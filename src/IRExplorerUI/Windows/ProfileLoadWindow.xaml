@@ -554,7 +554,7 @@
               <ListView
                 x:Name="ProcessList"
                 MinHeight="100"
-                MaxHeight="400"
+                MaxHeight="300"
                 Margin="8,4,8,0"
                 VerticalAlignment="Stretch"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -685,240 +685,17 @@
               </Grid>
             </StackPanel>
           </TabItem>
-          <TabItem Header="Options" Style="{StaticResource TabControlStyle}">
-            <StackPanel Margin="0,4,0,8" Orientation="Vertical">
-              <Expander
-                Margin="8,0,8,0"
-                IsEnabled="{Binding InputControlsEnabled}"
-                IsExpanded="True">
-                <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Processing" />
-                </Expander.Header>
-                <StackPanel>
-                  <CheckBox
-                    Margin="0,8,0,0"
-                    Content="Handle Kernel profile samples"
-                    ToolTip="Include kernel events from the trace, connecting user mode and kernel mode stacks"
-                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
-                  <CheckBox
-                    Margin="0,4,0,0"
-                    Content="Handle CPU performance counter samples"
-                    ToolTip="Include CPU performance counter (PMC) events from the trace"
-                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
-                  <CheckBox
-                    Margin="0,4,0,0"
-                    Content="Download source files from Source Server"
-                    IsChecked="{Binding Path=SymbolSettings.SourceServerEnabled, Mode=TwoWay}"
-                    ToolTip="Download source files using the SourceLink info from the symbol files" />
-                </StackPanel>
-              </Expander>
 
+          <TabItem Header="Symbols" Style="{StaticResource TabControlStyle}">
+            <StackPanel Margin="0,0,0,8" Orientation="Vertical">
               <Expander
                 Margin="8,10,8,0"
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Symbols" />
+                  <TextBlock FontWeight="Medium" Text="Symbol Options" />
                 </Expander.Header>
-
                 <StackPanel>
-                  <Grid>
-                    <Grid.RowDefinitions>
-                      <RowDefinition Height="*" />
-                      <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="80" />
-                    </Grid.ColumnDefinitions>
-
-                    <ListView
-                      x:Name="SymbolPathsList"
-                      Grid.Row="0"
-                      Grid.Column="0"
-                      Margin="0,4,4,4"
-                      IsTextSearchEnabled="True"
-                      SelectionMode="Single"
-                      TextSearch.TextPath="Name">
-                      <ListView.View>
-                        <GridView>
-                          <GridViewColumn Width="Auto" Header="Symbol Path">
-                            <GridViewColumn.HeaderContainerStyle>
-                              <Style TargetType="{x:Type GridViewColumnHeader}">
-                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                              </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                            <GridViewColumn.CellTemplate>
-                              <DataTemplate>
-                                <controls:FileSystemTextBox
-                                  BorderThickness="0"
-                                  KeyDown="SymbolPath_KeyDown"
-                                  LostFocus="SymbolPath_LostFocus"
-                                  DropDownClosed="SymbolPath_OnDropDownClosed"
-                                  FilterMode="StartsWithOrdinal"
-                                  ShowOnlyDirectories="True"
-                                  MinimumPrefixLength="0"
-                                  PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
-                                  Text="{Binding Path=.}" />
-                              </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                          </GridViewColumn>
-                          <GridViewColumn Width="Auto">
-                            <GridViewColumn.HeaderContainerStyle>
-                              <Style TargetType="{x:Type GridViewColumnHeader}">
-                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                              </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                            <GridViewColumn.CellTemplate>
-                              <DataTemplate>
-                                <Button
-                                  x:Name="BaseBrowseButton"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  Height="20"
-                                  Padding="4,2,4,2"
-                                  HorizontalAlignment="Right"
-                                  ToolTip="Select symbols directory from file system"
-                                  Click="SymbolPathBrowseButton_Click">
-                                  <Image Source="{StaticResource FolderIcon}"
-                                         Style="{StaticResource DisabledImageStyle}"/>
-                                  </Button>
-                              </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                          </GridViewColumn>
-                        </GridView>
-                      </ListView.View>
-                      <ListView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                          <Setter Property="Background"
-                                  Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                          <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        </Style>
-                      </ListView.ItemContainerStyle>
-                    </ListView>
-
-                    <StackPanel
-                      Grid.Row="0"
-                      Grid.Column="1"
-                      Margin="2,4,4,4">
-                      <Button
-                        Height="24"
-                        Padding="2"
-                        HorizontalContentAlignment="Left"
-                        Click="AddSymbolPathButton_Click"
-                        ToolTip="Add new symbol path to list">
-                        <StackPanel Orientation="Horizontal">
-                          <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource PlusIcon}"
-                            Style="{StaticResource DisabledImageStyle}" />
-                          <TextBlock Margin="4,0,0,0" Text="Add" />
-                        </StackPanel>
-                      </Button>
-                      <Button
-                        Height="24"
-                        Margin="0,2,0,0"
-                        Padding="2"
-                        HorizontalContentAlignment="Left"
-                        Click="RemoveSymbolPathButton_Click"
-                        ToolTip="Remove selected symbol path from list">
-                        <StackPanel Orientation="Horizontal">
-                          <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource MinusIcon}"
-                            Style="{StaticResource DisabledImageStyle}" />
-                          <TextBlock Margin="4,0,0,0" Text="Remove" />
-                        </StackPanel>
-                      </Button>
-                      <Button
-                        Height="24"
-                        Margin="0,2,0,0"
-                        Padding="2"
-                        HorizontalContentAlignment="Left"
-                        Click="MoveSymbolPathUpButton_Click"
-                        ToolTip="Move selected symbol path up in list">
-                        <StackPanel Orientation="Horizontal">
-                          <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource UpArrowIcon}"
-                            Style="{StaticResource DisabledImageStyle}" />
-                          <TextBlock Margin="4,0,0,0" Text="Up" />
-                        </StackPanel>
-                      </Button>
-                      <Button
-                        Height="24"
-                        Margin="0,2,0,0"
-                        Padding="2"
-                        HorizontalContentAlignment="Left"
-                        Click="MoveSymbolPathDownButton_Click"
-                        ToolTip="Move selected symbol path down in list">
-                        <StackPanel Orientation="Horizontal">
-                          <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource DownArrowIcon}"
-                            Style="{StaticResource DisabledImageStyle}" />
-                          <TextBlock Margin="4,0,0,0" Text="Down" />
-                        </StackPanel>
-                      </Button>
-                    </StackPanel>
-
-                    <StackPanel
-                      Grid.Row="1"
-                      Grid.Column="0"
-                      Grid.ColumnSpan="2"
-                      Margin="0,0,4,4"
-                      VerticalAlignment="Top"
-                      Orientation="Horizontal"
-                      ToolTip="Restore the predefined workspaces">
-
-                      <Button
-                        Height="24"
-                        Padding="4,2,4,2"
-                        HorizontalContentAlignment="Left"
-                        Click="AddPublicSymbolServer_OnClick"
-                        ToolTip="Add public symbol server path to list">
-                        <StackPanel Orientation="Horizontal">
-                          <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource PlusIcon}"
-                            Style="{StaticResource DisabledImageStyle}" />
-                          <TextBlock Margin="4,0,0,0" Text="Public Server" />
-                        </StackPanel>
-                      </Button>
-                      <Button
-                        Height="24"
-                        Margin="2,0,0,0"
-                        Padding="4,2,4,2"
-                        HorizontalContentAlignment="Left"
-                        Click="AddPrivateSymbolServer_OnClick"
-                        ToolTip="Add private symbol server path to list">
-                        <StackPanel Orientation="Horizontal">
-                          <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource PlusIcon}"
-                            Style="{StaticResource DisabledImageStyle}" />
-                          <TextBlock Margin="4,0,0,0" Text="Private Server" />
-                        </StackPanel>
-                      </Button>
-                      <TextBlock
-                        Margin="10,0,0,0"
-                        VerticalAlignment="Center"
-                        Cursor="Hand"
-                        Foreground="DarkBlue">
-                        <Hyperlink NavigateUri="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv"
-                                   RequestNavigate="Hyperlink_RequestNavigate">
-                          Symbol configuration help
-                        </Hyperlink>
-                      </TextBlock>
-                    </StackPanel>
-
-                  </Grid>
                   <CheckBox
                     Margin="0,8,0,0"
                     Content="Include __NT__SYMBOL__PATH environment variable"
@@ -929,7 +706,6 @@
                     Content="Include subdirectories for local paths"
                     IsChecked="{Binding Path=SymbolSettings.IncludeSymbolSubdirectories, Mode=TwoWay}"
                     ToolTip="Scan and include all subdirectories with symbols for the local paths in the list" />
-
                   <CheckBox
                     Margin="0,4,0,0"
                     Content="Don't load symbols for very low sample modules"
@@ -1173,6 +949,265 @@
                       </TabItem>
                     </TabControl>
                   </Border>
+
+                  <CheckBox
+                    Margin="0,4,0,0"
+                    Content="Cache processed symbol files"
+                    IsChecked="{Binding Path=SymbolSettings.CacheSymbolFiles, Mode=TwoWay}"
+                    ToolTip="Save the symbol files processing results to the %TEMP% directory for faster subsequent load" />
+                  <StackPanel Orientation="Horizontal" Margin="20,2,0,0">
+                    <TextBlock Text="Size on disk:" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Margin="4,0,0,0" Text="{Binding SymbolSettings.SymbolCacheDirectorySizeMB, StringFormat={}{0} MB}"
+                               VerticalAlignment="Center" />
+                    <Button
+                      Height="22"
+                      Margin="16,0,0,0"
+                      Padding="4,2,4,2"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
+                      Click="ClearSymbolCacheButton_Click"
+                      Content="Clear"
+                      ToolTip="Reset lists of rejected binaries and symbols"
+                      IsEnabled="{Binding InputControlsEnabled}" />
+                  </StackPanel>
+                </StackPanel>
+              </Expander>
+
+              <Expander
+                Margin="8,10,8,0"
+                IsEnabled="{Binding InputControlsEnabled}"
+                IsExpanded="True">
+                <Expander.Header>
+                  <TextBlock FontWeight="Medium" Text="Symbol Paths" />
+                </Expander.Header>
+
+                <Grid Height="300">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="30" />
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="80" />
+                  </Grid.ColumnDefinitions>
+
+                  <ListView
+                    x:Name="SymbolPathsList"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="0,4,4,4"
+                    IsTextSearchEnabled="True"
+                    SelectionMode="Single"
+                    TextSearch.TextPath="Name">
+                    <ListView.View>
+                      <GridView>
+                        <GridViewColumn Width="Auto" Header="Symbol Path">
+                          <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                              <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                          </GridViewColumn.HeaderContainerStyle>
+                          <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                              <controls:FileSystemTextBox
+                                BorderThickness="0"
+                                KeyDown="SymbolPath_KeyDown"
+                                LostFocus="SymbolPath_LostFocus"
+                                DropDownClosed="SymbolPath_OnDropDownClosed"
+                                FilterMode="StartsWithOrdinal"
+                                ShowOnlyDirectories="True"
+                                MinimumPrefixLength="0"
+                                PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
+                                Text="{Binding Path=.}" />
+                            </DataTemplate>
+                          </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Width="Auto">
+                          <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                              <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                          </GridViewColumn.HeaderContainerStyle>
+                          <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                              <Button
+                                x:Name="BaseBrowseButton"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Height="20"
+                                Padding="4,2,4,2"
+                                HorizontalAlignment="Right"
+                                ToolTip="Select symbols directory from file system"
+                                Click="SymbolPathBrowseButton_Click">
+                                <Image Source="{StaticResource FolderIcon}"
+                                       Style="{StaticResource DisabledImageStyle}" />
+                              </Button>
+                            </DataTemplate>
+                          </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                      </GridView>
+                    </ListView.View>
+                    <ListView.ItemContainerStyle>
+                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background"
+                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                      </Style>
+                    </ListView.ItemContainerStyle>
+                  </ListView>
+
+                  <StackPanel
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="2,4,4,4">
+                    <Button
+                      Height="24"
+                      Padding="2"
+                      HorizontalContentAlignment="Left"
+                      Click="AddSymbolPathButton_Click"
+                      ToolTip="Add new symbol path to list">
+                      <StackPanel Orientation="Horizontal">
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource PlusIcon}"
+                          Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock Margin="4,0,0,0" Text="Add" />
+                      </StackPanel>
+                    </Button>
+                    <Button
+                      Height="24"
+                      Margin="0,2,0,0"
+                      Padding="2"
+                      HorizontalContentAlignment="Left"
+                      Click="RemoveSymbolPathButton_Click"
+                      ToolTip="Remove selected symbol path from list">
+                      <StackPanel Orientation="Horizontal">
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource MinusIcon}"
+                          Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock Margin="4,0,0,0" Text="Remove" />
+                      </StackPanel>
+                    </Button>
+                    <Button
+                      Height="24"
+                      Margin="0,2,0,0"
+                      Padding="2"
+                      HorizontalContentAlignment="Left"
+                      Click="MoveSymbolPathUpButton_Click"
+                      ToolTip="Move selected symbol path up in list">
+                      <StackPanel Orientation="Horizontal">
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource UpArrowIcon}"
+                          Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock Margin="4,0,0,0" Text="Up" />
+                      </StackPanel>
+                    </Button>
+                    <Button
+                      Height="24"
+                      Margin="0,2,0,0"
+                      Padding="2"
+                      HorizontalContentAlignment="Left"
+                      Click="MoveSymbolPathDownButton_Click"
+                      ToolTip="Move selected symbol path down in list">
+                      <StackPanel Orientation="Horizontal">
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource DownArrowIcon}"
+                          Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock Margin="4,0,0,0" Text="Down" />
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+
+                  <StackPanel
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="0,0,4,4"
+                    VerticalAlignment="Top"
+                    Orientation="Horizontal"
+                    ToolTip="Restore the predefined workspaces">
+
+                    <Button
+                      Height="24"
+                      Padding="4,2,4,2"
+                      HorizontalContentAlignment="Left"
+                      Click="AddPublicSymbolServer_OnClick"
+                      ToolTip="Add public symbol server path to list">
+                      <StackPanel Orientation="Horizontal">
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource PlusIcon}"
+                          Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock Margin="4,0,0,0" Text="Public Server" />
+                      </StackPanel>
+                    </Button>
+                    <Button
+                      Height="24"
+                      Margin="2,0,0,0"
+                      Padding="4,2,4,2"
+                      HorizontalContentAlignment="Left"
+                      Click="AddPrivateSymbolServer_OnClick"
+                      ToolTip="Add private symbol server path to list">
+                      <StackPanel Orientation="Horizontal">
+                        <Image
+                          Width="16"
+                          Height="16"
+                          Source="{StaticResource PlusIcon}"
+                          Style="{StaticResource DisabledImageStyle}" />
+                        <TextBlock Margin="4,0,0,0" Text="Private Server" />
+                      </StackPanel>
+                    </Button>
+                    <TextBlock
+                      Margin="10,0,0,0"
+                      VerticalAlignment="Center"
+                      Cursor="Hand"
+                      Foreground="DarkBlue">
+                      <Hyperlink NavigateUri="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv"
+                                 RequestNavigate="Hyperlink_RequestNavigate">
+                        Symbol configuration help
+                      </Hyperlink>
+                    </TextBlock>
+                  </StackPanel>
+
+                </Grid>
+
+              </Expander>
+            </StackPanel>
+          </TabItem>
+
+          <TabItem Header="Options" Style="{StaticResource TabControlStyle}">
+            <StackPanel Margin="0,4,0,8" Orientation="Vertical">
+              <Expander
+                Margin="8,0,8,0"
+                IsEnabled="{Binding InputControlsEnabled}"
+                IsExpanded="True">
+                <Expander.Header>
+                  <TextBlock FontWeight="Medium" Text="Processing" />
+                </Expander.Header>
+                <StackPanel>
+                  <CheckBox
+                    Margin="0,8,0,0"
+                    Content="Handle Kernel profile samples"
+                    ToolTip="Include kernel events from the trace, connecting user mode and kernel mode stacks"
+                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
+                  <CheckBox
+                    Margin="0,4,0,0"
+                    Content="Handle CPU performance counter samples"
+                    ToolTip="Include CPU performance counter (PMC) events from the trace"
+                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
+                  <CheckBox
+                    Margin="0,4,0,0"
+                    Content="Download source files from Source Server"
+                    IsChecked="{Binding Path=SymbolSettings.SourceServerEnabled, Mode=TwoWay}"
+                    ToolTip="Download source files using the SourceLink info from the symbol files" />
                 </StackPanel>
               </Expander>
 
@@ -1218,8 +1253,8 @@
               </Expander>
               <Expander
                 Margin="8,8,8,8"
-                IsEnabled="{Binding InputControlsEnabled}"
-                IsExpanded="False">
+                IsExpanded="True"
+                IsEnabled="{Binding InputControlsEnabled}">
                 <Expander.Header>
                   <TextBlock FontWeight="Medium" Text="Binary files" />
                 </Expander.Header>

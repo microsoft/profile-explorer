@@ -53,7 +53,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   public string SymbolCacheDirectoryPath => !string.IsNullOrEmpty(CustomSymbolCacheDirectory) ?
     CustomSymbolCacheDirectory :
     DefaultCacheDirectoryPath;
-  public long SymbolCacheDirectorySize => Utils.ComputeDirectorySize(SymbolCacheDirectoryPath);
+  public long SymbolCacheDirectorySizeMB => Utils.ComputeDirectorySize(SymbolCacheDirectoryPath) / (1024*1024);
 
   public string EnvironmentVarSymbolPath {
     get {
@@ -64,6 +64,17 @@ public class SymbolFileSourceSettings : SettingsBase {
         Trace.WriteLine($"Failed to read symbol env var: {ex.Message}");
         return null;
       }
+    }
+  }
+
+  public void ClearSymbolFileCache() {
+    try {
+      if (Directory.Exists(SymbolCacheDirectoryPath)) {
+        Directory.Delete(SymbolCacheDirectoryPath, true);
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to empty cache dir {SymbolCacheDirectoryPath}: {ex.Message}");
     }
   }
 
