@@ -585,6 +585,10 @@ public partial class MainWindow : Window, ISession {
   private void RemoveProfileThreadButton_Click(object sender, RoutedEventArgs e) {
     ProfileFilter?.RemoveThreadFilter?.Invoke();
   }
+  
+  private void RemoveProfileAllFiltersButton_Click(object sender, RoutedEventArgs e) {
+    ProfileFilter?.RemoveAllFilters?.Invoke();
+  }
 
   private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.FunctionColors.Clear();

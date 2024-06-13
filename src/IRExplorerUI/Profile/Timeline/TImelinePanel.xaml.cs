@@ -597,6 +597,9 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     state.RemoveTimeRangeFilter += async () => {
       await RemoveTimeRangeFilters();
     };
+    state.RemoveAllFilters += async () => {
+      await RemoveAllFilters();
+    };
 
     SetFilteredThreadsState(state);
     return state;
@@ -649,6 +652,17 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async Task RemoveTimeRangeFilters(ActivityView view = null) {
+    RemoveTimeRangeFiltersImpl(view);
+    await ApplyProfileFilter();
+  }
+
+  private async Task RemoveAllFilters(ActivityView view = null) {
+    await RemoveThreadFilters();
+    await RemoveTimeRangeFilters(view);
+    await ApplyProfileFilter();
+  }
+
+  private void RemoveTimeRangeFiltersImpl(ActivityView view) {
     changingThreadFiltering_ = true;
 
     if (view == null || view.IsSingleThreadView) {
@@ -664,10 +678,14 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     changingThreadFiltering_ = false;
-    await ApplyProfileFilter();
   }
 
   private async Task RemoveThreadFilters() {
+    RemoveThreadFiltersImpl();
+    await ApplyProfileFilter();
+  }
+
+  private void RemoveThreadFiltersImpl() {
     changingThreadFiltering_ = true;
 
     foreach (var threadView in threadActivityViews_) {
@@ -675,7 +693,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     changingThreadFiltering_ = false;
-    await ApplyProfileFilter();
   }
 
   private async void ActivityView_FilteredTimeRange(object sender, SampleTimeRangeInfo range) {
@@ -973,6 +990,10 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void RemoveThreadFiltersExecuted(object sender, ExecutedRoutedEventArgs e) {
     await RemoveThreadFilters();
+  }
+  
+  private async void RemoveAllFiltersExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await RemoveAllFilters();
   }
 
   private async void ActivityViewHeader_MouseDown(object sender, MouseButtonEventArgs e) {

@@ -17,9 +17,9 @@ public struct ResolvedProfileStackFrame {
   [ProtoMember(1)]
   public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
   [ProtoMember(2)]
-  public uint FrameRVA { get; set; }
+  public long FrameRVA { get; set; }
 
-  public ResolvedProfileStackFrame(uint frameRva, ResolvedProfileStackFrameDetails frameDetails) {
+  public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackFrameDetails frameDetails) {
     FrameRVA = frameRva;
     FrameDetails = frameDetails;
   }
@@ -54,7 +54,7 @@ public sealed class ResolvedProfileStack {
                        ProfileStack stack) {
     // Deduplicate the frame.
     var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, frameDetails);
-    var rvaFrame = new ResolvedProfileStackFrame((uint)frameRVA, uniqueFrame);
+    var rvaFrame = new ResolvedProfileStackFrame(frameRVA, uniqueFrame);
 
     // A stack frame IP can be called from both user and kernel mode code.
     frameDetails.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;

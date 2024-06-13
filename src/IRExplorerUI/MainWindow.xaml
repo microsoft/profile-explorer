@@ -1180,22 +1180,23 @@
             BorderThickness="1,0,1,0"
             Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-
-              <Image
-                Width="16"
-                Height="16"
-                Margin="2,1,1,0"
-                Source="{StaticResource FilterIcon}"
-                Style="{StaticResource DisabledImageStyle}"
-                ToolTip="Active time and thread filters"
-                Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
-
-              <TextBlock
-                Margin="0,0,4,0"
-                VerticalAlignment="Center"
-                FontWeight="SemiBold"
-                Text="Profile Filter"
-                ToolTip="Active filtering of entire profile by thread and/or time range" />
+              <Button
+                Margin="0,0,6,0"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                Click="RemoveProfileAllFiltersButton_Click"
+                TabIndex="5"
+                ToolTip="Click to remove active filtering of entire profile by thread and/or time range"
+                Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource FilterIcon}" />
+                <TextBlock Text="Profile Filter"></TextBlock>
+                </StackPanel>
+              </Button>
+              
               <TextBlock
                 VerticalAlignment="Center"
                 FontWeight="SemiBold"

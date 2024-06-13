@@ -249,7 +249,12 @@ public class ProfileDocumentMarker {
     if (parsedSection != null) {
       instrToLineMap = await Task.Run(() => {
         var funcProcResult = profile.Process(parsedSection.Function, irInfo_.IR);
-        return funcProcResult.BuildSampledElementsToLineMapping(profile, parsedSection);
+
+        if (funcProcResult != null) {
+          return funcProcResult.BuildSampledElementsToLineMapping(profile, parsedSection);
+        }
+
+        return null;
       });
     }
 

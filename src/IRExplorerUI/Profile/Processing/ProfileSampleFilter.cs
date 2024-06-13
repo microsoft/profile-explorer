@@ -157,4 +157,5 @@ public class ProfileFilterState {
   public string ThreadFilterText { get; set; }
   public Func<Task> RemoveThreadFilter { get; set; }
   public Func<Task> RemoveTimeRangeFilter { get; set; }
+  public Func<Task> RemoveAllFilters { get; set; }
 }

@@ -21,6 +21,7 @@
     <CommandBinding Command="local:CallTreeCommand.RemoveFilters" Executed="RemoveFiltersExecuted" />
     <CommandBinding Command="local:CallTreeCommand.RemoveThreadFilters"
                     Executed="RemoveThreadFiltersExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.RemoveAllFilters" Executed="RemoveAllFiltersExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
   <irExplorerUi:ToolPanelControl.InputBindings>
@@ -199,10 +200,25 @@
           </Menu>
           <Separator />
 
-          <Image Source="{StaticResource FilterIcon}" Width="16" Height="16" Margin="2,1,4,0"
-                 ToolTip="Active time and thread filters"
-                 Style="{StaticResource DisabledImageStyle}"
-                 Visibility="{Binding ProfileFilter.HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+         
+          <Button
+            Command="local:CallTreeCommand.RemoveAllFilters"
+            CommandTarget="{Binding ElementName=ActivityView}"
+            Margin="0,0,6,0"
+            Background="{x:Null}"
+            BorderBrush="{x:Null}"
+            TabIndex="5"
+            ToolTip="Click to remove active filtering of entire profile by thread and/or time range"
+            Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource FilterIcon}" />
+              <TextBlock Text="Profile Filter"></TextBlock>
+            </StackPanel>
+          </Button>
+          
           <TextBlock
             VerticalAlignment="Center"
             FontWeight="Medium"

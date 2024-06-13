@@ -171,6 +171,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       }
 
       // If failing to load inlinee, load main source file instead.
+      currentInlinee_ = null;
       await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
     }
   }
@@ -423,6 +424,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async Task ResetState() {
+    ResetInlinee();
     await ProfileTextView.Reset();
     section_ = null;
     SourceFileLoaded = false;

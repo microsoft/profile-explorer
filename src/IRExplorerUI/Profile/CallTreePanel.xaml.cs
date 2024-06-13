@@ -71,6 +71,8 @@ public static class CallTreeCommand {
     new RoutedCommand("RemoveFilters", typeof(FrameworkElement));
   public static readonly RoutedCommand RemoveThreadFilters =
     new RoutedCommand("RemoveThreadFilters", typeof(FrameworkElement));
+  public static readonly RoutedCommand RemoveAllFilters =
+    new RoutedCommand("RemoveAllFilters", typeof(FrameworkElement));
 }
 
 public class CallTreeListItem : SearchableProfileItem, ITreeModel {
