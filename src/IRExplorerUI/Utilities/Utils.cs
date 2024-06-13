@@ -603,7 +603,7 @@ public static class Utils {
 
       foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
         if (!File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
-          total += file.Length;
+          total += new FileInfo(file).Length;
         }
         else if (recursive) {
           total += ComputeDirectorySize(file, true);

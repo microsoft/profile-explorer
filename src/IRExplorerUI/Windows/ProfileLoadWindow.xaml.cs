@@ -1189,4 +1189,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       UpdateSymbolPath(textBox);
     }
   }
+
+  private void ClearSymbolCacheButton_Click(object sender, RoutedEventArgs e) {
+    if (Utils.ShowYesNoMessageBox("Do you want to remove all cached symbol files?", this) ==
+        MessageBoxResult.Yes) {
+      SymbolSettings.ClearSymbolFileCache();
+      OnPropertyChange(nameof(SymbolSettings));
+    }
+  }
 }
