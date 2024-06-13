@@ -965,9 +965,19 @@
                       Padding="4,2,4,2"
                       HorizontalAlignment="Right"
                       VerticalAlignment="Center"
+                      Click="OpenSymbolCacheButton_Click"
+                      Content="Open"
+                      ToolTip="Open the with cached symbol files directory"
+                      IsEnabled="{Binding InputControlsEnabled}" />
+                    <Button
+                      Height="22"
+                      Margin="4,0,0,0"
+                      Padding="4,2,4,2"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
                       Click="ClearSymbolCacheButton_Click"
                       Content="Clear"
-                      ToolTip="Reset lists of rejected binaries and symbols"
+                      ToolTip="Reset lists of cached symbol files"
                       IsEnabled="{Binding InputControlsEnabled}" />
                   </StackPanel>
                 </StackPanel>
@@ -978,7 +988,9 @@
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Symbol Paths" />
+                  <TextBlock FontWeight="Medium" Text="Symbol Paths"
+                             
+                             ToolTip="Symbol server and local search paths for debug info and binary files"/>
                 </Expander.Header>
 
                 <Grid Height="300">
@@ -995,7 +1007,7 @@
                     x:Name="SymbolPathsList"
                     Grid.Row="0"
                     Grid.Column="0"
-                    Margin="0,4,4,4"
+                    Margin="0,8,4,4"
                     IsTextSearchEnabled="True"
                     SelectionMode="Single"
                     TextSearch.TextPath="Name">
@@ -1059,7 +1071,7 @@
                   <StackPanel
                     Grid.Row="0"
                     Grid.Column="1"
-                    Margin="2,4,4,4">
+                    Margin="2,8,4,4">
                     <Button
                       Height="24"
                       Padding="2"

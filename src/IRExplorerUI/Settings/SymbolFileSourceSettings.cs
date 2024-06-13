@@ -189,7 +189,7 @@ public class SymbolFileSourceSettings : SettingsBase {
 
       foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
         if (File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
-          BuildSymbolsDirectoriesSet(file, symbolDirs, symbolExtensions, level + 1);
+          BuildSymbolsDirectoriesSet(file, symbolDirs, symbolExtensions, level + 1, maxLevel);
         }
         else if (level > 0) {
           // Top-level directory already included in set,

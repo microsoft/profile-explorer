@@ -18,6 +18,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
@@ -618,7 +619,7 @@ public static class Utils {
   }
 
   public static void OpenExplorerAtFile(string path) {
-    if (!File.Exists(path)) {
+    if (!File.Exists(path) && !Directory.Exists(path)) {
       return;
     }
 
@@ -1379,4 +1380,12 @@ public static class Utils {
     "<!--EndFragment-->\r\n" +
     "</body>\r\n" +
     "</html>";
+
+  public static string RemovePathQuotes(string text) {
+    if(string.IsNullOrEmpty(text)) {
+      return text;
+    }
+
+    return text.Trim('\"');
+  }
 }

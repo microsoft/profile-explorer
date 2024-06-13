@@ -1108,9 +1108,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return;
     }
 
-    // Update list with the new text
-    if (symbolSettings_.SymbolPaths[index] != textBox.Text) {
-      symbolSettings_.SymbolPaths[index] = textBox.Text;
+    // Update list with the new text.
+    var newSymbolPath = Utils.RemovePathQuotes(textBox.Text);
+    textBox.Text = newSymbolPath;
+    
+    if (symbolSettings_.SymbolPaths[index] != newSymbolPath) {
+      symbolSettings_.SymbolPaths[index] = newSymbolPath;
       ReloadSymbolPathsList();
     }
   }
@@ -1196,5 +1199,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       SymbolSettings.ClearSymbolFileCache();
       OnPropertyChange(nameof(SymbolSettings));
     }
+  }
+
+  private void OpenSymbolCacheButton_Click(object sender, RoutedEventArgs e) {
+    Utils.OpenExplorerAtFile(SymbolSettings.SymbolCacheDirectoryPath);
   }
 }
