@@ -1005,16 +1005,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     App.SaveApplicationSettings();
   }
 
-  private void ShareButton_Click(object sender, RoutedEventArgs e) {
-    double width = Math.Max(SessionSharingPanel.MinimumWidth,
-                            Math.Min(MainGrid.ActualWidth, SessionSharingPanel.DefaultWidth));
-    double height = Math.Max(SessionSharingPanel.MinimumHeight,
-                             Math.Min(MainGrid.ActualHeight, SessionSharingPanel.DefaultHeight));
-    var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
-    var sharingPanel = new SessionSharingPanel(position, width, height, this, this);
-    sharingPanel.IsOpen = true;
-  }
-
   private void FindButton_Click(object sender, RoutedEventArgs e) {
     ShowDocumentSearchPanel();
   }
