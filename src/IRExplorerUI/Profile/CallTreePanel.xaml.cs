@@ -76,6 +76,7 @@ public static class CallTreeCommand {
 }
 
 public class CallTreeListItem : SearchableProfileItem, ITreeModel {
+  private string cacheFunctionName_;
   private Brush functionBackColor_;
   private Brush moduleBackColor_;
 
@@ -119,7 +120,11 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
       string name = base.FunctionName;
 
       if (Kind != CallTreeListItemKind.Header) {
-        return $"{name} ({Percentage.AsPercentageString()})";
+        if (cacheFunctionName_ == null) {
+          cacheFunctionName_ = $"{name} ({Percentage.AsPercentageString()})";
+        }
+
+        return cacheFunctionName_;
       }
 
       return name;

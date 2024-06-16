@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security;
 
 namespace IRExplorerCore.SourceParser;
 
@@ -179,25 +180,29 @@ public sealed class TSParser : IDisposable {
   }
 
 #region PInvoke
-
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-cpp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_cpp();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-c-sharp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_c_sharp();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-rust.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_rust();
 
   /**
   * Create a new parser.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_parser_new();
 
   /**
   * Delete the parser, freeing all of the memory that it used.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_parser_delete(IntPtr parser);
 
@@ -211,6 +216,7 @@ public sealed class TSParser : IDisposable {
   * and compare it to this library's `TREE_SITTER_LANGUAGE_VERSION` and
   * `TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION` constants.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   [return: MarshalAs(UnmanagedType.I1)]
   private static extern bool ts_parser_set_language(IntPtr parser, IntPtr language);
@@ -218,6 +224,7 @@ public sealed class TSParser : IDisposable {
   /**
   * Get the parser's current language.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_parser_language(IntPtr parser);
 
@@ -242,6 +249,7 @@ public sealed class TSParser : IDisposable {
   * will not be assigned, and this function will return `false`. On success,
   * this function returns `true`
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   //[return: MarshalAs(UnmanagedType.I1)]
   private static extern bool ts_parser_set_included_ranges(IntPtr parser,
@@ -255,6 +263,7 @@ public sealed class TSParser : IDisposable {
   * or write to it. The length of the array will be written to the given
   * `length` pointer.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   [return: MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]
   private static extern TSRange[] ts_parser_included_ranges(IntPtr parser, out uint length);
@@ -265,6 +274,7 @@ public sealed class TSParser : IDisposable {
   * above. The second two parameters indicate the location of the buffer and its
   * length in bytes.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_parser_parse_string(IntPtr parser, IntPtr oldTree,
                                                       [MarshalAs(UnmanagedType.LPUTF8Str)] string input, uint length);
@@ -275,6 +285,7 @@ public sealed class TSParser : IDisposable {
   * above. The second two parameters indicate the location of the buffer and its
   * length in bytes.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   //private static extern IntPtr ts_parser_parse_string_encoding(IntPtr parser, IntPtr oldTree, [MarshalAs(UnmanagedType.LPUTF8Str)] string input, uint length, TSInputEncoding encoding);
   private static extern IntPtr ts_parser_parse_string_encoding(IntPtr parser, IntPtr oldTree,
@@ -290,6 +301,7 @@ public sealed class TSParser : IDisposable {
   * and instead intend to use this parser to parse some other document, you must
   * call `ts_parser_reset` first.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_parser_reset(IntPtr parser);
 
@@ -300,12 +312,14 @@ public sealed class TSParser : IDisposable {
   * If parsing takes longer than this, it will halt early, returning NULL.
   * See `ts_parser_parse` for more information.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_parser_set_timeout_micros(IntPtr parser, ulong timeout);
 
   /**
   * Get the duration in microseconds that parsing is allowed to take.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern ulong ts_parser_timeout_micros(IntPtr parser);
 
@@ -316,12 +330,14 @@ public sealed class TSParser : IDisposable {
   * from this pointer during parsing. If it reads a non-zero value, it will
   * halt early, returning NULL. See `ts_parser_parse` for more information.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_parser_set_cancellation_flag(IntPtr parser, ref IntPtr flag);
 
   /**
   * Get the parser's current cancellation flag pointer.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_parser_cancellation_flag(IntPtr parser);
 
@@ -332,6 +348,7 @@ public sealed class TSParser : IDisposable {
   * previously assigned, the caller is responsible for releasing any memory
   * owned by the previous logger.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_parser_set_logger(IntPtr parser, _TSLoggerData logger);
 
@@ -381,18 +398,21 @@ public sealed class TSTree : IDisposable {
   * You need to copy a syntax tree in order to use it on more than one thread at
   * a time, as syntax trees are not thread safe.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_tree_copy(IntPtr tree);
 
   /**
   * Delete the syntax tree, freeing all of the memory that it used.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_tree_delete(IntPtr tree);
 
   /**
   * Get the root node of the syntax tree.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_tree_root_node(IntPtr tree);
 
@@ -400,12 +420,14 @@ public sealed class TSTree : IDisposable {
   * Get the root node of the syntax tree, but with its position
   * shifted forward by the given offset.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_tree_root_node_with_offset(IntPtr tree, uint offsetBytes, TSPoint offsetPoint);
 
   /**
   * Get the language that was used to parse the syntax tree.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_tree_language(IntPtr tree);
 
@@ -414,9 +436,11 @@ public sealed class TSTree : IDisposable {
   *
   * The returned pointer must be freed by the caller.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_tree_included_ranges(IntPtr tree, out uint length);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_tree_included_ranges_free(IntPtr ranges);
 
@@ -427,6 +451,7 @@ public sealed class TSTree : IDisposable {
   * You must describe the edit both in terms of byte offsets and in terms of
   * (row, column) coordinates.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_tree_edit(IntPtr tree, ref TSInputEdit edit);
 
@@ -444,6 +469,7 @@ public sealed class TSTree : IDisposable {
   * for freeing it using `free`. The length of the array will be written to the
   * given `length` pointer.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_tree_get_changed_ranges(IntPtr old_tree, IntPtr new_tree, out uint length);
 
@@ -552,36 +578,42 @@ public struct TSNode {
   /**
   * Get the node's type as a null-terminated string.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_node_type(TSNode node);
 
   /**
   * Get the node's type as a numerical id.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern ushort ts_node_symbol(TSNode node);
 
   /**
   * Get the node's start byte.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_node_start_byte(TSNode node);
 
   /**
   * Get the node's start position in terms of rows and columns.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSPoint ts_node_start_point(TSNode node);
 
   /**
   * Get the node's end byte.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_node_end_byte(TSNode node);
 
   /**
   * Get the node's end position in terms of rows and columns.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSPoint ts_node_end_point(TSNode node);
 
@@ -591,9 +623,11 @@ public struct TSNode {
   * This string is allocated with `malloc` and the caller is responsible for
   * freeing it using `free`.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_node_string(TSNode node);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_node_string_free(IntPtr str);
 
@@ -602,6 +636,7 @@ public struct TSNode {
   * `ts_node_next_sibling` will return a null node to indicate that no such node
   * was found.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_is_null(TSNode node);
 
@@ -610,6 +645,7 @@ public struct TSNode {
   * grammar, whereas *anonymous* nodes correspond to string literals in the
   * grammar.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_is_named(TSNode node);
 
@@ -617,6 +653,7 @@ public struct TSNode {
   * Check if the node is *missing*. Missing nodes are inserted by the parser in
   * order to recover from certain kinds of syntax errors.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_is_missing(TSNode node);
 
@@ -624,24 +661,28 @@ public struct TSNode {
   * Check if the node is *extra*. Extra nodes represent things like comments,
   * which are not required the grammar, but can appear anywhere.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_is_extra(TSNode node);
 
   /**
   * Check if a syntax node has been edited.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_has_changes(TSNode node);
 
   /**
   * Check if the node is a syntax error or contains any syntax errors.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_has_error(TSNode node);
 
   /**
   * Get the node's immediate parent.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_parent(TSNode node);
 
@@ -649,6 +690,7 @@ public struct TSNode {
   * Get the node's child at the given index, where zero represents the first
   * child.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_child(TSNode node, uint index);
 
@@ -662,6 +704,7 @@ public struct TSNode {
   /**
   * Get the node's number of children.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_node_child_count(TSNode node);
 
@@ -670,6 +713,7 @@ public struct TSNode {
   *
   * See also `ts_node_is_named`.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_named_child(TSNode node, uint index);
 
@@ -678,6 +722,7 @@ public struct TSNode {
   *
   * See also `ts_node_is_named`.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_node_named_child_count(TSNode node);
 
@@ -687,6 +732,7 @@ public struct TSNode {
   * You can convert a field name to an id using the
   * `ts_language_field_id_for_name` function.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_child_by_field_name(TSNode self,
                                                            [MarshalAs(UnmanagedType.LPUTF8Str)] string field_name,
@@ -698,36 +744,43 @@ public struct TSNode {
   * You can convert a field name to an id using the
   * `ts_language_field_id_for_name` function.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_child_by_field_id(TSNode self, ushort fieldId);
 
   /**
   * Get the node's next / previous sibling.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_next_sibling(TSNode self);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_prev_sibling(TSNode self);
 
   /**
   * Get the node's next / previous *named* sibling.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_next_named_sibling(TSNode self);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_prev_named_sibling(TSNode self);
 
   /**
   * Get the node's first child that extends beyond the given byte offset.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_first_child_for_byte(TSNode self, uint byteOffset);
 
   /**
   * Get the node's first named child that extends beyond the given byte offset.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_first_named_child_for_byte(TSNode self, uint byteOffset);
 
@@ -735,9 +788,11 @@ public struct TSNode {
   * Get the smallest node within this node that spans the given range of bytes
   * or (row, column) positions.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_descendant_for_byte_range(TSNode self, uint startByte, uint endByte);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_descendant_for_point_range(TSNode self, TSPoint startPoint, TSPoint endPoint);
 
@@ -745,9 +800,11 @@ public struct TSNode {
   * Get the smallest named node within this node that spans the given range of
   * bytes or (row, column) positions.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_named_descendant_for_byte_range(TSNode self, uint startByte, uint endByte);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_node_named_descendant_for_point_range(TSNode self, TSPoint startPoint,
                                                                         TSPoint endPoint);
@@ -755,6 +812,7 @@ public struct TSNode {
   /**
   * Check if two nodes are identical.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_node_eq(TSNode node1, TSNode node2);
 
@@ -829,24 +887,28 @@ public sealed class TSCursor : IDisposable {
   * possible using the `TSNode` functions. It is a mutable object that is always
   * on a certain syntax node, and can be moved imperatively to different nodes.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSTreeCursor ts_tree_cursor_new(TSNode node);
 
   /**
   * Delete a tree cursor, freeing all of the memory that it used.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_tree_cursor_delete(ref TSTreeCursor cursor);
 
   /**
   * Re-initialize a tree cursor to start at a different node.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_tree_cursor_reset(ref TSTreeCursor cursor, TSNode node);
 
   /**
   * Get the tree cursor's current node.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSNode ts_tree_cursor_current_node(ref TSTreeCursor cursor);
 
@@ -856,6 +918,7 @@ public sealed class TSCursor : IDisposable {
   * This returns `NULL` if the current node doesn't have a field.
   * See also `ts_node_child_by_field_name`.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_tree_cursor_current_field_name(ref TSTreeCursor cursor);
 
@@ -865,6 +928,7 @@ public sealed class TSCursor : IDisposable {
   * This returns zero if the current node doesn't have a field.
   * See also `ts_node_child_by_field_id`, `ts_language_field_id_for_name`.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern ushort ts_tree_cursor_current_field_id(ref TSTreeCursor cursor);
 
@@ -874,6 +938,7 @@ public sealed class TSCursor : IDisposable {
   * This returns `true` if the cursor successfully moved, and returns `false`
   * if there was no parent node (the cursor was already on the root node).
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_tree_cursor_goto_parent(ref TSTreeCursor cursor);
 
@@ -883,6 +948,7 @@ public sealed class TSCursor : IDisposable {
   * This returns `true` if the cursor successfully moved, and returns `false`
   * if there was no next sibling node.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_tree_cursor_goto_next_sibling(ref TSTreeCursor cursor);
 
@@ -892,6 +958,7 @@ public sealed class TSCursor : IDisposable {
   * This returns `true` if the cursor successfully moved, and returns `false`
   * if there were no children.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_tree_cursor_goto_first_child(ref TSTreeCursor cursor);
 
@@ -902,12 +969,15 @@ public sealed class TSCursor : IDisposable {
   * This returns the index of the child node if one was found, and returns -1
   * if no such child was found.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern long ts_tree_cursor_goto_first_child_for_byte(ref TSTreeCursor cursor, uint byteOffset);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern long ts_tree_cursor_goto_first_child_for_point(ref TSTreeCursor cursor, TSPoint point);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSTreeCursor ts_tree_cursor_copy(ref TSTreeCursor cursor);
 
@@ -970,47 +1040,61 @@ public sealed class TSQuery : IDisposable {
   public void disable_pattern(uint patternIndex) { ts_query_disable_pattern(Ptr, patternIndex); }
 #region PInvoke
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_delete(IntPtr query);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_query_pattern_count(IntPtr query);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_query_capture_count(IntPtr query);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_query_string_count(IntPtr query);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_query_start_byte_for_pattern(IntPtr query, uint patternIndex);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_query_predicates_for_pattern(IntPtr query, uint patternIndex, out uint length);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_query_is_pattern_rooted(IntPtr query, uint patternIndex);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_query_is_pattern_non_local(IntPtr query, uint patternIndex);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_query_is_pattern_guaranteed_at_step(IntPtr query, uint byteOffset);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_query_capture_name_for_id(IntPtr query, uint id, out uint length);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSQuantifier ts_query_capture_quantifier_for_id(IntPtr query, uint patternId, uint captureId);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_query_string_value_for_id(IntPtr query, uint id, out uint length);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_disable_capture(IntPtr query,
                                                       [MarshalAs(UnmanagedType.LPUTF8Str)] string captureName,
                                                       uint captureNameLength);
-
+  
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_disable_pattern(IntPtr query, uint patternIndex);
 
@@ -1072,37 +1156,47 @@ public sealed class TSQueryCursor : IDisposable {
   }
 
 #region PInvoke
-
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_query_cursor_new();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_cursor_delete(IntPtr cursor);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_cursor_exec(IntPtr cursor, IntPtr query, TSNode node);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_query_cursor_did_exceed_match_limit(IntPtr cursor);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_query_cursor_match_limit(IntPtr cursor);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_cursor_set_match_limit(IntPtr cursor, uint limit);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_cursor_set_byte_range(IntPtr cursor, uint start_byte, uint end_byte);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_cursor_set_point_range(IntPtr cursor, TSPoint start_point, TSPoint end_point);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool ts_query_cursor_next_match(IntPtr cursor, out TSQueryMatch match);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_cursor_remove_match(IntPtr cursor, uint id);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern bool
     ts_query_cursor_next_capture(IntPtr cursor, out TSQueryMatch match, out uint capture_index);
@@ -1191,6 +1285,7 @@ public sealed class TSLanguage : IDisposable {
   * 1. The byte offset of the error is written to the `error_offset` parameter.
   * 2. The type of error is written to the `error_type` parameter.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_query_new(IntPtr language, [MarshalAs(UnmanagedType.LPUTF8Str)] string source,
                                             uint source_len, out uint error_offset, out TSQueryError error_type);
@@ -1198,18 +1293,21 @@ public sealed class TSLanguage : IDisposable {
   /**
   * Get the number of distinct node types in the language.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_language_symbol_count(IntPtr language);
 
   /**
   * Get a node type string for the given numerical id.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_language_symbol_name(IntPtr language, ushort symbol);
 
   /**
   * Get the numerical id for the given node type string.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern ushort ts_language_symbol_for_name(IntPtr language,
                                                            [MarshalAs(UnmanagedType.LPUTF8Str)] string str, uint length,
@@ -1218,18 +1316,21 @@ public sealed class TSLanguage : IDisposable {
   /**
   * Get the number of distinct field names in the language.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_language_field_count(IntPtr language);
 
   /**
   * Get the field name string for the given numerical id.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_language_field_name_for_id(IntPtr language, ushort fieldId);
 
   /**
   * Get the numerical id for the given field name string.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern ushort ts_language_field_id_for_name(IntPtr language,
                                                              [MarshalAs(UnmanagedType.LPUTF8Str)] string str,
@@ -1241,6 +1342,7 @@ public sealed class TSLanguage : IDisposable {
   *
   * See also `ts_node_is_named`. Hidden nodes are never returned from the API.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern TSSymbolType ts_language_symbol_type(IntPtr language, ushort symbol);
 
@@ -1251,6 +1353,7 @@ public sealed class TSLanguage : IDisposable {
   *
   * See also `ts_parser_set_language`.
   */
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern uint ts_language_version(IntPtr language);
 

@@ -56,7 +56,12 @@ public sealed class ASMNameProvider : INameProvider {
   }
 
   public string FormatFunctionName(string name) {
-    if (!IsDemanglingEnabled) {
+    if (!IsDemanglingEnabled || string.IsNullOrEmpty(name)) {
+      return name;
+    }
+
+    // Mangled MSVC C++ names always start with a ? char. 
+    if (!name.StartsWith('?')) {
       return name;
     }
 

@@ -155,6 +155,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public static string DemangleFunctionName(string name, FunctionNameDemanglingOptions options =
                                               FunctionNameDemanglingOptions.Default) {
+    // Mangled MSVC C++ names always start with a ? char. 
+    if (string.IsNullOrEmpty(name) || !name.StartsWith('?')) {
+      return name;
+    }
+    
     var sb = new StringBuilder(MaxDemangledFunctionNameLength);
     var flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
     flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS |

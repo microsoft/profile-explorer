@@ -4,6 +4,7 @@
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -94,44 +95,32 @@ public enum SetWindowPosFlags : uint {
 
 // Code based on answer from https://stackoverflow.com/a/15369563
 public class DialogCenteringHelper : IDisposable {
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("kernel32.dll")]
   private static extern int GetCurrentThreadId();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   private static extern bool GetWindowRect(IntPtr hWnd, ref Rectangle lpRect);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
-  private static extern int MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+  public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
 
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
+  
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  public static extern int UnhookWindowsHookEx(IntPtr idHook);
+  
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   [return: MarshalAs(UnmanagedType.Bool)]
   private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,
                                           SetWindowPosFlags uFlags);
-
-  [DllImport("User32.dll")]
-  public static extern UIntPtr SetTimer(IntPtr hWnd, UIntPtr nIDEvent, uint uElapse, TimerProc lpTimerFunc);
-
-  [DllImport("User32.dll")]
-  public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
-
-  [DllImport("user32.dll")]
-  public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
-
-  [DllImport("user32.dll")]
-  public static extern int UnhookWindowsHookEx(IntPtr idHook);
-
-  [DllImport("user32.dll")]
-  public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
-
-  [DllImport("user32.dll")]
-  public static extern int GetWindowTextLength(IntPtr hWnd);
-
-  [DllImport("user32.dll")]
-  public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxLength);
-
-  [DllImport("user32.dll")]
-  public static extern int EndDialog(IntPtr hDlg, IntPtr nResult);
-
+  
   private const int WH_CALLWNDPROCRET = 12;
   private IntPtr ownerHandle_;
   private HookProc hookProc_;

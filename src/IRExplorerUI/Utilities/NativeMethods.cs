@@ -3,59 +3,38 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 
 namespace IRExplorerUI;
 
 static class NativeMethods {
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern uint GetDoubleClickTime();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   [return: MarshalAs(UnmanagedType.Bool)]
   public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, SetLastError = false)]
   public static extern bool PathFindOnPath([In][Out] StringBuilder pszFile,
                                            [In] string[] ppszOtherDirs);
 
-  [DllImport("User32.dll")]
-  public static extern bool SetForegroundWindow(IntPtr handle);
-
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X,
                                          int Y, int cx, int cy, uint uFlags);
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("dbghelp.dll", SetLastError = true, PreserveSig = true)]
   public static extern int UnDecorateSymbolName(
     [In][MarshalAs(UnmanagedType.LPStr)] string DecoratedName,
     [Out] StringBuilder UnDecoratedName,
     [In][MarshalAs(UnmanagedType.U4)] int UndecoratedLength,
     [In][MarshalAs(UnmanagedType.U4)] UnDecorateFlags Flags);
-
-  [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
-  public static extern bool SymFindFileInPath(IntPtr hProcess,
-                                              [MarshalAs(UnmanagedType.LPWStr)] string SearchPath,
-                                              [MarshalAs(UnmanagedType.LPWStr)] string FileName,
-                                              IntPtr id,
-                                              int two,
-                                              int three,
-                                              int flags,
-                                              [Out][MarshalAs(UnmanagedType.LPWStr)] StringBuilder filePath,
-                                              IntPtr callback,
-                                              IntPtr context);
-
-  [DllImport("dbghelp.dll")]
-  public static extern bool SymCleanup(IntPtr hProcess);
-
-  [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
-  public static extern bool SymInitialize(
-    IntPtr hProcess,
-    [MarshalAs(UnmanagedType.LPWStr)] string UserSearchPath,
-    bool fInvadeProcess);
-
-  [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
-  public static extern uint SymSetOptions(uint options);
 
   public const uint TOPMOST_FLAGS =
     SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOSENDCHANGING;

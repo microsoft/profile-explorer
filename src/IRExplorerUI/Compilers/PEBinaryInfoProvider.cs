@@ -287,12 +287,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     }
   }
 
-  public byte[] GetSectionData(SectionHeader header) {
+  public ReadOnlyMemory<byte> GetSectionData(SectionHeader header) {
     var data = reader_.GetSectionData(header.VirtualAddress);
     var array = data.GetContent();
-    byte[] copy = new byte[array.Length];
-    array.CopyTo(copy);
-    return copy;
+    return array.AsMemory();
   }
 
   public void Dispose() {

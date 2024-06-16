@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using IRExplorerCore;
@@ -59,28 +60,30 @@ public class DisassemberResult {
 }
 
 public class Disassembler : IDisposable {
-  private List<(byte[] Data, long StartRVA)> codeSectionData_;
+  private PEBinaryInfoProvider peInfo_;
+  private List<(ReadOnlyMemory<byte> Data, long StartRVA)> codeSectionData_;
   private long baseAddress_;
   private Machine architecture_;
   private IDebugInfoProvider debugInfo_;
   private Interop.DisassemblerHandle disasmHandle_;
-  private List<FunctionDebugInfo> sortedFuncList_;
   private bool checkValidCallAddress_;
   private SymbolNameResolverDelegate symbolNameResolver_;
   private FunctionNameFormatter funcNameFormatter_;
+  private object sectionLock_;
 
   private Disassembler(Machine architecture,
-                       List<(byte[] Data, long StartRVA)> codeSectionData,
+                       PEBinaryInfoProvider peInfo,
                        long baseAddress = 0,
                        IDebugInfoProvider debugInfo = null,
                        FunctionNameFormatter funcNameFormatter = null,
                        SymbolNameResolverDelegate symbolNameResolver = null) {
-    codeSectionData_ = codeSectionData;
+    peInfo_ = peInfo;
     architecture_ = architecture;
     baseAddress_ = baseAddress;
     debugInfo_ = debugInfo;
     funcNameFormatter_ = funcNameFormatter;
     symbolNameResolver_ = symbolNameResolver;
+    sectionLock_ = new();
     Initialize(true);
   }
 
@@ -88,21 +91,14 @@ public class Disassembler : IDisposable {
 
   public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo,
                                              FunctionNameFormatter funcNameFormatter) {
-    using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
+    var peInfo = new PEBinaryInfoProvider(binaryFilePath);
 
     if (!peInfo.Initialize()) {
       return null;
     }
 
-    var codeSections = peInfo.CodeSectionHeaders;
-    var codeSectionData = new List<(byte[] Data, long StartRVA)>();
-
-    foreach (var section in codeSections) {
-      codeSectionData.Add((peInfo.GetSectionData(section), section.VirtualAddress));
-    }
-
     var binaryInfo = peInfo.BinaryFileInfo;
-    return new Disassembler(binaryInfo.Architecture, codeSectionData,
+    return new Disassembler(binaryInfo.Architecture, peInfo,
                             binaryInfo.ImageBase, debugInfo, funcNameFormatter);
   }
 
@@ -121,7 +117,7 @@ public class Disassembler : IDisposable {
   }
 
   public string DisassembleToText(byte[] data, long startRVA) {
-    codeSectionData_ = new List<(byte[] Data, long StartRVA)> {(data, startRVA)};
+    codeSectionData_ = new () {(data.AsMemory(), startRVA)};
     string result = DisassembleToText(startRVA, data.Length);
     codeSectionData_ = null;
     return result;
@@ -135,7 +131,7 @@ public class Disassembler : IDisposable {
     var builder = new StringBuilder((int)(size / 4) + 1);
 
     try {
-      foreach (var instr in DisassembleInstructions(startRVA, size, startRVA + baseAddress_)) {
+      DisassembleInstructions(startRVA, size, startRVA + baseAddress_, (instr) => {
         string addressString = $"{instr.Address:X}:    ";
         builder.Append(addressString);
         int startIndex = 0;
@@ -162,7 +158,7 @@ public class Disassembler : IDisposable {
             builder.AppendLine();
           }
         }
-      }
+      });
     }
     catch (Exception ex) {
 #if DEBUG
@@ -257,7 +253,7 @@ public class Disassembler : IDisposable {
     }
 
     long rva = hexValue - baseAddress_;
-    return FindCodeSection(rva).Data != null;
+    return !FindCodeSection(rva).Data.IsEmpty;
   }
 
   private bool TryAppendFunctionName(StringBuilder builder, long rva) {
@@ -274,7 +270,7 @@ public class Disassembler : IDisposable {
 
     if (debugInfo_ != null) {
       var func = FindFunctionByRva(rva);
-      
+
       if (func != null) {
         if (funcNameFormatter_ != null) {
           builder.Append(funcNameFormatter_(func.Name));
@@ -401,30 +397,46 @@ public class Disassembler : IDisposable {
     return count;
   }
 
-  private (byte[] Data, long StartRVA) FindCodeSection(long rva) {
+  private (ReadOnlyMemory<byte> Data, long StartRVA) FindCodeSection(long rva) {
+    // Load code section on-demand to avoid wasting time and memory
+    // for binaries that are not dot disassembled.
+    if (codeSectionData_ == null) {
+      lock (sectionLock_) {
+        if (this.codeSectionData_ == null) {
+          var codeSections = peInfo_.CodeSectionHeaders;
+          codeSectionData_ = new ();
+
+          foreach (var section in codeSections) {
+            codeSectionData_.Add((peInfo_.GetSectionData(section), section.VirtualAddress));
+          }
+        }
+      }
+    }
+    
     foreach (var section in codeSectionData_) {
       if (rva >= section.StartRVA && rva < section.StartRVA + section.Data.Length) {
         return section;
       }
     }
 
-    return (null, 0);
+    return (ReadOnlyMemory<byte>.Empty, 0);
   }
 
-  private IEnumerable<Interop.Instruction> DisassembleInstructions(long startRVA, long size, long startAddress) {
+  private unsafe void DisassembleInstructions(long startRVA, long size, long startAddress,
+                                              Action<Interop.Instruction> action) {
     var codeSection = FindCodeSection(startRVA);
 
-    if (codeSection.Data == null) {
+    if (codeSection.Data.IsEmpty) {
       Trace.WriteLine($"Invalid disassembler RVA/size {startRVA}/{size}");
-      yield break;
+      return;
     }
 
     // Allocate a buffer for storing the instruction,
     // gets reused during iteration.
     using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
     long offset = startRVA - codeSection.StartRVA;
-    var dataBuffer = GCHandle.Alloc(codeSection.Data, GCHandleType.Pinned);
-    IntPtr dataBufferPtr = dataBuffer.AddrOfPinnedObject();
+    using var dataBuffer = codeSection.Data.Pin();
+    IntPtr dataBufferPtr = (IntPtr)dataBuffer.Pointer;
 
     // Disassemble the entire range of the code data buffer.
     IntPtr dataIteratorPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset);
@@ -438,20 +450,19 @@ public class Disassembler : IDisposable {
       if (Interop.Iterate(disasmHandle_, ref dataIteratorPtr, ref remainingLength, ref startAddress, instrBuffer)) {
         IntPtr instrPtr = instrBuffer.DangerousGetHandle();
         var instruction = (Interop.Instruction)Marshal.PtrToStructure(instrPtr, typeof(Interop.Instruction));
-        yield return instruction;
+        action(instruction);
       }
       else {
-        dataBuffer.Free();
-        yield break;
+        break;
       }
     }
-
-    dataBuffer.Free();
   }
 
   private void Dispose(bool disposing) {
     disasmHandle_?.Dispose();
     disasmHandle_ = null;
+    peInfo_?.Dispose();
+    peInfo_ = null;
 
     if (disposing) {
       GC.SuppressFinalize(this);
@@ -459,51 +470,64 @@ public class Disassembler : IDisposable {
   }
 
   private static class Interop {
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_close")]
     public static extern CapstoneResultCode CloseDisassembler(ref IntPtr pDissembler);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_open")]
     public static extern CapstoneResultCode CreateDisassembler(Architecture architecture,
                                                                DisassembleMode disassembleMode,
                                                                ref IntPtr pDisassembler);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_malloc")]
     public static extern IntPtr CreateInstruction(DisassemblerHandle hDisassembler);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_disasm")]
     public static extern IntPtr Disassemble(DisassemblerHandle hDisassembler, IntPtr pCode, IntPtr codeSize,
                                             long startingAddress, IntPtr count, ref IntPtr pInstructions);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_free")]
     public static extern void FreeInstructions(IntPtr pInstructions, IntPtr count);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_regs_access")]
     public static extern CapstoneResultCode GetAccessedRegisters(DisassemblerHandle hDisassembler,
                                                                  InstructionHandle hInstruction, short[] readRegisters,
                                                                  ref byte readRegistersCount, short[] writtenRegisters,
                                                                  ref byte writtenRegistersCount);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_group_name")]
     public static extern IntPtr GetInstructionGroupName(DisassemblerHandle hDisassembler, int instructionGroupId);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_errno")]
     public static extern CapstoneResultCode GetLastErrorCode(DisassemblerHandle hDisassembler);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_reg_name")]
     public static extern IntPtr GetRegisterName(DisassemblerHandle hDisassembler, int registerId);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_version")]
     public static extern int GetVersion(ref int majorVersion, ref int minorVersion);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_disasm_iter")]
     [return: MarshalAs(UnmanagedType.I1)]
     public static extern bool Iterate(DisassemblerHandle hDisassembler, ref IntPtr pCode, ref IntPtr codeSize,
                                       ref long address, InstructionHandle hInstruction);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("kernel32.dll", CallingConvention = CallingConvention.Winapi, CharSet = CharSet.Ansi,
                EntryPoint = "LoadLibraryA", SetLastError = true)]
     public static extern IntPtr LoadLibrary(string libraryFilePath);
 
+    [SuppressUnmanagedCodeSecurity]
     [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_option")]
     public static extern CapstoneResultCode SetDisassemblerOption(DisassemblerHandle hDisassembler,
                                                                   DisassemblerOptionType optionType,

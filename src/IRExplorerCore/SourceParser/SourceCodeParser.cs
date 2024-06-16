@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security;
 
 namespace IRExplorerCore.SourceParser;
 
@@ -15,12 +16,15 @@ public enum SourceCodeLanguage {
 }
 
 public class SourceCodeParser {
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-cpp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_cpp();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-c-sharp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_c_sharp();
 
+  [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-rust.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_rust();
 
