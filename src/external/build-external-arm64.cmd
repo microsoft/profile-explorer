@@ -1,0 +1,1 @@
+call build-capstone-arm64.cmd

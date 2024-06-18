@@ -11,12 +11,14 @@ rd %_OUT_PATH% /s /q
 rd %_PUBLISH_PATH% /s /q
 mkdir %_OUT_PATH%
 
+call %_EXTERNALS_PATH%\build-external-arm64.cmd
 dotnet publish -c "Release" -r win-arm64 --self-contained true --output %_PUBLISH_PATH% %_BUILD_TARGET%
 
 xcopy %_GRAPHVIZ_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_EXTERNALS_PATH% %_OUT_PATH% /i /c /y
+xcopy %_EXTERNALS_PATH%\capstone\build_arm64\Release\capstone.dll %_OUT_PATH% /i /c /y
 
 pushd %_OUT_PATH%
 dot.exe -c

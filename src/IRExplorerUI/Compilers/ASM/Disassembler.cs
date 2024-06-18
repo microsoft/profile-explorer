@@ -652,17 +652,20 @@ public class Disassembler : IDisposable {
     public static InstructionHandle AllocateInstruction(DisassemblerHandle handle) {
       return new InstructionHandle(CreateInstruction(handle));
     }
-
+    
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct Instruction {
       public const int MnemonicLength = 32;
       public const int OperandLength = 160;
       public int Id;
+      public long AliasId;
       public long Address;
       public short Size;
       public fixed byte Bytes[24];
       public fixed byte Mnemonic[32];
       public fixed byte Operand[160];
+      public bool IsAlias;
+      public bool UsesAliasDetails;
       public IntPtr Details;
 
       public byte[] BytesArray {
