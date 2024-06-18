@@ -378,7 +378,7 @@ public class RawProfileData : IDisposable {
       lastProcStacks_ = procStacks;
     }
 
-    if (!procStacks.TryGetValue(stack, out int existingStack)) {
+    if (!procStacks.TryGetValue(stack, out int existingStackId)) {
       // De-duplicate the stack frame pointer array,
       // since lots of samples have identical stacks.
       if (!stackData_.TryGetValue(stack.FramePointers, out long[] framePtrData)) {
@@ -387,17 +387,26 @@ public class RawProfileData : IDisposable {
         stackData_.Add(framePtrData);
       }
 
-      stack.SubstituteFramePointers(framePtrData);
-      stacks_.Add(stack);
-      procStacks[stack] = stacks_.Count;
-      existingStack = stacks_.Count;
+      var newStack = new ProfileStack(stack.ContextId, framePtrData);
+      stacks_.Add(newStack);
+      procStacks[newStack] = stacks_.Count;
+      existingStackId = stacks_.Count;
     }
     else {
-      stack.Discard();
-      Debug.Assert(stack == FindStack(existingStack));
+      Debug.Assert(stack == FindStack(existingStackId));
     }
 
-    return existingStack;
+    stack.Discard();
+    return existingStackId;
+  }
+  
+  public void ReplaceStackFramePointers(ProfileStack stack, long[] newFramePtrs, ProfileContext context) {
+    if (stacksMap_.TryGetValue(context.ProcessId, out var procStacks)) {
+      procStacks.Remove(stack);
+    }
+    
+    stack.FramePointers = newFramePtrs;
+    AddStack(stack, context);
   }
 
   public ProfileStack FindStack(int id) {

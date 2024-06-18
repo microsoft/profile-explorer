@@ -207,6 +207,14 @@ public partial class MainWindow : Window, ISession {
   public async Task<ParsedIRTextSection> LoadAndParseSection(IRTextSection section) {
     return await Task.Run(async () => {
       var docInfo = sessionState_.FindLoadedDocument(section);
+
+      // This shouldn't happen if document was loaded properly...
+      if (docInfo == null || docInfo.Loader == null) {
+        Trace.WriteLine($"Failed LoadAndParseSection for function {section.ParentFunction.Name}");
+        Utils.WaitForDebugger();
+        return null;
+      }
+      
       var parsedSection = docInfo.Loader.LoadSection(section);
 
       if (parsedSection != null && parsedSection.Function != null) {

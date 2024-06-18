@@ -411,7 +411,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
             frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
           }
 
-          kstack.FramePointers = frames;
+          profile.ReplaceStackFramePointers(kstack, frames, context);
           kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
           perThreadLastKernelStack[data.ThreadID] = (0, 0); // Clear the last kernel stack.
         }
@@ -440,7 +440,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
         long frameIp = (long)data.InstructionPointer(0);
 
-        //? TODO: Check fmore than the last sample?
+        //? TODO: Check more than the last sample?
         if (!profile.TrySetSampleStack(sampleId, stackId, frameIp, contextId)) {
 #if DEBUG
           //Trace.WriteLine($"Couldn't set stack {stackId} for sample {sampleId}");
@@ -451,8 +451,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
           //Trace.WriteLine($"    register KernelStack {stackId} on CPU {data.ProcessorNumber}");
           perThreadLastKernelStack[data.ThreadID] = (stackId, data.EventTimeStampQPC);
         }
-
-        profile.ReturnStack(stackId);
       }
 
       profile.ReturnContext(contextId);
@@ -561,8 +559,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
           int stackId = profile.AddStack(profileStack, profile.FindContext(sample.ContextId));
           profile.SetSampleStack(sampleId, stackId, sample.ContextId);
-
-          profile.ReturnStack(stackId);
         }
         else if (isKernelAddress) {
           var profileStack = profile.FindStack(sample.StackId);
@@ -575,7 +571,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
             frames[i] = (long)data.InstructionPointer(i);
           }
 
-          profileStack.FramePointers = frames;
+          var context = profile.FindContext(sample.ContextId);
+          profile.ReplaceStackFramePointers(profileStack, frames, context);
           profileStack.UserModeTransitionIndex = kstackFrameCount; // Frames after kernel stack are user mode.
         }
         else {
@@ -589,7 +586,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
             frames[i + kstackFrameCount] = (long)data.InstructionPointer(i);
           }
 
-          profileStack.FramePointers = frames;
+          var context = profile.FindContext(sample.ContextId);
+          profile.ReplaceStackFramePointers(profileStack, frames, context);
           profileStack.UserModeTransitionIndex = kstackFrameCount; // Frames after kernel stack are user mode.
         }
       }
@@ -691,6 +689,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
           UpdateProgress(progressCallback, ProfileLoadStage.TraceReading,
                          sampleId, sampleId);
         }
+        
+        lastReportedSample = sampleId;
       }
     };
 

@@ -177,7 +177,7 @@ public static class Utils {
   }
 
   public static void WaitForDebugger(bool showMessageBox = true) {
-#if true || DEBUG
+#if DEBUG
     if (Debugger.IsAttached) {
       return;
     }

@@ -140,11 +140,15 @@ public class ProfileStack : IEquatable<ProfileStack> {
   }
 
   public ProfileStack(int contextId, int frameCount) {
-    FramePointers = null;
     ContextId = contextId;
     FramePointers = RentArray(frameCount);
   }
 
+  public ProfileStack(int contextId, long[] framePtrs) {
+    ContextId = contextId;
+    FramePointers = framePtrs;
+  }
+  
   [ProtoMember(1)]
   public long[] FramePointers { get; set; }
   [ProtoMember(2)]
@@ -180,11 +184,6 @@ public class ProfileStack : IEquatable<ProfileStack> {
 
   public void SetTempFramePointers(int frameCount) {
     FramePointers = RentArray(frameCount);
-  }
-
-  public void SubstituteFramePointers(long[] data) {
-    ReturnArray(FramePointers);
-    FramePointers = data;
   }
 
   public ProfileImage FindImageForFrame(int frameIndex, RawProfileData profileData) {
