@@ -32,16 +32,16 @@
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CoreProfiler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CoreProfilerFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="framework.h">
+    <ClInclude Include="NamedPipeClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NamedPipeClient.h">
+    <ClInclude Include="CapstoneWrappers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreProfiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

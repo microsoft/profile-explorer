@@ -1,20 +1,18 @@
+// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 #pragma once
-
-
-#include "Common.h"
 #include <cor.h>
 #include <corprof.h>
 #include <atomic>
-#include <string>
-#include <map>
 #include <shared_mutex>
+#include <string>
+#include <thread>
 #include <unordered_set>
 #include <vector>
-#include <thread>
+#include "CapstoneWrappers.h"
+#include "Common.h"
 #include "NamedPipeClient.h"
-#include "cppbindings/disasm.hpp"
-#include "cppbindings/X86Disasm.hh"
-#include "cppbindings/ArmDisasm.hh"
 
 #undef min
 #undef max
@@ -306,17 +304,20 @@ class CoreProfiler : public ICorProfilerCallback10 {
   bool SendCallTargetName(uint64_t ip, uint64_t funcId, uint32_t rejitId);
   bool SendRequestedFunctionCode(RequestFunctionCodeMessage& request);
 
-  template <class DisasmType>
-  void CollectCallTargets(uint64_t funcId,
+  void CollectCallTargets(bool is64BitCode,
+                          uint64_t funcId,
                           uint32_t rejitId,
                           void* buffer,
                           size_t size) {
-    auto dis = DisasmType();
+    auto mode = cs_mode::CS_MODE_LITTLE_ENDIAN |
+                (is64BitCode ? cs_mode::CS_MODE_64 : cs_mode::CS_MODE_32);
+    auto dis = CapstoneDisasm(cs_arch::CS_ARCH_X86, mode);
     dis.SetDetail(cs_opt_value::CS_OPT_ON);
     dis.SetSyntax(cs_opt_value::CS_OPT_SYNTAX_INTEL);
     int64_t startRva = (int64_t)buffer;
 
-    auto instrs = dis.Disasm(buffer, size, startRva);
+    std::unique_ptr<InstructionListHolder> instrs(
+        dis.Disassemble(buffer, size, startRva));
 
     if (instrs->Count == 0) {
       return;
@@ -325,7 +326,7 @@ class CoreProfiler : public ICorProfilerCallback10 {
     std::unique_ptr<std::unordered_set<uint64_t>> sentTargets;
 
     for (size_t i = 0; i < instrs->Count; i++) {
-      auto instr = instrs->Instructions(i);
+      auto instr = instrs->Instruction(i);
       // Log("%s %s\n", instr->mnemonic, instr->op_str);
       if (!instr->detail)
         continue;
@@ -352,26 +353,40 @@ class CoreProfiler : public ICorProfilerCallback10 {
                                uint32_t rejitId,
                                void* buffer,
                                size_t size) {
-    auto dis = CArmDisasm64();
+    auto mode = cs_mode::CS_MODE_THUMB | cs_mode::CS_MODE_LITTLE_ENDIAN;
+    auto dis = CapstoneDisasm(cs_arch::CS_ARCH_AARCH64, mode);
     dis.SetDetail(cs_opt_value::CS_OPT_ON);
     dis.SetSyntax(cs_opt_value::CS_OPT_SYNTAX_INTEL);
     int64_t startRva = (int64_t)buffer;
 
-    auto instrs = dis.Disasm(buffer, size, startRva);
+    std::unique_ptr<InstructionListHolder> instrs(
+        dis.Disassemble(buffer, size, startRva));
+
     if (instrs->Count == 0) {
       return;
     }
 
+    std::unique_ptr<std::unordered_set<uint64_t>> sentTargets;
+
     for (size_t i = 0; i < instrs->Count; i++) {
-      auto instr = instrs->Instructions(i);
+      auto instr = instrs->Instruction(i);
       // Log("%s %s\n", instr->mnemonic, instr->op_str);
       if (!instr->detail)
         continue;
 
-      for (int i = 0; i < instr->detail->arm64.op_count; i++) {
-        if (instr->detail->arm64.operands[i].type == ARM64_OP_IMM) {
-          auto targetAddr = instr->detail->arm64.operands[i].imm;
-          SendCallTargetName(targetAddr, funcId, rejitId);
+      // Sent each unique call target only once.
+      if (sentTargets == nullptr) {
+        sentTargets = std::make_unique<std::unordered_set<uint64_t>>();
+      }
+
+      for (int i = 0; i < instr->detail->aarch64.op_count; i++) {
+        if (instr->detail->aarch64.operands[i].type == AArch64_OP_IMM) {
+          auto targetAddr = instr->detail->aarch64.operands[i].imm;
+
+          if (sentTargets->find(targetAddr) == sentTargets->end()) {
+            SendCallTargetName(targetAddr, funcId, rejitId);
+            sentTargets->insert(targetAddr);
+          }
         }
       }
     }

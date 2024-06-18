@@ -1,0 +1,3 @@
+[submodule "src/external/capstone"]
+	path = src/external/capstone
+	url = https://github.com/capstone-engine/capstone.git

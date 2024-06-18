@@ -33,6 +33,7 @@
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CapstoneWrappers.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="CoreProfiler.h" />
     <ClInclude Include="CoreProfilerFactory.h" />
@@ -113,16 +114,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\external\capstone\include;$(ProjectDir)\external\capstone;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\external\capstone\include;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <IncludePath>$(ProjectDir)\external\capstone\include;$(ProjectDir)\external\capstone;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\external\capstone\include;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)\external\capstone\include;$(ProjectDir)\external\capstone;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\external\capstone\include;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <IncludePath>$(ProjectDir)\external\capstone\include;$(ProjectDir)\external\capstone;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\external\capstone\include;$(ProjectDir)\external\coreclr\inc;$(ProjectDir)\external\coreclr\pal\prebuilt\inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -175,7 +176,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(ProjectDir)\external\capstone\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\external\capstone\build_static\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>capstone.lib;corguids.lib;mscoree.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -194,7 +195,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(ProjectDir)\external\capstone\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\external\capstone\build_arm64_static\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>capstone.lib;corguids.lib;mscoree.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -221,7 +222,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(ProjectDir)\external\capstone\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\external\capstone\build_static\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>capstone.lib;corguids.lib;mscoree.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>IRExplorerProfiler.def</ModuleDefinitionFile>
     </Link>
@@ -247,7 +248,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(ProjectDir)\external\capstone\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\external\capstone\build_arm64_static\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>capstone.lib;corguids.lib;mscoree.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>IRExplorerProfiler.def</ModuleDefinitionFile>
     </Link>

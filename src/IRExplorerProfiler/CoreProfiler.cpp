@@ -1,16 +1,18 @@
-#include <assert.h>
-#include <vector>
-#include <string>
+// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 #include "CoreProfiler.h"
-#include <stdio.h>
 #include <TlHelp32.h>
-#include <metahost.h>  
+#include <assert.h>
+#include <cordebug.h>
 #include <crosscomp.h>
 #include <dacprivate.h>
-#include <cordebug.h>
-#include <mutex>
-#include <unordered_set>
+#include <metahost.h>
+#include <stdio.h>
 #include <fstream>
+#include <mutex>
+#include <string>
+#include <unordered_set>
 #include <vector>
 #include "CLRDataTarget.h"
 
@@ -607,12 +609,7 @@ bool CoreProfiler::SendCallTargets(uint64_t funcId,
   __try {
     switch (machineType_) {
       case IMAGE_FILE_MACHINE_AMD64: {
-        CollectCallTargets<CX86Disasm64>(funcId, rejitId, codeBytes, codeSize);
-        break;
-      }
-      case IMAGE_FILE_MACHINE_ARM: {
-        //? TODO: Is ARM32 required anymore?
-        CollectCallTargetsArm64(funcId, rejitId, codeBytes, codeSize);
+        CollectCallTargets(true, funcId, rejitId, codeBytes, codeSize);
         break;
       }
       case IMAGE_FILE_MACHINE_ARM64: {
@@ -620,7 +617,7 @@ bool CoreProfiler::SendCallTargets(uint64_t funcId,
         break;
       }
       case IMAGE_FILE_MACHINE_I386: {
-        CollectCallTargets<CX86Disasm86>(funcId, rejitId, codeBytes, codeSize);
+        CollectCallTargets(false, funcId, rejitId, codeBytes, codeSize);
         break;
       }
     }
