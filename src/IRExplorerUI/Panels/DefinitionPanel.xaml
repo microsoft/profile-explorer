@@ -53,6 +53,7 @@
       <local:PanelToolbarTray
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         Grid.Column="1"
+        HasDuplicateButton="False"
         HasHelpButton="False"
         PinnedChanged="PanelToolbarTray_PinnedChanged"
         x:Name="FixedToolbar" />

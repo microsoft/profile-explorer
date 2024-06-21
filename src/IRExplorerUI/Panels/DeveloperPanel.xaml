@@ -86,7 +86,10 @@
         </ToolBar>
       </ToolBarTray>
 
-      <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" HasHelpButton="False" />
+      <local:PanelToolbarTray Grid.Column="1"
+                              HasPinButton="False"
+                              HasDuplicateButton="False"
+                              HasHelpButton="False" />
     </Grid>
 
     <document:SearcheableIRDocument

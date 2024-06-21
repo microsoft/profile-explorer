@@ -18,14 +18,10 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <Grid
+    <DockPanel
       Grid.Row="0"
       HorizontalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="75" />
-      </Grid.ColumnDefinitions>
       <ToolBarTray
         Grid.Column="0"
         Height="28"
@@ -47,8 +43,11 @@
         </ToolBar>
       </ToolBarTray>
 
-      <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" />
-    </Grid>
+      <local:PanelToolbarTray DockPanel.Dock="Right"
+                              HasPinButton="False"
+                              HasDuplicateButton="False"
+                              HasHelpButton="False"/>
+    </DockPanel>
 
     <Grid Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.RowDefinitions>

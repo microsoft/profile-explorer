@@ -77,15 +77,11 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <Grid
+    <DockPanel
       x:Name="ToolbarHost"
       Grid.Row="0"
       HorizontalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="75" />
-      </Grid.ColumnDefinitions>
       <ToolBarTray
         Grid.Column="0"
         Height="28"
@@ -178,17 +174,15 @@
       </ToolBarTray>
 
       <local:PanelToolbarTray
-        Grid.Column="1"
-        MinWidth="75"
-        MaxWidth="75"
+        DockPanel.Dock="Right"
+        HasDuplicateButton="False"
         HasHelpButton="False"
         BindMenuItemSelected="PanelToolbarTray_BindMenuItemSelected"
         BindMenuOpen="PanelToolbarTray_BindMenuOpen"
-        DockPanel.Dock="Right"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         PinnedChanged="PanelToolbarTray_PinnedChanged"
         SettingsClicked="PanelToolbarTray_SettingsClicked" />
-    </Grid>
+    </DockPanel>
 
     <local:ScrollViewerClickable
       x:Name="GraphHost"

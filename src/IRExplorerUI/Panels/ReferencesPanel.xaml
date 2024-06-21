@@ -137,6 +137,7 @@
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         Grid.Column="1"
         HasHelpButton="False"
+        HasDuplicateButton="False"
         PinnedChanged="PanelToolbarTray_PinnedChanged"
         SettingsClicked="PanelToolbarTray_SettingsClicked"
         x:Name="FixedToolbar" />
