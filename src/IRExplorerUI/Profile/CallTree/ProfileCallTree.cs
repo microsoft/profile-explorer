@@ -101,7 +101,7 @@ public sealed class ProfileCallTree {
     // Build call tree. Note that the call tree methods themselves are thread-safe.
     bool isRootFrame = true;
     ProfileCallTreeNode prevNode = null;
-    var prevFrame = new ResolvedProfileStackFrame();
+    ResolvedProfileStackFrame prevFrame = null;
 
     for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
       var resolvedFrame = resolvedStack.StackFrames[k];

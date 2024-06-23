@@ -37,7 +37,7 @@ public class FunctionProfileData {
   public FunctionDebugInfo FunctionDebugInfo { get; set; }
   public int SampleStartIndex { get; set; }
   public int SampleEndIndex { get; set; }
-  public bool HasPerformanceCounters => InstructionCounters.Count > 0;
+  public bool HasPerformanceCounters => InstructionCounters is {Count: > 0};
 
   public static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
                                              ICompilerIRInfo ir,
@@ -59,6 +59,7 @@ public class FunctionProfileData {
   }
 
   public void AddCounterSample(long instrOffset, int perfCounterId, long value) {
+    InstructionCounters ??= new();
     var counterSet = InstructionCounters.GetOrAddValue(instrOffset);
     counterSet.AddCounterSample(perfCounterId, value);
   }
@@ -93,12 +94,14 @@ public class FunctionProfileData {
       }
     }
 
-    foreach (var pair in InstructionCounters) {
-      if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
-        result.CounterElements.Add((element, pair.Value));
-      }
+    if (HasPerformanceCounters) {
+      foreach (var pair in InstructionCounters) {
+        if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
+          result.CounterElements.Add((element, pair.Value));
+        }
 
-      result.FunctionCountersValue.Add(pair.Value);
+        result.FunctionCountersValue.Add(pair.Value);
+      }
     }
 
     result.BlockSampledElements = result.BlockSampledElementsMap.ToList();
@@ -152,32 +155,34 @@ public class FunctionProfileData {
       }
     }
 
-    foreach (var pair in InstructionCounters) {
-      long rva = pair.Key + FunctionDebugInfo.RVA;
-      var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
+    if (HasPerformanceCounters) {
+      foreach (var pair in InstructionCounters) {
+        long rva = pair.Key + FunctionDebugInfo.RVA;
+        var lineInfo = debugInfo.FindSourceLineByRVA(rva, inlinee != null);
 
-      if (!lineInfo.IsUnknown) {
-        int line = lineInfo.Line;
+        if (!lineInfo.IsUnknown) {
+          int line = lineInfo.Line;
 
-        if (inlinee != null) {
-          // Map the instruction back to the function that got inlined
-          // at the call site, if filtering by an inlinee is used.
-          var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
+          if (inlinee != null) {
+            // Map the instruction back to the function that got inlined
+            // at the call site, if filtering by an inlinee is used.
+            var matchingInlinee = lineInfo.FindSameFunctionInlinee(inlinee);
 
-          if (matchingInlinee != null) {
-            line = matchingInlinee.Line;
+            if (matchingInlinee != null) {
+              line = matchingInlinee.Line;
+            }
+            else {
+              continue; // Don't count the instr. if not part of the inlinee.
+            }
           }
-          else {
-            continue; // Don't count the instr. if not part of the inlinee.
-          }
+
+          result.SourceLineCounters.AccumulateValue(line, pair.Value);
+          firstLine = Math.Min(line, firstLine);
+          lastLine = Math.Max(line, lastLine);
         }
 
-        result.SourceLineCounters.AccumulateValue(line, pair.Value);
-        firstLine = Math.Min(line, firstLine);
-        lastLine = Math.Max(line, lastLine);
+        result.FunctionCountersValue.Add(pair.Value);
       }
-
-      result.FunctionCountersValue.Add(pair.Value);
     }
 
     result.FirstLineIndex = firstLine;
@@ -188,8 +193,10 @@ public class FunctionProfileData {
   public PerformanceCounterValueSet ComputeFunctionTotalCounters() {
     var result = new PerformanceCounterValueSet();
 
-    foreach (var pair in InstructionCounters) {
-      result.Add(pair.Value);
+    if (HasPerformanceCounters) {
+      foreach (var pair in InstructionCounters) {
+        result.Add(pair.Value);
+      }
     }
 
     return result;
@@ -207,8 +214,6 @@ public class FunctionProfileData {
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     InstructionWeight ??= new Dictionary<long, TimeSpan>();
-    InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
-
     SampleStartIndex = int.MaxValue;
     SampleEndIndex = int.MinValue;
   }
@@ -217,11 +222,9 @@ public class FunctionProfileData {
     if (debugInfo != null) {
       int size = (int)debugInfo.Size / 4; // Assume 4 bytes per instruction.
       InstructionWeight ??= new Dictionary<long, TimeSpan>(size);
-      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>(size);
     }
     else {
       InstructionWeight ??= new Dictionary<long, TimeSpan>();
-      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
     }
 
     SampleStartIndex = int.MaxValue;

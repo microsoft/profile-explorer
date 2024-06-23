@@ -11,23 +11,68 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
-[ProtoContract(SkipConstructor = true)]
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct ResolvedProfileStackFrame {
-  [ProtoMember(1)]
+public class ResolvedProfileStackFrame {
   public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
-  [ProtoMember(2)]
-  public long FrameRVA { get; set; }
+  public virtual long FrameRVA { get; set; }
 
   public ResolvedProfileStackFrame(long frameRva, ResolvedProfileStackFrameDetails frameDetails) {
     FrameRVA = frameRva;
     FrameDetails = frameDetails;
   }
 
+  protected ResolvedProfileStackFrame(ResolvedProfileStackFrameDetails frameDetails) {
+    FrameDetails = frameDetails;
+  }
+
+  public static ResolvedProfileStackFrame
+    CreateStackFrame(long frameRVA, ResolvedProfileStackFrameDetails frameDetails) {
+    // Pick a type of frame that has an RVA field just large enough
+    // to hold the value, this reduces memory usage since most RVAs don't need 64 bits.
+    if ((ulong)frameRVA <= 0xFFFF) {
+      return new ResolvedProfileStackFrame16((ushort)frameRVA, frameDetails);
+    }
+    else if ((ulong)frameRVA <= 0xFFFFFFFF) {
+      return new ResolvedProfileStackFrame32((uint)frameRVA, frameDetails);
+    }
+    
+    return new ResolvedProfileStackFrame(frameRVA, frameDetails);
+  }
+
   public bool IsUnknown => FrameDetails.IsUnknown;
 }
 
-[ProtoContract(SkipConstructor = true)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class ResolvedProfileStackFrame16 : ResolvedProfileStackFrame {
+  private ushort frameRva_;
+
+  public override long FrameRVA {
+    get => frameRva_;
+    set => frameRva_ = (ushort)value;
+  }
+
+  public ResolvedProfileStackFrame16(ushort frameRva, ResolvedProfileStackFrameDetails frameDetails) :
+    base(frameDetails) {
+    frameRva_ = frameRva;
+  }
+}
+
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class ResolvedProfileStackFrame32 : ResolvedProfileStackFrame {
+  private uint frameRva_;
+
+  public override long FrameRVA {
+    get => frameRva_;
+    set => frameRva_ = (ushort)value;
+  }
+
+  public ResolvedProfileStackFrame32(uint frameRva, ResolvedProfileStackFrameDetails frameDetails) :
+    base(frameDetails) {
+    frameRva_ = frameRva;
+  }
+}
+
 public sealed class ResolvedProfileStack {
   // Used to deduplicate stack frames for the same function running in the same context.
   public static ConcurrentDictionary<ResolvedProfileStackFrameDetails, ResolvedProfileStackFrameDetails> uniqueFrames_ =
@@ -44,9 +89,7 @@ public sealed class ResolvedProfileStack {
     Context = context;
   }
 
-  [ProtoMember(1)]
   public List<ResolvedProfileStackFrame> StackFrames { get; set; }
-  [ProtoMember(2)]
   public ProfileContext Context { get; set; }
   public int FrameCount => StackFrames.Count;
 
@@ -54,7 +97,7 @@ public sealed class ResolvedProfileStack {
                        ProfileStack stack) {
     // Deduplicate the frame.
     var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, frameDetails);
-    var rvaFrame = new ResolvedProfileStackFrame(frameRVA, uniqueFrame);
+    var rvaFrame = ResolvedProfileStackFrame.CreateStackFrame(frameRVA, uniqueFrame);
 
     // A stack frame IP can be called from both user and kernel mode code.
     frameDetails.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
@@ -65,7 +108,6 @@ public sealed class ResolvedProfileStack {
   }
 }
 
-[ProtoContract(SkipConstructor = true)]
 public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfileStackFrameDetails> {
   public static readonly ResolvedProfileStackFrameDetails Unknown = new ResolvedProfileStackFrameDetails();
 
@@ -78,11 +120,8 @@ public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfil
   }
 
   private ResolvedProfileStackFrameDetails() { }
-  [ProtoMember(1)]
   public FunctionDebugInfo DebugInfo { get; set; }
-  [ProtoMember(2)]
   public IRTextFunction Function { get; set; }
-  [ProtoMember(3)]
   public ProfileImage Image { get; set; }
   public bool IsKernelCode { get; set; }
   public bool IsManagedCode { get; set; }

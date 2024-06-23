@@ -265,6 +265,10 @@ public class RawProfileData : IDisposable {
   }
 
   public ProfileProcess GetOrCreateProcess(int id) {
+    if (processes_.TryGetValue(id, out var process)) {
+      return process;
+    }
+    
     return processes_.GetOrAddValue(id, () => new ProfileProcess(id));
   }
 
@@ -273,15 +277,15 @@ public class RawProfileData : IDisposable {
   }
 
   public int AddImage(ProfileImage image) {
-    if (!imagesMap_.TryGetValue(image, out int existingImage)) {
+    if (!imagesMap_.TryGetValue(image, out int existingImageId)) {
       images_.Add(image);
       int id = images_.Count;
       image.Id = id;
       imagesMap_[image] = id;
-      existingImage = id;
+      existingImageId = id;
     }
 
-    return existingImage;
+    return existingImageId;
   }
 
   public ProfileImage FindImage(int id) {

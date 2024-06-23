@@ -10,8 +10,6 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallSite : IEquatable<ProfileCallSite> {
-  private bool isSorted_;
-
   public ProfileCallSite(long rva) {
     InitializeReferenceMembers();
     RVA = rva;
@@ -22,12 +20,13 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
   public long RVA { get; set; }
   [ProtoMember(2)]
   public TimeSpan Weight { get; set; }
+  //? TODO: Consider using TinyList
   [ProtoMember(3)]
   public List<(ProfileCallTreeNode Node, TimeSpan Weight)> Targets { get; set; }
 
   public List<(ProfileCallTreeNode Node, TimeSpan Weight)> SortedTargets {
     get {
-      if (!HasSingleTarget && !isSorted_) {
+      if (!HasSingleTarget) {
         Targets.Sort((a, b) => b.Weight.CompareTo(a.Weight));
       }
 
@@ -51,7 +50,15 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 
   public void AddTarget(ProfileCallTreeNode node, TimeSpan weight) {
     Weight += weight; // Total weight of targets.
-    int index = Targets.FindIndex(item => item.Node.Equals(node.Function));
+    int index = -1;
+
+    // Don't use FindIndex because it allocates a lambda on each invocation.
+    for (int i = 0; i < Targets.Count; i++) {
+      if (Targets[i].Node.Equals(node.Function)) {
+        index = i;
+        break;
+      }
+    }
 
     if (index != -1) {
       var span = CollectionsMarshal.AsSpan(Targets);
