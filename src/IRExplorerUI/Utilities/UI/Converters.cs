@@ -498,3 +498,17 @@ public class LongFunctionNameConverter : IValueConverter {
     return null;
   }
 }
+
+public class StringFormatConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (parameter is string formatString) {
+      return string.Format(formatString, value);
+    }
+
+    return null;
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    throw new NotImplementedException();
+  }
+}

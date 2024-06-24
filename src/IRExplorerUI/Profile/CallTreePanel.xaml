@@ -142,6 +142,7 @@
             IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
           <ToggleButton
+            Visibility="Collapsed"
             IsEnabled="False"
             Height="20"
             Margin="0,0,0,0"
@@ -449,7 +450,7 @@
               </DataTemplate>
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
-          
+
           <GridViewColumn Width="150">
             <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
 

@@ -594,7 +594,11 @@ public sealed class ASMParser : ParserBase {
 
   private void SkipToNextOperand() {
     while (!(TokenIs(TokenKind.Comma) || IsLineEnd())) {
-      if (TokenIs(TokenKind.OpenParen)) {
+      if (TokenIs(TokenKind.Dot)) {
+        // Skip over ARM64 operand annotations like v22.4s
+        SkipToToken(TokenKind.Comma);
+      }
+      else if (TokenIs(TokenKind.OpenParen)) {
         SkipAfterToken(TokenKind.CloseParen);
       }
       else if (TokenIs(TokenKind.OpenCurly)) {

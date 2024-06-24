@@ -208,6 +208,9 @@ public static class ProfilingUtils {
       string tooltip = $"File {Utils.TryGetFileName(node.InlineeFrame.FilePath)}:{node.InlineeFrame.Line}\n";
       tooltip += CreateInlineeFunctionDescription(node, funcProfile, settings.ProfileMarkerSettings, session);
 
+      tooltip += $"\n\nFile path: {node.InlineeFrame.FilePath}";
+      tooltip += $"\nFunction: {node.InlineeFrame.Function.FormatFunctionName(session)}";
+
       var value = new ProfileMenuItem(text, node.ExclusiveWeight.Ticks, weightPercentage) {
         PrefixText = title,
         ToolTip = tooltip,

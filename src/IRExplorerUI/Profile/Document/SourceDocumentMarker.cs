@@ -62,7 +62,7 @@ public class SourceDocumentMarker {
 
           if (lineNumberTooltip == null) {
             string fileName = Utils.TryGetFileName(tag.FilePath);
-            lineNumberTooltip = $"Line number for file {fileName} ({tag.FilePath})";
+            lineNumberTooltip = $"Line number for file {fileName}\nFile path: {tag.FilePath}";
           }
 
           var overlay = document.RegisterIconElementOverlay(instr, null, 16, 0, label, lineNumberTooltip);
@@ -107,7 +107,8 @@ public class SourceDocumentMarker {
 
           // MakeInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
           var inlineeOverlay =
-            document.RegisterIconElementOverlay(instr, null, 16, 0, sb.ToString(), tooltipSb.ToString());
+            document.RegisterIconElementOverlay(instr, null, 16, 0,
+                                                sb.ToString().Trim(), tooltipSb.ToString().Trim());
           inlineeOverlay.Tag = SourceOverlayTag;
           inlineeOverlay.TextColor = settings_.InlineeOverlayTextColor.AsBrush();
           inlineeOverlay.Background = settings_.SourceLineBackColor.AsBrush();

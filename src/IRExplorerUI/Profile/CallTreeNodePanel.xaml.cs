@@ -437,7 +437,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     var itemsList = new List<ThreadListItem>();
 
     foreach (var item in threadList) {
-      ;
       var threadInfo = Session.ProfileData.FindThread(item.ThreadId);
       var backColor = App.Settings.TimelineSettings.
         GetThreadBackgroundColors(threadInfo, item.ThreadId).Margin;

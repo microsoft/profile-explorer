@@ -32,4 +32,5 @@
   <utils:AlternateRowConverter x:Key="AlternateRowConverter" />
   <utils:FunctionNameConverter x:Key="FunctionNameConverter" />
   <utils:LongFunctionNameConverter x:Key="LongFunctionNameConverter" />
+  <utils:StringFormatConverter x:Key="StringFormatConverter" />
 </ResourceDictionary>

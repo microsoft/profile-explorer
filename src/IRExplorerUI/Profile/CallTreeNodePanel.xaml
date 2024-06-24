@@ -127,22 +127,11 @@
               x:Name="InstancesExpander"
               Margin="0,4,0,4"
               HorizontalAlignment="Stretch"
-              Header="Instances"
+              Header="{Binding FunctionInstancesCount, Converter={StaticResource StringFormatConverter}, ConverterParameter='Instances ({0})'}"
               IsExpanded="{Binding IsInstancesExpanded}"
               ToolTip="Function instances statistics">
               <StackPanel Orientation="Vertical">
-                <StackPanel Margin="4,4,0,0" Orientation="Horizontal">
-                  <TextBlock
-                    Width="72"
-                    Text="Number"
-                    ToolTip="Number of unique instances of the selected function" />
-                  <TextBlock
-                    Margin="8,0,0,0"
-                    FontWeight="Medium"
-                    Text="{Binding FunctionInstancesCount}" />
-                </StackPanel>
-
-                <StackPanel Margin="4,2,0,0" Orientation="Horizontal">
+                <StackPanel Margin="4,8,0,0" Orientation="Horizontal">
                   <TextBlock Width="72" Text="Total Time" />
                   <ContentControl
                     Width="200"
@@ -190,7 +179,7 @@
               Expanded="HistogramHost_Expanded"
               Header="Histogram"
               IsExpanded="{Binding IsHistogramExpanded}"
-              ToolTip="Histogram of all function instances">
+              ToolTip="Histogram representing time distribution across all function instances">
               <Border
                 Height="150"
                 Margin="0,4,0,0"
@@ -273,7 +262,7 @@
               MaxHeight="155"
               Margin="0,0,0,8"
               HorizontalAlignment="Stretch"
-              Header="Threads"
+              Header="{Binding Path=Items.Count, ElementName=ThreadList,  Converter={StaticResource StringFormatConverter}, ConverterParameter='Threads ({0})'}"
               IsExpanded="{Binding IsThreadsListExpanded}"
               ToolTip="Threads on which the selected instance executed">
               <ItemsControl x:Name="ThreadList" Margin="4,8,4,4">
