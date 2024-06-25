@@ -480,7 +480,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private GridViewColumnValueSorter<SectionFieldKind> sectionValueSorter_;
   private GridViewColumnValueSorter<ChildFunctionFieldKind> childFunctionValueSorter_;
   private GridViewColumnValueSorter<ModuleFieldKind> moduleValueSorter_;
-  private Dictionary<IRTextSummary, CallGraph> callGraphCache_;
+  private ConcurrentDictionary<IRTextSummary, CallGraph> callGraphCache_;
   private ModuleReport moduleReport_;
   private CancelableTaskInstance statisticsTask_;
   private CancelableTaskInstance callGraphTask_;
@@ -2592,18 +2592,46 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return functionStatMap;
     }
 
-    var tasks = new List<Task>();
-    var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
-    var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-
+    callGraphCache_ ??= new ConcurrentDictionary<IRTextSummary, CallGraph>();
     Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
 
+    // If call graph not requested, don't waste time with called function names.
     foreach (var loadedDoc in Session.SessionState.Documents) {
       if (loadedDoc.Loader is DisassemblerSectionLoader disasmLoader) {
-        disasmLoader.ResolveCallTargetNames = false;
+        disasmLoader.ResolveCallTargetNames = settings_.IncludeCallGraphStatistics;
       }
     }
 
+    if (settings_.IncludeCallGraphStatistics) {
+      var summaries = new List<IRTextSummary>();
+      summaries.Add(summary_);
+      summaries.AddRange(moduleSummaries_);
+      var cgTasks = new List<Task>();
+      var cgTaskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 8);
+      var cgTaskFactory = new TaskFactory(cgTaskScheduler.ConcurrentScheduler);
+
+      foreach (var summary in summaries) {
+        cgTasks.Add(cgTaskFactory.StartNew(async () => {
+          try {
+            if (cancelableTask.IsCanceled) {
+              return;
+            }
+
+            await GenerateCallGraph(summary);
+          }
+          catch (Exception ex) {
+            Trace.WriteLine($"Failed to compute call graph: {ex.Message}");
+          }
+        }, cancelableTask.Token));
+      }
+      
+      await Task.WhenAll(cgTasks.ToArray());
+    }
+
+    var tasks = new List<Task>();
+    var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
+    var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+    
     foreach (var function in functions) {
       if (function.SectionCount == 0) {
         continue;
@@ -2613,7 +2641,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         break;
       }
 
-      tasks.Add(taskFactory.StartNew(() => {
+      tasks.Add(taskFactory.StartNew(async () => {
         try {
           if (cancelableTask.IsCanceled) {
             return;
@@ -2624,7 +2652,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
           CallGraph callGraph = null;
 
           if (settings_.IncludeCallGraphStatistics) {
-            callGraph = GenerateCallGraph(summary).Result;
+            callGraph = await GenerateCallGraph(summary);
           }
 
           var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
@@ -2635,8 +2663,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
           }
         }
         catch (Exception ex) {
-          Trace.WriteLine(ex.ToString());
-          Trace.WriteLine($"Exception stats at {DateTime.Now}, ticks {Environment.TickCount64}");
+          Trace.WriteLine($"Failed to compute func statistics: {ex.Message}");
         }
       }, cancelableTask.Token));
     }
@@ -3240,8 +3267,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   private async Task<CallGraph> GenerateCallGraph(IRTextSummary summary) {
-    callGraphCache_ ??= new Dictionary<IRTextSummary, CallGraph>();
-
     if (callGraphCache_.TryGetValue(summary, out var callGraph)) {
       return callGraph;
     }
@@ -3255,7 +3280,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
     if (!cancelableTask.IsCanceled) {
       // Cache the call graph, can be expensive to compute.
-      callGraphCache_[summary] = callGraph;
+      callGraphCache_.TryAdd(summary, callGraph);
     }
 
     callGraphTask_.CompleteTask(cancelableTask);

@@ -134,7 +134,7 @@ public sealed class ProfileModuleBuilder {
 
   public (IRTextFunction Function, FunctionDebugInfo DebugInfo)
     GetOrCreateFunction(long funcAddress) {
-    // Try to get it form the concurrent dictionary.
+    // Try to get it form the concurrent dictionary first.
     //? TODO: Ideally a range tree would be used to capture all
     //? the RVAs of a function, which would avoid multiple queries
     //? of the debug info under the write lock.
@@ -142,42 +142,43 @@ public sealed class ProfileModuleBuilder {
       return pair;
     }
 
-    try {
-      lock_.EnterWriteLock();
+    // Find function outside lock to reduce contention.
+    FunctionDebugInfo debugInfo = null;
 
-      // Check again under the write lock.
-      if (functionMap_.TryGetValue(funcAddress, out pair)) {
-        return pair;
-      }
+    if (HasDebugInfo) {
+      // Search for the function at this RVA.
+      debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
+    }
 
-      FunctionDebugInfo debugInfo = null;
+    if (debugInfo == null) {
+      // Create a dummy debug entry for the missing function.
+      string placeholderName = $"{funcAddress:X}";
+      debugInfo = new FunctionDebugInfo(placeholderName, funcAddress, 0);
+    }
 
-      if (HasDebugInfo) {
-        // Search for the function at this RVA.
-        debugInfo = DebugInfo.FindFunctionByRVA(funcAddress);
-      }
+    // Acquire write lock to create an entry for the function.
+    lock_.EnterWriteLock();
 
-      if (debugInfo == null) {
-        // Create a dummy debug entry for the missing function.
-        string placeholderName = $"{funcAddress:X}";
-        debugInfo = new FunctionDebugInfo(placeholderName, funcAddress, 0);
-      }
-
-      // Add the new function to the module and disassembler.
-      var func = ModuleDocument.AddDummyFunction(debugInfo.Name);
-
-      if (ModuleDocument.Loader is DisassemblerSectionLoader disassemblerSectionLoader) {
-        disassemblerSectionLoader.RegisterFunction(func, debugInfo);
-      }
-
-      // Cache RVA -> function mapping.
-      pair = (func, debugInfo);
-      functionMap_[funcAddress] = pair;
+    // Check again under the write lock.
+    if (functionMap_.TryGetValue(funcAddress, out pair)) {
+      lock_.ExitWriteLock();
       return pair;
     }
-    finally {
-      lock_.ExitWriteLock();
+
+    // Add the new function to the module and disassembler.
+    var func = ModuleDocument.AddDummyFunction(debugInfo.Name);
+
+    if (ModuleDocument.Loader is DisassemblerSectionLoader disassemblerSectionLoader) {
+      disassemblerSectionLoader.RegisterFunction(func, debugInfo);
     }
+
+    // Updating the function map done outside lock.
+    lock_.ExitWriteLock();
+
+    // Cache RVA -> function mapping.
+    pair = (func, debugInfo);
+    functionMap_.TryAdd(funcAddress, pair);
+    return pair;
   }
 
   private void CreateDummyDocument(BinaryFileDescriptor binaryInfo) {

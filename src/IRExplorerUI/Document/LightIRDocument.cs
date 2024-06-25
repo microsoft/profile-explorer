@@ -261,7 +261,7 @@ public sealed class LightIRDocument : TextEditor {
   }
 
   private void TextView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    previewPopup_.HidePreviewPopup(true);
+    previewPopup_?.HidePreviewPopup(true);
     var position = e.GetPosition(TextArea.TextView);
 
     // Ignore click outside the text view.
