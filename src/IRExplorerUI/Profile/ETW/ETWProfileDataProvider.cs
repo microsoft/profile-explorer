@@ -19,7 +19,6 @@ namespace IRExplorerUI.Profile;
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
   private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
-
 #if DEBUG
   // For collecting statistics on stack frame resolution.
   private volatile static int UnresolvedStackCount;
@@ -72,7 +71,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   public void Dispose() {
-
   }
 
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
@@ -347,9 +345,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
       if (resolvedStack == null) {
-  #if DEBUG
+#if DEBUG
         Interlocked.Increment(ref UnresolvedStackCount);
-  #endif
+#endif
 
         resolvedStack = ProcessUnresolvedStack(stack, context, rawProfile, symbolSettings);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
@@ -676,7 +674,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
       bool acceptModule = moduleIndex >= 0 &&
-                          (topModules[moduleIndex].SampleCount > moduleSampleCutOff);
+                          topModules[moduleIndex].SampleCount > moduleSampleCutOff;
 
       if (!acceptModule) {
         rejectedDebugModules_.Add(imageList[i]);

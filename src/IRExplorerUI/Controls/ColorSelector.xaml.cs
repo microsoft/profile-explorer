@@ -38,7 +38,7 @@ public partial class ColorSelector : UserControl {
       Utils.ColorFromString("#FFF47F"),
       Utils.ColorFromString("#B9FF99"),
       Utils.ColorFromString("#99E2FF"),
-      Utils.ColorFromString("#C6B2FF"),
+      Utils.ColorFromString("#C6B2FF")
     };
   }
 

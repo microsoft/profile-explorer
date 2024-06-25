@@ -34,7 +34,7 @@ public struct AdjustedDiffPiece {
 }
 
 public class FilteredDiffInput {
-  public static List<Replacement> NoReplacements = new List<Replacement>(0);
+  public static List<Replacement> NoReplacements = new(0);
 
   public FilteredDiffInput(int capacity) {
     Text = string.Empty;

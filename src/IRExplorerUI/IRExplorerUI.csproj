@@ -179,15 +179,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\ClientServer\GrpcLib.csproj" />
+		<ProjectReference Include="..\GrpcLib\GrpcLib.csproj" />
 		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj" />
 		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Reference Include="Dia2Lib">
-			<HintPath>..\external\Dia2Lib.dll</HintPath>
-		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>

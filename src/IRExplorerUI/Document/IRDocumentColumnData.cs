@@ -29,7 +29,7 @@ public class IRDocumentColumnData {
     }
 
     public int GetHashCode(OptionalColumn obj) {
-      return (obj.ColumnName != null ? obj.ColumnName.GetHashCode() : 0);
+      return obj.ColumnName != null ? obj.ColumnName.GetHashCode() : 0;
     }
   }
 
@@ -181,7 +181,7 @@ public class IRDocumentColumnData {
 // Represents a value in the row associated with an element.
 // Can be viewed as a cell in a spreadsheet.
 public sealed class ElementColumnValue : BindableObject {
-  public static readonly ElementColumnValue Empty = new ElementColumnValue(string.Empty);
+  public static readonly ElementColumnValue Empty = new(string.Empty);
   private Thickness borderThickness_;
   private Brush borderBrush_;
   private string text_;

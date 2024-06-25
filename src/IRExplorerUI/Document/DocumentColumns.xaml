@@ -80,8 +80,9 @@
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
                 BorderThickness="{TemplateBinding BorderThickness}">
-                <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                <GridViewRowPresenter
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
               </Border>
 
               <ControlTemplate.Triggers>

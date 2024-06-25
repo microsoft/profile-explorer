@@ -60,7 +60,7 @@ public struct x86OpcodeInfo {
 
 public static class x86Opcodes {
   private static readonly Dictionary<string, x86OpcodeInfo> opcodes_ =
-    new Dictionary<string, x86OpcodeInfo> {
+    new() {
       {"JMP", new x86OpcodeInfo(x86Opcode.JMP, InstructionKind.Goto)},
       {"RET", new x86OpcodeInfo(x86Opcode.RET, InstructionKind.Return)},
       {"JO", new x86OpcodeInfo(x86Opcode.JO, InstructionKind.Branch)},
@@ -99,7 +99,7 @@ public static class x86Opcodes {
       {"SYSCALL", new x86OpcodeInfo(x86Opcode.SYSCALL, InstructionKind.Call)},
       {"NOP", new x86OpcodeInfo(x86Opcode.NOP, InstructionKind.Other)}
     };
-  private static readonly StringTrie<x86OpcodeInfo> opcodesTrie_ = new StringTrie<x86OpcodeInfo>(opcodes_);
+  private static readonly StringTrie<x86OpcodeInfo> opcodesTrie_ = new(opcodes_);
 
   public static bool GetOpcodeInfo(string value, out x86OpcodeInfo info) {
     return opcodesTrie_.TryGetValue(value, out info, true);

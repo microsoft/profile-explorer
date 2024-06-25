@@ -593,7 +593,8 @@
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
             BorderThickness="1,0,1,0">
-            <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Orientation="Horizontal">
+            <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Orientation="Horizontal">
               <ToggleButton
                 x:Name="DiffModeButton"
                 Padding="2,1,2,1"
@@ -1189,14 +1190,14 @@
                 ToolTip="Click to remove active filtering of entire profile by thread and/or time range"
                 Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal">
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource FilterIcon}" />
-                <TextBlock Text="Profile Filter"></TextBlock>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource FilterIcon}" />
+                  <TextBlock Text="Profile Filter" />
                 </StackPanel>
               </Button>
-              
+
               <TextBlock
                 VerticalAlignment="Center"
                 FontWeight="SemiBold"

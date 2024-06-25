@@ -13,27 +13,27 @@ public class SourceFileSettings : TextViewSettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue()]
+  [ProtoMember(1)][OptionValue()]
   public SourceFileFinderSettings FinderSettings { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool SyncStyleWithDocument { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool SyncLineWithDocument { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public bool SyncInlineeWithDocument { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool ShowInlineAssembly { get; set; }
-  [ProtoMember(6), OptionValue(false)]
+  [ProtoMember(6)][OptionValue(false)]
   public bool AutoExpandInlineAssembly { get; set; }
-  [ProtoMember(7), OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool ShowSourceStatements { get; set; }
-  [ProtoMember(8), OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool ShowSourceStatementsOnMargin { get; set; }
-  [ProtoMember(9), OptionValue(true)]
+  [ProtoMember(9)][OptionValue(true)]
   public bool ReplaceInsignificantSourceStatements { get; set; }
-  [ProtoMember(10), OptionValue("#505050")]
+  [ProtoMember(10)][OptionValue("#505050")]
   public Color AssemblyTextColor { get; set; }
-  [ProtoMember(11), OptionValue("#00000000")]
+  [ProtoMember(11)][OptionValue("#00000000")]
   public Color AssemblyBackColor { get; set; }
 
   public override void Reset() {
@@ -65,9 +65,9 @@ public class SourceFileSettings : TextViewSettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class SourceFileFinderSettings : SettingsBase {
-  [ProtoMember(1), OptionValue()]
+  [ProtoMember(1)][OptionValue()]
   public Dictionary<string, string> SourceMappings { get; set; }
-  [ProtoMember(2), OptionValue()]
+  [ProtoMember(2)][OptionValue()]
   public List<string> DisabledSourceMappings { get; set; }
 
   public SourceFileFinderSettings() {

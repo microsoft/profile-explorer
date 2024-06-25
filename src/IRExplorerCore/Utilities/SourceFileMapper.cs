@@ -14,8 +14,8 @@ public class SourceFileMapper {
 
   public SourceFileMapper(Dictionary<string, string> map = null) {
     map_ = map;
-    map_ ??= new();
-    missingFilesSet_ = new();
+    map_ ??= new Dictionary<string, string>();
+    missingFilesSet_ = new HashSet<string>();
   }
 
   public Dictionary<string, string> SourceMap => map_;

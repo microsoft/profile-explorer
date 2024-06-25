@@ -116,9 +116,9 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   public event EventHandler ClearedTimePoint;
   public event PropertyChangedEventHandler PropertyChanged;
   public List<MarkedSamples> MarkedSamples => markedSamples_;
-  public RelayCommand<object> FilterTimeRangeCommand => new RelayCommand<object>(obj => ApplyTimeRangeFilter());
-  public RelayCommand<object> ClearSelectionCommand => new RelayCommand<object>(obj => ClearSelectedTimeRange());
-  public RelayCommand<object> RemoveTimeRangeFilterCommand => new RelayCommand<object>(obj => RemoveTimeRangeFilter());
+  public RelayCommand<object> FilterTimeRangeCommand => new(obj => ApplyTimeRangeFilter());
+  public RelayCommand<object> ClearSelectionCommand => new(obj => ClearSelectedTimeRange());
+  public RelayCommand<object> RemoveTimeRangeFilterCommand => new(obj => RemoveTimeRangeFilter());
   public int ThreadId { get; private set; }
   public string ThreadName { get; set; }
   public TimeSpan ThreadWeight => slices_ != null ? slices_[0].TotalWeight : TimeSpan.Zero;
@@ -642,7 +642,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
     if (sliceSeriesDict.Count == 0) {
       // Other code assumes there is at least one slice list, make a dummy one.
-      return new List<SliceList> {new SliceList(threadId)};
+      return new List<SliceList> {new(threadId)};
     }
 
     return sliceSeriesDict.ToValueList();

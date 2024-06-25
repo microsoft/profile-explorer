@@ -8,8 +8,7 @@ using System.Runtime.CompilerServices;
 namespace IRExplorerCore;
 
 public static class ObjectTracker {
-  private static ConditionalWeakTable<object, DebugObjectId> DebugTaskId =
-    new ConditionalWeakTable<object, DebugObjectId>();
+  private static ConditionalWeakTable<object, DebugObjectId> DebugTaskId = new();
 
   public static DebugObjectId Track(object value) {
     if (value == null) {
@@ -20,9 +19,8 @@ public static class ObjectTracker {
   }
 
   public class DebugObjectId {
-    private static Dictionary<string, int> PrefixNumbers =
-      new Dictionary<string, int>();
-    private static object LockObject = new object();
+    private static Dictionary<string, int> PrefixNumbers = new();
+    private static object LockObject = new();
 
     public DebugObjectId() {
       Id = "<null>";

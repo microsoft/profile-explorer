@@ -69,8 +69,7 @@ public class GridViewColumnVisibility {
   public static readonly DependencyProperty IsVisibleProperty =
     DependencyProperty.RegisterAttached("IsVisible", typeof(bool), typeof(GridViewColumnVisibility),
                                         new UIPropertyMetadata(true));
-  private static Dictionary<ListView, List<(GridViewColumn Column, int Index)>> removedColumns_ =
-    new Dictionary<ListView, List<(GridViewColumn Column, int Index)>>();
+  private static Dictionary<ListView, List<(GridViewColumn Column, int Index)>> removedColumns_ = new();
   public static readonly DependencyProperty EnabledProperty =
     DependencyProperty.RegisterAttached("Enabled", typeof(bool), typeof(GridViewColumnVisibility),
                                         new UIPropertyMetadata(false,

@@ -38,16 +38,24 @@
     <CommandBinding Command="local:Command.SaveSectionText" Executed="SaveSectionTextExecuted" />
     <CommandBinding Command="local:Command.SaveFunctionText" Executed="SaveFunctionTextExecuted" />
     <CommandBinding Command="local:Command.CopyFunctionText" Executed="CopyFunctionTextExecuted" />
-    <CommandBinding Command="local:Command.OpenDocumentInEditor" Executed="OpenDocumentInEditorExecuted" />
-    <CommandBinding Command="local:Command.OpenDocumentInNewInstance" Executed="OpenDocumentInNewInstanceExecuted" />
+    <CommandBinding Command="local:Command.OpenDocumentInEditor"
+                    Executed="OpenDocumentInEditorExecuted" />
+    <CommandBinding Command="local:Command.OpenDocumentInNewInstance"
+                    Executed="OpenDocumentInNewInstanceExecuted" />
     <CommandBinding Command="local:Command.DisplayCallGraph" Executed="DisplayCallGraphExecuted" />
-    <CommandBinding Command="local:Command.DisplayPartialCallGraph" Executed="DisplayPartialCallGraphExecuted" />
+    <CommandBinding Command="local:Command.DisplayPartialCallGraph"
+                    Executed="DisplayPartialCallGraphExecuted" />
     <CommandBinding Command="local:Command.CopyFunctionName" Executed="CopyFunctionNameExecuted" />
-    <CommandBinding Command="local:Command.CopyDemangledFunctionName" Executed="CopyDemangledFunctionNameExecuted" />
-    <CommandBinding Command="local:Command.ExportFunctionList" Executed="ExportFunctionListExecuted" />
-    <CommandBinding Command="local:Command.CopyFunctionDetails" Executed="CopyFunctionDetailsExecuted" />
-    <CommandBinding Command="local:Command.ExportFunctionListHtml" Executed="ExportFunctionListHtmlExecuted" />
-    <CommandBinding Command="local:Command.ExportFunctionListMarkdown" Executed="ExportFunctionListMarkdownExecuted" />
+    <CommandBinding Command="local:Command.CopyDemangledFunctionName"
+                    Executed="CopyDemangledFunctionNameExecuted" />
+    <CommandBinding Command="local:Command.ExportFunctionList"
+                    Executed="ExportFunctionListExecuted" />
+    <CommandBinding Command="local:Command.CopyFunctionDetails"
+                    Executed="CopyFunctionDetailsExecuted" />
+    <CommandBinding Command="local:Command.ExportFunctionListHtml"
+                    Executed="ExportFunctionListHtmlExecuted" />
+    <CommandBinding Command="local:Command.ExportFunctionListMarkdown"
+                    Executed="ExportFunctionListMarkdownExecuted" />
   </local:ToolPanelControl.CommandBindings>
 
   <local:ToolPanelControl.Resources>
@@ -630,7 +638,8 @@
           </ListView.View>
           <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <EventSetter Event="MouseDoubleClick" Handler="ModuleDoubleClick" />
               <EventSetter Event="PreviewKeyDown" Handler="ModulePreviewKeyDown" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -641,7 +650,8 @@
                           Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
                 </Trigger>
               </Style.Triggers>
             </Style>
@@ -728,7 +738,8 @@
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
 
-              <GridViewColumn Width="100" local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
+              <GridViewColumn Width="100"
+                              local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
                 <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -753,7 +764,8 @@
                 x:Name="OptionalDataColumn"
                 Width="{Binding SelfTimeColumnWidth}"
                 local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
-                <GridViewColumnHeader x:Name="OptionalColumnHeader" Content="{Binding OptionalDataColumnName}" />
+                <GridViewColumnHeader x:Name="OptionalColumnHeader"
+                                      Content="{Binding OptionalDataColumnName}" />
 
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -785,7 +797,8 @@
                 x:Name="OptionalDataColumn2"
                 Width="{Binding TotalTimeColumnWidth}"
                 local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
-                <GridViewColumnHeader x:Name="OptionalColumnHeader2" Content="{Binding OptionalDataColumnName2}" />
+                <GridViewColumnHeader x:Name="OptionalColumnHeader2"
+                                      Content="{Binding OptionalDataColumnName2}" />
 
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -835,7 +848,8 @@
           </ListView.View>
           <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
               <EventSetter Event="MouseLeftButtonUp" Handler="FunctionClick" />
               <EventSetter Event="PreviewKeyDown" Handler="FunctionPreviewKeyDown" />
@@ -877,7 +891,8 @@
                           Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
                 </Trigger>
 
                 <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
@@ -990,7 +1005,8 @@
                 ToolTip="Copy the mangled function name to the clipboard (C++)" />
 
               <Separator />
-              <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+              <MenuItem Header="Mark Module"
+                        ToolTip="Mark all functions belonging to this module (saved)">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -1004,7 +1020,8 @@
 
                 </MenuItem>
               </MenuItem>
-              <MenuItem Header="Mark Function" ToolTip="Mark all functions with the same name (saved)">
+              <MenuItem Header="Mark Function"
+                        ToolTip="Mark all functions with the same name (saved)">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -1438,7 +1455,8 @@
 
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Stretch" />
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
 
               <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
@@ -1448,7 +1466,8 @@
                 <MultiDataTrigger>
                   <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding Path=IsDiffFromPrevious}" Value="False" />
-                    <Condition Binding="{Binding Path=LowerIdenticalToPreviousOpacity}" Value="True" />
+                    <Condition Binding="{Binding Path=LowerIdenticalToPreviousOpacity}"
+                               Value="True" />
                     <Condition Binding="{Binding Path=IsSelected}" Value="False" />
                   </MultiDataTrigger.Conditions>
                   <Setter Property="Opacity" Value="0.6" />

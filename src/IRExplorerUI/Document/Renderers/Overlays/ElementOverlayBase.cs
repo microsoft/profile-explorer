@@ -14,7 +14,7 @@ namespace IRExplorerUI.Document;
 [ProtoContract(SkipConstructor = true)]
 [ProtoInclude(200, typeof(IconElementOverlay))]
 public abstract class ElementOverlayBase : IElementOverlay {
-  private static readonly Typeface DefaultFont = new Typeface("Consolas");
+  private static readonly Typeface DefaultFont = new("Consolas");
   private Rect labelBounds_;
   [ProtoMember(1)]
   private IRElementReference elementRef_;
@@ -90,7 +90,7 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public double MarginY { get; set; }
   [ProtoMember(7)]
   public double Padding { get; set; }
-  public Size Size => new Size(ActualWidth, ActualHeight);
+  public Size Size => new(ActualWidth, ActualHeight);
   [ProtoMember(8)]
   public HorizontalAlignment AlignmentX { get; set; }
   [ProtoMember(9)]

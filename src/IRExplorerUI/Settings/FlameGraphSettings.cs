@@ -18,61 +18,61 @@ public class FlameGraphSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool ShowDetailsPanel { get; set; }
-  [ProtoMember(3), OptionValue(false)]
+  [ProtoMember(3)][OptionValue(false)]
   public bool SyncSourceFile { get; set; }
-  [ProtoMember(4), OptionValue(true)]
+  [ProtoMember(4)][OptionValue(true)]
   public bool SyncSelection { get; set; }
-  [ProtoMember(5), OptionValue(false)]
+  [ProtoMember(5)][OptionValue(false)]
   public bool UseCompactMode { get; set; }
-  [ProtoMember(6), OptionValue(true)]
+  [ProtoMember(6)][OptionValue(true)]
   public bool ShowNodePopup { get; set; }
-  [ProtoMember(7), OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool AppendPercentageToFunction { get; set; }
-  [ProtoMember(8), OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool AppendDurationToFunction { get; set; }
-  [ProtoMember(9), OptionValue(0)]
+  [ProtoMember(9)][OptionValue(0)]
   public int NodePopupDuration { get; set; }
-  [ProtoMember(10), OptionValue("Profile")]
+  [ProtoMember(10)][OptionValue("Profile")]
   public string DefaultColorPalette { get; set; }
-  [ProtoMember(11), OptionValue("ProfileKernel")]
+  [ProtoMember(11)][OptionValue("ProfileKernel")]
   public string KernelColorPalette { get; set; }
-  [ProtoMember(12), OptionValue("ProfileManaged")]
+  [ProtoMember(12)][OptionValue("ProfileManaged")]
   public string ManagedColorPalette { get; set; }
-  [ProtoMember(13), OptionValue(true)]
+  [ProtoMember(13)][OptionValue(true)]
   public bool UseKernelColorPalette { get; set; }
-  [ProtoMember(14), OptionValue(true)]
+  [ProtoMember(14)][OptionValue(true)]
   public bool UseManagedColorPalette { get; set; }
-  [ProtoMember(15), OptionValue("#D0E3F1")]
+  [ProtoMember(15)][OptionValue("#D0E3F1")]
   public Color SelectedNodeColor { get; set; }
-  [ProtoMember(16), OptionValue("#F0E68C")]
+  [ProtoMember(16)][OptionValue("#F0E68C")]
   public Color SearchResultMarkingColor { get; set; }
-  [ProtoMember(17), OptionValue("#000000")]
+  [ProtoMember(17)][OptionValue("#000000")]
   public Color SelectedNodeBorderColor { get; set; }
-  [ProtoMember(18), OptionValue("#000000")]
+  [ProtoMember(18)][OptionValue("#000000")]
   public Color SearchedNodeBorderColor { get; set; }
-  [ProtoMember(19), OptionValue("#000000")]
+  [ProtoMember(19)][OptionValue("#000000")]
   public Color NodeBorderColor { get; set; }
-  [ProtoMember(20), OptionValue("#000000")]
+  [ProtoMember(20)][OptionValue("#000000")]
   public Color NodeTextColor { get; set; }
-  [ProtoMember(21), OptionValue("#696969")]
+  [ProtoMember(21)][OptionValue("#696969")]
   public Color NodeModuleColor { get; set; }
-  [ProtoMember(22), OptionValue("#191970")]
+  [ProtoMember(22)][OptionValue("#191970")]
   public Color NodeWeightColor { get; set; }
-  [ProtoMember(23), OptionValue("#800000")]
+  [ProtoMember(23)][OptionValue("#800000")]
   public Color NodePercentageColor { get; set; }
-  [ProtoMember(24), OptionValue("#c3ebbc")]
+  [ProtoMember(24)][OptionValue("#c3ebbc")]
   public Color SearchedNodeColor { get; set; }
-  [ProtoMember(25), OptionValue("#00008B")]
+  [ProtoMember(25)][OptionValue("#00008B")]
   public Color KernelNodeBorderColor { get; set; }
-  [ProtoMember(26), OptionValue("#4B0082")]
+  [ProtoMember(26)][OptionValue("#4B0082")]
   public Color ManagedNodeBorderColor { get; set; }
-  [ProtoMember(27), OptionValue("#00009B")]
+  [ProtoMember(27)][OptionValue("#00009B")]
   public Color KernelNodeTextColor { get; set; }
-  [ProtoMember(28), OptionValue("#800080")]
+  [ProtoMember(28)][OptionValue("#800080")]
   public Color ManagedNodeTextColor { get; set; }
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {

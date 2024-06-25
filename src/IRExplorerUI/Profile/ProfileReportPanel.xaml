@@ -451,7 +451,8 @@
 
           <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
             </Style>
           </ListView.ItemContainerStyle>
         </ListView>
@@ -640,7 +641,8 @@
               </GridViewColumn.HeaderContainerStyle>
             </GridViewColumn>
 
-            <GridViewColumn Width="80" DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
+            <GridViewColumn Width="80"
+                            DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
               <GridViewColumnHeader Content="Weight" />
               <GridViewColumn.HeaderContainerStyle>
                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -649,7 +651,8 @@
               </GridViewColumn.HeaderContainerStyle>
             </GridViewColumn>
 
-            <GridViewColumn Width="80" DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
+            <GridViewColumn Width="80"
+                            DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
               <GridViewColumnHeader Content="Duration" />
               <GridViewColumn.HeaderContainerStyle>
                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -680,7 +683,8 @@
 
         <ListView.ItemContainerStyle>
           <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+            <Setter Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           </Style>
         </ListView.ItemContainerStyle>
       </ListView>

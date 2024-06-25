@@ -10,20 +10,14 @@ using System.Windows.Input;
 namespace IRExplorerUI.Document;
 
 public static class SearchCommand {
-  public static readonly RoutedUICommand PreviousResult =
-    new RoutedUICommand("Untitled", "PreviousResult", typeof(SearchPanel));
-  public static readonly RoutedUICommand NextResult =
-    new RoutedUICommand("Untitled", "NextResult", typeof(SearchPanel));
-  public static readonly RoutedUICommand ClearText =
-    new RoutedUICommand("Untitled", "ClearText", typeof(SearchPanel));
+  public static readonly RoutedUICommand PreviousResult = new("Untitled", "PreviousResult", typeof(SearchPanel));
+  public static readonly RoutedUICommand NextResult = new("Untitled", "NextResult", typeof(SearchPanel));
+  public static readonly RoutedUICommand ClearText = new("Untitled", "ClearText", typeof(SearchPanel));
   public static readonly RoutedUICommand ToggleCaseSensitive =
-    new RoutedUICommand("Untitled", "ToggleCaseSensitive", typeof(SearchPanel));
-  public static readonly RoutedUICommand ToggleWholeWord =
-    new RoutedUICommand("Untitled", "ToggleWholeWord", typeof(SearchPanel));
-  public static readonly RoutedUICommand ToggleRegex =
-    new RoutedUICommand("Untitled", "ToggleRegex", typeof(SearchPanel));
-  public static readonly RoutedUICommand ToggleSearchAll =
-    new RoutedUICommand("Untitled", "ToggleSearchAll", typeof(SearchPanel));
+    new("Untitled", "ToggleCaseSensitive", typeof(SearchPanel));
+  public static readonly RoutedUICommand ToggleWholeWord = new("Untitled", "ToggleWholeWord", typeof(SearchPanel));
+  public static readonly RoutedUICommand ToggleRegex = new("Untitled", "ToggleRegex", typeof(SearchPanel));
+  public static readonly RoutedUICommand ToggleSearchAll = new("Untitled", "ToggleSearchAll", typeof(SearchPanel));
 }
 
 public partial class SearchPanel : UserControl {

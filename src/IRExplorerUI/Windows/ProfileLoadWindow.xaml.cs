@@ -47,7 +47,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
   private bool showLoadingProgress_;
-  double lastProgressPercentage_ = 0;
+  private double lastProgressPercentage_ = 0;
 
   public ProfileLoadWindow(ISession session, bool recordMode,
                            RecordingSession loadedSession = null) {
@@ -811,7 +811,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     var process = new ProfileProcess(processId, imageFileName);
     selectedProcSummary_ = new List<ProcessSummary>() {
-      new ProcessSummary(process, TimeSpan.Zero)
+      new(process, TimeSpan.Zero)
     };
 
     await LoadProfileTraceFileAndCloseWindow(symbolSettings_.WithSymbolPaths(symbolPath));
@@ -874,7 +874,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     if (report.Process != null) {
       // Set previous selected process.
       selectedProcSummary_ = new List<ProcessSummary> {
-        new ProcessSummary(report.Process, TimeSpan.Zero)
+        new(report.Process, TimeSpan.Zero)
       };
     }
 
@@ -1070,11 +1070,11 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     SymbolPathsList.ItemsSource = list;
 
     var binariesList = symbolSettings_.RejectedBinaryFiles.ToList();
-    binariesList.Sort((a, b) => String.Compare(a.ImageName, b.ImageName, StringComparison.OrdinalIgnoreCase));
+    binariesList.Sort((a, b) => string.Compare(a.ImageName, b.ImageName, StringComparison.OrdinalIgnoreCase));
     RejectedBinariesList.ItemsSource = binariesList;
 
     var symbolList = symbolSettings_.RejectedSymbolFiles.ToList();
-    symbolList.Sort((a, b) => String.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
+    symbolList.Sort((a, b) => string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
     RejectedSymbolsList.ItemsSource = symbolList;
     OnPropertyChange(nameof(SymbolSettings));
   }
@@ -1109,9 +1109,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
 
     // Update list with the new text.
-    var newSymbolPath = Utils.RemovePathQuotes(textBox.Text);
+    string newSymbolPath = Utils.RemovePathQuotes(textBox.Text);
     textBox.Text = newSymbolPath;
-    
+
     if (symbolSettings_.SymbolPaths[index] != newSymbolPath) {
       symbolSettings_.SymbolPaths[index] = newSymbolPath;
       ReloadSymbolPathsList();

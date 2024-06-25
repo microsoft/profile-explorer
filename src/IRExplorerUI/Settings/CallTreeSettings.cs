@@ -13,23 +13,23 @@ public class CallTreeSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool CombineInstances { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool ShowTimeAfterPercentage { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public bool ShowDetailsPanel { get; set; }
-  [ProtoMember(5), OptionValue(false)]
+  [ProtoMember(5)][OptionValue(false)]
   public bool SyncSourceFile { get; set; }
-  [ProtoMember(6), OptionValue(true)]
+  [ProtoMember(6)][OptionValue(true)]
   public bool SyncSelection { get; set; }
-  [ProtoMember(7), OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool ShowNodePopup { get; set; }
-  [ProtoMember(8), OptionValue(0)]
+  [ProtoMember(8)][OptionValue(0)]
   public int NodePopupDuration { get; set; }
-  [ProtoMember(9), OptionValue()]
+  [ProtoMember(9)][OptionValue()]
   public ColumnSettings TreeListColumns { get; set; }
 
   public override void Reset() {

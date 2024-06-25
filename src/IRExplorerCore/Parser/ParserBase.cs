@@ -13,12 +13,12 @@ using IRExplorerCore.Lexer;
 namespace IRExplorerCore;
 
 public class ParserBase {
-  protected readonly Lexer.Lexer lexer_ = new Lexer.Lexer();
+  protected readonly Lexer.Lexer lexer_ = new();
   protected ICompilerIRInfo irInfo_;
   protected Token current_;
   protected Token previous_;
   protected IRTextSection section_;
-  private readonly Dictionary<int, BlockIR> blockMap_ = new Dictionary<int, BlockIR>();
+  private readonly Dictionary<int, BlockIR> blockMap_ = new();
   private readonly IRParsingErrorHandler errorHandler_;
   private readonly RegisterTable registerTable_;
   private IRElementId nextElementId_;

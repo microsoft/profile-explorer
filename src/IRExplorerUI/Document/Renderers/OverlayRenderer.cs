@@ -178,8 +178,8 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   public void ClearElementOverlays() {
-    overlaySegments_ = new();
-    overlaySegmentMap_ = new();
+    overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
+    overlaySegmentMap_ = new Dictionary<IRElement, IROverlaySegment>();
   }
 
   public void Add(Visual drawingVisual) {

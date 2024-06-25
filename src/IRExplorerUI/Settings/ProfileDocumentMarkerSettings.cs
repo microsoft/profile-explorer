@@ -31,49 +31,49 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   //   ("Instruction", "Instr"),
   //   ("Misprediction", "Mispred")
   // };
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool MarkElements { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool MarkBlocks { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool MarkBlocksInFlowGraph { get; set; }
-  [ProtoMember(4), OptionValue(true)]
+  [ProtoMember(4)][OptionValue(true)]
   public bool MarkCallTargets { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool JumpToHottestElement { get; set; }
-  [ProtoMember(7), OptionValue(0.01)] // 1%
+  [ProtoMember(7)][OptionValue(0.01)] // 1%
   public double ElementWeightCutoff { get; set; }
-  [ProtoMember(8), OptionValue(10)]
+  [ProtoMember(8)][OptionValue(10)]
   public int TopOrderCutoff { get; set; }
-  [ProtoMember(9), OptionValue(0.01)] // 1%
+  [ProtoMember(9)][OptionValue(0.01)] // 1%
   public double IconBarWeightCutoff { get; set; }
-  [ProtoMember(10), OptionValue("#000000")]
+  [ProtoMember(10)][OptionValue("#000000")]
   public Color ColumnTextColor { get; set; }
-  [ProtoMember(11), OptionValue("#00008B")]
+  [ProtoMember(11)][OptionValue("#00008B")]
   public Color BlockOverlayTextColor { get; set; }
-  [ProtoMember(12), OptionValue("#8B0000")]
+  [ProtoMember(12)][OptionValue("#8B0000")]
   public Color HotBlockOverlayTextColor { get; set; }
-  [ProtoMember(14), OptionValue("#696969")]
+  [ProtoMember(14)][OptionValue("#696969")]
   public Color BlockOverlayBorderColor { get; set; }
-  [ProtoMember(15), OptionValue(1)]
+  [ProtoMember(15)][OptionValue(1)]
   public double BlockOverlayBorderThickness { get; set; }
-  [ProtoMember(16), OptionValue("#AA4343")]
+  [ProtoMember(16)][OptionValue("#AA4343")]
   public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(17), OptionValue(50)]
+  [ProtoMember(17)][OptionValue(50)]
   public int MaxPercentageBarWidth { get; set; }
-  [ProtoMember(18), OptionValue(true)]
+  [ProtoMember(18)][OptionValue(true)]
   public bool DisplayPercentageBar { get; set; }
-  [ProtoMember(19), OptionValue(true)]
+  [ProtoMember(19)][OptionValue(true)]
   public bool DisplayIcons { get; set; }
-  [ProtoMember(20), OptionValue(ValueUnitKind.Millisecond)]
+  [ProtoMember(20)][OptionValue(ValueUnitKind.Millisecond)]
   public ValueUnitKind ValueUnit { get; set; }
-  [ProtoMember(21), OptionValue(true)]
+  [ProtoMember(21)][OptionValue(true)]
   public bool AppendValueUnitSuffix { get; set; }
-  [ProtoMember(22), OptionValue(2)]
+  [ProtoMember(22)][OptionValue(2)]
   public int ValueUnitDecimals { get; set; }
-  [ProtoMember(23), OptionValue("#FAEBD7")]
+  [ProtoMember(23)][OptionValue("#FAEBD7")]
   public Color PerformanceMetricBackColor { get; set; }
-  [ProtoMember(24), OptionValue("#F5F5F5")]
+  [ProtoMember(24)][OptionValue("#F5F5F5")]
   public Color PerformanceCounterBackColor { get; set; }
   public static int DefaultMaxPercentageBarWidth = 50;
   public static double DefaultElementWeightCutoff = 0.01; // 1%;
@@ -159,7 +159,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   public bool IsVisibleValue(int order, double percentage) {
-    return (order < TopOrderCutoff && percentage > double.Epsilon) ||
+    return order < TopOrderCutoff && percentage > double.Epsilon ||
            percentage >= ElementWeightCutoff;
   }
 
@@ -285,20 +285,20 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   private bool ShouldShowPercentageBar(OptionalColumn column) {
     return DisplayPercentageBar &&
            (column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.Always ||
-            (column.IsMainColumn &&
-             column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.IfActiveColumn));
+            column.IsMainColumn &&
+            column.Style.ShowPercentageBar == OptionalColumnStyle.PartVisibility.IfActiveColumn);
   }
 
   private bool ShouldShowIcon(OptionalColumn column) {
     return DisplayIcons && (column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.Always ||
-                            (column.IsMainColumn &&
-                             column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn));
+                            column.IsMainColumn &&
+                            column.Style.ShowIcon == OptionalColumnStyle.PartVisibility.IfActiveColumn);
   }
 
   private bool ShouldUseBackColor(OptionalColumn column) {
     return column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.Always ||
-           (column.IsMainColumn &&
-            column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.IfActiveColumn);
+           column.IsMainColumn &&
+           column.Style.UseBackColor == OptionalColumnStyle.PartVisibility.IfActiveColumn;
   }
 
   public Brush PickColorForPercentage(double percentage) {

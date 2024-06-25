@@ -26,7 +26,7 @@ public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {
   public int StartLine { get; set; }
   [ProtoMember(4)]
   public bool HasChecksumMismatch { get; set; }
-  public static readonly SourceFileDebugInfo Unknown = new SourceFileDebugInfo(null, null, -1);
+  public static readonly SourceFileDebugInfo Unknown = new(null, null, -1);
   public bool IsUnknown => FilePath == null;
   public bool HasFilePath => !string.IsNullOrEmpty(FilePath);
   public bool HasOriginalFilePath => !string.IsNullOrEmpty(OriginalFilePath);
@@ -60,7 +60,7 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
   [ProtoMember(5)]
   public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
   public List<SourceStackFrame> Inlinees { get; set; }
-  public static readonly SourceLineDebugInfo Unknown = new SourceLineDebugInfo(-1, -1);
+  public static readonly SourceLineDebugInfo Unknown = new(-1, -1);
   public bool IsUnknown => Line == -1;
 
   public SourceLineDebugInfo(int offsetStart, int line, int column = 0, string filePath = null) {
@@ -101,7 +101,7 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
-  public static readonly FunctionDebugInfo Unknown = new FunctionDebugInfo(null, 0, 0);
+  public static readonly FunctionDebugInfo Unknown = new(null, 0, 0);
   private int cachedHashCode_;
 
   public FunctionDebugInfo(string name, long rva, long size, short optLevel = 0, int id = -1, short auxId = -1) {

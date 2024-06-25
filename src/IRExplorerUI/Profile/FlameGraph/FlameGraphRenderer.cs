@@ -66,7 +66,7 @@ public class FlameGraphRenderer {
   public double MaxGraphWidth => maxWidth_;
   public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
   public Rect VisibleArea => visibleArea_;
-  public Rect GraphArea => new Rect(0, 0, MaxGraphWidth, MaxGraphHeight);
+  public Rect GraphArea => new(0, 0, MaxGraphWidth, MaxGraphHeight);
   public Dictionary<FlameGraphNode, HighlightingStyle> SelectedNodes { get; set; }
 
   private void ReloadSettings() {
@@ -304,7 +304,7 @@ public class FlameGraphRenderer {
             }
           }
         }
-        else if (offsetDiff < 0 && Math.Abs(offsetDiff) < (margin * 0.5)) {
+        else if (offsetDiff < 0 && Math.Abs(offsetDiff) < margin * 0.5) {
           // Align by reducing the margin from previous text
           // to match the parent offset.
           margin += offsetDiff;

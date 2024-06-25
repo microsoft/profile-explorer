@@ -671,7 +671,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
   private static string GenerateNameListText(Dictionary<string, int> nameMap, string separator) {
     var nameList = nameMap.ToList();
-    nameList.Sort((a, b) => String.Compare(a.Item1, b.Item1, StringComparison.Ordinal));
+    nameList.Sort((a, b) => string.Compare(a.Item1, b.Item1, StringComparison.Ordinal));
     var sb = new StringBuilder();
 
     foreach (var pair in nameList) {
@@ -754,25 +754,25 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   public RelayCommand<object> ExcludeThreadCommand =>
-    new RelayCommand<object>(async obj => {
+    new(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
       }
     });
   public RelayCommand<object> ExcludeSameNameThreadCommand =>
-    new RelayCommand<object>(async obj => {
+    new(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
       }
     });
   public RelayCommand<object> FilterToThreadCommand =>
-    new RelayCommand<object>(async obj => {
+    new(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
       }
     });
   public RelayCommand<object> FilterToSameNameThreadCommand =>
-    new RelayCommand<object>(async obj => {
+    new(async obj => {
       if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
         await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToSameNameThread);
       }
@@ -782,7 +782,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     Utils.ShowContextMenu(sender as FrameworkElement, this);
   }
 
-  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
     if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem &&
         instancesNode_.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(threadItem.ThreadId);
@@ -790,11 +790,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
                                                      ThreadsExpander, Session, filter);
     }
   });
-  public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenFunctionCommand => new(async obj => {
     var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(obj, mode);
   });
-  public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
     await OpenFunction(obj, OpenSectionKind.NewTabDockRight);
   });
 
@@ -827,7 +827,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     Utils.ShowContextMenu(sender as FrameworkElement, this);
   }
 
-  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
     if (obj is SelectedColorEventArgs e) {
       if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
         foreach (var node in groupNode.Nodes) {
@@ -839,7 +839,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
       }
     }
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     if (obj is SelectedColorEventArgs e) {
       if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
         foreach (var node in groupNode.Nodes) {

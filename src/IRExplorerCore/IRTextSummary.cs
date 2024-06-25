@@ -65,7 +65,7 @@ public class IRTextSummary {
     if (unmangledFunctionNameMap_ == null) {
       ComputeUnmangledFunctionNameMap(matchCheck);
     }
-    
+
     return unmangledFunctionNameMap_.GetValueOrNull(name);
   }
 
@@ -75,10 +75,10 @@ public class IRTextSummary {
         return;
       }
 
-      unmangledFunctionNameMap_ = new();
+      unmangledFunctionNameMap_ = new Dictionary<string, IRTextFunction>();
 
       foreach (var function in Functions) {
-        var unmangledName = matchCheck(function.Name);
+        string unmangledName = matchCheck(function.Name);
         unmangledFunctionNameMap_[unmangledName] = function;
       }
     }

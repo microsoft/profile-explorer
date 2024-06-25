@@ -28,8 +28,10 @@ public interface ICompilerInfoProvider {
   string OpenFileFilter { get; }
   string OpenDebugFileFilter { get; }
   Task ReloadSettings();
-  Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section, 
+
+  Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
                                    FunctionDebugInfo funcDebugInfo = null);
+
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
   Task HandleLoadedDocument(LoadedDocument document, string modulePath);
   IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
@@ -50,8 +52,7 @@ public interface ICompilerInfoProvider {
 
 [ProtoContract]
 public class BinaryFileSearchResult {
-  public static BinaryFileSearchResult None =
-    new BinaryFileSearchResult();
+  public static BinaryFileSearchResult None = new();
   [ProtoMember(1)]
   public bool Found { get; set; }
   [ProtoMember(2)]
@@ -85,8 +86,7 @@ public class BinaryFileSearchResult {
 
 [ProtoContract]
 public class DebugFileSearchResult {
-  public static DebugFileSearchResult None =
-    new DebugFileSearchResult();
+  public static DebugFileSearchResult None = new();
   [ProtoMember(1)]
   public bool Found { get; set; }
   [ProtoMember(2)]

@@ -18,7 +18,7 @@ using IRExplorerUI.Windows;
 namespace IRExplorerUI;
 
 public partial class MainWindow : Window, ISession {
-  private CancelableTaskInstance updateProfileTask_ = new CancelableTaskInstance();
+  private CancelableTaskInstance updateProfileTask_ = new();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
   public ProfileData ProfileData => sessionState_?.ProfileData;
@@ -585,7 +585,7 @@ public partial class MainWindow : Window, ISession {
   private void RemoveProfileThreadButton_Click(object sender, RoutedEventArgs e) {
     ProfileFilter?.RemoveThreadFilter?.Invoke();
   }
-  
+
   private void RemoveProfileAllFiltersButton_Click(object sender, RoutedEventArgs e) {
     ProfileFilter?.RemoveAllFilters?.Invoke();
   }
@@ -636,13 +636,13 @@ public partial class MainWindow : Window, ISession {
       var item = new MenuItem {
         Header = markingSet.Title,
         ToolTip = DocumentUtils.FormatLongFunctionName(markingSet.Name),
-        Tag = markingSet,
+        Tag = markingSet
       };
 
       var colorSelector = new ColorSelector();
       var selectorItem = new MenuItem {
         Header = colorSelector,
-        Tag = markingSet,
+        Tag = markingSet
       };
 
       colorSelector.ColorSelected += (o, args) => {
@@ -669,7 +669,7 @@ public partial class MainWindow : Window, ISession {
       var item = new MenuItem {
         Header = markingSet.Title,
         ToolTip = tooltip,
-        Tag = markingSet,
+        Tag = markingSet
       };
 
       item.Click += (sender, args) => action(markingSet);

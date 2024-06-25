@@ -33,7 +33,7 @@ public class DraggablePopup : Popup {
   }
 
   public RelayCommand<SelectedColorEventArgs> PopupColorSelectedCommand =>
-    new RelayCommand<SelectedColorEventArgs>(async e => {
+    new(async e => {
       SetPanelAccentColor(e.SelectedColor);
     });
 
@@ -42,7 +42,7 @@ public class DraggablePopup : Popup {
 
   public event EventHandler PopupClosed;
   public event EventHandler PopupDetached;
-  public Thumb Thumb { get; private set; } = new Thumb {Width = 0, Height = 0};
+  public Thumb Thumb { get; private set; } = new() {Width = 0, Height = 0};
 
   public bool IsAlwaysOnTop {
     get => isAlwaysOnTop_;

@@ -83,19 +83,17 @@ public class DocumentMargin : AbstractMargin {
   private static readonly int MarginWidth = 16;
   private static readonly int ButtonWidth = 16;
   private static readonly int ButtonIconWidth = 12;
-  private static readonly Typeface DefaultFont = new Typeface("Consolas");
+  private static readonly Typeface DefaultFont = new("Consolas");
   private static readonly HighlightingStyle defaultBookmarkStyle_ =
-    new HighlightingStyle(Colors.LemonChiffon, ColorPens.GetPen(Colors.Silver));
+    new(Colors.LemonChiffon, ColorPens.GetPen(Colors.Silver));
   private static readonly HighlightingStyle selectedBookmarkStyle_ =
-    new HighlightingStyle(Colors.PeachPuff, ColorPens.GetPen(Colors.Black));
+    new(Colors.PeachPuff, ColorPens.GetPen(Colors.Black));
   private static readonly HighlightingStyle pinnedBookmarkStyle_ =
-    new HighlightingStyle(Colors.PapayaWhip, ColorPens.GetPen(Colors.Black));
-  private static readonly HighlightingStyle pinButtonStyle_ =
-    new HighlightingStyle(Colors.Silver, ColorPens.GetPen(Colors.Black));
-  private static readonly HighlightingStyle hoverBookmarkStyle_ =
-    new HighlightingStyle(Colors.LightBlue, ColorPens.GetPen(Colors.Gray));
+    new(Colors.PapayaWhip, ColorPens.GetPen(Colors.Black));
+  private static readonly HighlightingStyle pinButtonStyle_ = new(Colors.Silver, ColorPens.GetPen(Colors.Black));
+  private static readonly HighlightingStyle hoverBookmarkStyle_ = new(Colors.LightBlue, ColorPens.GetPen(Colors.Gray));
   private static readonly HighlightingStyle nearbyBookmarkStyle_ =
-    new HighlightingStyle(Colors.LightBlue, ColorPens.GetPen(Colors.Silver));
+    new(Colors.LightBlue, ColorPens.GetPen(Colors.Silver));
   private SolidColorBrush backgroundBrush_;
   private HashSet<IRElement> blockElements_;
   private List<HighlightedSegmentGroup> blockGroups_;
@@ -260,7 +258,7 @@ public class DocumentMargin : AbstractMargin {
   }
 
   public void ClearBookmarks() {
-    bookmarkSegments_ = new();
+    bookmarkSegments_ = new TextSegmentCollection<BookmarkSegment>();
     Version++;
   }
 

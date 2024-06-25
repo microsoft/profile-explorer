@@ -12,43 +12,43 @@ public class RemarkSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(false)]
+  [ProtoMember(1)][OptionValue(false)]
   public bool ShowRemarks { get; set; }
-  [ProtoMember(2), OptionValue(false)]
+  [ProtoMember(2)][OptionValue(false)]
   public bool ShowPreviousSections { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool StopAtSectionBoundaries { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public int SectionHistoryDepth { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool ShowPreviousOptimizationRemarks { get; set; }
-  [ProtoMember(6), OptionValue(true)]
+  [ProtoMember(6)][OptionValue(true)]
   public bool ShowActionButtonOnHover { get; set; }
-  [ProtoMember(7), OptionValue(false)]
+  [ProtoMember(7)][OptionValue(false)]
   public bool ShowActionButtonWithModifier { get; set; }
-  [ProtoMember(8), OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool ShowMarginRemarks { get; set; }
-  [ProtoMember(9), OptionValue(true)]
+  [ProtoMember(9)][OptionValue(true)]
   public bool ShowDocumentRemarks { get; set; }
-  [ProtoMember(10), OptionValue(true)]
+  [ProtoMember(10)][OptionValue(true)]
   public bool UseRemarkBackground { get; set; }
-  [ProtoMember(11), OptionValue(true)]
+  [ProtoMember(11)][OptionValue(true)]
   public bool UseTransparentRemarkBackground { get; set; }
-  [ProtoMember(12), OptionValue(25)]
+  [ProtoMember(12)][OptionValue(25)]
   public int RemarkBackgroundOpacity { get; set; }
-  [ProtoMember(13), OptionValue(true)]
+  [ProtoMember(13)][OptionValue(true)]
   public bool Default { get; set; }
-  [ProtoMember(14), OptionValue(true)]
+  [ProtoMember(14)][OptionValue(true)]
   public bool Verbose { get; set; }
-  [ProtoMember(15), OptionValue(false)]
+  [ProtoMember(15)][OptionValue(false)]
   public bool Trace { get; set; }
-  [ProtoMember(16), OptionValue(true)]
+  [ProtoMember(16)][OptionValue(true)]
   public bool Analysis { get; set; }
-  [ProtoMember(17), OptionValue(true)]
+  [ProtoMember(17)][OptionValue(true)]
   public bool Optimization { get; set; }
-  [ProtoMember(18), OptionValue()]
+  [ProtoMember(18)][OptionValue()]
   public Dictionary<string, bool> CategoryFilter { get; set; }
-  [ProtoMember(19), OptionValue(false)]
+  [ProtoMember(19)][OptionValue(false)]
   public bool ShowPreviousAnalysisRemarks { get; set; }
   public string SearchedText { get; set; }
   public bool HasCategoryFilters => CategoryFilter != null && CategoryFilter.Count > 0;

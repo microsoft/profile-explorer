@@ -18,14 +18,14 @@ public class DebuggerInstance {
   public static Debugger5 debugger_;
   private static readonly int DefaultWaitTime = 30000;
   private static readonly Dictionary<string, string> ElementTypeRules =
-    new Dictionary<string, string> {
+    new() {
       {"Type", "&({0})"},
       {"Type *", "{0}"},
       {"Type &", "{0}"},
       {"Type * *", "*({0})"},
-      {"Type * &", "{0}"},
+      {"Type * &", "{0}"}
     };
-  private static readonly HashSet<string> CppKeywords = new HashSet<string> {
+  private static readonly HashSet<string> CppKeywords = new() {
     "alignas",
     "alignof",
     "and",
@@ -119,7 +119,7 @@ public class DebuggerInstance {
     "xor",
     "xor_eq"
   };
-  private static readonly HashSet<string> CompilerKeywords = new HashSet<string> {
+  private static readonly HashSet<string> CompilerKeywords = new() {
     "Set of common types used in the compiler codebase"
   };
   public static bool InBreakMode => debugger_.CurrentMode == dbgDebugMode.dbgBreakMode;

@@ -14,13 +14,13 @@ namespace IRExplorerCore.Graph;
 
 public sealed class GraphvizReader {
   private static readonly Dictionary<string, Keyword> keywordMap_ =
-    new Dictionary<string, Keyword> {
+    new() {
       {"graph", Keyword.Graph},
       {"node", Keyword.Node},
       {"edge", Keyword.Edge},
       {"stop", Keyword.Stop}
     };
-  private static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
+  private static readonly StringTrie<Keyword> keywordTrie_ = new(keywordMap_);
   private readonly Dictionary<string, Node> nodeMap_;
   private readonly Dictionary<string, TaggedObject> dataNameMap_;
   private Token current_;

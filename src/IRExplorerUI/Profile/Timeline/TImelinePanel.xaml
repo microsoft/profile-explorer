@@ -21,7 +21,8 @@
     <CommandBinding Command="local:CallTreeCommand.RemoveFilters" Executed="RemoveFiltersExecuted" />
     <CommandBinding Command="local:CallTreeCommand.RemoveThreadFilters"
                     Executed="RemoveThreadFiltersExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.RemoveAllFilters" Executed="RemoveAllFiltersExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.RemoveAllFilters"
+                    Executed="RemoveAllFiltersExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
   <irExplorerUi:ToolPanelControl.InputBindings>
@@ -216,7 +217,7 @@
                 Width="16"
                 Height="16"
                 Source="{StaticResource FilterIcon}" />
-              <TextBlock Text="Profile Filter"></TextBlock>
+              <TextBlock Text="Profile Filter" />
             </StackPanel>
           </Button>
 

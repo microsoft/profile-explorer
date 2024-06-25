@@ -14,8 +14,7 @@ using Microsoft.Diagnostics.Symbols;
 namespace IRExplorerUI.Compilers;
 
 public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
-  private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ =
-    new ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult>();
+  private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ = new();
   private string filePath_;
   private PEReader reader_;
 

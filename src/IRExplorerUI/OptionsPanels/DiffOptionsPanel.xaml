@@ -12,7 +12,8 @@
   d:DesignWidth="340 "
   mc:Ignorable="d">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-    <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderThickness="0">
+    <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderThickness="0">
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <TextBlock FontWeight="Medium" Text="Displayed changes" />

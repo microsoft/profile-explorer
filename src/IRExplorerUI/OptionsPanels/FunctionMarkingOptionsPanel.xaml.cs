@@ -69,7 +69,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
 
   private void ModuleRemove_Click(object sender, RoutedEventArgs e) {
     if (ModuleList.SelectedItem is FunctionMarkingStyle pair) {
-      settings_.ModuleColors.Remove((pair));
+      settings_.ModuleColors.Remove(pair);
       ReloadModuleList();
       NotifySettingsChanged();
     }
@@ -103,7 +103,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
 
   private void FunctionRemove_Click(object sender, RoutedEventArgs e) {
     if (FunctionList.SelectedItem is FunctionMarkingStyle pair) {
-      settings_.FunctionColors.Remove((pair));
+      settings_.FunctionColors.Remove(pair);
       ReloadFunctionList();
       NotifySettingsChanged();
     }

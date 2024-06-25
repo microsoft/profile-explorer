@@ -131,8 +131,7 @@
         <Border Background="{Binding BackColor}"
                 BorderBrush="Black"
                 BorderThickness="1"
-                Width="16" Height="16">
-        </Border>
+                Width="16" Height="16" />
         <TextBlock
           MinWidth="{Binding MinTextWidth}"
           Margin="4,0,2,0"
@@ -297,7 +296,8 @@
             <Border.Width>
               <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                 <Binding Path="Percentage" />
-                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                <Binding Path="ActualWidth"
+                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
               </MultiBinding>
             </Border.Width>
           </Border>
@@ -341,7 +341,8 @@
             <Border.Width>
               <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                 <Binding Path="ExclusivePercentage" />
-                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                <Binding Path="ActualWidth"
+                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
               </MultiBinding>
             </Border.Width>
           </Border>
@@ -386,7 +387,8 @@
             <Border.Width>
               <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                 <Binding Path="ExclusivePercentage" />
-                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                <Binding Path="ActualWidth"
+                         RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
               </MultiBinding>
             </Border.Width>
           </Border>
@@ -441,7 +443,8 @@
               <Border.Width>
                 <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
                   <Binding Path="ExclusivePercentage" />
-                  <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                  <Binding Path="ActualWidth"
+                           RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
                 </MultiBinding>
               </Border.Width>
             </Border>
@@ -455,7 +458,8 @@
                 <MultiBinding Converter="{StaticResource DoubleDiffScalingBoundConverter}">
                   <Binding Path="ExclusivePercentage" />
                   <Binding Path="Percentage" />
-                  <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                  <Binding Path="ActualWidth"
+                           RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
                 </MultiBinding>
               </Border.Width>
             </Border>

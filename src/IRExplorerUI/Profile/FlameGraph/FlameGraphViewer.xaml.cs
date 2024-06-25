@@ -97,7 +97,7 @@ public partial class FlameGraphViewer : FrameworkElement {
       // call tree instance, remember it in case the filtering changes
       // later to a state where the call tree includes it again.
       if (!added) {
-        unmatchedList ??= new();
+        unmatchedList ??= new List<(ProfileCallTreeNode Node, HighlightingStyle Style)>();
         unmatchedList.Add(pair);
       }
     }

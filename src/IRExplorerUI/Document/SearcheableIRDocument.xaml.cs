@@ -14,8 +14,7 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI.Document;
 
 public static class SearcheableIRDocumentCommand {
-  public static readonly RoutedUICommand ToggleSearch =
-    new RoutedUICommand("Untitled", "ToggleSearch", typeof(SearcheableIRDocument));
+  public static readonly RoutedUICommand ToggleSearch = new("Untitled", "ToggleSearch", typeof(SearcheableIRDocument));
 }
 
 public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged {

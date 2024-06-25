@@ -15,13 +15,13 @@ public class SettingsBaseTest {
   [ProtoContract()]
   [ProtoInclude(100, typeof(DerivedObject))]
   private class TestObject : SettingsBase {
-    [ProtoMember(1), OptionValue(true)]
+    [ProtoMember(1)][OptionValue(true)]
     public bool a { get; set; }
-    [ProtoMember(2), OptionValue(false)]
+    [ProtoMember(2)][OptionValue(false)]
     public bool b { get; set; }
-    [ProtoMember(3), OptionValue(123)]
+    [ProtoMember(3)][OptionValue(123)]
     public int c { get; set; }
-    [ProtoMember(4), OptionValue("foo")]
+    [ProtoMember(4)][OptionValue("foo")]
     public string s { get; set; }
 
     public override void Reset() {
@@ -31,13 +31,13 @@ public class SettingsBaseTest {
 
   [ProtoContract()]
   private class DerivedObject : TestObject {
-    [ProtoMember(1), OptionValue(true)]
+    [ProtoMember(1)][OptionValue(true)]
     public bool d { get; set; }
-    [ProtoMember(2), OptionValue("bar")]
+    [ProtoMember(2)][OptionValue("bar")]
     public string s2 { get; set; }
-    [ProtoMember(3), OptionValue("#F0F0F0")]
+    [ProtoMember(3)][OptionValue("#F0F0F0")]
     public Color color { get; set; }
-    [ProtoMember(4), OptionValue(new string[] {"#F0F0F0", "#1F2F3F"})]
+    [ProtoMember(4)][OptionValue(new string[] {"#F0F0F0", "#1F2F3F"})]
     public Color[] colorArray { get; set; }
 
     public override void Reset() {
@@ -48,9 +48,9 @@ public class SettingsBaseTest {
 
   [ProtoContract()]
   private class NestedObject : SettingsBase {
-    [ProtoMember(1), OptionValue(123)]
+    [ProtoMember(1)][OptionValue(123)]
     public int a { get; set; }
-    [ProtoMember(2), OptionValue(456)]
+    [ProtoMember(2)][OptionValue(456)]
     public int b { get; set; }
     public bool EqualsCalled = false;
 
@@ -95,11 +95,11 @@ public class SettingsBaseTest {
 
   [ProtoContract()]
   public class CollectionObject : SettingsBase {
-    [ProtoMember(1), OptionValue()]
+    [ProtoMember(1)][OptionValue()]
     public List<int> list { get; set; }
-    [ProtoMember(2), OptionValue()]
+    [ProtoMember(2)][OptionValue()]
     public Dictionary<string, int> dict { get; set; }
-    [ProtoMember(3), OptionValue(true)]
+    [ProtoMember(3)][OptionValue(true)]
     public bool flag { get; set; }
 
     public override void Reset() {

@@ -19,8 +19,7 @@ sealed class ShowExpressionGraphCommand : CommandBase {
   /// <summary>
   ///   Command menu group (command set GUID).
   /// </summary>
-  public static readonly Guid CommandSet =
-    new Guid("9885ad8d-69e0-4ec4-8324-b9fd109ebdcd");
+  public static readonly Guid CommandSet = new("9885ad8d-69e0-4ec4-8324-b9fd109ebdcd");
   /// <summary>
   ///   VS Package that provides this command, not null.
   /// </summary>

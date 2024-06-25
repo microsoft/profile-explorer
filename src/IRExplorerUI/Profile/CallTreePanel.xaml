@@ -11,15 +11,21 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <irExplorerUi:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath" Executed="ExpandHottestCallPathExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.CollapseCallPath" Executed="CollapseCallPathExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath"
+                    Executed="ExpandHottestCallPathExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.CollapseCallPath"
+                    Executed="CollapseCallPathExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.SelectFunction"
+                    Executed="SelectFunctionExecuted" />
     <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
+    <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                    Executed="OpenFunctionInNewTab" />
     <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
     <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
+                    Executed="PreviousSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
+                    Executed="NextSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.GoBack" Executed="GoBackExecuted" />
     <CommandBinding Command="local:CallTreeCommand.CollapseNodes" Executed="CollapseNodesExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
@@ -59,7 +65,8 @@
             ToolTip="Go back to the previous function (Backspace/Mouse Back button)"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource DockLeftIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -70,7 +77,8 @@
             ToolTip="Reset call tree to initial state (Ctrl+R)"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource ResetWidthIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -496,7 +504,8 @@
       <ListView.ItemContainerStyle>
         <Style BasedOn="{StaticResource TreeListViewItem}" TargetType="{x:Type ListViewItem}">
           <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
-          <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          <Setter Property="Background"
+                  Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
       </ListView.ItemContainerStyle>
@@ -660,7 +669,8 @@
             InputGestureText="Ctrl+Alt+C"
             ToolTip="Copy the mangled function name to the clipboard (C++)" />
           <Separator />
-          <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+          <MenuItem Header="Mark Module"
+                    ToolTip="Mark all functions belonging to this module (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"

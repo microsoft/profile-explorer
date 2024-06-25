@@ -11,7 +11,7 @@ public class CancelableTaskInstance : IDisposable {
   private CancelableTask taskInstance_;
   private CancelableTaskDelegate registerAction_;
   private CancelableTaskDelegate unregisterAction_;
-  private object lockObject_ = new object();
+  private object lockObject_ = new();
   private bool completeOnCancel_;
 
   public CancelableTaskInstance(bool completeOnCancel = true,

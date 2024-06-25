@@ -65,7 +65,7 @@ public static class WindowPlacement {
   private const int SW_SHOWNORMAL = 1;
   private const int SW_SHOWMINIMIZED = 2;
   private static Encoding encoding = new UTF8Encoding();
-  private static XmlSerializer serializer = new XmlSerializer(typeof(WINDOWPLACEMENT));
+  private static XmlSerializer serializer = new(typeof(WINDOWPLACEMENT));
 
   public static void SetPlacement(IntPtr windowHandle, string placementXml) {
     if (string.IsNullOrEmpty(placementXml)) {

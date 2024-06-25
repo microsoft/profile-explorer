@@ -12,29 +12,29 @@ public class ProfileDataProviderOptions : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(false)]
+  [ProtoMember(1)][OptionValue(false)]
   public bool BinarySearchPathsEnabled { get; set; }
-  [ProtoMember(2), OptionValue(false)]
+  [ProtoMember(2)][OptionValue(false)]
   public bool BinaryNameWhitelistEnabled { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool DownloadBinaryFiles { get; set; }
-  [ProtoMember(4), OptionValue()]
+  [ProtoMember(4)][OptionValue()]
   public List<string> BinarySearchPaths { get; set; }
-  [ProtoMember(5), OptionValue()]
+  [ProtoMember(5)][OptionValue()]
   public List<string> BinaryNameWhitelist { get; set; }
-  [ProtoMember(6), OptionValue(false)]
+  [ProtoMember(6)][OptionValue(false)]
   public bool MarkInlinedFunctions { get; set; }
-  [ProtoMember(7), OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool IncludeKernelEvents { get; set; }
-  [ProtoMember(8), OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool IncludePerformanceCounters { get; set; }
-  [ProtoMember(9), OptionValue()]
+  [ProtoMember(9)][OptionValue()]
   public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; }
-  [ProtoMember(10), OptionValue()]
+  [ProtoMember(10)][OptionValue()]
   public List<PerformanceMetricConfig> PerformanceMetrics { get; set; }
-  [ProtoMember(11), OptionValue()]
+  [ProtoMember(11)][OptionValue()]
   public List<ProfileDataReport> PreviousRecordingSessions { get; set; }
-  [ProtoMember(12), OptionValue()]
+  [ProtoMember(12)][OptionValue()]
   public List<ProfileDataReport> PreviousLoadedSessions { get; set; }
   public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
   public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;

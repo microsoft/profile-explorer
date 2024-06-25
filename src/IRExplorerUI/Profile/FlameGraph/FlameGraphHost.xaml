@@ -13,14 +13,19 @@
   <UserControl.CommandBindings>
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
-    <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.SelectFunction"
+                    Executed="SelectFunctionExecuted" />
     <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
+    <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                    Executed="OpenFunctionInNewTab" />
     <CommandBinding Command="local:CallTreeCommand.EnlargeNode" Executed="EnlargeNodeExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.ChangeRootNode" Executed="ChangeRootNodeExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.MarkAllInstances" Executed="MarkAllInstancesExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.ChangeRootNode"
+                    Executed="ChangeRootNodeExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.MarkAllInstances"
+                    Executed="MarkAllInstancesExecuted" />
     <CommandBinding Command="local:CallTreeCommand.MarkInstance" Executed="MarkInstanceExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.ClearMarkedNodes" Executed="ClearMarkedNodesExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.ClearMarkedNodes"
+                    Executed="ClearMarkedNodesExecuted" />
   </UserControl.CommandBindings>
 
   <irExplorerUi:ScrollViewerClickable
@@ -175,7 +180,8 @@
             ToolTip="Copy the mangled function name to the clipboard (C++)" />
           <Separator />
 
-          <MenuItem Header="Mark Module" ToolTip="Mark all functions belonging to this module (saved)">
+          <MenuItem Header="Mark Module"
+                    ToolTip="Mark all functions belonging to this module (saved)">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -222,7 +228,8 @@
             ToolTip="Mark all instances of the function (temporary)">
             <MenuItem>
               <MenuItem.Header>
-                <irExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkAllInstancesCommand}" />
+                <irExplorerUi:ColorSelector
+                  ColorSelectedCommand="{Binding MarkAllInstancesCommand}" />
               </MenuItem.Header>
             </MenuItem>
           </MenuItem>

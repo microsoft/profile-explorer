@@ -290,7 +290,7 @@ public sealed class FlameGraph {
   public double ScaleWeight(FlameGraphNode node) {
     return node.Weight.Ticks * rootWeightReciprocal_;
   }
-  
+
   public double ScaleExclusiveWeight(FlameGraphNode node) {
     return node.ExclusiveWeight.Ticks * rootWeightReciprocal_;
   }

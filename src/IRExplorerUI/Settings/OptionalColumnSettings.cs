@@ -10,15 +10,15 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class OptionalColumnSettings : SettingsBase {
-  [ProtoMember(1), OptionValue()]
+  [ProtoMember(1)][OptionValue()]
   public Dictionary<string, OptionalColumnStyle> ColumnStyles { get; set; }
-  [ProtoMember(2), OptionValue()]
+  [ProtoMember(2)][OptionValue()]
   public Dictionary<string, ColumnState> ColumnStates { get; set; }
-  [ProtoMember(3), OptionValue(false)]
+  [ProtoMember(3)][OptionValue(false)]
   public bool RemoveEmptyColumns { get; set; }
-  [ProtoMember(4), OptionValue(true)]
+  [ProtoMember(4)][OptionValue(true)]
   public bool ShowPerformanceCounterColumns { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool ShowPerformanceMetricColumns { get; set; }
 
   public OptionalColumnSettings() {
@@ -31,7 +31,7 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
-    new OptionalColumnStyle() {
+    new() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.Always,
@@ -40,7 +40,7 @@ public class OptionalColumnSettings : SettingsBase {
       PickColorForPercentage = true
     };
   public static OptionalColumnStyle DefaultTimeColumnStyle =>
-    new OptionalColumnStyle() {
+    new() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.IfActiveColumn,
       UseBackColor = OptionalColumnStyle.PartVisibility.Always,
       ShowIcon = OptionalColumnStyle.PartVisibility.IfActiveColumn,
@@ -116,8 +116,8 @@ public class OptionalColumnSettings : SettingsBase {
 
     foreach (var column in columns) {
       // Filter out columns.
-      if ((column.IsPerformanceCounter && !ShowPerformanceCounterColumns) ||
-          (column.IsPerformanceMetric && !ShowPerformanceMetricColumns)) {
+      if (column.IsPerformanceCounter && !ShowPerformanceCounterColumns ||
+          column.IsPerformanceMetric && !ShowPerformanceMetricColumns) {
         continue;
       }
 
@@ -165,25 +165,25 @@ public class OptionalColumnStyle : SettingsBase {
     Never
   }
 
-  [ProtoMember(1), OptionValue("")]
+  [ProtoMember(1)][OptionValue("")]
   public string AlternateTitle { get; set; }
-  [ProtoMember(2), OptionValue(PartVisibility.Never)]
+  [ProtoMember(2)][OptionValue(PartVisibility.Never)]
   public PartVisibility ShowPercentageBar { get; set; }
   [ProtoMember(3)]
   public Color PercentageBarBackColor { get; set; }
-  [ProtoMember(4), OptionValue("#000000")]
+  [ProtoMember(4)][OptionValue("#000000")]
   public Color TextColor { get; set; }
-  [ProtoMember(5), OptionValue(PartVisibility.Never)]
+  [ProtoMember(5)][OptionValue(PartVisibility.Never)]
   public PartVisibility ShowIcon { get; set; }
-  [ProtoMember(6), OptionValue(false)]
+  [ProtoMember(6)][OptionValue(false)]
   public bool PickColorForPercentage { get; set; }
-  [ProtoMember(7), OptionValue(PartVisibility.Never)]
+  [ProtoMember(7)][OptionValue(PartVisibility.Never)]
   public PartVisibility UseBackColor { get; set; }
-  [ProtoMember(8), OptionValue("")]
+  [ProtoMember(8)][OptionValue("")]
   public string BackColorPalette { get; set; }
-  [ProtoMember(9), OptionValue(false)]
+  [ProtoMember(9)][OptionValue(false)]
   public bool InvertColorPalette { get; set; }
-  [ProtoMember(10), OptionValue("#00FFFFFF")]
+  [ProtoMember(10)][OptionValue("#00FFFFFF")]
   public Color BackgroundColor { get; set; }
 
   public override void Reset() {

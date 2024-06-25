@@ -294,7 +294,7 @@ public static class DocumentUtils {
         ToolTip = "",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {

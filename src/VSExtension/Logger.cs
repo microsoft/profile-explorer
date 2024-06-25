@@ -12,7 +12,7 @@ public static class Logger {
   private static IServiceProvider provider_;
   private static Guid panelId_;
   private static string name_;
-  private static object lockObject_ = new object();
+  private static object lockObject_ = new();
 
   public static void Initialize(IServiceProvider provider, string name) {
     provider_ = provider;

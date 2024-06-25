@@ -9,9 +9,9 @@ namespace IRExplorerUI.Profile;
 
 public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
   private class ChunkData {
-    public HashSet<int> StackModules = new HashSet<int>();
-    public HashSet<IRTextFunction> StackFunctions = new HashSet<IRTextFunction>();
-    public Dictionary<int, TimeSpan> ModuleWeights = new Dictionary<int, TimeSpan>();
+    public HashSet<int> StackModules = new();
+    public HashSet<IRTextFunction> StackFunctions = new();
+    public Dictionary<int, TimeSpan> ModuleWeights = new();
     public TimeSpan TotalWeight = TimeSpan.Zero;
     public TimeSpan ProfileWeight = TimeSpan.Zero;
   }
@@ -52,7 +52,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
     filterStackFuncts_.Add(stackFuncts);
   }
 
-  public ProfileData Profile { get; } = new ProfileData();
+  public ProfileData Profile { get; } = new();
 
   public static ProfileData Compute(ProfileData profile, ProfileSampleFilter filter,
                                     int maxChunks = int.MaxValue) {

@@ -101,7 +101,8 @@
           ToolTip="Go back to previous function (Backspace/Mouse Back button)"
           Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
-            <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
+            <Image Source="{StaticResource DockLeftIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
             <TextBlock
               Margin="4,0,0,0"
               VerticalAlignment="Center"
@@ -117,7 +118,8 @@
           ToolTip="Go back to next function (Shift+Backspace/Mouse Forward button)"
           Visibility="{Binding ShowHistoryButtons, Converter={StaticResource BoolToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
-            <Image Source="{StaticResource DockRightIcon}" Style="{StaticResource DisabledImageStyle}" />
+            <Image Source="{StaticResource DockRightIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </StackPanel>
         </Button>
 

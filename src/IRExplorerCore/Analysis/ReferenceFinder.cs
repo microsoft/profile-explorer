@@ -233,7 +233,7 @@ public sealed class ReferenceFinder {
       var ssaDef = GetSSADefinition(op);
 
       if (ssaDef != null) {
-        var list = new List<Reference> {new Reference(ssaDef, ReferenceKind.SSA)};
+        var list = new List<Reference> {new(ssaDef, ReferenceKind.SSA)};
         var useList = FindSSAUses(op);
         useList.ForEach(item => list.Add(new Reference(item, ReferenceKind.SSA)));
         return list;

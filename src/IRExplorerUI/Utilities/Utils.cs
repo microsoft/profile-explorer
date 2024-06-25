@@ -31,11 +31,10 @@ using Xceed.Wpf.Toolkit.Core.Utilities;
 namespace IRExplorerUI;
 
 public static class Utils {
-  private static readonly TaskFactory TaskFactoryInstance = new
-    TaskFactory(CancellationToken.None,
-                TaskCreationOptions.None,
-                TaskContinuationOptions.None,
-                TaskScheduler.Default);
+  private static readonly TaskFactory TaskFactoryInstance = new(CancellationToken.None,
+                                                                TaskCreationOptions.None,
+                                                                TaskContinuationOptions.None,
+                                                                TaskScheduler.Default);
 
   public static TResult RunSync<TResult>(Func<Task<TResult>> func) {
     return TaskFactoryInstance.StartNew<Task<TResult>>(func).
@@ -222,13 +221,14 @@ public static class Utils {
                                                  MessageBoxImage image) {
     if (owner != null) {
       using var centerForm = new DialogCenteringHelper(owner);
-      return MessageBox.Show(App.Current.MainWindow, text, "IR Explorer", buttons, image,
+      return MessageBox.Show(Application.Current.MainWindow, text, "IR Explorer", buttons, image,
                              MessageBoxResult.OK);
     }
     else {
       // Likely called from a non-UI thread, show through the Dispatcher.
-      return App.Current.Dispatcher.Invoke(() => MessageBox.Show(App.Current.MainWindow, text, "IR Explorer", buttons,
-                                                                 image, MessageBoxResult.OK));
+      return Application.Current.Dispatcher.Invoke(() => MessageBox.Show(Application.Current.MainWindow, text,
+                                                                         "IR Explorer", buttons,
+                                                                         image, MessageBoxResult.OK));
     }
   }
 
@@ -602,7 +602,7 @@ public static class Utils {
 
       long total = 0;
 
-      foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
+      foreach (string file in Directory.EnumerateFileSystemEntries(path)) {
         if (!File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
           total += new FileInfo(file).Length;
         }
@@ -1225,7 +1225,7 @@ public static class Utils {
 
   public static Size MeasureString(int letterCount, string fontName, double fontSize,
                                    FontWeight? fontWeight = null) {
-    string dummyString = new string('X', letterCount);
+    string dummyString = new('X', letterCount);
     return MeasureString(dummyString, fontName, fontSize, fontWeight);
   }
 
@@ -1234,7 +1234,7 @@ public static class Utils {
       return MeasureString("X", font, fontSize);
     }
 
-    string dummyString = new string('X', letterCount);
+    string dummyString = new('X', letterCount);
     return MeasureString(dummyString, font, fontSize);
   }
 
@@ -1348,7 +1348,7 @@ public static class Utils {
   public static string ConvertHtmlToClipboardFormat(string html) {
     var encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     byte[] data = Array.Empty<byte>();
-    byte[] header = encoding.GetBytes(String.Format(HEADER, 0, 1, 2, 3));
+    byte[] header = encoding.GetBytes(string.Format(HEADER, 0, 1, 2, 3));
     data = data.Concat(header).ToArray();
 
     int startHtml = data.Length;
@@ -1361,28 +1361,28 @@ public static class Utils {
 
     int endHtml = data.Length;
     byte[] newHeader = encoding.GetBytes(
-      String.Format(HEADER, startHtml, endHtml, startFragment, endFragment));
-    Array.Copy(newHeader, data, length: startHtml);
+      string.Format(HEADER, startHtml, endHtml, startFragment, endFragment));
+    Array.Copy(newHeader, data, startHtml);
     return encoding.GetString(data);
   }
 
-  static readonly string HEADER =
+  private static readonly string HEADER =
     "Version:0.9\r\n" +
     "StartHTML:{0:0000000000}\r\n" +
     "EndHTML:{1:0000000000}\r\n" +
     "StartFragment:{2:0000000000}\r\n" +
     "EndFragment:{3:0000000000}\r\n";
-  static readonly string HTML_START =
+  private static readonly string HTML_START =
     "<html>\r\n" +
     "<body>\r\n" +
     "<!--StartFragment-->";
-  static readonly string HTML_END =
+  private static readonly string HTML_END =
     "<!--EndFragment-->\r\n" +
     "</body>\r\n" +
     "</html>";
 
   public static string RemovePathQuotes(string text) {
-    if(string.IsNullOrEmpty(text)) {
+    if (string.IsNullOrEmpty(text)) {
       return text;
     }
 

@@ -104,7 +104,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
 
   private void RemoveExcludedPath_Click(object sender, RoutedEventArgs e) {
     if (ExcludedPathsList.SelectedItem is string path) {
-      settings_.FinderSettings.DisabledSourceMappings.Remove((path));
+      settings_.FinderSettings.DisabledSourceMappings.Remove(path);
       ReloadExcludedPathsList();
     }
   }

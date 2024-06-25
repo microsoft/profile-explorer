@@ -123,8 +123,7 @@ public class DocumentDiffUpdater {
               ? document.GetOffset(docLineIndex, 0)
               : document.TextLength;
 
-            string imaginaryText =
-              new string(AddedDiffLineChar, otherDiff.Lines[lineIndex].Text.Length);
+            string imaginaryText = new(AddedDiffLineChar, otherDiff.Lines[lineIndex].Text.Length);
 
             document.Insert(offset, imaginaryText + Environment.NewLine);
             result.DiffSegments.Add(new DiffTextSegment(DiffKind.Placeholder, offset,

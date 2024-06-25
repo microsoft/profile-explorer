@@ -127,7 +127,8 @@
           </ListView.View>
           <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
             </Style>
@@ -281,7 +282,8 @@
           </ListView.View>
           <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
             </Style>
@@ -376,7 +378,8 @@
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
-              <GridViewColumn Width="Auto" Header="Functions" DisplayMemberBinding="{Binding FunctionColors.Count}">
+              <GridViewColumn Width="Auto" Header="Functions"
+                              DisplayMemberBinding="{Binding FunctionColors.Count}">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Number of function patterns in the set" />
@@ -384,7 +387,8 @@
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
-              <GridViewColumn Width="Auto" Header="Modules" DisplayMemberBinding="{Binding ModuleColors.Count}">
+              <GridViewColumn Width="Auto" Header="Modules"
+                              DisplayMemberBinding="{Binding ModuleColors.Count}">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Number of module patterns in the set" />
@@ -396,7 +400,8 @@
           </ListView.View>
           <ListView.ItemContainerStyle>
             <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
             </Style>

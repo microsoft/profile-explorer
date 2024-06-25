@@ -39,19 +39,19 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
   public event EventHandler<ThreadActivityAction> ThreadActivityAction;
   public event PropertyChangedEventHandler PropertyChanged;
   public RelayCommand<object> IncludeThreadCommand =>
-    new RelayCommand<object>(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.IncludeThread));
+    new(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.IncludeThread));
   public RelayCommand<object> IncludeSameNameThreadCommand =>
-    new RelayCommand<object>(
+    new(
       obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.IncludeSameNameThread));
   public RelayCommand<object> ExcludeThreadCommand =>
-    new RelayCommand<object>(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.ExcludeThread));
+    new(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.ExcludeThread));
   public RelayCommand<object> ExcludeSameNameThreadCommand =>
-    new RelayCommand<object>(
+    new(
       obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.ExcludeSameNameThread));
   public RelayCommand<object> FilterToThreadCommand =>
-    new RelayCommand<object>(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.FilterToThread));
+    new(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.FilterToThread));
   public RelayCommand<object> FilterToSameNameThreadCommand =>
-    new RelayCommand<object>(
+    new(
       obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.FilterToSameNameThread));
 
   public Brush DisabledMarginBackColor {

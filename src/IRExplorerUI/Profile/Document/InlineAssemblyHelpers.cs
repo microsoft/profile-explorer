@@ -16,7 +16,7 @@ namespace IRExplorerUI.Profile.Document;
 // for block folding - the lines part of a block folding are not numbered.
 sealed class SourceLineNumberMargin : LineNumberMargin {
   private readonly IRDocument textView_;
-  SourceLineProfileResult sourceLineProfileResult_;
+  private SourceLineProfileResult sourceLineProfileResult_;
 
   static SourceLineNumberMargin() {
     DefaultStyleKeyProperty.OverrideMetadata(typeof(SourceLineNumberMargin),

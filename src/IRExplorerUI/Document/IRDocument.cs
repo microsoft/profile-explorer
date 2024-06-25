@@ -72,64 +72,43 @@ public class SelectedBookmarkInfo {
 }
 
 public static class DocumentCommand {
-  public static readonly RoutedUICommand GoToDefinition =
-    new RoutedUICommand("Untitled", "GoToDefinition", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand GoToDefinition = new("Untitled", "GoToDefinition", typeof(IRDocumentHost));
   public static readonly RoutedUICommand GoToDefinitionSkipCopies =
-    new RoutedUICommand("Untitled", "GoToDefinitionSkipCopies", typeof(IRDocumentHost));
+    new("Untitled", "GoToDefinitionSkipCopies", typeof(IRDocumentHost));
   public static readonly RoutedUICommand PreviewDefinition =
-    new RoutedUICommand("Untitled", "PreviewDefinition", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand MarkDefinition =
-    new RoutedUICommand("Untitled", "MarkDefinition", typeof(IRDocumentHost));
+    new("Untitled", "PreviewDefinition", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand MarkDefinition = new("Untitled", "MarkDefinition", typeof(IRDocumentHost));
   public static readonly RoutedUICommand MarkDefinitionBlock =
-    new RoutedUICommand("Untitled", "MarkDefinitionBlock", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand Mark =
-    new RoutedUICommand("Untitled", "Mark", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand MarkIcon =
-    new RoutedUICommand("Untitled", "MarkIcon", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ShowUses =
-    new RoutedUICommand("Untitled", "ShowUses", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand MarkUses =
-    new RoutedUICommand("Untitled", "MarkUses", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand MarkBlock =
-    new RoutedUICommand("Untitled", "MarkBlock", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand MarkReferences =
-    new RoutedUICommand("Untitled", "MarkReferences", typeof(IRDocumentHost));
+    new("Untitled", "MarkDefinitionBlock", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand Mark = new("Untitled", "Mark", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand MarkIcon = new("Untitled", "MarkIcon", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ShowUses = new("Untitled", "ShowUses", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand MarkUses = new("Untitled", "MarkUses", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand MarkBlock = new("Untitled", "MarkBlock", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand MarkReferences = new("Untitled", "MarkReferences", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ShowExpressionGraph =
-    new RoutedUICommand("Untitled", "ShowExpressionGraph", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand NextBlock =
-    new RoutedUICommand("Untitled", "NextBlock", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand PreviousBlock =
-    new RoutedUICommand("Untitled", "PreviousBlock", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ShowReferences =
-    new RoutedUICommand("Untitled", "ShowReferences", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand AddBookmark =
-    new RoutedUICommand("Untitled", "AddBookmark", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand RemoveBookmark =
-    new RoutedUICommand("Untitled", "RemoveBookmark", typeof(IRDocumentHost));
+    new("Untitled", "ShowExpressionGraph", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand NextBlock = new("Untitled", "NextBlock", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand PreviousBlock = new("Untitled", "PreviousBlock", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ShowReferences = new("Untitled", "ShowReferences", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand AddBookmark = new("Untitled", "AddBookmark", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand RemoveBookmark = new("Untitled", "RemoveBookmark", typeof(IRDocumentHost));
   public static readonly RoutedUICommand RemoveAllBookmarks =
-    new RoutedUICommand("Untitled", "RemoveAllBookmarks", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand PreviousBookmark =
-    new RoutedUICommand("Untitled", "PreviousBookmark", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand NextBookmark =
-    new RoutedUICommand("Untitled", "NextBookmark", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ShowBookmarks =
-    new RoutedUICommand("Untitled", "ShowBookmarks", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand FirstBookmark =
-    new RoutedUICommand("Untitled", "FirstBookmark", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand LastBookmark =
-    new RoutedUICommand("Untitled", "LastBookmark", typeof(IRDocumentHost));
+    new("Untitled", "RemoveAllBookmarks", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand PreviousBookmark = new("Untitled", "PreviousBookmark", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand NextBookmark = new("Untitled", "NextBookmark", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ShowBookmarks = new("Untitled", "ShowBookmarks", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand FirstBookmark = new("Untitled", "FirstBookmark", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand LastBookmark = new("Untitled", "LastBookmark", typeof(IRDocumentHost));
   public static readonly RoutedUICommand FocusBlockSelector =
-    new RoutedUICommand("Untitled", "FocusBlockSelector", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ClearMarker =
-    new RoutedUICommand("Untitled", "ClearMarker", typeof(IRDocumentHost));
+    new("Untitled", "FocusBlockSelector", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ClearMarker = new("Untitled", "ClearMarker", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ClearBlockMarkers =
-    new RoutedUICommand("Untitled", "ClearBlockMarkers", typeof(IRDocumentHost));
+    new("Untitled", "ClearBlockMarkers", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ClearInstructionMarkers =
-    new RoutedUICommand("Untitled", "ClearInstructionMarkers", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ClearAllMarkers =
-    new RoutedUICommand("Untitled", "ClearAllMarkers", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand UndoAction =
-    new RoutedUICommand("Untitled", "UndoAction", typeof(IRDocumentHost));
+    new("Untitled", "ClearInstructionMarkers", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ClearAllMarkers = new("Untitled", "ClearAllMarkers", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand UndoAction = new("Untitled", "UndoAction", typeof(IRDocumentHost));
 }
 
 public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
@@ -223,8 +202,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     expressionStyle_ = DefaultHighlightingStyles.LightStyleSet;
     markerChildStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.StyleSet);
     markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
-    registerdTransformers_ = new();
-    registeredHoverPreviews_ = new();
+    registerdTransformers_ = new List<IVisualLineTransformer>();
+    registeredHoverPreviews_ = new List<HoverPreview>();
 
     SetupProperties();
     SetupStableRenderers();
@@ -300,7 +279,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 #if DEBUG
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Execute {action}");
 #endif
-    
+
     switch (action.ActionKind) {
       case DocumentActionKind.SelectElement: {
         if (action.Element != null) {
@@ -662,7 +641,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(this)}: Load saved section {parsedSection}");
 #endif
-    
+
     selectedElements_ = savedState.SelectedElements?.ToHashSet(item => (IRElement)item) ??
                         new HashSet<IRElement>();
 
@@ -741,7 +720,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     if (raiseEvent) {
 #if DEBUG
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
-  #endif
+#endif
       RecordReversibleAction(DocumentActionKind.MarkElement, element);
     }
 
@@ -1015,7 +994,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 #if DEBUG
     Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
 #endif
-    
+
     DuringSectionLoading = true;
     Section = parsedSection.Section;
     Function = parsedSection.Function;
@@ -2935,8 +2914,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     // Don't send event to overlays that may extend under the scrollbar.
     if (!disableOverlayEvents_ &&
         (docVerticalScrollBar_ == null || !docVerticalScrollBar_.IsMouseOver) &&
-        (e.LeftButton == MouseButtonState.Released &&
-         e.RightButton == MouseButtonState.Released)) {
+        e.LeftButton == MouseButtonState.Released &&
+        e.RightButton == MouseButtonState.Released) {
       overlayRenderer_.MouseMoved(e);
     }
   }
@@ -2974,7 +2953,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     Trace.TraceInformation(
       $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
 #endif
-    
+
     // Folding uses the basic block boundaries.
     actionUndoStack_.Clear();
     SetupBlockHighlighter();

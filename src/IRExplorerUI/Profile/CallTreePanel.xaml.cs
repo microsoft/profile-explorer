@@ -31,48 +31,29 @@ public enum CallTreeListItemKind {
 
 //? TODO: Replace all with RelayCommand pattern.
 public static class CallTreeCommand {
-  public static readonly RoutedCommand ExpandHottestCallPath =
-    new RoutedCommand("ExpandHottestCallPath", typeof(FrameworkElement));
-  public static readonly RoutedCommand CollapseCallPath =
-    new RoutedCommand("CollapseCallPath", typeof(FrameworkElement));
-  public static readonly RoutedCommand SelectFunction =
-    new RoutedCommand("SelectFunction", typeof(FrameworkElement));
-  public static readonly RoutedCommand OpenFunction =
-    new RoutedCommand("OpenFunction", typeof(FrameworkElement));
-  public static readonly RoutedCommand OpenFunctionInNewTab =
-    new RoutedCommand("OpenFunctionInNewTab", typeof(FrameworkElement));
-  public static readonly RoutedCommand FocusSearch =
-    new RoutedCommand("FocusSearch", typeof(FrameworkElement));
-  public static readonly RoutedCommand ClearSearch =
-    new RoutedCommand("ClearSearch", typeof(FrameworkElement));
-  public static readonly RoutedCommand PreviousSearchResult =
-    new RoutedCommand("PreviousSearchResult", typeof(FrameworkElement));
-  public static readonly RoutedCommand NextSearchResult =
-    new RoutedCommand("NextSearchResult", typeof(FrameworkElement));
-  public static readonly RoutedCommand GoBack =
-    new RoutedCommand("GoBack", typeof(FrameworkElement));
-  public static readonly RoutedCommand CollapseNodes =
-    new RoutedCommand("CollapseNodes", typeof(FrameworkElement));
+  public static readonly RoutedCommand ExpandHottestCallPath = new("ExpandHottestCallPath", typeof(FrameworkElement));
+  public static readonly RoutedCommand CollapseCallPath = new("CollapseCallPath", typeof(FrameworkElement));
+  public static readonly RoutedCommand SelectFunction = new("SelectFunction", typeof(FrameworkElement));
+  public static readonly RoutedCommand OpenFunction = new("OpenFunction", typeof(FrameworkElement));
+  public static readonly RoutedCommand OpenFunctionInNewTab = new("OpenFunctionInNewTab", typeof(FrameworkElement));
+  public static readonly RoutedCommand FocusSearch = new("FocusSearch", typeof(FrameworkElement));
+  public static readonly RoutedCommand ClearSearch = new("ClearSearch", typeof(FrameworkElement));
+  public static readonly RoutedCommand PreviousSearchResult = new("PreviousSearchResult", typeof(FrameworkElement));
+  public static readonly RoutedCommand NextSearchResult = new("NextSearchResult", typeof(FrameworkElement));
+  public static readonly RoutedCommand GoBack = new("GoBack", typeof(FrameworkElement));
+  public static readonly RoutedCommand CollapseNodes = new("CollapseNodes", typeof(FrameworkElement));
 
   // FlameGraph specific commands.
-  public static readonly RoutedCommand EnlargeNode =
-    new RoutedCommand("EnlargeNode", typeof(FrameworkElement));
-  public static readonly RoutedCommand ChangeRootNode =
-    new RoutedCommand("ChangeRootNode", typeof(FrameworkElement));
-  public static readonly RoutedCommand MarkAllInstances =
-    new RoutedCommand("MarkAllInstances", typeof(FrameworkElement));
-  public static readonly RoutedCommand MarkInstance =
-    new RoutedCommand("MarkInstance", typeof(FrameworkElement));
-  public static readonly RoutedCommand ClearMarkedNodes =
-    new RoutedCommand("ClearMarkedNodes", typeof(FrameworkElement));
+  public static readonly RoutedCommand EnlargeNode = new("EnlargeNode", typeof(FrameworkElement));
+  public static readonly RoutedCommand ChangeRootNode = new("ChangeRootNode", typeof(FrameworkElement));
+  public static readonly RoutedCommand MarkAllInstances = new("MarkAllInstances", typeof(FrameworkElement));
+  public static readonly RoutedCommand MarkInstance = new("MarkInstance", typeof(FrameworkElement));
+  public static readonly RoutedCommand ClearMarkedNodes = new("ClearMarkedNodes", typeof(FrameworkElement));
 
   // Timeline specific commands.
-  public static readonly RoutedCommand RemoveFilters =
-    new RoutedCommand("RemoveFilters", typeof(FrameworkElement));
-  public static readonly RoutedCommand RemoveThreadFilters =
-    new RoutedCommand("RemoveThreadFilters", typeof(FrameworkElement));
-  public static readonly RoutedCommand RemoveAllFilters =
-    new RoutedCommand("RemoveAllFilters", typeof(FrameworkElement));
+  public static readonly RoutedCommand RemoveFilters = new("RemoveFilters", typeof(FrameworkElement));
+  public static readonly RoutedCommand RemoveThreadFilters = new("RemoveThreadFilters", typeof(FrameworkElement));
+  public static readonly RoutedCommand RemoveAllFilters = new("RemoveAllFilters", typeof(FrameworkElement));
 }
 
 public class CallTreeListItem : SearchableProfileItem, ITreeModel {
@@ -209,32 +190,32 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public event PropertyChangedEventHandler PropertyChanged;
 
   //? TODO: Replace all other commands with RelayCommand.
-  public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionCallTreeCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.CallTree);
   });
-  public RelayCommand<object> SelectFunctionFlameGraphCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionFlameGraphCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.FlameGraph);
   });
-  public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionTimelineCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.Timeline);
   });
-  public RelayCommand<object> SelectFunctionSourceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionSourceCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.Source);
   });
-  public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyFunctionNameCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
       string text = Session.CompilerInfo.NameProvider.GetFunctionName(item.Function);
       Clipboard.SetText(text);
     }
   });
-  public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyDemangledFunctionNameCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
       var options = FunctionNameDemanglingOptions.Default;
       string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(item.Function, options);
       Clipboard.SetText(text);
     }
   });
-  public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyFunctionDetailsCommand => new(async obj => {
     if (CallTreeList.SelectedItems.Count > 0) {
       var funcList = new List<SearchableProfileItem>();
 
@@ -247,14 +228,14 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
-  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
       var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
                                                      CallTreeList, Session, null, false, brush);
     }
   });
-  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
       var brush = GetMarkedNodeColor(item);
@@ -268,14 +249,14 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
   }
 
-  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var item = node.Tag as CallTreeListItem;
       var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await OpenFunctionInstance(item, mode);
     }
   });
-  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var item = node.Tag as CallTreeListItem;
       await OpenFunctionInstance(item, OpenSectionKind.NewTabDockRight);
@@ -1147,14 +1128,14 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                                                      e.OriginalSource, () => UpdateMarkedFunctions());
   }
 
-  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) =>
                         markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
     UpdateMarkedFunctions();
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => {
       markingSettings.AddFunctionColor(node.FunctionName, color);

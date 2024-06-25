@@ -14,23 +14,23 @@ public class PreviewPopupSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(false)]
+  [ProtoMember(1)][OptionValue(false)]
   public bool JumpToHottestElement { get; set; }
-  [ProtoMember(2), OptionValue(false)]
+  [ProtoMember(2)][OptionValue(false)]
   public bool UseCompactProfilingColumns { get; set; }
-  [ProtoMember(3), OptionValue(false)]
+  [ProtoMember(3)][OptionValue(false)]
   public bool ShowPerformanceCounterColumns { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public bool ShowPerformanceMetricColumns { get; set; }
-  [ProtoMember(5), OptionValue(false)]
+  [ProtoMember(5)][OptionValue(false)]
   public bool UseSmallerFontSize { get; set; }
-  [ProtoMember(6), OptionValue(false)]
+  [ProtoMember(6)][OptionValue(false)]
   public bool ShowSourcePreviewPopup { get; set; }
-  [ProtoMember(7), OptionValue(650)]
+  [ProtoMember(7)][OptionValue(650)]
   public double PopupWidth { get; set; }
-  [ProtoMember(8), OptionValue(450)]
+  [ProtoMember(8)][OptionValue(450)]
   public double PopupHeight { get; set; }
-  [ProtoMember(9), OptionValue(false)]
+  [ProtoMember(9)][OptionValue(false)]
   public bool IsElementPopup { get; set; }
 
   public override void Reset() {

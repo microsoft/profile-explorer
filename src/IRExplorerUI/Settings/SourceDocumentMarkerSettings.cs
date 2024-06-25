@@ -12,25 +12,25 @@ public class SourceDocumentMarkerSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool AnnotateSourceLines { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool AnnotateInlinees { get; set; }
-  [ProtoMember(3), OptionValue(0.5)]
+  [ProtoMember(3)][OptionValue(0.5)]
   public double VirtualColumnPosition { get; set; }
-  [ProtoMember(4), OptionValue("#696969")]
+  [ProtoMember(4)][OptionValue("#696969")]
   public Color SourceLineTextColor { get; set; }
-  [ProtoMember(5), OptionValue("#00FFFFFF")]
+  [ProtoMember(5)][OptionValue("#00FFFFFF")]
   public Color SourceLineBackColor { get; set; }
-  [ProtoMember(6), OptionValue("#008000")]
+  [ProtoMember(6)][OptionValue("#008000")]
   public Color InlineeOverlayTextColor { get; set; }
-  [ProtoMember(7), OptionValue("#00FFFFFF")]
+  [ProtoMember(7)][OptionValue("#00FFFFFF")]
   public Color InlineeOverlayBackColor { get; set; }
-  [ProtoMember(8), OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool MarkCallTargets { get; set; }
-  [ProtoMember(9), OptionValue("#00008B")]
+  [ProtoMember(9)][OptionValue("#00008B")]
   public Color CallTargetTextColor { get; set; }
-  [ProtoMember(10), OptionValue("#00FFFFFF")]
+  [ProtoMember(10)][OptionValue("#00FFFFFF")]
   public Color CallTargetBackColor { get; set; }
 
   public override void Reset() {

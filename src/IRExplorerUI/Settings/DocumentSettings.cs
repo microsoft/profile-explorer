@@ -12,37 +12,37 @@ public class DocumentSettings : TextViewSettingsBase {
     Reset();
   }
 
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool ShowBlockFolding { get; set; }
-  [ProtoMember(4), OptionValue(true)]
+  [ProtoMember(4)][OptionValue(true)]
   public bool HighlightSourceDefinition { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool HighlightDestinationUses { get; set; }
-  [ProtoMember(6), OptionValue(true)]
+  [ProtoMember(6)][OptionValue(true)]
   public bool HighlightInstructionOperands { get; set; }
-  [ProtoMember(7), OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool ShowInfoOnHover { get; set; }
-  [ProtoMember(8), OptionValue(false)]
+  [ProtoMember(8)][OptionValue(false)]
   public bool ShowInfoOnHoverWithModifier { get; set; }
-  [ProtoMember(9), OptionValue(true)]
+  [ProtoMember(9)][OptionValue(true)]
   public bool ShowPreviewPopup { get; set; }
-  [ProtoMember(13), OptionValue("#EAE4BB")]
+  [ProtoMember(13)][OptionValue("#EAE4BB")]
   public Color DefinitionValueColor { get; set; }
-  [ProtoMember(14), OptionValue("#B7E5C6")]
+  [ProtoMember(14)][OptionValue("#B7E5C6")]
   public Color UseValueColor { get; set; }
-  [ProtoMember(15), OptionValue("#000000")]
+  [ProtoMember(15)][OptionValue("#000000")]
   public Color BorderColor { get; set; }
-  [ProtoMember(16), OptionValue("")]
+  [ProtoMember(16)][OptionValue("")]
   public string SyntaxHighlightingName { get; set; }
-  [ProtoMember(17), OptionValue(0)]
+  [ProtoMember(17)][OptionValue(0)]
   public int DefaultExpressionsLevel { get; set; }
-  [ProtoMember(18), OptionValue(false)]
+  [ProtoMember(18)][OptionValue(false)]
   public bool MarkMultipleDefinitionExpressions { get; set; }
-  [ProtoMember(19), OptionValue(true)]
+  [ProtoMember(19)][OptionValue(true)]
   public bool FilterSourceDefinitions { get; set; }
-  [ProtoMember(20), OptionValue(true)]
+  [ProtoMember(20)][OptionValue(true)]
   public bool FilterDestinationUses { get; set; }
-  [ProtoMember(21), OptionValue()]
+  [ProtoMember(21)][OptionValue()]
   public SourceDocumentMarkerSettings SourceMarkerSettings { get; set; }
 
   public override void Reset() {

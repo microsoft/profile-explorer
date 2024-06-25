@@ -50,7 +50,7 @@ public struct ARMOpcodeInfo {
 
 public static class ARMOpcodes {
   private static readonly Dictionary<string, ARMOpcodeInfo> opcodes_ =
-    new Dictionary<string, ARMOpcodeInfo> {
+    new() {
       {"B", new ARMOpcodeInfo(ARMOpcode.B, InstructionKind.Goto)},
       {"BR", new ARMOpcodeInfo(ARMOpcode.BR, InstructionKind.Goto)},
       {"RET", new ARMOpcodeInfo(ARMOpcode.RET, InstructionKind.Return)},
@@ -79,7 +79,7 @@ public static class ARMOpcodes {
       {"BLR", new ARMOpcodeInfo(ARMOpcode.BLR, InstructionKind.Call)},
       {"NOP", new ARMOpcodeInfo(ARMOpcode.NOP, InstructionKind.Other)}
     };
-  private static readonly StringTrie<ARMOpcodeInfo> opcodesTrie_ = new StringTrie<ARMOpcodeInfo>(opcodes_);
+  private static readonly StringTrie<ARMOpcodeInfo> opcodesTrie_ = new(opcodes_);
 
   public static bool GetOpcodeInfo(string value, out ARMOpcodeInfo info) {
     return opcodesTrie_.TryGetValue(value, out info, true);

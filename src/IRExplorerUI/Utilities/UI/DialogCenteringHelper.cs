@@ -110,17 +110,17 @@ public class DialogCenteringHelper : IDisposable {
   [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
-  
+
   [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern int UnhookWindowsHookEx(IntPtr idHook);
-  
+
   [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   [return: MarshalAs(UnmanagedType.Bool)]
   private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,
                                           SetWindowPosFlags uFlags);
-  
+
   private const int WH_CALLWNDPROCRET = 12;
   private IntPtr ownerHandle_;
   private HookProc hookProc_;

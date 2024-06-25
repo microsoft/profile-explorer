@@ -83,7 +83,7 @@ public class Disassembler : IDisposable {
     debugInfo_ = debugInfo;
     funcNameFormatter_ = funcNameFormatter;
     symbolNameResolver_ = symbolNameResolver;
-    sectionLock_ = new();
+    sectionLock_ = new object();
     Initialize(true);
   }
 
@@ -117,7 +117,7 @@ public class Disassembler : IDisposable {
   }
 
   public string DisassembleToText(byte[] data, long startRVA) {
-    codeSectionData_ = new () {(data.AsMemory(), startRVA)};
+    codeSectionData_ = new List<(ReadOnlyMemory<byte> Data, long StartRVA)> {(data.AsMemory(), startRVA)};
     string result = DisassembleToText(startRVA, data.Length);
     codeSectionData_ = null;
     return result;
@@ -402,9 +402,9 @@ public class Disassembler : IDisposable {
     // for binaries that are not dot disassembled.
     if (codeSectionData_ == null) {
       lock (sectionLock_) {
-        if (this.codeSectionData_ == null) {
+        if (codeSectionData_ == null) {
           var codeSections = peInfo_.CodeSectionHeaders;
-          codeSectionData_ = new ();
+          codeSectionData_ = new List<(ReadOnlyMemory<byte> Data, long StartRVA)>();
 
           foreach (var section in codeSections) {
             codeSectionData_.Add((peInfo_.GetSectionData(section), section.VirtualAddress));
@@ -412,7 +412,7 @@ public class Disassembler : IDisposable {
         }
       }
     }
-    
+
     foreach (var section in codeSectionData_) {
       if (rva >= section.StartRVA && rva < section.StartRVA + section.Data.Length) {
         return section;
@@ -652,7 +652,7 @@ public class Disassembler : IDisposable {
     public static InstructionHandle AllocateInstruction(DisassemblerHandle handle) {
       return new InstructionHandle(CreateInstruction(handle));
     }
-    
+
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct Instruction {
       public const int MnemonicLength = 32;

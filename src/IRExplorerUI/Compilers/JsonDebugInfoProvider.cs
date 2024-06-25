@@ -45,7 +45,7 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
       return false;
     }
 
-    if ( !funcInfo.HasSourceLines) {
+    if (!funcInfo.HasSourceLines) {
       return false;
     }
 

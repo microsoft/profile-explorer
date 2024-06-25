@@ -240,7 +240,8 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="70" DisplayMemberBinding="{Binding Process.ProcessId}">
+                        <GridViewColumn Width="70"
+                                        DisplayMemberBinding="{Binding Process.ProcessId}">
                           <GridViewColumnHeader Content="Process ID" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -259,7 +260,8 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="250" DisplayMemberBinding="{Binding Process.ImageFileName}">
+                        <GridViewColumn Width="250"
+                                        DisplayMemberBinding="{Binding Process.ImageFileName}">
                           <GridViewColumnHeader Content="Title" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -271,11 +273,13 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
                         <Setter Property="Background"
                                 Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
-                        <EventSetter Event="MouseDoubleClick" Handler="RunningProcessList_DoubleClick" />
+                        <EventSetter Event="MouseDoubleClick"
+                                     Handler="RunningProcessList_DoubleClick" />
                       </Style>
                     </ListView.ItemContainerStyle>
 
@@ -605,7 +609,8 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.CommandLine}">
+                    <GridViewColumn Width="150"
+                                    DisplayMemberBinding="{Binding Process.CommandLine}">
                       <GridViewColumnHeader Content="Command line" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -617,7 +622,8 @@
                 </ListView.View>
 
                 <ListView.ItemContainerStyle>
-                  <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                  <Style BasedOn="{StaticResource FlatListViewItem}"
+                         TargetType="{x:Type ListViewItem}">
                     <Setter Property="Background"
                             Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
@@ -717,14 +723,15 @@
                     IsChecked="{Binding Path=SymbolSettings.RejectPreviouslyFailedFiles, Mode=TwoWay}"
                     ToolTip="Skip downloading and loading of symbols that could not be found in previous sessions" />
                   <StackPanel Orientation="Horizontal" Margin="20,2,0,0">
-                    <TextBlock Text="Excluded binaries:" VerticalAlignment="Center"></TextBlock>
-                    <TextBlock Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedBinaryFiles.Count}"
-                               VerticalAlignment="Center">
-                    </TextBlock>
-                    <TextBlock Margin="24,0,0,0" Text="Excluded symbols:" VerticalAlignment="Center"></TextBlock>
-                    <TextBlock Margin="4,0,0,0" Text="{Binding  SymbolSettings.RejectedSymbolFiles.Count}"
-                               VerticalAlignment="Center">
-                    </TextBlock>
+                    <TextBlock Text="Excluded binaries:" VerticalAlignment="Center" />
+                    <TextBlock Margin="4,0,0,0"
+                               Text="{Binding  SymbolSettings.RejectedBinaryFiles.Count}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Margin="24,0,0,0" Text="Excluded symbols:"
+                               VerticalAlignment="Center" />
+                    <TextBlock Margin="4,0,0,0"
+                               Text="{Binding  SymbolSettings.RejectedSymbolFiles.Count}"
+                               VerticalAlignment="Center" />
                     <ToggleButton
                       x:Name="ExcludedToggleButton"
                       Height="22"
@@ -748,8 +755,9 @@
                   </StackPanel>
                   <Border Margin="20,4,0,0" BorderBrush="LightGray" BorderThickness="1"
                           Visibility="{Binding IsChecked, ElementName=ExcludedToggleButton, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                                BorderThickness="0">
+                    <TabControl
+                      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                      BorderThickness="0">
                       <TabItem Header="Binaries" Style="{StaticResource TabControlStyle}">
                         <Grid>
                           <Grid.RowDefinitions>
@@ -772,21 +780,24 @@
                             TextSearch.TextPath="ImageName">
                             <ListView.View>
                               <GridView>
-                                <GridViewColumn Width="Auto" Header="File" DisplayMemberBinding="{Binding ImageName}">
+                                <GridViewColumn Width="Auto" Header="File"
+                                                DisplayMemberBinding="{Binding ImageName}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
                                     </Style>
                                   </GridViewColumn.HeaderContainerStyle>
                                 </GridViewColumn>
-                                <GridViewColumn Width="150" Header="Path" DisplayMemberBinding="{Binding ImagePath}">
+                                <GridViewColumn Width="150" Header="Path"
+                                                DisplayMemberBinding="{Binding ImagePath}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
                                     </Style>
                                   </GridViewColumn.HeaderContainerStyle>
                                 </GridViewColumn>
-                                <GridViewColumn Width="Auto" Header="Size" DisplayMemberBinding="{Binding ImageSize}">
+                                <GridViewColumn Width="Auto" Header="Size"
+                                                DisplayMemberBinding="{Binding ImageSize}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -804,7 +815,8 @@
                               </GridView>
                             </ListView.View>
                             <ListView.ItemContainerStyle>
-                              <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                              <Style BasedOn="{StaticResource FlatListViewItem}"
+                                     TargetType="{x:Type ListViewItem}">
                                 <Setter Property="Background"
                                         Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -871,28 +883,32 @@
                             TextSearch.TextPath="ImageName">
                             <ListView.View>
                               <GridView>
-                                <GridViewColumn Width="Auto" Header="File" DisplayMemberBinding="{Binding SymbolName}">
+                                <GridViewColumn Width="Auto" Header="File"
+                                                DisplayMemberBinding="{Binding SymbolName}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
                                     </Style>
                                   </GridViewColumn.HeaderContainerStyle>
                                 </GridViewColumn>
-                                <GridViewColumn Width="150" Header="File" DisplayMemberBinding="{Binding FileName}">
+                                <GridViewColumn Width="150" Header="File"
+                                                DisplayMemberBinding="{Binding FileName}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
                                     </Style>
                                   </GridViewColumn.HeaderContainerStyle>
                                 </GridViewColumn>
-                                <GridViewColumn Width="Auto" Header="Id" DisplayMemberBinding="{Binding Id}">
+                                <GridViewColumn Width="Auto" Header="Id"
+                                                DisplayMemberBinding="{Binding Id}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
                                     </Style>
                                   </GridViewColumn.HeaderContainerStyle>
                                 </GridViewColumn>
-                                <GridViewColumn Width="Auto" Header="Age" DisplayMemberBinding="{Binding Age}">
+                                <GridViewColumn Width="Auto" Header="Age"
+                                                DisplayMemberBinding="{Binding Age}">
                                   <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
                                       <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -902,7 +918,8 @@
                               </GridView>
                             </ListView.View>
                             <ListView.ItemContainerStyle>
-                              <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                              <Style BasedOn="{StaticResource FlatListViewItem}"
+                                     TargetType="{x:Type ListViewItem}">
                                 <Setter Property="Background"
                                         Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -956,8 +973,9 @@
                     IsChecked="{Binding Path=SymbolSettings.CacheSymbolFiles, Mode=TwoWay}"
                     ToolTip="Save the symbol files processing results to the %TEMP% directory for faster subsequent load" />
                   <StackPanel Orientation="Horizontal" Margin="20,2,0,0">
-                    <TextBlock Text="Size on disk:" VerticalAlignment="Center"></TextBlock>
-                    <TextBlock Margin="4,0,0,0" Text="{Binding SymbolSettings.SymbolCacheDirectorySizeMB, StringFormat={}{0} MB}"
+                    <TextBlock Text="Size on disk:" VerticalAlignment="Center" />
+                    <TextBlock Margin="4,0,0,0"
+                               Text="{Binding SymbolSettings.SymbolCacheDirectorySizeMB, StringFormat={}{0} MB}"
                                VerticalAlignment="Center" />
                     <Button
                       Height="22"
@@ -989,8 +1007,8 @@
                 IsExpanded="True">
                 <Expander.Header>
                   <TextBlock FontWeight="Medium" Text="Symbol Paths"
-                             
-                             ToolTip="Symbol server and local search paths for debug info and binary files"/>
+
+                             ToolTip="Symbol server and local search paths for debug info and binary files" />
                 </Expander.Header>
 
                 <Grid Height="300">
@@ -1060,7 +1078,8 @@
                       </GridView>
                     </ListView.View>
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
                         <Setter Property="Background"
                                 Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -1182,8 +1201,9 @@
                       VerticalAlignment="Center"
                       Cursor="Hand"
                       Foreground="DarkBlue">
-                      <Hyperlink NavigateUri="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv"
-                                 RequestNavigate="Hyperlink_RequestNavigate">
+                      <Hyperlink
+                        NavigateUri="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv"
+                        RequestNavigate="Hyperlink_RequestNavigate">
                         Symbol configuration help
                       </Hyperlink>
                     </TextBlock>
@@ -1240,7 +1260,7 @@
                     IsChecked="{Binding Path=SymbolSettings.AuthorizationTokenEnabled, Mode=TwoWay}"
                     ToolTip="Personal Authentication Token used for symbol and source servers" />
 
-                  <TextBlock Text="User/email address" Margin="20,8,0,0"></TextBlock>
+                  <TextBlock Text="User/email address" Margin="20,8,0,0" />
                   <TextBox
                     Height="22"
                     Margin="20,2,8,0"
@@ -1251,7 +1271,7 @@
                     Text="{Binding Path=SymbolSettings.AuthorizationUser, Mode=TwoWay}"
                     TextWrapping="Wrap" />
 
-                  <TextBlock Text="Authentication token" Margin="20,4,0,0"></TextBlock>
+                  <TextBlock Text="Authentication token" Margin="20,4,0,0" />
                   <PasswordBox
                     local:PasswordHelper.Attach="True"
                     local:PasswordHelper.Password="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
@@ -1434,7 +1454,8 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
                         <Setter Property="Background"
                                 Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Description}" />
@@ -1530,7 +1551,8 @@
                           <GridViewColumnHeader Content="Name" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding RelativeCounterName}">
+                        <GridViewColumn Width="100"
+                                        DisplayMemberBinding="{Binding RelativeCounterName}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1539,7 +1561,8 @@
                           <GridViewColumnHeader Content="Relative counter" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding BaseCounterName}">
+                        <GridViewColumn Width="100"
+                                        DisplayMemberBinding="{Binding BaseCounterName}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1560,7 +1583,8 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                      <Style BasedOn="{StaticResource FlatListViewItem}"
+                             TargetType="{x:Type ListViewItem}">
                         <Setter Property="Background"
                                 Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Description}" />

@@ -9,7 +9,7 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class ColumnSettings : SettingsBase {
-  [ProtoMember(1), OptionValue()]
+  [ProtoMember(1)][OptionValue()]
   public Dictionary<string, ColumnState> ColumnStates { get; set; }
 
   public ColumnSettings() {
@@ -103,11 +103,11 @@ public class ColumnSettings : SettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class ColumnState : SettingsBase {
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool IsVisible { get; set; }
-  [ProtoMember(2), OptionValue(50)]
+  [ProtoMember(2)][OptionValue(50)]
   public int Width { get; set; }
-  [ProtoMember(3), OptionValue(int.MaxValue)]
+  [ProtoMember(3)][OptionValue(int.MaxValue)]
   public int Order { get; set; }
 
   public ColumnState() {

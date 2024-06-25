@@ -18,7 +18,7 @@ using IRExplorerUI.Controls;
 namespace IRExplorerUI.Document;
 
 public class RemarkEx {
-  private static readonly FontFamily RemarkFont = new FontFamily("Consolas");
+  private static readonly FontFamily RemarkFont = new("Consolas");
   public Remark Remark { get; set; }
   public TextBlock Text => FormatRemarkTextLine(Remark);
   public Brush Background => GetRemarkBackground(Remark);

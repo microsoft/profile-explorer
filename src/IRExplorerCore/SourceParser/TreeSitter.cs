@@ -25,12 +25,12 @@ public enum TSInputEncoding {
 public enum TSSymbolType {
   TSSymbolTypeRegular,
   TSSymbolTypeAnonymous,
-  TSSymbolTypeAuxiliary,
+  TSSymbolTypeAuxiliary
 }
 
 public enum TSLogType {
   TSLogTypeParse,
-  TSLogTypeLex,
+  TSLogTypeLex
 }
 
 public enum TSQuantifier {
@@ -38,13 +38,13 @@ public enum TSQuantifier {
   TSQuantifierZeroOrOne,
   TSQuantifierZeroOrMore,
   TSQuantifierOne,
-  TSQuantifierOneOrMore,
+  TSQuantifierOneOrMore
 }
 
 public enum TSQueryPredicateStepType {
   TSQueryPredicateStepTypeDone,
   TSQueryPredicateStepTypeCapture,
-  TSQueryPredicateStepTypeString,
+  TSQueryPredicateStepTypeString
 }
 
 public enum TSQueryError {
@@ -54,7 +54,7 @@ public enum TSQueryError {
   TSQueryErrorField,
   TSQueryErrorCapture,
   TSQueryErrorStructure,
-  TSQueryErrorLanguage,
+  TSQueryErrorLanguage
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -180,6 +180,7 @@ public sealed class TSParser : IDisposable {
   }
 
 #region PInvoke
+
   [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-cpp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_cpp();
@@ -253,7 +254,7 @@ public sealed class TSParser : IDisposable {
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   //[return: MarshalAs(UnmanagedType.I1)]
   private static extern bool ts_parser_set_included_ranges(IntPtr parser,
-                                                           [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
+                                                           [In][MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
                                                            TSRange[] ranges, uint length);
 
   /**
@@ -493,7 +494,7 @@ public struct TSNode {
     tree = IntPtr.Zero;
   }
 
-  public bool is_zero() { return (id == IntPtr.Zero && tree == IntPtr.Zero); }
+  public bool is_zero() { return id == IntPtr.Zero && tree == IntPtr.Zero; }
   public string type() { return Marshal.PtrToStringAnsi(ts_node_type(this)); }
   public string type(TSLanguage lang) { return lang.symbol_name(symbol()); }
   public ushort symbol() { return ts_node_symbol(this); }
@@ -861,7 +862,7 @@ public sealed class TSCursor : IDisposable {
 
   public string current_symbol() {
     ushort symbol = ts_tree_cursor_current_node(ref cursor).symbol();
-    return (symbol != UInt16.MaxValue) ? lang.symbols[symbol] : "ERROR";
+    return symbol != ushort.MaxValue ? lang.symbols[symbol] : "ERROR";
   }
 
   public ushort current_field_id() { return ts_tree_cursor_current_field_id(ref cursor); }
@@ -1093,7 +1094,7 @@ public sealed class TSQuery : IDisposable {
   private static extern void ts_query_disable_capture(IntPtr query,
                                                       [MarshalAs(UnmanagedType.LPUTF8Str)] string captureName,
                                                       uint captureNameLength);
-  
+
   [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern void ts_query_disable_pattern(IntPtr query, uint patternIndex);
@@ -1156,6 +1157,7 @@ public sealed class TSQueryCursor : IDisposable {
   }
 
 #region PInvoke
+
   [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr ts_query_cursor_new();
@@ -1214,13 +1216,13 @@ public sealed class TSLanguage : IDisposable {
   public TSLanguage(IntPtr ptr) {
     Ptr = ptr;
 
-    symbols = new String[symbol_count() + 1];
+    symbols = new string[symbol_count() + 1];
 
     for (ushort i = 0; i < symbols.Length; i++) {
       symbols[i] = Marshal.PtrToStringAnsi(ts_language_symbol_name(Ptr, i));
     }
 
-    fields = new String[field_count() + 1];
+    fields = new string[field_count() + 1];
     fieldIds = new Dictionary<string, ushort>((int)field_count() + 1);
 
     for (ushort i = 0; i < fields.Length; i++) {
@@ -1258,11 +1260,11 @@ public sealed class TSLanguage : IDisposable {
     return ptr != IntPtr.Zero ? new TSQuery(ptr) : null;
   }
 
-  public String[] symbols;
-  public String[] fields;
-  public Dictionary<String, ushort> fieldIds;
+  public string[] symbols;
+  public string[] fields;
+  public Dictionary<string, ushort> fieldIds;
   public uint symbol_count() { return ts_language_symbol_count(Ptr); }
-  public string symbol_name(ushort symbol) { return (symbol != UInt16.MaxValue) ? symbols[symbol] : "ERROR"; }
+  public string symbol_name(ushort symbol) { return symbol != ushort.MaxValue ? symbols[symbol] : "ERROR"; }
 
   public ushort symbol_for_name(string str, bool is_named) {
     return ts_language_symbol_for_name(Ptr, str, (uint)str.Length, is_named);

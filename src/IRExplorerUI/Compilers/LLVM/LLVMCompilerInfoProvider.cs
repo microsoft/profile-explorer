@@ -38,9 +38,9 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
-  public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
-  public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
-  public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
+  public List<QueryDefinition> BuiltinQueries => new();
+  public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
+  public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
 
   public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
     return new BasicBlockFoldingStrategy(function);

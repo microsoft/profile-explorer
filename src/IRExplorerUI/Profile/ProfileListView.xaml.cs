@@ -18,7 +18,7 @@ using IRExplorerUI.Utilities;
 namespace IRExplorerUI.Profile;
 
 public class ProfileListViewItem : SearchableProfileItem {
-  CallTreeNodeSettings settings_;
+  private CallTreeNodeSettings settings_;
   private object associatedObject_;
   private Brush functionBackColor_;
   private Brush moduleBackColor_;
@@ -245,7 +245,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
   public event EventHandler MarkingChanged;
   public event PropertyChangedEventHandler PropertyChanged;
-  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
@@ -258,11 +258,11 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
   }
 
-  public RelayCommand<object> OpenFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenFunctionCommand => new(async obj => {
     var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
   });
-  public RelayCommand<object> OpenFunctionInNewTabCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
     await OpenFunction(OpenSectionKind.NewTabDockRight);
   });
 
@@ -272,18 +272,18 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.CallTreeNode.Function, "",
                                                      ItemList, session_, filter);
     }
   });
-  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
   });
-  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
     await OpenFunctionInstance(OpenSectionKind.NewTabDockRight);
   });
 
@@ -294,35 +294,35 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public RelayCommand<object> SelectFunctionSummaryCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionSummaryCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Section);
   });
-  public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionCallTreeCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
-  public RelayCommand<object> SelectFunctionFlameGraphCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionFlameGraphCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.FlameGraph);
   });
-  public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionTimelineCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Timeline);
   });
-  public RelayCommand<object> ToggleSearchCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> ToggleSearchCommand => new(async obj => {
     SearchPanelVisible = !SearchPanelVisible;
   });
-  public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyFunctionNameCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item) {
       string text = Session.CompilerInfo.NameProvider.GetFunctionName(item.CallTreeNode.Function);
       Clipboard.SetText(text);
     }
   });
-  public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyDemangledFunctionNameCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item) {
       var options = FunctionNameDemanglingOptions.Default;
       string text = Session.CompilerInfo.NameProvider.DemangleFunctionName(item.CallTreeNode.Function, options);
       Clipboard.SetText(text);
     }
   });
-  public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyFunctionDetailsCommand => new(async obj => {
     if (ItemList.SelectedItems.Count > 0) {
       var funcList = new List<SearchableProfileItem>();
 
@@ -333,7 +333,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
-  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
 
     foreach (object item in ItemList.SelectedItems) {
@@ -347,7 +347,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     UpdateMarkedFunctions();
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
 
     foreach (object item in ItemList.SelectedItems) {
@@ -361,17 +361,17 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     UpdateMarkedFunctions();
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-  public RelayCommand<object> CopyCategoriesCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyCategoriesCommand => new(async obj => {
     if (categories_ != null) {
       ProfilingExporting.CopyFunctionMarkingsAsHtml(categories_, Session);
     }
   });
-  public RelayCommand<object> ExportCategoriesHtmlCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> ExportCategoriesHtmlCommand => new(async obj => {
     if (categories_ != null) {
       await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(categories_, Session);
     }
   });
-  public RelayCommand<object> ExportCategoriesMarkdownCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> ExportCategoriesMarkdownCommand => new(async obj => {
     if (categories_ != null) {
       await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(categories_, Session);
     }

@@ -84,7 +84,7 @@ public class ASMDiffInputFilter : IDiffInputFilter {
     }
 
     string newLinePrefix = newLine.Substring(0, index);
-    string newLinePrefixReplacement = new string(' ', index);
+    string newLinePrefixReplacement = new(' ', index);
     newLine = newLinePrefixReplacement + newLine.Substring(index); //? TODO: In-place replace?
     replacements.Add(new FilteredDiffInput.Replacement(0, newLinePrefixReplacement, newLinePrefix));
     return (newLine, replacements);

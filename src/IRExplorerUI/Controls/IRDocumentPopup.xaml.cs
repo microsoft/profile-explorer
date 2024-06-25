@@ -653,7 +653,7 @@ public class PreviewPopupArgs {
       RelativeElement = relativeElement,
       Title = title,
       ProfilerFilter = profileFilter,
-      ShowSourceCode = showSourceCode,
+      ShowSourceCode = showSourceCode
     };
   }
 
@@ -671,7 +671,7 @@ public class PreviewPopupArgs {
       RelativeElement = relativeElement,
       Title = title,
       ProfilerFilter = profileFilter,
-      ShowSourceCode = showSourceCode,
+      ShowSourceCode = showSourceCode
     };
   }
 
@@ -680,7 +680,7 @@ public class PreviewPopupArgs {
     return new PreviewPopupArgs {
       LoadedSection = section,
       RelativeElement = relativeElement,
-      Title = title,
+      Title = title
     };
   }
 

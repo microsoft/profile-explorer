@@ -573,7 +573,8 @@
                       Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
                       <MenuItem>
                         <MenuItem.Header>
-                          <client:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+                          <client:ColorSelector
+                            ColorSelectedCommand="{Binding MarkFunctionCommand}" />
                         </MenuItem.Header>
                       </MenuItem>
                     </ContextMenu>

@@ -311,7 +311,7 @@ public sealed class ProfileCallTree {
       //funcLock_.ExitReadLock();
     }
 
-    return new();
+    return new List<ProfileCallTreeNode>();
   }
 
   public List<ProfileCallTreeNode> GetSortedCallTreeNodes(IRTextFunction function) {

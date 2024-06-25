@@ -21,7 +21,7 @@ public class DefinitionPanelState {
 public partial class DefinitionPanel : ToolPanelControl {
   private IRElement definedOperand_;
   private CancelableTaskInstance loadTask_;
-  
+
   public DefinitionPanel() {
     InitializeComponent();
     loadTask_ = new CancelableTaskInstance(false);
@@ -89,7 +89,7 @@ public partial class DefinitionPanel : ToolPanelControl {
 
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    
+
     if (TextView.Section == section) {
       return;
     }
@@ -115,7 +115,7 @@ public partial class DefinitionPanel : ToolPanelControl {
 
   public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-    
+
     if (TextView.Section != section) {
       return;
     }

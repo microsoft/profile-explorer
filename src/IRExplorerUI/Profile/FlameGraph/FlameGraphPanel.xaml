@@ -10,11 +10,14 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <irExplorerUi:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth" Executed="ExecuteGraphResetWidth" />
+    <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth"
+                    Executed="ExecuteGraphResetWidth" />
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
     <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
-    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult" Executed="PreviousSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.NextSearchResult" Executed="NextSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
+                    Executed="PreviousSearchResultExecuted" />
+    <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
+                    Executed="NextSearchResultExecuted" />
     <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
     <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
@@ -102,7 +105,8 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Go back to previous state (Backspace/Mouse Back)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource DockLeftIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Back" />
             </StackPanel>
           </Button>
@@ -113,7 +117,8 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the graph view to 100% (Ctrl+0)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource ResetWidthIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>
@@ -377,7 +382,8 @@
               Source="{StaticResource ClearIcon}"
               Style="{StaticResource DisabledImageStyle}" />
           </Button>
-          <Separator Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <Image Source="{StaticResource SearchIcon}" />
           <Grid Height="24">

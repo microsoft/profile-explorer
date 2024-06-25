@@ -80,7 +80,8 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="80" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
+          <GridViewColumn Width="80"
+                          irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
             <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -113,7 +114,8 @@
 
           <GridViewColumn Width="150"
                           irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
-            <GridViewColumnHeader x:Name="ChildExclusiveTimeColumnHeader" Content="{Binding ExclusiveTimeColumnTitle}" />
+            <GridViewColumnHeader x:Name="ChildExclusiveTimeColumnHeader"
+                                  Content="{Binding ExclusiveTimeColumnTitle}" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -130,8 +132,10 @@
             </GridViewColumn.CellTemplate>
           </GridViewColumn>
 
-          <GridViewColumn Width="150" irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowTimeColumn}">
-            <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
+          <GridViewColumn Width="150"
+                          irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowTimeColumn}">
+            <GridViewColumnHeader x:Name="ChildTimeColumnHeader"
+                                  Content="{Binding TimeColumnTitle}" />
 
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -151,7 +155,8 @@
 
           <GridViewColumn Width="180"
                           irExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
-            <GridViewColumnHeader x:Name="ChildCombinedTimeColumnHeader" Content="{Binding TimeColumnTitle}" />
+            <GridViewColumnHeader x:Name="ChildCombinedTimeColumnHeader"
+                                  Content="{Binding TimeColumnTitle}" />
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -173,15 +178,18 @@
       <ListView.ItemContainerStyle>
         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
           <EventSetter Event="MouseDoubleClick" Handler="ItemList_MouseDoubleClick" />
-          <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          <Setter Property="Background"
+                  Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
           <Style.Triggers>
             <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
             </Trigger>
             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+              <Setter Property="Background"
+                      Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
             </Trigger>
           </Style.Triggers>
         </Style>
@@ -416,7 +424,8 @@
                 Source="{StaticResource DocumentIcon}" />
             </MenuItem.Icon>
           </MenuItem>
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}" />
           <MenuItem
             Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}"
             Command="{Binding CopyCategoriesCommand}"

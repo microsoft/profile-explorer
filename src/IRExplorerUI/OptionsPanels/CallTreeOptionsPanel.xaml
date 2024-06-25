@@ -98,8 +98,7 @@
         Style="{StaticResource TabControlStyle}">
         <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
       </TabItem>
-      <TabItem IsEnabled="False" Header="Details Panel" Style="{StaticResource TabControlStyle}">
-      </TabItem>
+      <TabItem IsEnabled="False" Header="Details Panel" Style="{StaticResource TabControlStyle}" />
     </TabControl>
   </Grid>
 </local:OptionsPanelBase>

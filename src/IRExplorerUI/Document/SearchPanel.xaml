@@ -21,10 +21,13 @@
       Command="local:SearchCommand.PreviousResult"
       Executed="PreviousResultExecuted" />
     <CommandBinding Command="local:SearchCommand.ClearText" Executed="ClearTextExecuted" />
-    <CommandBinding Command="local:SearchCommand.ToggleCaseSensitive" Executed="ToggleCaseSensitiveExecuted" />
-    <CommandBinding Command="local:SearchCommand.ToggleWholeWord" Executed="ToggleWholeWordExecuted" />
+    <CommandBinding Command="local:SearchCommand.ToggleCaseSensitive"
+                    Executed="ToggleCaseSensitiveExecuted" />
+    <CommandBinding Command="local:SearchCommand.ToggleWholeWord"
+                    Executed="ToggleWholeWordExecuted" />
     <CommandBinding Command="local:SearchCommand.ToggleRegex" Executed="ToggleRegexExecuted" />
-    <CommandBinding Command="local:SearchCommand.ToggleSearchAll" Executed="ToggleSearchAllExecuted" />
+    <CommandBinding Command="local:SearchCommand.ToggleSearchAll"
+                    Executed="ToggleSearchAllExecuted" />
   </UserControl.CommandBindings>
 
   <UserControl.InputBindings>
@@ -64,7 +67,8 @@
       Modifiers="Alt" />
   </UserControl.InputBindings>
 
-  <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,1,0,1">
+  <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+          BorderThickness="1,1,0,1">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <ToolBarTray
         Grid.Row="0"
@@ -138,7 +142,8 @@
             ToolTip="Use Regular Expressions (Alt+R)">
             <TextBlock FontWeight="ExtraBlack" Text=".*" />
           </ToggleButton>
-          <Separator Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
 
           <ToggleButton

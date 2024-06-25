@@ -13,7 +13,7 @@ namespace IRExplorerCore.FileFormat;
 
 public sealed class FileArchive : IDisposable {
   private const string HeaderFilePath = "HEADER-4F1B8FB1-DD26-4D60-B275-6C0588668EE6";
-  private static readonly Guid FileSignature = new Guid("80BCEE32-5110-4A25-87D3-D359B0C2634C");
+  private static readonly Guid FileSignature = new("80BCEE32-5110-4A25-87D3-D359B0C2634C");
   private const int FileBufferSize = 128 * 1024;
   private const int FileFormatVersion = 1;
   private const int MinFileFormatVersion = 1;
@@ -72,7 +72,7 @@ public sealed class FileArchive : IDisposable {
                       CompressionLevel level = CompressionLevel.Fastest) {
     try {
       var mode = openForWrite ? ZipArchiveMode.Create : ZipArchiveMode.Read;
-      archive_ = new ZipArchive(stream, mode, leaveOpen: false);
+      archive_ = new ZipArchive(stream, mode, false);
     }
     catch {
       stream?.Dispose();
@@ -123,7 +123,7 @@ public sealed class FileArchive : IDisposable {
         continue; // Filter based on kind.
       }
 
-      var entryDir = entry.Directory;
+      string entryDir = entry.Directory;
 
       if (entryDir == directoryPath) {
         yield return entry;
@@ -146,10 +146,10 @@ public sealed class FileArchive : IDisposable {
   public static async Task<FileArchive> LoadAsync(string filePath) {
     try {
       var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
-                                  bufferSize: FileBufferSize, useAsync: false);
+                                  FileBufferSize, false);
       var archive = new FileArchive(stream, false);
 
-      if (!(await archive.LoadHeader().ConfigureAwait(false))) {
+      if (!await archive.LoadHeader().ConfigureAwait(false)) {
         Trace.WriteLine($"Failed to validate archive header for {filePath}");
         return null;
       }
@@ -194,7 +194,7 @@ public sealed class FileArchive : IDisposable {
       }
 
       var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
-                                  bufferSize: FileBufferSize, useAsync: false);
+                                  FileBufferSize, false);
       var archive = new FileArchive(stream, true, compressionLevel);
       return archive;
     }
@@ -221,7 +221,7 @@ public sealed class FileArchive : IDisposable {
                                        bool keepExisting = false) {
     try {
       await using var sourceStream = File.OpenRead(sourceFilePath);
-      var archiveFilePath = Path.GetFileName(sourceFilePath);
+      string archiveFilePath = Path.GetFileName(sourceFilePath);
 
       if (!string.IsNullOrEmpty(optionalDirectory)) {
         archiveFilePath = Path.Combine(optionalDirectory, archiveFilePath);
@@ -243,15 +243,15 @@ public sealed class FileArchive : IDisposable {
       int index = 0;
       OnFileAdded?.Invoke(0, files.Count);
 
-      foreach (var filePath in files) {
+      foreach (string filePath in files) {
         await using var sourceStream = File.OpenRead(filePath);
-        var archiveFilePath = Path.GetFileName(filePath);
+        string archiveFilePath = Path.GetFileName(filePath);
 
         if (!string.IsNullOrEmpty(optionalDirectory)) {
           archiveFilePath = Path.Combine(optionalDirectory, archiveFilePath);
         }
 
-        if (!(await AddFileStreamAsync(sourceStream, archiveFilePath, fileKind, keepExisting).ConfigureAwait(false))) {
+        if (!await AddFileStreamAsync(sourceStream, archiveFilePath, fileKind, keepExisting).ConfigureAwait(false)) {
           return false;
         }
 
@@ -276,7 +276,7 @@ public sealed class FileArchive : IDisposable {
       int index = 0;
       OnFileAdded?.Invoke(0, files.Count);
 
-      foreach (var file in files) {
+      foreach (string file in files) {
         // If file is in a directoryPath subdir, create the corresponding
         // subdir in the archive too, combined with the subdir force by client.
         string subdirPath = Path.GetRelativePath(directoryPath, file);
@@ -286,7 +286,7 @@ public sealed class FileArchive : IDisposable {
           subdirPath = Path.Combine(optionalDirectory, subdirPath);
         }
 
-        if (!(await AddFileAsync(file, fileKind, subdirPath, keepExisting).ConfigureAwait(false))) {
+        if (!await AddFileAsync(file, fileKind, subdirPath, keepExisting).ConfigureAwait(false)) {
           return false;
         }
 
@@ -352,7 +352,7 @@ public sealed class FileArchive : IDisposable {
     int index = 0;
     OnFileExtracted?.Invoke(0, Files.Count);
 
-    foreach (var file in files) {
+    foreach (string file in files) {
       if (!await ExtractFileToDirectoryAsync(file, directoryPath,
                                              preserveArchiveDirs, overwriteExisting).ConfigureAwait(false)) {
         return false;
@@ -419,7 +419,7 @@ public sealed class FileArchive : IDisposable {
         ? Path.Combine(directoryPath, archiveFilePath)
         : Path.Combine(directoryPath, Path.GetFileName(archiveFilePath));
 
-      var outFileDir = Path.GetDirectoryName(outFilePath);
+      string outFileDir = Path.GetDirectoryName(outFilePath);
 
       if (!string.IsNullOrEmpty(outFileDir) &&
           !Directory.Exists(outFileDir)) {
@@ -441,8 +441,8 @@ public sealed class FileArchive : IDisposable {
     OnFileExtracted?.Invoke(0, Files.Count);
 
     foreach (var file in Files) {
-      if (!(await ExtractFileToDirectoryAsync(file, directoryPath,
-                                              preserveArchiveDirs, overwriteExisting).ConfigureAwait(false))) {
+      if (!await ExtractFileToDirectoryAsync(file, directoryPath,
+                                             preserveArchiveDirs, overwriteExisting).ConfigureAwait(false)) {
         return false;
       }
 
@@ -474,7 +474,7 @@ public sealed class FileArchive : IDisposable {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
 
     if (archive == null ||
-        !(await archive.AddFileAsync(sourceFilePath, fileKind, null, false).ConfigureAwait(false))) {
+        !await archive.AddFileAsync(sourceFilePath, fileKind, null, false).ConfigureAwait(false)) {
       return false;
     }
 
@@ -489,7 +489,7 @@ public sealed class FileArchive : IDisposable {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
 
     if (archive == null ||
-        !(await archive.AddFilesAsync(sourceFilePaths, fileKind, null, false).ConfigureAwait(false))) {
+        !await archive.AddFilesAsync(sourceFilePaths, fileKind, null, false).ConfigureAwait(false)) {
       return false;
     }
 
@@ -505,7 +505,7 @@ public sealed class FileArchive : IDisposable {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
 
     if (archive == null ||
-        !(await archive.AddFileStreamAsync(sourceStream, sourceFilePath, fileKind, false).ConfigureAwait(false))) {
+        !await archive.AddFileStreamAsync(sourceStream, sourceFilePath, fileKind, false).ConfigureAwait(false)) {
       return false;
     }
 
@@ -522,8 +522,8 @@ public sealed class FileArchive : IDisposable {
     using var archive = await CreateAsync(archivePath, compressionLevel, overwriteExisting).ConfigureAwait(false);
 
     if (archive == null ||
-        !(await archive.AddDirectoryAsync(directoryPath, includeSubdirs, fileKind, searchPattern, null, false).
-          ConfigureAwait(false))) {
+        !await archive.AddDirectoryAsync(directoryPath, includeSubdirs, fileKind, searchPattern, null, false).
+          ConfigureAwait(false)) {
       return false;
     }
 
@@ -548,7 +548,7 @@ public sealed class FileArchive : IDisposable {
       }
 
       await using var stream = new FileStream(outFilePath, FileMode.CreateNew, FileAccess.Write,
-                                              FileShare.None, bufferSize: FileBufferSize, useAsync: false);
+                                              FileShare.None, FileBufferSize, false);
       return await ExtractFileAsync(archiveFilePath, stream).ConfigureAwait(false);
     }
     catch (Exception ex) {
@@ -621,7 +621,7 @@ public sealed class FileArchive : IDisposable {
     header_ = new Header() {
       Signature = FileSignature,
       Version = FileFormatVersion,
-      Files = new()
+      Files = new List<FileEntry>()
     };
   }
 

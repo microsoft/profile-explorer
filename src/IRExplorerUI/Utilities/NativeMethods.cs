@@ -52,10 +52,10 @@ static class NativeMethods {
   private const uint SWP_NOCOPYBITS = 0x0100;
   private const uint SWP_NOOWNERZORDER = 0x0200; /* Don’t do owner Z ordering */
   private const uint SWP_NOSENDCHANGING = 0x0400; /* Don’t send WM_WINDOWPOSCHANGING */
-  public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-  public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
-  public static readonly IntPtr HWND_TOP = new IntPtr(0);
-  public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+  public static readonly IntPtr HWND_TOPMOST = new(-1);
+  public static readonly IntPtr HWND_NOTOPMOST = new(-2);
+  public static readonly IntPtr HWND_TOP = new(0);
+  public static readonly IntPtr HWND_BOTTOM = new(1);
 
   // C++ function name demangling
   [Flags]
@@ -100,11 +100,11 @@ static class NativeMethods {
     unchecked {
       if (Environment.Is64BitOperatingSystem) {
         long val64 = ptr.ToInt64();
-        return (short)((val64 >> 16) & 0xFFFF);
+        return (short)(val64 >> 16 & 0xFFFF);
       }
 
       int val32 = ptr.ToInt32();
-      return (short)((val32 >> 16) & 0xFFFF);
+      return (short)(val32 >> 16 & 0xFFFF);
     }
   }
 }

@@ -10,7 +10,7 @@ public static class ExtensionMethods {
   private static readonly string[] NewLineStrings = {"\r\n", "\r", "\n"};
 
   public static string Indent(this string value, int spaces) {
-    string whitespace = new string(' ', spaces);
+    string whitespace = new(' ', spaces);
     string valueNoCr = value.Replace("\r\n", "\n", StringComparison.Ordinal);
     return valueNoCr.Replace("\n", $"{Environment.NewLine}{whitespace}", StringComparison.Ordinal);
   }

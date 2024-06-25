@@ -89,62 +89,47 @@ public enum ModuleFieldKind {
 // https://stackoverflow.com/questions/1361350/keyboard-shortcuts-in-wpf
 //? https://stackoverflow.com/questions/13826504/how-do-you-bind-a-command-to-a-menuitem-wpf
 public static class Command {
-  public static readonly RoutedUICommand ClearTextbox =
-    new RoutedUICommand("Clear text", "ClearTextbox", typeof(SectionPanel));
-  public static readonly RoutedUICommand Open =
-    new RoutedUICommand("Open section", "Open", typeof(SectionPanel));
+  public static readonly RoutedUICommand ClearTextbox = new("Clear text", "ClearTextbox", typeof(SectionPanel));
+  public static readonly RoutedUICommand Open = new("Open section", "Open", typeof(SectionPanel));
   public static readonly RoutedUICommand OpenInNewTab =
-    new RoutedUICommand("Open section in new tab", "OpenInNewTab", typeof(SectionPanel));
-  public static readonly RoutedUICommand OpenLeft =
-    new RoutedUICommand("Open section in new tab", "OpenLeft", typeof(SectionPanel));
-  public static readonly RoutedUICommand OpenRight =
-    new RoutedUICommand("Open section in new tab", "OpenRight", typeof(SectionPanel));
+    new("Open section in new tab", "OpenInNewTab", typeof(SectionPanel));
+  public static readonly RoutedUICommand OpenLeft = new("Open section in new tab", "OpenLeft", typeof(SectionPanel));
+  public static readonly RoutedUICommand OpenRight = new("Open section in new tab", "OpenRight", typeof(SectionPanel));
   public static readonly RoutedUICommand OpenSideBySide =
-    new RoutedUICommand("Open section in new tab", "OpenSideBySide", typeof(SectionPanel));
+    new("Open section in new tab", "OpenSideBySide", typeof(SectionPanel));
   public static readonly RoutedUICommand DiffSideBySide =
-    new RoutedUICommand("Open section in new tab", "DiffSideBySide", typeof(SectionPanel));
+    new("Open section in new tab", "DiffSideBySide", typeof(SectionPanel));
   public static readonly RoutedUICommand DiffWithOtherDocument =
-    new RoutedUICommand("Open section in new tab", "DiffWithOtherDocument", typeof(SectionPanel));
+    new("Open section in new tab", "DiffWithOtherDocument", typeof(SectionPanel));
   public static readonly RoutedUICommand SyncDiffedDocuments =
-    new RoutedUICommand("Untitled", "SyncDiffedDocuments", typeof(SectionPanel));
-  public static readonly RoutedUICommand ToggleTag =
-    new RoutedUICommand("Toggle tag", "ToggleTag", typeof(SectionPanel));
-  public static readonly RoutedUICommand PreviousSection =
-    new RoutedUICommand("Untitled", "PreviousSection", typeof(SectionPanel));
-  public static readonly RoutedUICommand NextSection =
-    new RoutedUICommand("Untitled", "NextSection", typeof(SectionPanel));
-  public static readonly RoutedUICommand FocusSearch =
-    new RoutedUICommand("Untitled", "FocusSearch", typeof(SectionPanel));
-  public static readonly RoutedUICommand CopySectionText =
-    new RoutedUICommand("Untitled", "CopySectionText", typeof(SectionPanel));
-  public static readonly RoutedUICommand SaveSectionText =
-    new RoutedUICommand("Untitled", "SaveSectionText", typeof(SectionPanel));
-  public static readonly RoutedUICommand SaveFunctionText =
-    new RoutedUICommand("Untitled", "SaveFunctionText", typeof(SectionPanel));
-  public static readonly RoutedUICommand CopyFunctionText =
-    new RoutedUICommand("Untitled", "CopyFunctionText", typeof(SectionPanel));
+    new("Untitled", "SyncDiffedDocuments", typeof(SectionPanel));
+  public static readonly RoutedUICommand ToggleTag = new("Toggle tag", "ToggleTag", typeof(SectionPanel));
+  public static readonly RoutedUICommand PreviousSection = new("Untitled", "PreviousSection", typeof(SectionPanel));
+  public static readonly RoutedUICommand NextSection = new("Untitled", "NextSection", typeof(SectionPanel));
+  public static readonly RoutedUICommand FocusSearch = new("Untitled", "FocusSearch", typeof(SectionPanel));
+  public static readonly RoutedUICommand CopySectionText = new("Untitled", "CopySectionText", typeof(SectionPanel));
+  public static readonly RoutedUICommand SaveSectionText = new("Untitled", "SaveSectionText", typeof(SectionPanel));
+  public static readonly RoutedUICommand SaveFunctionText = new("Untitled", "SaveFunctionText", typeof(SectionPanel));
+  public static readonly RoutedUICommand CopyFunctionText = new("Untitled", "CopyFunctionText", typeof(SectionPanel));
   public static readonly RoutedUICommand OpenDocumentInEditor =
-    new RoutedUICommand("Untitled", "OpenDocumentInEditor", typeof(SectionPanel));
+    new("Untitled", "OpenDocumentInEditor", typeof(SectionPanel));
   public static readonly RoutedUICommand OpenDocumentInNewInstance =
-    new RoutedUICommand("Untitled", "OpenDocumentInNewInstance", typeof(SectionPanel));
-  public static readonly RoutedUICommand DisplayCallGraph =
-    new RoutedUICommand("Untitled", "DisplayCallGraph", typeof(SectionPanel));
+    new("Untitled", "OpenDocumentInNewInstance", typeof(SectionPanel));
+  public static readonly RoutedUICommand DisplayCallGraph = new("Untitled", "DisplayCallGraph", typeof(SectionPanel));
   public static readonly RoutedUICommand DisplayPartialCallGraph =
-    new RoutedUICommand("Untitled", "DisplayPartialCallGraph", typeof(SectionPanel));
-  public static readonly RoutedUICommand CopyFunctionName =
-    new RoutedUICommand("Untitled", "CopyFunctionName", typeof(SectionPanel));
+    new("Untitled", "DisplayPartialCallGraph", typeof(SectionPanel));
+  public static readonly RoutedUICommand CopyFunctionName = new("Untitled", "CopyFunctionName", typeof(SectionPanel));
   public static readonly RoutedUICommand CopyDemangledFunctionName =
-    new RoutedUICommand("Untitled", "CopyDemangledFunctionName", typeof(SectionPanel));
+    new("Untitled", "CopyDemangledFunctionName", typeof(SectionPanel));
   public static readonly RoutedUICommand ExportFunctionList =
-    new RoutedUICommand("Untitled", "ExportFunctionList", typeof(SectionPanel));
-  public static readonly RoutedUICommand ExportModuleList =
-    new RoutedUICommand("Untitled", "ExportModuleList", typeof(SectionPanel));
+    new("Untitled", "ExportFunctionList", typeof(SectionPanel));
+  public static readonly RoutedUICommand ExportModuleList = new("Untitled", "ExportModuleList", typeof(SectionPanel));
   public static readonly RoutedUICommand CopyFunctionDetails =
-    new RoutedUICommand("Untitled", "CopyFunctionDetails", typeof(SectionPanel));
+    new("Untitled", "CopyFunctionDetails", typeof(SectionPanel));
   public static readonly RoutedUICommand ExportFunctionListHtml =
-    new RoutedUICommand("Untitled", "ExportFunctionListHtml", typeof(SectionPanel));
+    new("Untitled", "ExportFunctionListHtml", typeof(SectionPanel));
   public static readonly RoutedUICommand ExportFunctionListMarkdown =
-    new RoutedUICommand("Untitled", "ExportFunctionListMarkdown", typeof(SectionPanel));
+    new("Untitled", "ExportFunctionListMarkdown", typeof(SectionPanel));
 }
 
 public class OpenSectionEventArgs : EventArgs {
@@ -800,23 +785,23 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
 
   //? TODO: Replace all other commands with RelayCommand.
-  public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionCallTreeCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.CallTree);
   });
-  public RelayCommand<object> SelectFunctionFlameGraphCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionFlameGraphCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.FlameGraph);
   });
-  public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionTimelineCommand => new(async obj => {
     await SelectFunctionInPanel(obj, ToolPanelKind.Timeline);
   });
-  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
     if (obj is IRTextFunctionEx funcEx) {
       var brush = GetMarkedNodeColor(funcEx);
       await IRDocumentPopupInstance.ShowPreviewPopup(funcEx.Function, "",
                                                      FunctionList, Session, null, false, brush);
     }
   });
-  public RelayCommand<object> CopyAllFunctionsCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyAllFunctionsCommand => new(async obj => {
     CopyFunctionListAsHtml(true);
   });
 
@@ -1356,6 +1341,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     if (!SetupSectionExtensions(force)) {
       return new List<IRTextSectionEx>();
     }
+
     var sections = new List<IRTextSectionEx>();
     int sectionIndex = 0;
 
@@ -1528,8 +1514,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         continue;
       }
 
-      if ((!settings_.ShowPerformanceCounterColumns && !counter.IsMetric) ||
-          (!settings_.ShowPerformanceMetricColumns && counter.IsMetric)) {
+      if (!settings_.ShowPerformanceCounterColumns && !counter.IsMetric ||
+          !settings_.ShowPerformanceMetricColumns && counter.IsMetric) {
         continue;
       }
 
@@ -3545,14 +3531,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                                                      e.OriginalSource, () => UpdateMarkedFunctions());
   }
 
-  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) =>
                         markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
     UpdateMarkedFunctions();
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => {
       if (settings_.ShowDemangledNames) {

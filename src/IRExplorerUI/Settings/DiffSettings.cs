@@ -13,50 +13,50 @@ public class DiffSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool IdentifyMinorDiffs { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool FilterInsignificantDiffs { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool ManyDiffsMarkWholeLine { get; set; }
-  [ProtoMember(4), OptionValue(60)]
+  [ProtoMember(4)][OptionValue(60)]
   public int ManyDiffsModificationPercentage { get; set; }
-  [ProtoMember(5), OptionValue(75)]
+  [ProtoMember(5)][OptionValue(75)]
   public int ManyDiffsInsertionPercentage { get; set; }
-  [ProtoMember(6), OptionValue("#FFF6D9")]
+  [ProtoMember(6)][OptionValue("#FFF6D9")]
   public Color ModificationColor { get; set; }
-  [ProtoMember(7), OptionValue("#ff6f00")]
+  [ProtoMember(7)][OptionValue("#ff6f00")]
   public Color ModificationBorderColor { get; set; }
-  [ProtoMember(8), OptionValue("#E2F0D3")]
+  [ProtoMember(8)][OptionValue("#E2F0D3")]
   public Color InsertionColor { get; set; }
-  [ProtoMember(9), OptionValue("#7FA72E")]
+  [ProtoMember(9)][OptionValue("#7FA72E")]
   public Color InsertionBorderColor { get; set; }
-  [ProtoMember(10), OptionValue("#FFE8EA")]
+  [ProtoMember(10)][OptionValue("#FFE8EA")]
   public Color DeletionColor { get; set; }
-  [ProtoMember(11), OptionValue("#B33232")]
+  [ProtoMember(11)][OptionValue("#B33232")]
   public Color DeletionBorderColor { get; set; }
-  [ProtoMember(12), OptionValue("#E1E1E1")]
+  [ProtoMember(12)][OptionValue("#E1E1E1")]
   public Color MinorModificationColor { get; set; }
-  [ProtoMember(13), OptionValue("#8F8F8F")]
+  [ProtoMember(13)][OptionValue("#8F8F8F")]
   public Color MinorModificationBorderColor { get; set; }
-  [ProtoMember(15), OptionValue("#A9A9A9")]
+  [ProtoMember(15)][OptionValue("#A9A9A9")]
   public Color PlaceholderBorderColor { get; set; }
-  [ProtoMember(16), OptionValue("")]
+  [ProtoMember(16)][OptionValue("")]
   public string ExternalDiffAppPath { get; set; }
-  [ProtoMember(17), OptionValue(DiffImplementationKind.Internal)]
+  [ProtoMember(17)][OptionValue(DiffImplementationKind.Internal)]
   [DefaultValue(DiffImplementationKind.Internal)]
   public DiffImplementationKind DiffImplementation { get; set; }
-  [ProtoMember(18), OptionValue(true)]
+  [ProtoMember(18)][OptionValue(true)]
   public bool FilterTempVariableNames { get; set; }
-  [ProtoMember(19), OptionValue(true)]
+  [ProtoMember(19)][OptionValue(true)]
   public bool FilterSSADefNumbers { get; set; }
-  [ProtoMember(20), OptionValue(true)]
+  [ProtoMember(20)][OptionValue(true)]
   public bool ShowInsertions { get; set; }
-  [ProtoMember(21), OptionValue(true)]
+  [ProtoMember(21)][OptionValue(true)]
   public bool ShowDeletions { get; set; }
-  [ProtoMember(22), OptionValue(true)]
+  [ProtoMember(22)][OptionValue(true)]
   public bool ShowModifications { get; set; }
-  [ProtoMember(23), OptionValue(true)]
+  [ProtoMember(23)][OptionValue(true)]
   public bool ShowMinorModifications { get; set; }
   public bool ShowAnyChanges => ShowInsertions || ShowDeletions || ShowModifications || ShowMinorModifications;
 

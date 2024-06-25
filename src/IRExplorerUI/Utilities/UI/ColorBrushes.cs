@@ -10,7 +10,7 @@ namespace IRExplorerUI;
 
 public static class ColorBrushes {
   private static readonly ThreadLocal<Dictionary<Color, SolidColorBrush>> brushes_ =
-    new ThreadLocal<Dictionary<Color, SolidColorBrush>>(() => {
+    new(() => {
       return new Dictionary<Color, SolidColorBrush>();
     });
 

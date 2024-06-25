@@ -33,7 +33,7 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestCreateAsync() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.SaveAsync());
 
@@ -43,9 +43,9 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestAddFileAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileAsync(file1));
@@ -60,9 +60,9 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestAddFileStreamAsync() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
     var stream = CreateTestStream(1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileStreamAsync(stream, @"file1.txt"));
@@ -77,9 +77,9 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestAddDirectoryAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddDirectoryAsync(InPath));
@@ -93,12 +93,12 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestAddDirectoryWithSubdirsAsync() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
 
     Directory.CreateDirectory($@"{InPath}\subdir");
-    var file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
+    string file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddDirectoryAsync(InPath, true, searchPattern: "*", optionalDirectory: "clientSubdir"));
@@ -113,12 +113,12 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestAddDirectoryWithoutSubdirsAsync() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
 
     Directory.CreateDirectory($@"{InPath}\subdir");
-    var file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
+    string file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddDirectoryAsync(InPath, false));
@@ -133,10 +133,10 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestAddDirectoryFilteringAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.dat", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.dat", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.dat", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.dat", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddDirectoryAsync(InPath, false, searchPattern: "*.dat"));
@@ -151,9 +151,9 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestLoadAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileAsync(file1));
@@ -170,9 +170,9 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestExtractFileToDirectoryAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileAsync(file1));
@@ -191,11 +191,11 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestExtractAllToDirectoryAsync() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
     Directory.CreateDirectory($@"{InPath}\subdir");
-    var file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
+    string file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddDirectoryAsync(InPath, false));
@@ -210,8 +210,8 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestExtractFileToStreamAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
 
     await FileArchive.CreateFromFileAsync(file1, path, CompressionLevel.Fastest);
     Assert.IsTrue(File.Exists(path));
@@ -227,8 +227,8 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestCreateFromFileAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
 
     await FileArchive.CreateFromFileAsync(file1, path, CompressionLevel.Fastest);
     Assert.IsTrue(File.Exists(path));
@@ -239,7 +239,7 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestCreateFromStreamAsync() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
     var stream = CreateTestStream(1023);
 
     await FileArchive.CreateFromStreamAsync(stream, "file1.txt", path, CompressionLevel.Fastest);
@@ -251,10 +251,10 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestGetFilesOfKind() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileAsync(file1, 123, null, false));
@@ -274,10 +274,10 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestFindFilesInDirectory() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileAsync(file1, 123, "foo", false));
@@ -313,10 +313,10 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestExtractAllFilesOfKindToDirectoryAsync() {
-    var path = $@"{ResultPath}\archive.zip";
-    var file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
+    string path = $@"{ResultPath}\archive.zip";
+    string file1 = CreateTestFile($@"{InPath}\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 4095);
 
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     Assert.IsTrue(await archive.AddFileAsync(file1, 123, null, false));
@@ -333,7 +333,7 @@ public class FileArchiveTest {
     Assert.IsTrue(AreFilesEqual(file3, $@"{OutPath}\foo\file3.txt"));
   }
 
-  class ExtraData {
+  private class ExtraData {
     public int Value1 { get; set; }
     public int Value2 { get; set; }
     public string Value3 { get; set; }
@@ -341,7 +341,7 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestOptionalData() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
     using var archive = await FileArchive.CreateAsync(path, CompressionLevel.Fastest);
     var data = new ExtraData() {
       Value1 = 123,
@@ -364,11 +364,11 @@ public class FileArchiveTest {
 
   [TestMethod]
   public async Task TestPlainZipFile() {
-    var path = $@"{ResultPath}\archive.zip";
+    string path = $@"{ResultPath}\archive.zip";
     Directory.CreateDirectory($@"{InPath}\subdir");
-    var file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
-    var file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
-    var file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
+    string file1 = CreateTestFile($@"{InPath}\subdir\file1.txt", 1023);
+    string file2 = CreateTestFile($@"{InPath}\subdir\file2.txt", 4095);
+    string file3 = CreateTestFile($@"{InPath}\file3.txt", 1023);
 
     // Create zip file without included header,
     // extracting files should still work.
@@ -418,8 +418,8 @@ public class FileArchiveTest {
 
   private static bool AreFilesEqual(string fileA, string fileB) {
     try {
-      var data1 = File.ReadAllBytes(fileA);
-      var data2 = File.ReadAllBytes(fileB);
+      byte[] data1 = File.ReadAllBytes(fileA);
+      byte[] data2 = File.ReadAllBytes(fileB);
       return data1.SequenceEqual(data2);
     }
     catch {
@@ -429,10 +429,10 @@ public class FileArchiveTest {
 
   private static bool AreFilesEqual(Stream stream, string fileB) {
     try {
-      var data1 = new byte[stream.Length];
+      byte[] data1 = new byte[stream.Length];
       stream.Position = 0;
       stream.Read(data1, 0, (int)stream.Length);
-      var data2 = File.ReadAllBytes(fileB);
+      byte[] data2 = File.ReadAllBytes(fileB);
       return data1.SequenceEqual(data2);
     }
     catch {

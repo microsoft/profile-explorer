@@ -67,16 +67,16 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     set => SetField(ref enableSingleNodeActions_, value);
   }
 
-  public RelayCommand<object> SelectFunctionCallTreeCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionCallTreeCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.CallTree);
   });
-  public RelayCommand<object> SelectFunctionTimelineCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionTimelineCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Timeline);
   });
-  public RelayCommand<object> SelectFunctionSourceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> SelectFunctionSourceCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Source);
   });
-  public RelayCommand<object> CopyFunctionNameCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyFunctionNameCommand => new(async obj => {
     string text = "";
 
     foreach (var node in SelectedNodes) {
@@ -91,7 +91,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     Clipboard.SetText(text);
   });
-  public RelayCommand<object> CopyDemangledFunctionNameCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyDemangledFunctionNameCommand => new(async obj => {
     string text = "";
 
     foreach (var node in SelectedNodes) {
@@ -106,7 +106,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     Clipboard.SetText(text);
   });
-  public RelayCommand<object> CopyFunctionDetailsCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyFunctionDetailsCommand => new(async obj => {
     if (SelectedNodes.Count > 0) {
       var funcList = new List<SearchableProfileItem>();
 
@@ -130,42 +130,42 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  public RelayCommand<object> MarkInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkInstanceCommand => new(async obj => {
     MarkSelectedNodes(obj, (node, color) => GraphViewer.MarkNode(node, GraphViewer.MarkedColoredNodeStyle(color)));
   });
-  public RelayCommand<object> MarkAllInstancesCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkAllInstancesCommand => new(async obj => {
     MarkSelectedNodes(
       obj, (node, color) => MarkFunctionInstances(node.Function, GraphViewer.MarkedColoredNodeStyle(color)));
   });
-  public RelayCommand<object> MarkModuleCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
     SettingsUpdated(settings_);
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-  public RelayCommand<object> MarkFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => markingSettings.AddFunctionColor(node.FunctionName, color));
     markingSettings.UseFunctionColors = true;
     SettingsUpdated(settings_);
     MarkingChanged?.Invoke(this, EventArgs.Empty);
   });
-  public RelayCommand<object> MarkTimelineCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> MarkTimelineCommand => new(async obj => {
     if (obj is SelectedColorEventArgs e && GraphViewer.SelectedNode is {HasFunction: true}) {
       GraphViewer.MarkNode(GraphViewer.SelectedNode, GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
       await Session.MarkProfileFunction(GraphViewer.SelectedNode.CallTreeNode, ToolPanelKind.Timeline,
                                         GraphViewer.MarkedColoredNodeStyle(e.SelectedColor));
     }
   });
-  public RelayCommand<object> PreviewFunctionCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var brush = GetMarkedNodeColor(GraphViewer.SelectedNode);
       await IRDocumentPopupInstance.ShowPreviewPopup(GraphViewer.SelectedNode.Function, "",
                                                      GraphViewer, Session, null, false, brush);
     }
   });
-  public RelayCommand<object> PreviewFunctionInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> PreviewFunctionInstanceCommand => new(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
       var brush = GetMarkedNodeColor(GraphViewer.SelectedNode);
@@ -183,14 +183,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
   }
 
-  public RelayCommand<object> OpenInstanceCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
       var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode, mode, filter);
     }
   });
-  public RelayCommand<object> OpenInstanceInNewTabCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
       await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode,
@@ -205,11 +205,11 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
   private double GraphAreaHeight => GraphHost.ViewportHeight;
-  private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
-  private Rect GraphVisibleArea => new Rect(GraphHost.HorizontalOffset,
-                                            GraphHost.VerticalOffset,
-                                            GraphAreaWidth, GraphAreaHeight);
-  private Rect GraphHostBounds => new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight);
+  private Rect GraphArea => new(0, 0, GraphAreaWidth, GraphAreaHeight);
+  private Rect GraphVisibleArea => new(GraphHost.HorizontalOffset,
+                                       GraphHost.VerticalOffset,
+                                       GraphAreaWidth, GraphAreaHeight);
+  private Rect GraphHostBounds => new(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight);
   private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
   private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
   private double PanOffset => Utils.IsKeyboardModifierActive() ?
@@ -565,7 +565,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         SetMaxWidth(args.NewSize.Width, false);
       }
     };
-    
+
     // Setup events for the flame graph area.
     GraphHost.PreviewMouseWheel += OnPreviewMouseWheel;
     MouseLeftButtonDown += OnMouseLeftButtonDown;
@@ -806,7 +806,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (dragging_) {
       EndMouseDragging();
       e.Handled = true;
-      
+
       // Don't deselect nodes if dragging was done.
       var draggingEnd = e.GetPosition(GraphHost);
       var draggingDistance = draggingEnd - draggingStart_;
@@ -816,7 +816,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
         return;
       }
     }
-    
+
     HandleNodeSelection(e);
   }
 

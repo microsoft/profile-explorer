@@ -48,7 +48,7 @@ public static class ProfilingUtils {
     double maxWidth = 0;
 
     var nodes = session.ProfileData.CallTree.GetSortedCallTreeNodes(section.ParentFunction);
-    int maxCallers = nodes.Count >= 2 ? CommonParentCallerIndex(nodes[0], nodes[1]) : Int32.MaxValue;
+    int maxCallers = nodes.Count >= 2 ? CommonParentCallerIndex(nodes[0], nodes[1]) : int.MaxValue;
 
     foreach (var node in nodes) {
       double weightPercentage = funcProfile.ScaleWeight(node.Weight);
@@ -66,7 +66,7 @@ public static class ProfilingUtils {
         ToolTip = tooltip,
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -129,7 +129,7 @@ public static class ProfilingUtils {
         ToolTip = tooltip,
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -186,7 +186,7 @@ public static class ProfilingUtils {
       ToolTip = "Time for code not originating from an inlined function",
       ShowPercentageBar = markerSettings.ShowPercentageBar(nonInlineeWeightPercentage),
       TextWeight = markerSettings.PickTextWeight(nonInlineeWeightPercentage),
-      PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+      PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
     };
     profileItems.Add(nonInlineeValue);
 
@@ -216,7 +216,7 @@ public static class ProfilingUtils {
         ToolTip = tooltip,
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -392,7 +392,7 @@ public static class ProfilingUtils {
                                                                      ProfileCallTreeNode startNode = null) {
     // Collect functions across all markings to compute the "Unmarked" weight.
     var markingCategoryList = new List<FunctionMarkingCategory>();
-    object lockObject = new object();
+    object lockObject = new();
     var tasks = new List<Task>();
 
     foreach (var marking in markings) {
@@ -800,7 +800,7 @@ public static class ProfilingUtils {
         IsChecked = !isCategoriesMenu && category.Marking.IsEnabled,
         StaysOpenOnClick = true,
         Header = value,
-        Tag = !isCategoriesMenu ? category.Marking : (category.HottestFunction ?? new object()),
+        Tag = !isCategoriesMenu ? category.Marking : category.HottestFunction ?? new object(),
         HeaderTemplate = !isCategoriesMenu ? checkableValueTemplate : categoriesValueTemplate,
         Style = category.SortedFunctions is {Count: > 0} ? submenuStyle : menuStyle
       };
@@ -886,7 +886,7 @@ public static class ProfilingUtils {
         Header = funcValue,
         Tag = node.Function,
         HeaderTemplate = valueTemplate,
-        Style = menuStyle,
+        Style = menuStyle
       };
 
       if (menuClickHandler != null) {

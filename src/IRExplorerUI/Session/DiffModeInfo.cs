@@ -26,7 +26,7 @@ public class DiffMarkingResult {
 }
 
 public class DiffModeInfo {
-  public SemaphoreSlim DiffModeChangeCompleted = new SemaphoreSlim(1);
+  public SemaphoreSlim DiffModeChangeCompleted = new(1);
 
   public DiffModeInfo() {
     PassOutputShowBefore = true; //? TODO: Restore settings

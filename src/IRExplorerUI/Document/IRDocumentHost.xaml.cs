@@ -29,40 +29,33 @@ using ProtoBuf;
 namespace IRExplorerUI;
 
 public static class DocumentHostCommand {
-  public static readonly RoutedUICommand ShowSearch =
-    new RoutedUICommand("Untitled", "ShowSearch", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ToggleSearch =
-    new RoutedUICommand("Untitled", "ToggleSearch", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand ShowSectionList =
-    new RoutedUICommand("Untitled", "ShowSectionList", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand PreviousSection =
-    new RoutedUICommand("Untitled", "PreviousSection", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand NextSection =
-    new RoutedUICommand("Untitled", "NextSection", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand SearchSymbol =
-    new RoutedUICommand("Untitled", "SearchSymbol", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ShowSearch = new("Untitled", "ShowSearch", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ToggleSearch = new("Untitled", "ToggleSearch", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand ShowSectionList = new("Untitled", "ShowSectionList", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand PreviousSection = new("Untitled", "PreviousSection", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand NextSection = new("Untitled", "NextSection", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand SearchSymbol = new("Untitled", "SearchSymbol", typeof(IRDocumentHost));
   public static readonly RoutedUICommand SearchSymbolAllSections =
-    new RoutedUICommand("Untitled", "SearchSymbolAllSections", typeof(IRDocumentHost));
+    new("Untitled", "SearchSymbolAllSections", typeof(IRDocumentHost));
   public static readonly RoutedUICommand JumpToProfiledElement =
-    new RoutedUICommand("Untitled", "JumpToProfiledElement", typeof(IRDocumentHost));
+    new("Untitled", "JumpToProfiledElement", typeof(IRDocumentHost));
   public static readonly RoutedUICommand JumpToNextProfiledElement =
-    new RoutedUICommand("Untitled", "JumpToNextProfiledElement", typeof(IRDocumentHost));
+    new("Untitled", "JumpToNextProfiledElement", typeof(IRDocumentHost));
   public static readonly RoutedUICommand JumpToPreviousProfiledElement =
-    new RoutedUICommand("Untitled", "JumpToPreviousProfiledElement", typeof(IRDocumentHost));
+    new("Untitled", "JumpToPreviousProfiledElement", typeof(IRDocumentHost));
   public static readonly RoutedUICommand JumpToNextProfiledBlock =
-    new RoutedUICommand("Untitled", "JumpToNextProfiledBlock", typeof(IRDocumentHost));
+    new("Untitled", "JumpToNextProfiledBlock", typeof(IRDocumentHost));
   public static readonly RoutedUICommand JumpToPreviousProfiledBlock =
-    new RoutedUICommand("Untitled", "JumpToPreviousProfiledBlock", typeof(IRDocumentHost));
+    new("Untitled", "JumpToPreviousProfiledBlock", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfile =
-    new RoutedUICommand("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
+    new("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfileHTML =
-    new RoutedUICommand("Untitled", "ExportFunctionProfileHTML", typeof(IRDocumentHost));
+    new("Untitled", "ExportFunctionProfileHTML", typeof(IRDocumentHost));
   public static readonly RoutedUICommand ExportFunctionProfileMarkdown =
-    new RoutedUICommand("Untitled", "ExportFunctionProfileMarkdown", typeof(IRDocumentHost));
+    new("Untitled", "ExportFunctionProfileMarkdown", typeof(IRDocumentHost));
   public static readonly RoutedUICommand CopySelectedLinesAsHTML =
-    new RoutedUICommand("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
-  public static readonly RoutedUICommand CopySelectedText =
-    new RoutedUICommand("Untitled", "CopySelectedText", typeof(IRDocumentHost));
+    new("Untitled", "CopySelectedLinesAsHTML", typeof(IRDocumentHost));
+  public static readonly RoutedUICommand CopySelectedText = new("Untitled", "CopySelectedText", typeof(IRDocumentHost));
 }
 
 [ProtoContract]
@@ -1246,7 +1239,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         ToolTip = $"Line {block.TextLocation.Line + 1}",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -1298,7 +1291,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         ToolTip = $"Line {element.TextLocation.Line + 1}",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -1435,10 +1428,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    if (remarkList_ is { Count: > 0 }) {
+    if (remarkList_ is {Count: > 0}) {
       await AddRemarks(remarkList_);
     }
-    else if(prevRemarkList is { Count: > 0}) {
+    else if (prevRemarkList is {Count: > 0}) {
       TextView.RemoveRemarks();
     }
   }
@@ -2391,7 +2384,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.Copy();
   }
 
-  public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyDocumentCommand => new(async obj => {
     await DocumentExporting.CopyAllLinesAsHtml(TextView);
   });
 

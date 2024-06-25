@@ -104,6 +104,7 @@ public class SourceFileFinder {
 
                                                      Press Cancel to stop showing the Open File dialog during the current session for source files that cannot be found.
                                                      """, null);
+
         if (result == MessageBoxResult.No ||
             result == MessageBoxResult.Cancel) {
           if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {

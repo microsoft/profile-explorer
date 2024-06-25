@@ -22,15 +22,15 @@ public class TimelineSettings : SettingsBase {
   //?    - hover time
   //?    - same settings in SectionPanel
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool SyncSelection { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool ShowCallStackPopup { get; set; }
-  [ProtoMember(3), OptionValue(0)]
+  [ProtoMember(3)][OptionValue(0)]
   public int CallStackPopupDuration { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public bool GroupThreads { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool UseThreadColors { get; set; }
 
   public (Brush Margin, Brush Samples)

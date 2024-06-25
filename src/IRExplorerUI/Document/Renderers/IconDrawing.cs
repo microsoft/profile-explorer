@@ -10,7 +10,7 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class IconDrawing {
-  public static readonly IconDrawing Empty = new IconDrawing();
+  public static readonly IconDrawing Empty = new();
 
   public IconDrawing() {
     // Used for deserialization.

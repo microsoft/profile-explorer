@@ -30,9 +30,9 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
   public Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)> ThreadWeights { get; set; }
   public bool HasThreadWeights => ThreadWeights != null && ThreadWeights.Count > 0;
-  public virtual List<ProfileCallTreeNode> Nodes => new List<ProfileCallTreeNode>() {this};
+  public virtual List<ProfileCallTreeNode> Nodes => new() {this};
   public IList<ProfileCallTreeNode> Children => children_;
-  public virtual List<ProfileCallTreeNode> Callers => new List<ProfileCallTreeNode> {caller_};
+  public virtual List<ProfileCallTreeNode> Callers => new() {caller_};
 #if DEBUG
   public ProfileCallTreeNode Caller =>
     !IsGroup ? caller_ : throw new InvalidOperationException("For group use Callers");

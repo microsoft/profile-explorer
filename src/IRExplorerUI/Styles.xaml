@@ -52,12 +52,14 @@
             BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}"
             ToolTip="{TemplateBinding ToolTip}">
-            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <GridViewRowPresenter
+              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsSelected" Value="true">
-              <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectedBackgroundBrush}" />
+              <Setter TargetName="Border" Property="Background"
+                      Value="{StaticResource SelectedBackgroundBrush}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="false">
               <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
@@ -89,12 +91,14 @@
             BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}"
             ToolTip="{TemplateBinding ToolTip}">
-            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <GridViewRowPresenter
+              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsSelected" Value="true">
-              <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectedBackgroundBrush}" />
+              <Setter TargetName="Border" Property="Background"
+                      Value="{StaticResource SelectedBackgroundBrush}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="false">
               <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
@@ -124,8 +128,9 @@
             Background="{TemplateBinding Background}"
             BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}">
-            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <GridViewRowPresenter
+              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Border>
 
           <ControlTemplate.Triggers>
@@ -207,14 +212,16 @@
         </MenuItem.Header>
       </MenuItem>
     </MenuItem>
-    <MenuItem Header="Mark Dominance Frontier" ToolTip="Mark all the blocks in its dominance frontier">
+    <MenuItem Header="Mark Dominance Frontier"
+              ToolTip="Mark all the blocks in its dominance frontier">
       <MenuItem>
         <MenuItem.Header>
           <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominanceFrontier" />
         </MenuItem.Header>
       </MenuItem>
     </MenuItem>
-    <MenuItem Header="Mark Post-Dominance Frontier" ToolTip="Mark all the blocks in its post-dominance frontier">
+    <MenuItem Header="Mark Post-Dominance Frontier"
+              ToolTip="Mark all the blocks in its post-dominance frontier">
       <MenuItem>
         <MenuItem.Header>
           <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPostDominanceFrontier" />
@@ -277,7 +284,8 @@
   <Style x:Key="RemarkTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
     <Style.Resources>
       <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFB1D6F1" />
-      <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#FFB1D6F1" />
+      <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                       Color="#FFB1D6F1" />
       <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
       <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
 
@@ -329,7 +337,8 @@
     <Setter Property="VerticalContentAlignment"
             Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
     <Setter Property="Padding" Value="1,0,0,0" />
-    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+    <Setter Property="Foreground"
+            Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
     <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}" />
 
     <Setter Property="Template">
@@ -427,7 +436,8 @@
             <Trigger Property="IsSelected" Value="true">
               <Setter TargetName="Bd" Property="Background"
                       Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-              <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+              <Setter Property="Foreground"
+                      Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
             </Trigger>
             <MultiTrigger>
               <MultiTrigger.Conditions>
@@ -436,10 +446,12 @@
               </MultiTrigger.Conditions>
               <Setter TargetName="Bd" Property="Background"
                       Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-              <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+              <Setter Property="Foreground"
+                      Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
             </MultiTrigger>
             <Trigger Property="IsEnabled" Value="false">
-              <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+              <Setter Property="Foreground"
+                      Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -641,10 +653,13 @@
             <Trigger Property="IsEnabled" Value="False">
               <Setter TargetName="templateRoot" Property="TextElement.Foreground"
                       Value="{StaticResource Menu.Disabled.Foreground}" />
-              <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Menu.Disabled.Foreground}" />
-              <Setter TargetName="RightArrow" Property="Fill" Value="{StaticResource Menu.Disabled.Foreground}" />
+              <Setter TargetName="Glyph" Property="Fill"
+                      Value="{StaticResource Menu.Disabled.Foreground}" />
+              <Setter TargetName="RightArrow" Property="Fill"
+                      Value="{StaticResource Menu.Disabled.Foreground}" />
             </Trigger>
-            <Trigger SourceName="SubMenuScrollViewer" Property="ScrollViewer.CanContentScroll" Value="false">
+            <Trigger SourceName="SubMenuScrollViewer" Property="ScrollViewer.CanContentScroll"
+                     Value="false">
               <Setter TargetName="OpaqueRect" Property="Canvas.Top"
                       Value="{Binding VerticalOffset, ElementName=SubMenuScrollViewer}" />
               <Setter TargetName="OpaqueRect" Property="Canvas.Left"
@@ -743,7 +758,8 @@
             <Trigger Property="IsEnabled" Value="False">
               <Setter TargetName="templateRoot" Property="TextElement.Foreground"
                       Value="{StaticResource Menu.Disabled.Foreground}" />
-              <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Menu.Disabled.Foreground}" />
+              <Setter TargetName="Glyph" Property="Fill"
+                      Value="{StaticResource Menu.Disabled.Foreground}" />
             </Trigger>
             <MultiTrigger>
               <MultiTrigger.Conditions>

@@ -14,7 +14,7 @@ namespace IRExplorerCore.ASM;
 
 public sealed class ASMParser : ParserBase {
   private static Dictionary<string, Keyword> keywordMap_ =
-    new Dictionary<string, Keyword> {
+    new() {
       {"byte", Keyword.Byte},
       {"word", Keyword.Word},
       {"dword", Keyword.Dword},
@@ -34,7 +34,7 @@ public sealed class ASMParser : ParserBase {
       {"h", Keyword.Hex},
       {"H", Keyword.Hex}
     };
-  private static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
+  private static readonly StringTrie<Keyword> keywordTrie_ = new(keywordMap_);
 
   //? TODO: ILT+foo func names not parsed properly
   private long functionSize_;

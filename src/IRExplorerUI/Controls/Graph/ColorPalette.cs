@@ -50,7 +50,7 @@ public class ColorPalette {
         ProfileManaged,
         ProfileKernel,
         LightPastels,
-        Pastels,
+        Pastels
       };
 
       for (int i = 0; i < ColorUtils.LightPastelColors.Length; i++) {
@@ -65,7 +65,7 @@ public class ColorPalette {
   }
 
   public static List<ColorPalette> GradientBuiltinPalettes =>
-    new List<ColorPalette> {
+    new() {
       LightPastels,
       Pastels,
       LightPastels2,
@@ -74,7 +74,7 @@ public class ColorPalette {
       Pastels2,
       Profile,
       ProfileManaged,
-      ProfileKernel,
+      ProfileKernel
     };
   public static List<ColorPalette>[] BuiltinPaletteSets = new List<ColorPalette>[] {
     BuiltinPalettes,
@@ -94,7 +94,7 @@ public class ColorPalette {
   }
 
   public static ColorPalette Profile =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#FFF4F1E8",
       "#FFFCF2D6",
       "#FFFCEED6",
@@ -106,7 +106,7 @@ public class ColorPalette {
       "#FFFCD7D7"
     }, "Profile");
   public static ColorPalette ProfileManaged =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#FFCCDAF2",
       "#FFD4DAEE",
       "#FFDCDAEC",
@@ -117,7 +117,7 @@ public class ColorPalette {
       "#FFF7E0E7"
     }, "ProfileManaged");
   public static ColorPalette ProfileKernel =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#FFCFF7FB",
       "#FFD0F1FB",
       "#FFD0ECFB",
@@ -127,28 +127,26 @@ public class ColorPalette {
       "#FFD1D8FB",
       "#FFD2D3FB"
     }, "ProfileKernel");
-  public static ColorPalette Pastels =>
-    new ColorPalette(ColorUtils.PastelColors, "Pastels");
+  public static ColorPalette Pastels => new(ColorUtils.PastelColors, "Pastels");
   public static ColorPalette Pastels2 =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#E2E2DF", "#D2D2CF", "#E2CFC4", "#F7D9C4",
       "#FAEDCB", "#C9E4DE", "#C6DEF1", "#DBCDF0",
       "#F2C6DE", "#F9C6C9"
     }, "Pastels2");
-  public static ColorPalette LightPastels =>
-    new ColorPalette(ColorUtils.LightPastelColors, "LightPastels");
+  public static ColorPalette LightPastels => new(ColorUtils.LightPastelColors, "LightPastels");
   public static ColorPalette LightPastels2 =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#E8DCE6", "#FFEDE0", "#FCDEE0", "#FAD2E1",
-      "#D3EAE3", "#BEE1E6", "#EDE9DC", "#DFE7FD",
+      "#D3EAE3", "#BEE1E6", "#EDE9DC", "#DFE7FD"
     }, "LightPastels2");
   public static ColorPalette LightPastels3 =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#FFF1E6", "#FDE2E4", "#FAD2E1",
       "#C5DEDD", "#DBE7E4", "#F0EFEB", "#BCD4E6", "#99C1DE"
     }, "LightPastels3");
   public static ColorPalette LightPastels4 =>
-    new ColorPalette(new[] {
+    new(new[] {
       "#F0D7DF", "#F8EAEC", "#F7DDD9",
       "#F7E6DA", "#E3E9DD", "#C4DBD9", "#D4E5E3",
       "#C8C7D6"

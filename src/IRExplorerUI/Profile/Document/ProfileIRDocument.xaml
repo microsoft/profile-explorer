@@ -54,14 +54,16 @@
       CanExecute="JumpToPreviousProfiledElementCanExecute"
       Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
       Executed="JumpToPreviousProfiledElementExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile" Executed="ExportSourceExecuted" />
+    <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfile"
+                    Executed="ExportSourceExecuted" />
     <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileHTML"
                     Executed="ExportSourceHtmlExecuted" />
     <CommandBinding Command="irExplorerUi:DocumentHostCommand.ExportFunctionProfileMarkdown"
                     Executed="ExportSourceMarkdownExecuted" />
     <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedLinesAsHTML"
                     Executed="CopySelectedLinesAsHtmlExecuted" />
-    <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedText" Executed="CopySelectedTextExecuted" />
+    <CommandBinding Command="irExplorerUi:DocumentHostCommand.CopySelectedText"
+                    Executed="CopySelectedTextExecuted" />
   </UserControl.CommandBindings>
   <Grid>
     <Grid.ColumnDefinitions>
@@ -118,7 +120,8 @@
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Jump to hottest profiled line (Ctrl+H)"
               Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-              <Image Source="{StaticResource HotFlameIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource HotFlameIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
             </Button>
             <Button
               Margin="2,0,0,0"
@@ -126,7 +129,8 @@
               Command="irExplorerUi:DocumentHostCommand.JumpToPreviousProfiledElement"
               CommandTarget="{Binding ElementName=TextView}"
               ToolTip="Jump to previous less hot line (Shift+F2)">
-              <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource MinusIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
             </Button>
             <Button
               Margin="0,0,2,0"
@@ -151,7 +155,8 @@
                 OverridesDefaultStyle="True">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource FlowChartSolidIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <Image Source="{StaticResource FlowChartSolidIcon}"
+                           Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="2,0,0,0"
                       VerticalAlignment="Bottom"
@@ -185,7 +190,8 @@
                 Visibility="{Binding IsSourceFileDocument, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TreeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <Image Source="{StaticResource TreeIcon}"
+                           Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="2,0,0,0"
                       VerticalAlignment="Bottom"
@@ -211,7 +217,8 @@
                 OverridesDefaultStyle="True">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource TasklistIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <Image Source="{StaticResource TasklistIcon}"
+                           Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="2,0,0,0"
                       VerticalAlignment="Bottom"
@@ -242,7 +249,8 @@
                 ToolTip="Select threads the function ran on to display">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource FilterIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <Image Source="{StaticResource FilterIcon}"
+                           Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="2,0,0,0"
                       VerticalAlignment="Bottom"
@@ -349,7 +357,8 @@
                 ToolTip="Configure displayed profiling columns">
                 <MenuItem.Header>
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    <Image Source="{StaticResource EyeIcon}"
+                           Style="{StaticResource DisabledImageStyle}" />
                     <TextBlock
                       Margin="4,0,0,0"
                       VerticalAlignment="Bottom"
@@ -444,6 +453,6 @@
       Padding="-1,0,0,0"
       HorizontalAlignment="Stretch"
       VerticalAlignment="Stretch"
-      Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+      Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
   </Grid>
 </UserControl>

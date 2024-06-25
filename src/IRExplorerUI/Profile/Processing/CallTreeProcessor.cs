@@ -4,7 +4,7 @@
 namespace IRExplorerUI.Profile;
 
 public sealed class CallTreeProcessor : ProfileSampleProcessor {
-  public ProfileCallTree CallTree { get; } = new ProfileCallTree();
+  public ProfileCallTree CallTree { get; } = new();
 
   //? TODO: Multi-threading disabled until merging of trees is impl.
   protected override int DefaultThreadCount => 1;

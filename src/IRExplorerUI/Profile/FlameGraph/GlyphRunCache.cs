@@ -9,7 +9,7 @@ using System.Windows.Media;
 namespace IRExplorerUI.Profile;
 
 public class GlyphRunCache {
-  private static readonly Point ZeroPoint = new Point(0, 0);
+  private static readonly Point ZeroPoint = new(0, 0);
   private readonly GlyphTypeface glyphTypeface_;
   private readonly Dictionary<string, Dictionary<double, GlyphInfo>> textGlyphsCache_;
   private readonly Typeface typeFace_;

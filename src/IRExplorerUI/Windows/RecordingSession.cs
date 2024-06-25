@@ -12,7 +12,7 @@ namespace IRExplorerUI;
 
 public class RecordingSession : BindableObject {
   private static readonly SortedList<double, Func<TimeSpan, string>> offsets =
-    new SortedList<double, Func<TimeSpan, string>> {
+    new() {
       {0.75, x => $"{x.TotalSeconds:F0} seconds"},
       {1.5, x => "a minute"},
       {45, x => $"{x.TotalMinutes:F0} minutes"},

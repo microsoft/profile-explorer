@@ -27,25 +27,24 @@ public enum TypeFlags {
 }
 
 public sealed class TypeIR {
-  private static readonly TypeIR boolType_ = new TypeIR(TypeKind.Integer, 0);
-  private static readonly TypeIR doubleType_ = new TypeIR(TypeKind.Float, 8);
-  private static readonly TypeIR floatType_ = new TypeIR(TypeKind.Float, 4);
+  private static readonly TypeIR boolType_ = new(TypeKind.Integer, 0);
+  private static readonly TypeIR doubleType_ = new(TypeKind.Float, 8);
+  private static readonly TypeIR floatType_ = new(TypeKind.Float, 4);
   private static readonly TypeIR[] signedIntTypes_ = {
-    new TypeIR(TypeKind.Integer, 1, TypeFlags.SignedInt),
-    new TypeIR(TypeKind.Integer, 2, TypeFlags.SignedInt),
-    new TypeIR(TypeKind.Integer, 4, TypeFlags.SignedInt),
-    new TypeIR(TypeKind.Integer, 8, TypeFlags.SignedInt)
+    new(TypeKind.Integer, 1, TypeFlags.SignedInt),
+    new(TypeKind.Integer, 2, TypeFlags.SignedInt),
+    new(TypeKind.Integer, 4, TypeFlags.SignedInt),
+    new(TypeKind.Integer, 8, TypeFlags.SignedInt)
   };
-  private static readonly ConcurrentDictionary<TypeIR, TypeIR> uniqueTypes_ =
-    new ConcurrentDictionary<TypeIR, TypeIR>();
-  private static readonly TypeIR unknownType_ = new TypeIR(TypeKind.Unknown, 0);
+  private static readonly ConcurrentDictionary<TypeIR, TypeIR> uniqueTypes_ = new();
+  private static readonly TypeIR unknownType_ = new(TypeKind.Unknown, 0);
   private static readonly TypeIR[] unsignedIntTypes_ = {
-    new TypeIR(TypeKind.Integer, 1, TypeFlags.UnsignedInt),
-    new TypeIR(TypeKind.Integer, 2, TypeFlags.UnsignedInt),
-    new TypeIR(TypeKind.Integer, 4, TypeFlags.UnsignedInt),
-    new TypeIR(TypeKind.Integer, 8, TypeFlags.UnsignedInt)
+    new(TypeKind.Integer, 1, TypeFlags.UnsignedInt),
+    new(TypeKind.Integer, 2, TypeFlags.UnsignedInt),
+    new(TypeKind.Integer, 4, TypeFlags.UnsignedInt),
+    new(TypeKind.Integer, 8, TypeFlags.UnsignedInt)
   };
-  private static readonly TypeIR voidType_ = new TypeIR(TypeKind.Void, 0);
+  private static readonly TypeIR voidType_ = new(TypeKind.Void, 0);
 
   private TypeIR(TypeKind kind, int size, TypeFlags flags = TypeFlags.None) {
     Kind = kind;

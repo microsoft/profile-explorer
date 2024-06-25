@@ -33,7 +33,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private const double EnlargeAnimationDuration = TimePerFrame * 12;
   private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
   private const int MaxPreviewNameLength = 80;
-  private static readonly Typeface DefaultTextFont = new Typeface("Segoe UI");
+  private static readonly Typeface DefaultTextFont = new("Segoe UI");
   private TimelineSettings settings_;
   private bool panelVisible_;
   private ProfileCallTree callTree_;
@@ -583,7 +583,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     state.HasThreadFilter = true;
   }
 
-  ProfileFilterState CreateProfileFilterState() {
+  private ProfileFilterState CreateProfileFilterState() {
     var timeRange = ActivityView.HasFilter ? ActivityView.FilteredRange : null;
     var filter = ConstructProfileSampleFilter(timeRange);
 
@@ -991,7 +991,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async void RemoveThreadFiltersExecuted(object sender, ExecutedRoutedEventArgs e) {
     await RemoveThreadFilters();
   }
-  
+
   private async void RemoveAllFiltersExecuted(object sender, ExecutedRoutedEventArgs e) {
     await RemoveAllFilters();
   }

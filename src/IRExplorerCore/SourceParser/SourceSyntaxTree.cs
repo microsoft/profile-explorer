@@ -19,7 +19,7 @@ public enum SourceSyntaxNodeKind {
   Compound,
   Condition,
   Call,
-  Other,
+  Other
 }
 
 public class SourceSyntaxNode {
@@ -38,7 +38,7 @@ public class SourceSyntaxNode {
   public bool HasChildren => ChildNodes is {Count: > 0};
 
   public void AddChild(SourceSyntaxNode node) {
-    ChildNodes ??= new();
+    ChildNodes ??= new List<SourceSyntaxNode>();
     ChildNodes.Add(node);
     node.ParentNode = this;
   }

@@ -223,7 +223,7 @@ public class ApplicationSettings {
     RecentFiles ??= new List<string>();
     RecentTextSearches ??= new List<string>();
     RecentComparedFiles ??= new List<Tuple<string, string>>();
-    GeneralSettings ??= new();
+    GeneralSettings ??= new GeneralSettings();
     DocumentSettings ??= new DocumentSettings();
     FlowGraphSettings ??= new FlowGraphSettings();
     ExpressionGraphSettings ??= new ExpressionGraphSettings();

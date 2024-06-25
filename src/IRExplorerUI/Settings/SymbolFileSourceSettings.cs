@@ -23,37 +23,37 @@ public class SymbolFileSourceSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue()]
+  [ProtoMember(1)][OptionValue()]
   public List<string> SymbolPaths { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool SourceServerEnabled { get; set; }
-  [ProtoMember(3), OptionValue(false)]
+  [ProtoMember(3)][OptionValue(false)]
   public bool AuthorizationTokenEnabled { get; set; }
-  [ProtoMember(4), OptionValue("")]
+  [ProtoMember(4)][OptionValue("")]
   public string AuthorizationToken { get; set; }
-  [ProtoMember(5), OptionValue(false)]
+  [ProtoMember(5)][OptionValue(false)]
   public bool UseEnvironmentVarSymbolPaths { get; set; }
-  [ProtoMember(6), OptionValue(true)]
+  [ProtoMember(6)][OptionValue(true)]
   public bool SkipLowSampleModules { get; set; }
-  [ProtoMember(7), OptionValue("")]
+  [ProtoMember(7)][OptionValue("")]
   public string AuthorizationUser { get; set; }
-  [ProtoMember(8), OptionValue()]
+  [ProtoMember(8)][OptionValue()]
   public HashSet<BinaryFileDescriptor> RejectedBinaryFiles { get; set; }
-  [ProtoMember(9), OptionValue()]
+  [ProtoMember(9)][OptionValue()]
   public HashSet<SymbolFileDescriptor> RejectedSymbolFiles { get; set; }
-  [ProtoMember(10), OptionValue(false)]
+  [ProtoMember(10)][OptionValue(false)]
   public bool RejectPreviouslyFailedFiles { get; set; }
-  [ProtoMember(11), OptionValue(true)]
+  [ProtoMember(11)][OptionValue(true)]
   public bool IncludeSymbolSubdirectories { get; set; }
-  [ProtoMember(12), OptionValue(true)]
+  [ProtoMember(12)][OptionValue(true)]
   public bool CacheSymbolFiles { get; set; }
-  [ProtoMember(13), OptionValue("")]
+  [ProtoMember(13)][OptionValue("")]
   public string CustomSymbolCacheDirectory { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public string SymbolCacheDirectoryPath => !string.IsNullOrEmpty(CustomSymbolCacheDirectory) ?
     CustomSymbolCacheDirectory :
     DefaultCacheDirectoryPath;
-  public long SymbolCacheDirectorySizeMB => Utils.ComputeDirectorySize(SymbolCacheDirectoryPath) / (1024*1024);
+  public long SymbolCacheDirectorySizeMB => Utils.ComputeDirectorySize(SymbolCacheDirectoryPath) / (1024 * 1024);
 
   public string EnvironmentVarSymbolPath {
     get {
@@ -155,7 +155,7 @@ public class SymbolFileSourceSettings : SettingsBase {
     // will not find them since it doesn't search rerursively.
     var symbolPathSet = new HashSet<string>();
 
-    foreach (var path in SymbolPaths) {
+    foreach (string path in SymbolPaths) {
       symbolPathSet.Add(path);
 
       if (path.StartsWith("srv*", StringComparison.OrdinalIgnoreCase)) {
@@ -187,16 +187,16 @@ public class SymbolFileSourceSettings : SettingsBase {
         }
       }
 
-      foreach (var file in Directory.EnumerateFileSystemEntries(path)) {
+      foreach (string file in Directory.EnumerateFileSystemEntries(path)) {
         if (File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
           BuildSymbolsDirectoriesSet(file, symbolDirs, symbolExtensions, level + 1, maxLevel);
         }
         else if (level > 0) {
           // Top-level directory already included in set,
           // check files only for subdirectories.
-          var extension = Path.GetExtension(file);
+          string extension = Path.GetExtension(file);
 
-          foreach (var symbolExt in symbolExtensions) {
+          foreach (string symbolExt in symbolExtensions) {
             if (extension.Equals(symbolExt, StringComparison.OrdinalIgnoreCase)) {
               symbolDirs.Add(path);
               break;
@@ -286,7 +286,7 @@ public class SymbolFileSourceSettings : SettingsBase {
     return PrintOptions(this);
   }
 
-  class NetAPI32 {
+  private class NetAPI32 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct DSREG_JOIN_INFO {
       public int joinType;

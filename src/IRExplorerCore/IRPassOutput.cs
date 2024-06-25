@@ -6,7 +6,7 @@ using System;
 namespace IRExplorerCore;
 
 public class IRPassOutput {
-  public static readonly IRPassOutput Empty = new IRPassOutput(0, 0, 0, 0);
+  public static readonly IRPassOutput Empty = new(0, 0, 0, 0);
 
   public IRPassOutput(long dataStartOffset, long dataEndOffset, int startLine,
                       int endLine) {

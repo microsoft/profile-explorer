@@ -110,7 +110,7 @@ static class ExtensionMethods {
   private static ConcurrentDictionary<TimeString, string> microsecondTimeStringCache_ = new();
   private static ConcurrentDictionary<TimeString, string> millisecondsTimeStringCache_ = new();
   private static ConcurrentDictionary<TimeString, string> secondsTimeStringCache_ = new();
-  
+
   public static string AsTrimmedPercentageString(this double value, int digits = 2, string suffix = "%") {
     return AsPercentageString(value, digits, true, suffix);
   }
@@ -119,10 +119,10 @@ static class ExtensionMethods {
                                           bool trim = false, string suffix = "%") {
     var entry = new PercentageString(value, digits, trim, suffix);
 
-    if (percentageStringCache_.TryGetValue(entry, out var percentageString)) {
+    if (percentageStringCache_.TryGetValue(entry, out string percentageString)) {
       return percentageString;
     }
-    
+
     value = Math.Round(value * 100, digits);
 
     if (value == 0 && trim) {
@@ -144,10 +144,10 @@ static class ExtensionMethods {
                                            string suffix = " ns") {
     var entry = new TimeString(value, digits, suffix);
 
-    if (nanosecondsTimeStringCache_.TryGetValue(entry, out var timeString)) {
+    if (nanosecondsTimeStringCache_.TryGetValue(entry, out string timeString)) {
       return timeString;
     }
-    
+
     double roundedValue = value.TotalNanoseconds.TruncateToDigits(digits);
     timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
     nanosecondsTimeStringCache_.TryAdd(entry, timeString);
@@ -158,10 +158,10 @@ static class ExtensionMethods {
                                            string suffix = " µs") {
     var entry = new TimeString(value, digits, suffix);
 
-    if (microsecondTimeStringCache_.TryGetValue(entry, out var timeString)) {
+    if (microsecondTimeStringCache_.TryGetValue(entry, out string timeString)) {
       return timeString;
     }
-    
+
     double roundedValue = value.TotalMicroseconds.TruncateToDigits(digits);
     timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
     microsecondTimeStringCache_.TryAdd(entry, timeString);
@@ -172,10 +172,10 @@ static class ExtensionMethods {
                                             string suffix = " ms") {
     var entry = new TimeString(value, digits, suffix);
 
-    if (millisecondsTimeStringCache_.TryGetValue(entry, out var timeString)) {
+    if (millisecondsTimeStringCache_.TryGetValue(entry, out string timeString)) {
       return timeString;
     }
-    
+
     double roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
     timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
     millisecondsTimeStringCache_.TryAdd(entry, timeString);
@@ -186,10 +186,10 @@ static class ExtensionMethods {
                                        string suffix = " s") {
     var entry = new TimeString(value, digits, suffix);
 
-    if (secondsTimeStringCache_.TryGetValue(entry, out var timeString)) {
+    if (secondsTimeStringCache_.TryGetValue(entry, out string timeString)) {
       return timeString;
     }
-    
+
     double roundedValue = value.TotalSeconds.TruncateToDigits(digits);
     timeString = string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
     secondsTimeStringCache_.TryAdd(entry, timeString);

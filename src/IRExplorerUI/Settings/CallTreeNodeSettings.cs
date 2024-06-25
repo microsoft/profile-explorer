@@ -14,43 +14,43 @@ public class CallTreeNodeSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool ShowPreviewPopup { get; set; }
-  [ProtoMember(2), OptionValue(0)]
+  [ProtoMember(2)][OptionValue(0)]
   public int PreviewPopupDuration { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool ExpandInstances { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public bool ExpandHistogram { get; set; }
-  [ProtoMember(5), OptionValue(true)]
+  [ProtoMember(5)][OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
-  [ProtoMember(6), OptionValue()]
+  [ProtoMember(6)][OptionValue()]
   public ProfileListViewFilter FunctionListViewFilter { get; set; }
-  [ProtoMember(7), OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool AlternateListRows { get; set; }
-  [ProtoMember(8), OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool ExpandThreads { get; set; }
-  [ProtoMember(9), OptionValue()]
+  [ProtoMember(9)][OptionValue()]
   public ColumnSettings StackListColumns { get; set; }
-  [ProtoMember(10), OptionValue()]
+  [ProtoMember(10)][OptionValue()]
   public ColumnSettings FunctionListColumns { get; set; }
-  [ProtoMember(11), OptionValue()]
+  [ProtoMember(11)][OptionValue()]
   public ColumnSettings ModuleListColumns { get; set; }
-  [ProtoMember(12), OptionValue()]
+  [ProtoMember(12)][OptionValue()]
   public ColumnSettings ModuleFunctionListColumns { get; set; }
-  [ProtoMember(13), OptionValue()]
+  [ProtoMember(13)][OptionValue()]
   public ColumnSettings CategoryListColumns { get; set; }
-  [ProtoMember(14), OptionValue()]
+  [ProtoMember(14)][OptionValue()]
   public ColumnSettings CategoryFunctionListColumns { get; set; }
-  [ProtoMember(15), OptionValue()]
+  [ProtoMember(15)][OptionValue()]
   public ColumnSettings InstanceListColumns { get; set; }
-  [ProtoMember(16), OptionValue("#F2EA9D")]
+  [ProtoMember(16)][OptionValue("#F2EA9D")]
   public Color HistogramBarColor { get; set; }
-  [ProtoMember(17), OptionValue("#B22222")]
+  [ProtoMember(17)][OptionValue("#B22222")]
   public Color HistogramAverageColor { get; set; }
-  [ProtoMember(18), OptionValue("#00008B")]
+  [ProtoMember(18)][OptionValue("#00008B")]
   public Color HistogramMedianColor { get; set; }
-  [ProtoMember(19), OptionValue("#008000")]
+  [ProtoMember(19)][OptionValue("#008000")]
   public Color HistogramCurrentColor { get; set; }
 
   public override void Reset() {
@@ -86,15 +86,15 @@ public class ProfileListViewFilter : SettingsBase {
 
   public static double DefaultMinWeight = 1;
   public static int DefaultMinItems = 10;
-  [ProtoMember(1), OptionValue(true)]
+  [ProtoMember(1)][OptionValue(true)]
   public bool IsEnabled { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool FilterByWeight { get; set; }
-  [ProtoMember(3), OptionValue(true)]
+  [ProtoMember(3)][OptionValue(true)]
   public bool SortByExclusiveTime { get; set; }
-  [ProtoMember(4), OptionValue(0)]
+  [ProtoMember(4)][OptionValue(0)]
   public int MinItems { get; set; }
-  [ProtoMember(5), OptionValue(0)]
+  [ProtoMember(5)][OptionValue(0)]
   public double MinWeight { get; set; }
 
   public override void Reset() {

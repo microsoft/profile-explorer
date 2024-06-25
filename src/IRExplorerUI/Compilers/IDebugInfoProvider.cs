@@ -14,6 +14,7 @@ namespace IRExplorerUI.Compilers;
 public interface IDebugInfoProvider : IDisposable {
   public Machine? Architecture { get; }
   public SymbolFileSourceSettings SymbolSettings { get; set; }
+
   //bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null);
   bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null);
   void Unload();

@@ -29,8 +29,8 @@ public class SymbolFileCache {
         Directory.CreateDirectory(directoryPath);
       }
 
-      var cacheFile = MakeCacheFilePath(symCache.SymbolFile);
-      var cachePath = Path.Combine(directoryPath, cacheFile);
+      string cacheFile = MakeCacheFilePath(symCache.SymbolFile);
+      string cachePath = Path.Combine(directoryPath, cacheFile);
 
       //? TODO: Convert everything to RunSync or add the support in the FileArchive
       return await FileArchive.CreateFromStreamAsync(outStream, cacheFile, cachePath).ConfigureAwait(false);
@@ -43,8 +43,8 @@ public class SymbolFileCache {
 
   public static async Task<SymbolFileCache> DeserializeAsync(SymbolFileDescriptor symbolFile, string directoryPath) {
     try {
-      var cacheFile = MakeCacheFilePath(symbolFile);
-      var cachePath = Path.Combine(directoryPath, cacheFile);
+      string cacheFile = MakeCacheFilePath(symbolFile);
+      string cachePath = Path.Combine(directoryPath, cacheFile);
 
       if (!File.Exists(cachePath)) {
         return null;

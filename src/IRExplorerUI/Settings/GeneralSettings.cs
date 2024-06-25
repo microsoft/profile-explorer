@@ -16,13 +16,13 @@ public class GeneralSettings : SettingsBase {
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(false)]
+  [ProtoMember(1)][OptionValue(false)]
   public bool DisableHardwareRendering { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool CheckForUpdates { get; set; }
-  [ProtoMember(3), OptionValue(1.0)]
+  [ProtoMember(3)][OptionValue(1.0)]
   public double WindowScaling { get; set; }
-  [ProtoMember(4), OptionValue(0)]
+  [ProtoMember(4)][OptionValue(0)]
   public int ThemeIndex { get; set; }
 
   public override void Reset() {

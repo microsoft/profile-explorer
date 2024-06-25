@@ -17,33 +17,33 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     Reset();
   }
 
-  [ProtoMember(1), OptionValue(ProfileSessionKind.StartProcess)]
+  [ProtoMember(1)][OptionValue(ProfileSessionKind.StartProcess)]
   public ProfileSessionKind SessionKind { get; set; }
-  [ProtoMember(2), OptionValue("")]
+  [ProtoMember(2)][OptionValue("")]
   public string ApplicationPath { get; set; }
-  [ProtoMember(3), OptionValue("")]
+  [ProtoMember(3)][OptionValue("")]
   public string ApplicationArguments { get; set; }
-  [ProtoMember(4), OptionValue("")]
+  [ProtoMember(4)][OptionValue("")]
   public string WorkingDirectory { get; set; }
-  [ProtoMember(5), OptionValue(4000)] // 4 kHz, Xperf default is 1 kHz.
+  [ProtoMember(5)][OptionValue(4000)] // 4 kHz, Xperf default is 1 kHz.
   public int SamplingFrequency { get; set; }
-  [ProtoMember(6), OptionValue(false)]
+  [ProtoMember(6)][OptionValue(false)]
   public bool ProfileDotNet { get; set; }
-  [ProtoMember(7), OptionValue(false)]
+  [ProtoMember(7)][OptionValue(false)]
   public bool ProfileChildProcesses { get; set; }
-  [ProtoMember(8), OptionValue(false)]
+  [ProtoMember(8)][OptionValue(false)]
   public bool RecordPerformanceCounters { get; set; }
-  [ProtoMember(9), OptionValue(false)]
+  [ProtoMember(9)][OptionValue(false)]
   public bool EnableEnvironmentVars { get; set; }
-  [ProtoMember(10), OptionValue()]
+  [ProtoMember(10)][OptionValue()]
   public List<(string Variable, string Value)> EnvironmentVariables { get; set; }
-  [ProtoMember(11), OptionValue()]
+  [ProtoMember(11)][OptionValue()]
   public List<PerformanceCounterConfig> PerformanceCounters { get; set; }
-  [ProtoMember(12), OptionValue("")]
+  [ProtoMember(12)][OptionValue("")]
   public string Title { get; set; }
-  [ProtoMember(13), OptionValue(0)]
+  [ProtoMember(13)][OptionValue(0)]
   public int TargetProcessId { get; set; }
-  [ProtoMember(14), OptionValue(false)]
+  [ProtoMember(14)][OptionValue(false)]
   public bool RecordDotNetAssembly { get; set; }
   public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
   public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);

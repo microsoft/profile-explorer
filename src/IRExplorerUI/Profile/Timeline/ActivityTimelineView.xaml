@@ -115,13 +115,11 @@
           <MenuItem
             Command="{Binding IncludeThreadCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            Header="Include Thread">
-          </MenuItem>
+            Header="Include Thread" />
           <MenuItem
             Command="{Binding ExcludeThreadCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            Header="Exclude Thread">
-          </MenuItem>
+            Header="Exclude Thread" />
           <Separator />
 
           <MenuItem

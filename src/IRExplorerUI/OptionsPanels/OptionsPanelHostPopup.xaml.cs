@@ -43,7 +43,7 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
                                                    ISession session,
                                                    Func<S, bool, Task<S>> newSettingsHandler,
                                                    Action panelClosedHandler,
-                                                   Point positionAdjustment = new Point())
+                                                   Point positionAdjustment = new())
     where T : OptionsPanelBase, new()
     where S : SettingsBase, new() {
     var panel = new T();

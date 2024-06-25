@@ -11,11 +11,11 @@ namespace IRExplorerUI;
 public static class ColorPens {
   private static readonly double BoldPenThickness = 1.25;
   private static ThreadLocal<Dictionary<Tuple<Color, double>, Pen>> pens_ =
-    new ThreadLocal<Dictionary<Tuple<Color, double>, Pen>>(() => {
+    new(() => {
       return new Dictionary<Tuple<Color, double>, Pen>();
     });
   private static ThreadLocal<Dictionary<Tuple<Color, double, DashStyle>, Pen>> dashedPens_ =
-    new ThreadLocal<Dictionary<Tuple<Color, double, DashStyle>, Pen>>(() => {
+    new(() => {
       return new Dictionary<Tuple<Color, double, DashStyle>, Pen>();
     });
 

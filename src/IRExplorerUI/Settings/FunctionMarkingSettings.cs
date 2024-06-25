@@ -14,19 +14,19 @@ namespace IRExplorerUI;
 public class FunctionMarkingSettings : SettingsBase {
   private ColorPalette modulesPalette_;
   private FunctionMarkingSet builtinMarking_;
-  [ProtoMember(1), OptionValue("")]
+  [ProtoMember(1)][OptionValue("")]
   public string Title { get; set; }
-  [ProtoMember(2), OptionValue(true)]
+  [ProtoMember(2)][OptionValue(true)]
   public bool UseAutoModuleColors { get; set; }
-  [ProtoMember(3), OptionValue(false)]
+  [ProtoMember(3)][OptionValue(false)]
   public bool UseModuleColors { get; set; }
-  [ProtoMember(4), OptionValue(false)]
+  [ProtoMember(4)][OptionValue(false)]
   public bool UseFunctionColors { get; set; }
-  [ProtoMember(5), OptionValue("LightPastels")]
+  [ProtoMember(5)][OptionValue("LightPastels")]
   public string ModulesColorPalette { get; set; }
-  [ProtoMember(6), OptionValue()]
+  [ProtoMember(6)][OptionValue()]
   public FunctionMarkingSet CurrentSet { get; set; }
-  [ProtoMember(7), OptionValue()]
+  [ProtoMember(7)][OptionValue()]
   public List<FunctionMarkingSet> SavedSets { get; set; }
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
@@ -104,7 +104,7 @@ public class FunctionMarkingSettings : SettingsBase {
     SavedSets.RemoveAll(set => set.Title == markingSet.Title);
   }
 
-  record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
+  private record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
 
   public bool SaveToFile(string filePath) {
     var markings = new Markings(CurrentSet, SavedSets);
@@ -277,11 +277,11 @@ public class FunctionMarkingSettings : SettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionMarkingSet : SettingsBase {
-  [ProtoMember(1), OptionValue()]
+  [ProtoMember(1)][OptionValue()]
   public List<FunctionMarkingStyle> ModuleColors { get; set; }
-  [ProtoMember(2), OptionValue()]
+  [ProtoMember(2)][OptionValue()]
   public List<FunctionMarkingStyle> FunctionColors { get; set; }
-  [ProtoMember(3), OptionValue("")]
+  [ProtoMember(3)][OptionValue("")]
   public string Title { get; set; }
 
   public FunctionMarkingSet() {
