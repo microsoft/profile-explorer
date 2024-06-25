@@ -23,14 +23,10 @@ using ProtoBuf;
 namespace IRExplorerUI;
 
 public static class ReferenceCommand {
-  public static readonly RoutedUICommand JumpToReference =
-    new RoutedUICommand("Untitled", "JumpToReference", typeof(ReferencesPanel));
-  public static readonly RoutedUICommand CopyToClipboard =
-    new RoutedUICommand("Untitled", "CopyToClipboard", typeof(ReferencesPanel));
-  public static readonly RoutedUICommand MarkReference =
-    new RoutedUICommand("Untitled", "MarkReference", typeof(ReferencesPanel));
-  public static readonly RoutedUICommand UnmarkReference =
-    new RoutedUICommand("Untitled", "UnmarkReference", typeof(ReferencesPanel));
+  public static readonly RoutedUICommand JumpToReference = new("Untitled", "JumpToReference", typeof(ReferencesPanel));
+  public static readonly RoutedUICommand CopyToClipboard = new("Untitled", "CopyToClipboard", typeof(ReferencesPanel));
+  public static readonly RoutedUICommand MarkReference = new("Untitled", "MarkReference", typeof(ReferencesPanel));
+  public static readonly RoutedUICommand UnmarkReference = new("Untitled", "UnmarkReference", typeof(ReferencesPanel));
 }
 
 public class ReferenceSummary {
@@ -43,7 +39,7 @@ public class ReferenceSummary {
 public class ReferenceInfo {
   //? TODO: Should match editor font, not be hardcoded
   //? Needs to listen to DocumentSettings event change to update font used too
-  private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
+  private static readonly FontFamily PreviewFont = new("Consolas");
   private OperandIR operand_;
   private ReadOnlyMemory<char> documentText_;
   private string previewText_;

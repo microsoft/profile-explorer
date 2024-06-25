@@ -12,7 +12,8 @@
   mc:Ignorable="d">
 
   <local:OptionsPanelBase.Resources>
-    <CollectionViewSource x:Key="FontCollection" Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
+    <CollectionViewSource x:Key="FontCollection"
+                          Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
 
     <utilities:FontFamilyConverter x:Key="FontFamilyConverter" />
   </local:OptionsPanelBase.Resources>

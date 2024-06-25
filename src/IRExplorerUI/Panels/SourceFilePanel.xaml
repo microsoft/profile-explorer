@@ -205,8 +205,9 @@
             ToolTip="Inlined functions in calling order">
             <ComboBox.ItemTemplate>
               <DataTemplate>
-                <TextBlock Text="{Binding Path=Function, Converter={StaticResource FunctionNameConverter}}"
-                           ToolTip="{Binding Path=Function, Converter={StaticResource LongFunctionNameConverter}}" />
+                <TextBlock
+                  Text="{Binding Path=Function, Converter={StaticResource FunctionNameConverter}}"
+                  ToolTip="{Binding Path=Function, Converter={StaticResource LongFunctionNameConverter}}" />
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
@@ -214,17 +215,18 @@
             Click="InlineUpButton_Click"
             IsEnabled="{Binding HasInlinees}"
             ToolTip="Switch to inlinee caller function (go up the call tree)">
-            <Image Source="{StaticResource UpArrowIcon}" Style="{StaticResource DisabledImageStyle}" />
+            <Image Source="{StaticResource UpArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Button
             Click="InlineDownButton_Click"
             IsEnabled="{Binding HasInlinees}"
             ToolTip="Switch to inlinee called function (go down the call tree)">
-            <Image Source="{StaticResource DownArrowIcon}" Style="{StaticResource DisabledImageStyle}" />
+            <Image Source="{StaticResource DownArrowIcon}"
+                   Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <TextBlock Text="{Binding InlineeText}" Margin="4,0,4,0" VerticalAlignment="Center"
-                     Visibility="{Binding HasInlinees, Converter={StaticResource BoolToVisibilityConverter}}">
-          </TextBlock>
+                     Visibility="{Binding HasInlinees, Converter={StaticResource BoolToVisibilityConverter}}" />
           <Separator />
           <Button
             Width="20"

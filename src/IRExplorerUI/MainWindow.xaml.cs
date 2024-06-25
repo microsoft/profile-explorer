@@ -36,50 +36,29 @@ using IRExplorerUI.Windows;
 namespace IRExplorerUI;
 
 public static class AppCommand {
-  public static readonly RoutedUICommand FullScreen =
-    new RoutedUICommand("Untitled", "FullScreen", typeof(Window));
-  public static readonly RoutedUICommand OpenDocument =
-    new RoutedUICommand("Untitled", "OpenDocument", typeof(Window));
-  public static readonly RoutedUICommand OpenNewDocument =
-    new RoutedUICommand("Untitled", "OpenNewDocument", typeof(Window));
-  public static readonly RoutedUICommand OpenDebug =
-    new RoutedUICommand("Untitled", "OpenDebug", typeof(Window));
-  public static readonly RoutedUICommand OpenDiffDebug =
-    new RoutedUICommand("Untitled", "OpenDiffDebug", typeof(Window));
-  public static readonly RoutedUICommand OpenExecutable =
-    new RoutedUICommand("Untitled", "OpenExecutable", typeof(Window));
-  public static readonly RoutedUICommand OpenExecutableDiff =
-    new RoutedUICommand("Untitled", "OpenExecutableDiff", typeof(Window));
-  public static readonly RoutedUICommand CloseDocument =
-    new RoutedUICommand("Untitled", "CloseDocument", typeof(Window));
-  public static readonly RoutedUICommand SaveDocument =
-    new RoutedUICommand("Untitled", "SaveDocument", typeof(Window));
-  public static readonly RoutedUICommand SaveAsDocument =
-    new RoutedUICommand("Untitled", "SaveAsDocument", typeof(Window));
-  public static readonly RoutedUICommand ToggleDiffMode =
-    new RoutedUICommand("Untitled", "ToggleDiffMode", typeof(Window));
-  public static readonly RoutedUICommand ReloadDocument =
-    new RoutedUICommand("Untitled", "ReloadDocument", typeof(Window));
-  public static readonly RoutedUICommand AutoReloadDocument =
-    new RoutedUICommand("Untitled", "AutoReloadDocument", typeof(Window));
-  public static readonly RoutedUICommand OpenDiffDocument =
-    new RoutedUICommand("Untitled", "OpenDiffDocument", typeof(Window));
+  public static readonly RoutedUICommand FullScreen = new("Untitled", "FullScreen", typeof(Window));
+  public static readonly RoutedUICommand OpenDocument = new("Untitled", "OpenDocument", typeof(Window));
+  public static readonly RoutedUICommand OpenNewDocument = new("Untitled", "OpenNewDocument", typeof(Window));
+  public static readonly RoutedUICommand OpenDebug = new("Untitled", "OpenDebug", typeof(Window));
+  public static readonly RoutedUICommand OpenDiffDebug = new("Untitled", "OpenDiffDebug", typeof(Window));
+  public static readonly RoutedUICommand OpenExecutable = new("Untitled", "OpenExecutable", typeof(Window));
+  public static readonly RoutedUICommand OpenExecutableDiff = new("Untitled", "OpenExecutableDiff", typeof(Window));
+  public static readonly RoutedUICommand CloseDocument = new("Untitled", "CloseDocument", typeof(Window));
+  public static readonly RoutedUICommand SaveDocument = new("Untitled", "SaveDocument", typeof(Window));
+  public static readonly RoutedUICommand SaveAsDocument = new("Untitled", "SaveAsDocument", typeof(Window));
+  public static readonly RoutedUICommand ToggleDiffMode = new("Untitled", "ToggleDiffMode", typeof(Window));
+  public static readonly RoutedUICommand ReloadDocument = new("Untitled", "ReloadDocument", typeof(Window));
+  public static readonly RoutedUICommand AutoReloadDocument = new("Untitled", "AutoReloadDocument", typeof(Window));
+  public static readonly RoutedUICommand OpenDiffDocument = new("Untitled", "OpenDiffDocument", typeof(Window));
   public static readonly RoutedUICommand OpenBaseDiffDocuments =
-    new RoutedUICommand("Untitled", "OpenBaseDiffDocuments", typeof(Window));
-  public static readonly RoutedUICommand CloseDiffDocument =
-    new RoutedUICommand("Untitled", "CloseDiffDocument", typeof(Window));
-  public static readonly RoutedUICommand SwapDiffDocuments =
-    new RoutedUICommand("Untitled", "SwapDiffDocuments", typeof(Window));
-  public static readonly RoutedUICommand ShowDocumentSearch =
-    new RoutedUICommand("Untitled", "ShowDocumentSearch", typeof(Window));
-  public static readonly RoutedUICommand LoadProfile =
-    new RoutedUICommand("Untitled", "LoadProfile", typeof(Window));
-  public static readonly RoutedUICommand RecordProfile =
-    new RoutedUICommand("Untitled", "RecordProfile", typeof(Window));
-  public static readonly RoutedUICommand ViewProfileReport =
-    new RoutedUICommand("Untitled", "ViewProfileReport", typeof(Window));
-  public static readonly RoutedUICommand ShowProfileCallGraph =
-    new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
+    new("Untitled", "OpenBaseDiffDocuments", typeof(Window));
+  public static readonly RoutedUICommand CloseDiffDocument = new("Untitled", "CloseDiffDocument", typeof(Window));
+  public static readonly RoutedUICommand SwapDiffDocuments = new("Untitled", "SwapDiffDocuments", typeof(Window));
+  public static readonly RoutedUICommand ShowDocumentSearch = new("Untitled", "ShowDocumentSearch", typeof(Window));
+  public static readonly RoutedUICommand LoadProfile = new("Untitled", "LoadProfile", typeof(Window));
+  public static readonly RoutedUICommand RecordProfile = new("Untitled", "RecordProfile", typeof(Window));
+  public static readonly RoutedUICommand ViewProfileReport = new("Untitled", "ViewProfileReport", typeof(Window));
+  public static readonly RoutedUICommand ShowProfileCallGraph = new("Untitled", "ShowProfileCallGraph", typeof(Window));
 }
 
 public partial class MainWindow : Window, ISession, INotifyPropertyChanged {

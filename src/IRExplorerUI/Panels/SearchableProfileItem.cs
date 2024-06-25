@@ -139,7 +139,7 @@ public class SearchableProfileItem : BindableObject {
   }
 
   public static void CopyFunctionListAsHtml(List<SearchableProfileItem> list) {
-    string html = ExportFunctionListAsHtml((list));
+    string html = ExportFunctionListAsHtml(list);
     string plainText = ProfilingExporting.ExportFunctionListAsMarkdownTable(list);
     Utils.CopyHtmlToClipboard(html, plainText);
   }

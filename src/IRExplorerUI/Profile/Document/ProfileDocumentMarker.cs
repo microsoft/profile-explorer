@@ -68,7 +68,7 @@ public class ProfileDocumentMarker {
       ProfileDocumentMarkerSettings.ValueUnitKind.Second      => "sec",
       ProfileDocumentMarkerSettings.ValueUnitKind.Millisecond => "ms",
       ProfileDocumentMarkerSettings.ValueUnitKind.Microsecond => "µs",
-      ProfileDocumentMarkerSettings.ValueUnitKind.Nanosecond  => "ns",
+      ProfileDocumentMarkerSettings.ValueUnitKind.Nanosecond  => "ns"
     };
 
     TimeColumnDefinition.Title = $"Time ({timeUnit})";
@@ -373,7 +373,7 @@ public class ProfileDocumentMarker {
 #if DEBUG
     Trace.WriteLine($"Update column {column.ColumnName}, is main column: {column.IsMainColumn}");
 #endif
-    
+
     column.IsVisible = columnSettings.IsColumnVisible(column);
     var elementColorPairs = new List<ValueTuple<IRElement, Brush>>(function.TupleCount);
     var cells = columnData.ColumnValues.GetValueOrNull(column);
@@ -676,7 +676,7 @@ public class ProfileDocumentMarker {
                                             ((SolidColorBrush)color).Color,
                                             ((SolidColorBrush)overlay.TextColor).Color,
                                             ((SolidColorBrush)overlay.TextColor).Color,
-                                            (i < 3 || weightPercentage >= 0.1))); // Bold text for >10%.
+                                            i < 3 || weightPercentage >= 0.1)); // Bold text for >10%.
       }
     }
 

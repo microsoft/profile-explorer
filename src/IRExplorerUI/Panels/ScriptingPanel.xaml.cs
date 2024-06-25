@@ -20,8 +20,7 @@ using Microsoft.CodeAnalysis;
 namespace IRExplorerUI;
 
 public static class ScriptingCommand {
-  public static readonly RoutedUICommand ExecuteScript =
-    new RoutedUICommand("Untitled", "ExecuteScript", typeof(BookmarksPanel));
+  public static readonly RoutedUICommand ExecuteScript = new("Untitled", "ExecuteScript", typeof(BookmarksPanel));
 }
 
 public class CompletionWindowEx : CompletionWindow {

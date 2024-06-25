@@ -120,7 +120,8 @@
           </Style>
         </TreeView.ItemContainerStyle>
         <TreeView.Resources>
-          <HierarchicalDataTemplate DataType="{x:Type local:HelpTopic}" ItemsSource="{Binding SubTopics}">
+          <HierarchicalDataTemplate DataType="{x:Type local:HelpTopic}"
+                                    ItemsSource="{Binding SubTopics}">
             <TextBlock Text="{Binding Path=Title}" />
           </HierarchicalDataTemplate>
         </TreeView.Resources>

@@ -606,7 +606,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    if (!(await MarkSourceFileProfile(section, funcProfile, jumpToHottestLine))) {
+    if (!await MarkSourceFileProfile(section, funcProfile, jumpToHottestLine)) {
       return false;
     }
 
@@ -654,7 +654,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter: true};
   public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter: true};
 
-  string MakeSyntaxNodePreviewText(string text, int maxLength) {
+  private string MakeSyntaxNodePreviewText(string text, int maxLength) {
     if (string.IsNullOrEmpty(text)) {
       return "";
     }
@@ -946,7 +946,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       return false;
     }
 
-    if (!(await MarkSourceFileProfile(section, funcProfile, jumpToHottestLine))) {
+    if (!await MarkSourceFileProfile(section, funcProfile, jumpToHottestLine)) {
       return false;
     }
 
@@ -1136,7 +1136,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = node.Kind != SourceSyntaxNodeKind.Function ?
           markerSettings.PickTextWeight(weightPercentage) : FontWeights.Normal,
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       node.SetTextStyle(value);
@@ -1216,7 +1216,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
     bool showStatementOverlays = ((SourceFileSettings)settings_).ShowSourceStatementsOnMargin;
 
-    if (showStatementOverlays || (failedReplaceAttempt && replaceOnlyInsignificant)) {
+    if (showStatementOverlays || failedReplaceAttempt && replaceOnlyInsignificant) {
       CreateFileStructureOverlay(node, funcProfile, markerSettings);
     }
   }
@@ -1437,8 +1437,8 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       if (!ShowPerformanceCounterColumns ||
           !ShowPerformanceMetricColumns) {
         foreach (var column in sourceColumnData.Columns) {
-          if ((!ShowPerformanceCounterColumns && column.IsPerformanceCounter) ||
-              (!ShowPerformanceMetricColumns && column.IsPerformanceMetric)) {
+          if (!ShowPerformanceCounterColumns && column.IsPerformanceCounter ||
+              !ShowPerformanceMetricColumns && column.IsPerformanceMetric) {
             column.IsVisible = false;
           }
         }
@@ -1513,7 +1513,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         ToolTip = $"Line {line}",
         ShowPercentageBar = markerSettings.ShowPercentageBar(weightPercentage),
         TextWeight = markerSettings.PickTextWeight(weightPercentage),
-        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush(),
+        PercentageBarBackColor = markerSettings.PercentageBarBackColor.AsBrush()
       };
 
       var item = new MenuItem {
@@ -1714,7 +1714,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     }
   }
 
-  bool IsSourceLine(int line) {
+  private bool IsSourceLine(int line) {
     return sourceProfileResult_ == null ||
            sourceProfileResult_.LineToOriginalLineMap.ContainsKey(line);
   }
@@ -1948,7 +1948,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.Copy();
   }
 
-  public RelayCommand<object> CopyDocumentCommand => new RelayCommand<object>(async obj => {
+  public RelayCommand<object> CopyDocumentCommand => new(async obj => {
     await CopyAllLinesAsHtml();
   });
 

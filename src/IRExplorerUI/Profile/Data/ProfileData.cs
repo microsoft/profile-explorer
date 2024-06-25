@@ -286,7 +286,7 @@ public class ProfileData {
     if (FunctionProfiles.TryGetValue(function, out var funcProfile)) {
       return funcProfile;
     }
-    
+
     funcProfile = new FunctionProfileData(debugInfo);
     return FunctionProfiles.GetOrAdd(function, funcProfile);
   }
@@ -469,7 +469,7 @@ public class ProfileData {
 
     // Add an entry representing all threads, covering all samples.
     threadSampleRanges[-1] = new List<ThreadSampleRange> {
-      new ThreadSampleRange {
+      new() {
         StartIndex = 0,
         EndIndex = sampleIndex
       }

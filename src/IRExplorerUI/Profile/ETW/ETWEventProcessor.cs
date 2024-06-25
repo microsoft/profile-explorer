@@ -689,7 +689,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
           UpdateProgress(progressCallback, ProfileLoadStage.TraceReading,
                          sampleId, sampleId);
         }
-        
+
         lastReportedSample = sampleId;
       }
     };

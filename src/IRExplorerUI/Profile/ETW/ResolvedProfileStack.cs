@@ -35,7 +35,7 @@ public class ResolvedProfileStackFrame {
     else if ((ulong)frameRVA <= 0xFFFFFFFF) {
       return new ResolvedProfileStackFrame32((uint)frameRVA, frameDetails);
     }
-    
+
     return new ResolvedProfileStackFrame(frameRVA, frameDetails);
   }
 
@@ -57,7 +57,6 @@ public class ResolvedProfileStackFrame16 : ResolvedProfileStackFrame {
   }
 }
 
-
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class ResolvedProfileStackFrame32 : ResolvedProfileStackFrame {
   private uint frameRva_;
@@ -76,13 +75,11 @@ public class ResolvedProfileStackFrame32 : ResolvedProfileStackFrame {
 public sealed class ResolvedProfileStack {
   // Used to deduplicate stack frames for the same function running in the same context.
   public static ConcurrentDictionary<ResolvedProfileStackFrameDetails, ResolvedProfileStackFrameDetails> uniqueFrames_ =
-    new ConcurrentDictionary<ResolvedProfileStackFrameDetails, ResolvedProfileStackFrameDetails>();
+    new();
 
   // Stack frames with the same IP have a unique instance shared among all call stacks.
-  public static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ =
-    new ConcurrentDictionary<long, ResolvedProfileStackFrame>();
-  public static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ =
-    new ConcurrentDictionary<long, ResolvedProfileStackFrame>();
+  public static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
+  public static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ = new();
 
   public ResolvedProfileStack(int frameCount, ProfileContext context) {
     StackFrames = new List<ResolvedProfileStackFrame>(frameCount);
@@ -109,7 +106,7 @@ public sealed class ResolvedProfileStack {
 }
 
 public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfileStackFrameDetails> {
-  public static readonly ResolvedProfileStackFrameDetails Unknown = new ResolvedProfileStackFrameDetails();
+  public static readonly ResolvedProfileStackFrameDetails Unknown = new();
 
   public ResolvedProfileStackFrameDetails(FunctionDebugInfo debugInfo, IRTextFunction function,
                                           ProfileImage image, bool isManagedCode) {

@@ -952,7 +952,7 @@ public partial class GraphPanel : ToolPanelControl {
       Trace.TraceInformation(
         $"Graph panel {ObjectTracker.Track(this)}: Ignore graph reload during section switch");
 #endif
-      
+
       delayRestoreState_ = !restoredState_;
       return;
     }
@@ -1029,7 +1029,7 @@ public partial class GraphPanel : ToolPanelControl {
 #if DEBUG
     Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(Document)}");
 #endif
-    
+
     Document = null;
     graph_ = null;
     hoveredNode_ = null;

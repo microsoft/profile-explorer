@@ -31,12 +31,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   //? TODO: Save cache between sessions, including the unavailable PDBs.
   //? Invalidate unavailable ones if SymbolOption paths change so they get a chance
   //? to be searched for in new locations.
-  private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ =
-    new ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult>();
+  private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
   private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
-  private static object undecorateLock_ = new object();
+  private static object undecorateLock_ = new();
   private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
   private SymbolFileCache symbolCache_;
@@ -159,7 +158,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if (string.IsNullOrEmpty(name) || !name.StartsWith('?')) {
       return name;
     }
-    
+
     var sb = new StringBuilder(MaxDemangledFunctionNameLength);
     var flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
     flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS |

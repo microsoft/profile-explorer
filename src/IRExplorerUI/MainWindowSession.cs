@@ -27,7 +27,7 @@ using IRExplorerUI.Query;
 namespace IRExplorerUI;
 
 public partial class MainWindow : Window, ISession {
-  private SemaphoreSlim SessionLoadCompleted = new SemaphoreSlim(1);
+  private SemaphoreSlim SessionLoadCompleted = new(1);
   public bool SilentMode { get; set; }
   public ICompilerInfoProvider CompilerInfo => compilerInfo_;
   public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
@@ -214,7 +214,7 @@ public partial class MainWindow : Window, ISession {
         Utils.WaitForDebugger();
         return null;
       }
-      
+
       var parsedSection = docInfo.Loader.LoadSection(section);
 
       if (parsedSection != null && parsedSection.Function != null) {
@@ -1097,7 +1097,7 @@ public partial class MainWindow : Window, ISession {
       UpdateUIAfterSectionLoad(section, document, delayedAction);
       return null;
     }
-    
+
     // Update UI to reflect new section before starting long-running tasks.
     await document.LoadSectionMinimal(result);
 

@@ -83,7 +83,6 @@
       HorizontalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <ToolBarTray
-        Grid.Column="0"
         Height="28"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
@@ -100,7 +99,8 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the graph view to 100% (Ctrl+0)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}" Style="{StaticResource DisabledImageStyle}" />
+              <Image Source="{StaticResource ResetWidthIcon}"
+                     Style="{StaticResource DisabledImageStyle}" />
               <TextBlock Margin="4,0,0,0" Text="Reset" />
             </StackPanel>
           </Button>

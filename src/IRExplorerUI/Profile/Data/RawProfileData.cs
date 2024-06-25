@@ -20,8 +20,8 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class RawProfileData : IDisposable {
-  private static ProfileContext tempContext_ = new ProfileContext();
-  private static ProfileStack tempStack_ = new ProfileStack();
+  private static ProfileContext tempContext_ = new();
+  private static ProfileStack tempStack_ = new();
 
   // Per-thread caches to speed up lookups.
   [ThreadStatic]
@@ -88,7 +88,6 @@ public class RawProfileData : IDisposable {
   public List<ProfileImage> Images => images_;
   public CompressedSegmentedList<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
   public List<PerformanceCounter> PerformanceCounters => perfCounters_;
-
   public bool HasPerformanceCountersEvents => PerformanceCountersEvents is {Count: > 0};
 
   public bool HasManagedMethods(int processId) {
@@ -268,7 +267,7 @@ public class RawProfileData : IDisposable {
     if (processes_.TryGetValue(id, out var process)) {
       return process;
     }
-    
+
     return processes_.GetOrAddValue(id, () => new ProfileProcess(id));
   }
 
@@ -355,7 +354,7 @@ public class RawProfileData : IDisposable {
 
   public int AddPerformanceCounterEvent(PerformanceCounterEvent counterEvent) {
     Debug.Assert(counterEvent.ContextId != 0);
-    perfCountersEvents_ ??= new();
+    perfCountersEvents_ ??= new CompressedSegmentedList<PerformanceCounterEvent>();
     perfCountersEvents_.Add(counterEvent);
     return perfCountersEvents_.Count;
   }
@@ -403,12 +402,12 @@ public class RawProfileData : IDisposable {
     stack.Discard();
     return existingStackId;
   }
-  
+
   public void ReplaceStackFramePointers(ProfileStack stack, long[] newFramePtrs, ProfileContext context) {
     if (stacksMap_.TryGetValue(context.ProcessId, out var procStacks)) {
       procStacks.Remove(stack);
     }
-    
+
     stack.FramePointers = newFramePtrs;
     AddStack(stack, context);
   }
@@ -631,7 +630,7 @@ public class StackComparer : IEqualityComparer<long[]> {
   }
 
   public static bool AreEqual(long[] data1, long[] data2) {
-    if(data1.Length != data2.Length) {
+    if (data1.Length != data2.Length) {
       return false;
     }
 
@@ -701,9 +700,8 @@ public class IpToImageCache {
 
 public class ProcessSummaryBuilder {
   private RawProfileData profile_;
-  private Dictionary<ProfileProcess, TimeSpan> processSamples_ = new Dictionary<ProfileProcess, TimeSpan>();
-  private Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)> procDuration_ =
-    new Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)>();
+  private Dictionary<ProfileProcess, TimeSpan> processSamples_ = new();
+  private Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)> procDuration_ = new();
   private TimeSpan totalWeight_;
 
   public ProcessSummaryBuilder(RawProfileData profile) {

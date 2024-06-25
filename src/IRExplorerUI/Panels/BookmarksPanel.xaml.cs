@@ -12,16 +12,12 @@ using IRExplorerUI.Controls;
 namespace IRExplorerUI;
 
 public static class BookmarkCommand {
-  public static readonly RoutedUICommand JumpToBookmark =
-    new RoutedUICommand("Untitled", "JumpToBookmark", typeof(BookmarksPanel));
-  public static readonly RoutedUICommand RemoveBookmark =
-    new RoutedUICommand("Untitled", "RemoveBookmark", typeof(BookmarksPanel));
+  public static readonly RoutedUICommand JumpToBookmark = new("Untitled", "JumpToBookmark", typeof(BookmarksPanel));
+  public static readonly RoutedUICommand RemoveBookmark = new("Untitled", "RemoveBookmark", typeof(BookmarksPanel));
   public static readonly RoutedUICommand RemoveAllBookmarks =
-    new RoutedUICommand("Untitled", "RemoveAllBookmarks", typeof(BookmarksPanel));
-  public static readonly RoutedUICommand MarkBookmark =
-    new RoutedUICommand("Untitled", "MarkBookmark", typeof(BookmarksPanel));
-  public static readonly RoutedUICommand UnmarkBookmark =
-    new RoutedUICommand("Untitled", "UnmarkBookmark", typeof(BookmarksPanel));
+    new("Untitled", "RemoveAllBookmarks", typeof(BookmarksPanel));
+  public static readonly RoutedUICommand MarkBookmark = new("Untitled", "MarkBookmark", typeof(BookmarksPanel));
+  public static readonly RoutedUICommand UnmarkBookmark = new("Untitled", "UnmarkBookmark", typeof(BookmarksPanel));
 }
 
 public partial class BookmarksPanel : ToolPanelControl {

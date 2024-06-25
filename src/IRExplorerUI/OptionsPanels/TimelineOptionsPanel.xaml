@@ -64,17 +64,16 @@
       <Separator Margin="0,4,0,4" Background="LightGray" />
       <TextBlock FontWeight="Medium" Text="Threads" />
       <CheckBox
+        Content="Use colors based on thread name"
+        IsChecked="{Binding UseThreadColors, Mode=TwoWay}"
+        Margin="0,2,0,2"
+        ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
+      <CheckBox
         IsEnabled="False"
         Content="Group threads by name"
         IsChecked="{Binding GroupThreads, Mode=TwoWay}"
         Margin="0,4,0,0"
         ToolTip="Partition threads into groups based on their name" />
-      <CheckBox
-        Content="Use colors based on thread name"
-        IsChecked="{Binding UseThreadColors, Mode=TwoWay}"
-        Margin="0,2,0,2"
-        ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
-      <TextBlock Text="TODO: Hidden/excluded/marked threads" Margin="0,8,0,0"></TextBlock>
     </StackPanel>
   </Grid>
 </local:OptionsPanelBase>

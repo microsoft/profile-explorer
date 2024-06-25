@@ -15,7 +15,7 @@ public partial class ColumnOptionsPanel : OptionsPanelBase {
   public override double MinimumWidth => 300;
   public Dictionary<OptionalColumnStyle.PartVisibility, string>
     PartVisibilityKinds { get; } =
-    new Dictionary<OptionalColumnStyle.PartVisibility, string>() {
+    new() {
       {OptionalColumnStyle.PartVisibility.Always, "Always"},
       {OptionalColumnStyle.PartVisibility.Never, "Never"},
       {OptionalColumnStyle.PartVisibility.IfActiveColumn, "If Active Column"}

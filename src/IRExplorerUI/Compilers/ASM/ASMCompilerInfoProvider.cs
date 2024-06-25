@@ -15,11 +15,10 @@ using IRExplorerUI.Query;
 namespace IRExplorerUI.Compilers.ASM;
 
 public class ASMCompilerInfoProvider : ICompilerInfoProvider {
-  private static Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ =
-    new Dictionary<DebugFileSearchResult, IDebugInfoProvider>();
+  private static Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();
   private readonly ISession session_;
-  private readonly ASMNameProvider names_ = new ASMNameProvider();
-  private readonly DummySectionStyleProvider styles_ = new DummySectionStyleProvider();
+  private readonly ASMNameProvider names_ = new();
+  private readonly DummySectionStyleProvider styles_ = new();
   private readonly DefaultRemarkProvider remarks_;
   private readonly ASMCompilerIRInfo ir_;
 
@@ -40,15 +39,15 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
-  public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
-  public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
-  public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
+  public List<QueryDefinition> BuiltinQueries => new();
+  public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
+  public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
 
   public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
     return Task.CompletedTask;
   }
 
-  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section, 
+  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
                                                 FunctionDebugInfo funcDebugInfo) {
     // Annotate the instructions with debug info (line numbers, source files)
     // if the debug file is specified and available.

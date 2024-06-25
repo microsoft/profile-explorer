@@ -122,7 +122,7 @@ public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
 public class ProfileStack : IEquatable<ProfileStack> {
   private const int MaxFrameNumber = 512;
   private static long[][] TempFrameArrays = new long[MaxFrameNumber + 1][];
-  public static readonly ProfileStack Unknown = new ProfileStack();
+  public static readonly ProfileStack Unknown = new();
   private object optionalData_;
 
   static ProfileStack() {
@@ -148,7 +148,7 @@ public class ProfileStack : IEquatable<ProfileStack> {
     ContextId = contextId;
     FramePointers = framePtrs;
   }
-  
+
   [ProtoMember(1)]
   public long[] FramePointers { get; set; }
   [ProtoMember(2)]

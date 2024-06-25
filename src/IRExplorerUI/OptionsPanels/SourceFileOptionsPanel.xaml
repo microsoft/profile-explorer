@@ -11,12 +11,14 @@
   d:DesignWidth="350"
   mc:Ignorable="d">
   <local:OptionsPanelBase.Resources>
-    <CollectionViewSource x:Key="FontCollection" Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
+    <CollectionViewSource x:Key="FontCollection"
+                          Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
     <utilities:FontFamilyConverter x:Key="FontFamilyConverter" />
   </local:OptionsPanelBase.Resources>
 
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-    <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderThickness="0">
+    <TabControl Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderThickness="0">
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
@@ -306,7 +308,8 @@
                 </GridView>
               </ListView.View>
               <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                <Style BasedOn="{StaticResource FlatListViewItem}"
+                       TargetType="{x:Type ListViewItem}">
                   <Setter Property="Background"
                           Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -431,7 +434,8 @@
                 </GridView>
               </ListView.View>
               <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                <Style BasedOn="{StaticResource FlatListViewItem}"
+                       TargetType="{x:Type ListViewItem}">
                   <Setter Property="Background"
                           Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />

@@ -17,11 +17,11 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
   private bool showsDocumentSettings_;
   public Dictionary<ValueUnitKind, string>
     ValueUnitKinds { get; } =
-    new Dictionary<ValueUnitKind, string>() {
+    new() {
       {ValueUnitKind.Second, "Second"},
       {ValueUnitKind.Millisecond, "Millisecond"},
       {ValueUnitKind.Microsecond, "Microsecond"},
-      {ValueUnitKind.Nanosecond, "Nanosecond"},
+      {ValueUnitKind.Nanosecond, "Nanosecond"}
     };
 
   public DocumentProfilingOptionsPanel() {

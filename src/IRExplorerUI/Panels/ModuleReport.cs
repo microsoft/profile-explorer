@@ -57,7 +57,7 @@ public class ValueStatistics {
   }
 
   public class Generator {
-    private List<Tuple<IRTextFunction, long>> values_ = new List<Tuple<IRTextFunction, long>>();
+    private List<Tuple<IRTextFunction, long>> values_ = new();
     private long total_;
     private long min_ = long.MaxValue;
     private long max_ = long.MinValue;

@@ -290,7 +290,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     if (section_ != null && section_.Equals(section)) {
       return;
     }
-    
+
     Utils.EnableControl(this);
     section_ = section;
     associatedDocument_ = associatedDocument;

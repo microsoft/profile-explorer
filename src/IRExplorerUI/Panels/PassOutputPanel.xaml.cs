@@ -33,10 +33,8 @@ public class PassOutputPanelState {
 }
 
 public static class PassOutputPanelCommand {
-  public static readonly RoutedUICommand ToggleOutput =
-    new RoutedUICommand("Untitled", "ToggleOutput", typeof(PassOutputPanel));
-  public static readonly RoutedUICommand ToggleSearch =
-    new RoutedUICommand("Untitled", "ToggleSearch", typeof(PassOutputPanel));
+  public static readonly RoutedUICommand ToggleOutput = new("Untitled", "ToggleOutput", typeof(PassOutputPanel));
+  public static readonly RoutedUICommand ToggleSearch = new("Untitled", "ToggleSearch", typeof(PassOutputPanel));
 }
 
 public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged {

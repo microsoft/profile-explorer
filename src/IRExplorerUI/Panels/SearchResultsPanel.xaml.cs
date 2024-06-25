@@ -17,26 +17,23 @@ using IRExplorerUI.Document;
 namespace IRExplorerUI;
 
 public static class SearchResultsCommand {
-  public static readonly RoutedUICommand JumpToNext =
-    new RoutedUICommand("Untitled", "JumpToNext", typeof(SearchResultsPanel));
-  public static readonly RoutedUICommand JumpToPrevious =
-    new RoutedUICommand("Untitled", "JumpToPrevious", typeof(SearchResultsPanel));
+  public static readonly RoutedUICommand JumpToNext = new("Untitled", "JumpToNext", typeof(SearchResultsPanel));
+  public static readonly RoutedUICommand JumpToPrevious = new("Untitled", "JumpToPrevious", typeof(SearchResultsPanel));
   public static readonly RoutedUICommand JumpToNextSection =
-    new RoutedUICommand("Untitled", "JumpToNextSection", typeof(SearchResultsPanel));
+    new("Untitled", "JumpToNextSection", typeof(SearchResultsPanel));
   public static readonly RoutedUICommand JumpToPreviousSection =
-    new RoutedUICommand("Untitled", "JumpToPreviousSection", typeof(SearchResultsPanel));
-  public static readonly RoutedUICommand JumpToSelected =
-    new RoutedUICommand("Untitled", "JumpToSelected", typeof(SearchResultsPanel));
+    new("Untitled", "JumpToPreviousSection", typeof(SearchResultsPanel));
+  public static readonly RoutedUICommand JumpToSelected = new("Untitled", "JumpToSelected", typeof(SearchResultsPanel));
   public static readonly RoutedUICommand OpenInNewTab =
-    new RoutedUICommand("Open section in new tab", "OpenInNewTab", typeof(SearchResultsPanel));
+    new("Open section in new tab", "OpenInNewTab", typeof(SearchResultsPanel));
   public static readonly RoutedUICommand OpenLeft =
-    new RoutedUICommand("Open section in new tab", "OpenLeft", typeof(SearchResultsPanel));
+    new("Open section in new tab", "OpenLeft", typeof(SearchResultsPanel));
   public static readonly RoutedUICommand OpenRight =
-    new RoutedUICommand("Open section in new tab", "OpenRight", typeof(SearchResultsPanel));
+    new("Open section in new tab", "OpenRight", typeof(SearchResultsPanel));
 }
 
 public class SearchResultInfo {
-  private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
+  private static readonly FontFamily PreviewFont = new("Consolas");
   private bool isMarked_;
   private TextBlock preview_;
   private Brush textColor_;

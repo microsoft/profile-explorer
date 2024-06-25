@@ -59,7 +59,7 @@ public class FunctionProfileData {
   }
 
   public void AddCounterSample(long instrOffset, int perfCounterId, long value) {
-    InstructionCounters ??= new();
+    InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
     var counterSet = InstructionCounters.GetOrAddValue(instrOffset);
     counterSet.AddCounterSample(perfCounterId, value);
   }

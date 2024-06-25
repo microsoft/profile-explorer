@@ -32,7 +32,6 @@
       HorizontalAlignment="Stretch">
       <ToolBarTray
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-        Grid.Column="0"
         Height="28"
         HorizontalAlignment="Stretch"
         IsLocked="True"
