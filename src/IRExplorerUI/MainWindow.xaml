@@ -284,6 +284,7 @@
             <Separator />
 
             <MenuItem
+              IsEnabled="False"
               Command="local:AppCommand.SaveDocument"
               Header="_Save Session"
               InputGestureText="Ctrl+S">
@@ -295,6 +296,7 @@
               </MenuItem.Icon>
             </MenuItem>
             <MenuItem
+              IsEnabled="False"
               Command="local:AppCommand.SaveAsDocument"
               Header="Save Session _As..."
               InputGestureText="Ctrl+Shift+S" />

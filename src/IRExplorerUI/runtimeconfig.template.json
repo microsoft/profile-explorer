@@ -1,6 +1,7 @@
 {
   "configProperties": {
     "Switch.System.Windows.Media.EnableHardwareAccelerationInRdp": true,
+    "Switch.System.Windows.Input.Stylus.DisableStylusAndTouchSupport": true,
     "System.GC.Concurrent": true,
     "System.GC.Server": true,
     "System.GC.HeapCount": 16,

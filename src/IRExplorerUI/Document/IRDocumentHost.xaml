@@ -391,10 +391,10 @@
               ToolTip="Jump to next bookmark (F2)">
               <Image Source="{StaticResource DownArrowIcon}" />
             </Button>
-
-            <Separator />
+            <Separator Visibility="Collapsed"/>
 
             <ToggleButton
+              Visibility="Collapsed"
               Height="20"
               Margin="0,0,0,0"
               Padding="0,0,2,0"
@@ -412,6 +412,7 @@
               </StackPanel>
             </ToggleButton>
             <ToggleButton
+              Visibility="Collapsed"
               Width="20"
               Height="20"
               Margin="0,0,2,0"
@@ -423,6 +424,7 @@
                      Style="{StaticResource DisabledImageStyle}" />
             </ToggleButton>
             <Button
+              Visibility="Collapsed"
               Width="20"
               Height="20"
               Padding="0,0,0,0"
@@ -516,10 +518,10 @@
                 <MenuItem Click="CloseAllQueryPanelsMenuItem_Click" Header="Close All Query Panels" />
               </MenuItem>
             </Menu>
-
             <Separator />
 
             <ToggleButton
+              Visibility="Collapsed"
               Width="20"
               Height="20"
               Margin="0,0,2,0"

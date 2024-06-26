@@ -237,8 +237,8 @@
           <MenuItem
             Command="local:CallTreeCommand.ClearMarkedNodes"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-            Header="Clear Marked Functions"
-            ToolTip="Clear all temporarily marked functions" />
+            Header="Clear Marked Instances"
+            ToolTip="Clear all temporarily marked function instances" />
           <Separator />
 
           <MenuItem

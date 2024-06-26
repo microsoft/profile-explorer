@@ -6,8 +6,8 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:options="clr-namespace:IRExplorerUI.OptionsPanels"
   Title="Settings"
-  Width="650"
-  Height="500"
+  Width="750"
+  Height="550"
   MinWidth="400"
   MinHeight="300"
   ResizeMode="CanResize"
@@ -30,22 +30,33 @@
 
     <TabControl
       Grid.Row="0"
-      Margin="0,0,0,4"
-      Padding="16,0,0,0"
+      Margin="4,0,0,4"
+      Padding="20,0,0,0"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       BorderThickness="0"
       IsSynchronizedWithCurrentItem="True"
       SelectedIndex="0"
       TabStripPlacement="Left">
-      <TabItem Header="Applicatiomn" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Application" Style="{StaticResource TabControlStyle}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:GeneralOptionsPanel
             x:Name="GeneralOptionsPanel"
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
+        </ScrollViewer>
+      </TabItem>
+      <TabItem
+        Header="Symbols"
+        Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:SymbolOptionsPanel
+            x:Name="SymbolOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
@@ -55,30 +66,17 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Document" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Assembly Code" Style="{StaticResource TabControlStyle}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:DocumentOptionsPanel
             x:Name="DocumentOptionsPanel"
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
-        </ScrollViewer>
-      </TabItem>
-      <TabItem Header="Timeline" Style="{StaticResource TabControlStyle}">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-          <options:TimelineOptionsPanel
-            x:Name="TimelineOptionsPanel"
-            Width="Auto"
-            Height="Auto"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Source File" Style="{StaticResource TabControlStyle}">
@@ -88,8 +86,17 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Timeline" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:TimelineOptionsPanel
+            x:Name="TimelineOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Flame Graph" Style="{StaticResource TabControlStyle}">
@@ -99,8 +106,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Call Tree" Style="{StaticResource TabControlStyle}">
@@ -110,8 +116,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Caller/Callee" Style="{StaticResource TabControlStyle}">
@@ -121,8 +126,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
 
@@ -133,8 +137,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Expression Graph" Style="{StaticResource TabControlStyle}">
@@ -144,8 +147,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Preview Popup" Style="{StaticResource TabControlStyle}">
@@ -155,8 +157,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
       <TabItem Header="Diffing" Style="{StaticResource TabControlStyle}">
@@ -166,25 +167,7 @@
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Visibility="Visible" />
-        </ScrollViewer>
-      </TabItem>
-
-      <TabItem
-        Header="Profiling"
-        IsEnabled="False"
-        Style="{StaticResource TabControlStyle}">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
-        </ScrollViewer>
-      </TabItem>
-      <TabItem
-        Header="Advanced"
-        IsEnabled="False"
-        Style="{StaticResource TabControlStyle}">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-          <TextBlock Text="TODO" />
+            VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
     </TabControl>

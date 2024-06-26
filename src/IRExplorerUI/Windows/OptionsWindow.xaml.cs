@@ -24,6 +24,7 @@ public partial class OptionsWindow : Window {
 
   private void LoadSettings() {
     GeneralOptionsPanel.Initialize(this, App.Settings.GeneralSettings, Session);
+    SymbolOptionsPanel.Initialize(this, App.Settings.SymbolSettings, Session);
     SummaryOptionsPanel.Initialize(this, App.Settings.SectionSettings, Session);
     DocumentOptionsPanel.Initialize(this, App.Settings.DocumentSettings, Session);
     GraphOptionsPanel.Initialize(this, App.Settings.FlowGraphSettings, Session);
