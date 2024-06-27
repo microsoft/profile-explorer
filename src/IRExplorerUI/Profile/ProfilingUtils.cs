@@ -474,7 +474,7 @@ public static class ProfilingUtils {
 
       if (marking.NameMatches(nameProvider.FormatFunctionName(node.Function.Name))) {
         funcNodeList.Add(node); // Per-category list.
-        var instanceNodeList = funcNodeMap.GetOrAddValue(node.Function, () => new List<ProfileCallTreeNode>());
+        var instanceNodeList = funcNodeMap.GetOrAddValue(node.Function);
         instanceNodeList.Add(node);
       }
 
@@ -521,7 +521,7 @@ public static class ProfilingUtils {
     // Pick top N function per module, in exclusive weight order.
     foreach (var pair in functs) {
       var func = pair.Item1;
-      var list = moduleFuncs.GetOrAddValue(func.ModuleName, () => new List<ProfileCallTreeNode>());
+      var list = moduleFuncs.GetOrAddValue(func.ModuleName);
 
       if (list.Count < maxFunctsPerModule) {
         list.Add(session.ProfileData.CallTree.GetCombinedCallTreeNode(func));

@@ -435,8 +435,8 @@ public class ProfileDocumentMarker {
       return new List<ProfileCallTreeNode>();
     }
 
-    public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-      return new List<ProfileCallTreeNode>();
+    public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
+      return new();
     }
 
     public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {

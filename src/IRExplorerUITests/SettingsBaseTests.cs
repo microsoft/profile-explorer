@@ -11,7 +11,7 @@ namespace IRExplorerUITests.Settings;
 
 [TestClass]
 [TestSubject(typeof(SettingsBase))]
-public class SettingsBaseTest {
+public class SettingsBaseTests {
   [ProtoContract()]
   [ProtoInclude(100, typeof(DerivedObject))]
   private class TestObject : SettingsBase {

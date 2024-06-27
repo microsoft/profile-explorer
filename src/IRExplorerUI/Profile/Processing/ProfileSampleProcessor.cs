@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace IRExplorerUI.Profile;
@@ -15,7 +17,7 @@ public abstract class ProfileSampleProcessor {
     return null;
   }
 
-  protected abstract void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
+  protected abstract void ProcessSample(ref ProfileSample sample, ResolvedProfileStack stack,
                                         int sampleIndex, object chunkData);
 
   protected virtual void CompleteChunk(int k, object chunkData) {
@@ -30,12 +32,13 @@ public abstract class ProfileSampleProcessor {
                                     int maxChunks = int.MaxValue) {
     int sampleStartIndex = filter.TimeRange?.StartSampleIndex ?? 0;
     int sampleEndIndex = filter.TimeRange?.EndSampleIndex ?? profile.Samples.Count;
-    // Trace.WriteLine($"Sample range: {sampleStartIndex} - {sampleEndIndex}");
+    //Trace.WriteLine($"ProfileSampleProcessor: Sample range: {sampleStartIndex} - {sampleEndIndex}");
 
     int sampleCount = sampleEndIndex - sampleStartIndex;
     int chunks = Math.Min(maxChunks, DefaultThreadCount);
-    // Trace.WriteLine($"Using {chunks} chunks");
-
+    //Trace.WriteLine($"ProfileSampleProcessor: Using {chunks} chunks");
+    //var sw = Stopwatch.StartNew();
+    
     int chunkSize = sampleCount / chunks;
     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
     var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
@@ -72,6 +75,7 @@ public abstract class ProfileSampleProcessor {
 
         // Walk each sample in the range and update the function profile.
         bool hasThreadFilter = filter.HasThreadFilter;
+        var sampleSpan = CollectionsMarshal.AsSpan(profile.Samples);
 
         for (int k = startRangeIndex; k <= endRangeIndex; k++) {
           var range = ranges[k];
@@ -79,14 +83,15 @@ public abstract class ProfileSampleProcessor {
           int endIndex = Math.Min(end, range.EndIndex);
 
           for (int i = startIndex; i < endIndex; i++) {
-            var (sample, stack) = profile.Samples[i];
+            ref var stack = ref sampleSpan[i].Stack;
 
             if (hasThreadFilter &&
                 !filter.ThreadIds.Contains(stack.Context.ThreadId)) {
               continue;
             }
 
-            ProcessSample(sample, stack, i, chunkData);
+            ref var sample = ref sampleSpan[i].Sample;
+            ProcessSample(ref sample, stack, i, chunkData);
           }
         }
 
@@ -96,5 +101,9 @@ public abstract class ProfileSampleProcessor {
 
     Task.WhenAll(tasks.ToArray()).Wait();
     Complete();
+
+    //sw.Stop();
+    //Trace.WriteLine($"ProfileSampleProcessor: Time {sw.ElapsedMilliseconds} ms");
+    //Trace.Flush();
   }
 }

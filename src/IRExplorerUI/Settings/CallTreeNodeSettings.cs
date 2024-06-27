@@ -92,15 +92,15 @@ public class ProfileListViewFilter : SettingsBase {
   public bool FilterByWeight { get; set; }
   [ProtoMember(3)][OptionValue(true)]
   public bool SortByExclusiveTime { get; set; }
-  [ProtoMember(4)][OptionValue(0)]
+  [ProtoMember(4)][OptionValue(10)]
   public int MinItems { get; set; }
-  [ProtoMember(5)][OptionValue(0)]
+  [ProtoMember(5)][OptionValue(1)]
   public double MinWeight { get; set; }
+  [ProtoMember(6)][OptionValue(0.01)]
+  public double MinPercentage { get; set; }
 
   public override void Reset() {
     ResetAllOptions(this);
-    MinItems = DefaultMinItems;
-    MinWeight = DefaultMinWeight;
   }
 
   public override bool Equals(object obj) {

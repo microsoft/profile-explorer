@@ -16,8 +16,8 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
     return funcProcessor.CallTree;
   }
 
-  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
+  protected override void ProcessSample(ref ProfileSample sample, ResolvedProfileStack stack,
                                         int sampleIndex, object chunkData) {
-    CallTree.UpdateCallTree(sample, stack);
+    CallTree.UpdateCallTree(ref sample, stack);
   }
 }

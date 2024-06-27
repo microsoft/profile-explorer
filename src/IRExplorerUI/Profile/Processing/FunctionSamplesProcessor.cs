@@ -51,7 +51,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     return chunk;
   }
 
-  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
+  protected override void ProcessSample(ref ProfileSample sample, ResolvedProfileStack stack,
                                         int sampleIndex, object chunkData) {
     var data = (ChunkData)chunkData;
     var currentNode = node_;
@@ -84,8 +84,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     }
 
     if (match) {
-      var threadList = data.ThreadListMap.GetOrAddValue(stack.Context.ThreadId,
-                                                        () => new List<SampleIndex>());
+      var threadList = data.ThreadListMap.GetOrAddValue(stack.Context.ThreadId);
       var index = new SampleIndex(sampleIndex, sample.Time);
       threadList.Add(index);
       data.AllThreadsList.Add(index);

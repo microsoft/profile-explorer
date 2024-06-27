@@ -100,7 +100,7 @@ public class GridViewColumnVisibility {
       return;
 
     removedColumns_ ??= new Dictionary<ListView, List<(GridViewColumn, int)>>();
-    var columnList = removedColumns_.GetOrAddValue(lv, () => new List<(GridViewColumn Column, int Index)>());
+    var columnList = removedColumns_.GetOrAddValue(lv);
     var addedColumns = new List<GridViewColumn>();
 
     // If some of the removed columns got re-enabled, insert them back.

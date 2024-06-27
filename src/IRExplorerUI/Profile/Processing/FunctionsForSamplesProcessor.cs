@@ -39,7 +39,7 @@ public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
     return chunk;
   }
 
-  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack, int sampleIndex,
+  protected override void ProcessSample(ref ProfileSample sample, ResolvedProfileStack stack, int sampleIndex,
                                         object chunkData) {
     var data = (ChunkData)chunkData;
 

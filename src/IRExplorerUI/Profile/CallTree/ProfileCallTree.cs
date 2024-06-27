@@ -97,11 +97,12 @@ public sealed class ProfileCallTree {
     return callTree;
   }
 
-  public void UpdateCallTree(ProfileSample sample, ResolvedProfileStack resolvedStack) {
+  public void UpdateCallTree(ref ProfileSample sample, ResolvedProfileStack resolvedStack) {
     // Build call tree. Note that the call tree methods themselves are thread-safe.
     bool isRootFrame = true;
     ProfileCallTreeNode prevNode = null;
     ResolvedProfileStackFrame prevFrame = null;
+    var sampleWeight = sample.Weight;
 
     for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
       var resolvedFrame = resolvedStack.StackFrames[k];
@@ -121,11 +122,11 @@ public sealed class ProfileCallTree {
 
         //? TODO: Call sites can be computed on-demand when opening a func
         //? by going over the samples in the func, similar to how timeline selection works
-        prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
+        prevNode.AddCallSite(node, prevFrame.FrameRVA, sampleWeight);
       }
 
-      node.AccumulateWeight(sample.Weight);
-      node.AccumulateWeight(sample.Weight, TimeSpan.Zero, resolvedStack.Context.ThreadId);
+      node.AccumulateWeight(sampleWeight);
+      node.AccumulateWeight(sampleWeight, TimeSpan.Zero, resolvedStack.Context.ThreadId);
 
       // Set the user/kernel-mode context of the function.
       if (node.Kind == ProfileCallTreeNodeKind.Unset) {
@@ -147,8 +148,8 @@ public sealed class ProfileCallTree {
 
     // Last function on the stack gets the exclusive weight.
     if (prevNode != null) {
-      prevNode.AccumulateExclusiveWeight(sample.Weight);
-      prevNode.AccumulateWeight(TimeSpan.Zero, sample.Weight, resolvedStack.Context.ThreadId);
+      prevNode.AccumulateExclusiveWeight(sampleWeight);
+      prevNode.AccumulateWeight(TimeSpan.Zero, sampleWeight, resolvedStack.Context.ThreadId);
     }
   }
 
@@ -504,62 +505,26 @@ public sealed class ProfileCallTree {
     return list;
   }
 
-  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node, bool combineInstances = true) {
+  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
+    return GetTopFunctionsAndModules(node).Functions;
+  }
+
+  public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+    return GetTopFunctionsAndModules(node).Modules;
+  }
+
+  public (List<ProfileCallTreeNode> Functions,
+    List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
+    var moduleMap = new Dictionary<string, ModuleProfileInfo>();
     var funcMap = new Dictionary<IRTextFunction, ProfileCallTreeNode>();
 
     if (node is ProfileCallTreeGroupNode groupNode) {
       foreach (var n in groupNode.Nodes) {
-        CollectFunctions(n, funcMap, combineInstances);
+        CollectFunctionsAndModules(n, funcMap, moduleMap);
       }
     }
     else {
-      CollectFunctions(node, funcMap, combineInstances);
-    }
-
-    var funcList = new List<ProfileCallTreeNode>(funcMap.Count);
-
-    foreach (var func in funcMap.Values) {
-      funcList.Add(func);
-    }
-
-    funcList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
-    return funcList;
-  }
-
-  public void CollectFunctions(ProfileCallTreeNode node, Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap,
-                               bool combineInstances = true) {
-    var entry = node;
-
-    if (combineInstances) {
-      // Combine all instances of a function under the node.
-      entry = funcMap.GetOrAddValue(node.Function, () =>
-                                      new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function) {
-                                        Kind = node.Kind
-                                      });
-
-      var groupEntry = (ProfileCallTreeGroupNode)entry;
-      groupEntry.Nodes.Add(node);
-      groupEntry.AccumulateWeight(node.Weight);
-      groupEntry.AccumulateExclusiveWeight(node.ExclusiveWeight);
-    }
-
-    if (node.HasChildren) {
-      foreach (var childNode in node.Children) {
-        CollectFunctions(childNode, funcMap);
-      }
-    }
-  }
-
-  public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-    var moduleMap = new Dictionary<string, ModuleProfileInfo>();
-
-    if (node is ProfileCallTreeGroupNode groupNode) {
-      foreach (var n in groupNode.Nodes) {
-        CollectModules(n, moduleMap);
-      }
-    }
-    else {
-      CollectModules(node, moduleMap);
+      CollectFunctionsAndModules(node, funcMap, moduleMap);
     }
 
     var moduleList = new List<ModuleProfileInfo>(moduleMap.Count);
@@ -570,18 +535,37 @@ public sealed class ProfileCallTree {
     }
 
     moduleList.Sort((a, b) => b.Weight.CompareTo(a.Weight));
-    return moduleList;
+    var funcList = funcMap.ToValueList();
+    funcList.Sort((a, b) => b.ExclusiveWeight.CompareTo(a.ExclusiveWeight));
+    return (funcList, moduleList);
   }
 
-  public void CollectModules(ProfileCallTreeNode node, Dictionary<string, ModuleProfileInfo> moduleMap) {
-    var entry = moduleMap.GetOrAddValue(node.ModuleName,
-                                        () => new ModuleProfileInfo(node.ModuleName));
-    entry.Weight += node.ExclusiveWeight;
-    entry.Functions.Add(node);
+  private void CollectFunctionsAndModules(ProfileCallTreeNode node,
+                                          Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap,
+                                          Dictionary<string, ModuleProfileInfo> moduleMap) {
+    // Combine all instances of a function under the node.
+    if (!funcMap.TryGetValue(node.Function, out var entry)) {
+      entry = new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function, node.Kind);
+      funcMap[node.Function] = entry;
+    }
+
+    var groupEntry = (ProfileCallTreeGroupNode)entry;
+    groupEntry.Nodes.Add(node);
+    groupEntry.AccumulateWeight(node.Weight);
+    groupEntry.AccumulateExclusiveWeight(node.ExclusiveWeight);
+
+    // Collect time and functions per module.
+    if (!moduleMap.TryGetValue(node.ModuleName, out var moduleEntry)) {
+      moduleEntry = new ModuleProfileInfo(node.ModuleName);
+      moduleMap[node.ModuleName] = moduleEntry;
+    }
+
+    moduleEntry.Weight += node.ExclusiveWeight;
+    moduleEntry.Functions.Add(node);
 
     if (node.HasChildren) {
       foreach (var childNode in node.Children) {
-        CollectModules(childNode, moduleMap);
+        CollectFunctionsAndModules(childNode, funcMap, moduleMap);
       }
     }
   }

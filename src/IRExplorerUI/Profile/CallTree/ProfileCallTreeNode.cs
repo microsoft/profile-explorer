@@ -284,6 +284,13 @@ public sealed class ProfileCallTreeGroupNode : ProfileCallTreeNode {
     callers_ = callers ?? new List<ProfileCallTreeNode>();
   }
 
+  public ProfileCallTreeGroupNode(FunctionDebugInfo funcInfo, IRTextFunction function,
+                                  ProfileCallTreeNodeKind kind) :
+    base(funcInfo, function) {
+    nodes_ = new List<ProfileCallTreeNode>();
+    Kind = kind;
+  }
+
   public ProfileCallTreeGroupNode(ProfileCallTreeNode baseNode, TimeSpan weight) :
     this(baseNode.FunctionDebugInfo, baseNode.Function) {
     nodes_.Add(baseNode);

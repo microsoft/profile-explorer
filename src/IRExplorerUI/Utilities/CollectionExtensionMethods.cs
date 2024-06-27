@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows.Data;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore.IR;
@@ -257,61 +258,42 @@ public static class CollectionExtensionMethods {
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int AccumulateValue<K>(this Dictionary<K, int> dict, K key, int value) {
-    if (dict.TryGetValue(key, out int currentValue)) {
-      int newValue = currentValue + value;
-      dict[key] = newValue;
-      return newValue;
-    }
-
-    dict[key] = value;
-    return value;
+  public static void AccumulateValue<K>(this Dictionary<K, int> dict, K key, int value) {
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    currentValue += value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static long AccumulateValue<K>(this Dictionary<K, long> dict, K key, long value) {
-    if (dict.TryGetValue(key, out long currentValue)) {
-      long newValue = currentValue + value;
-      dict[key] = newValue;
-      return newValue;
-    }
-
-    dict[key] = value;
-    return value;
+  public static void AccumulateValue<K>(this Dictionary<K, long> dict, K key, long value) {
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    currentValue += value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static TimeSpan AccumulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
-    if (dict.TryGetValue(key, out var currentValue)) {
-      // The TimeSpan + operator does an overflow check that is not relevant
-      // (and an exception undesirable), avoid it for some speedup.
-      long sum = currentValue.Ticks + value.Ticks;
-      var newValue = TimeSpan.FromTicks(sum);
-      dict[key] = newValue;
-      return newValue;
-    }
-
-    dict[key] = value;
-    return value;
+  public static void AccumulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    
+    // The TimeSpan + operator does an overflow check that is not relevant
+    // (and an exception undesirable), avoid it for some speedup.
+    long sum = currentValue.Ticks + value.Ticks;
+    var newValue = TimeSpan.FromTicks(sum);
+    currentValue = newValue;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static (TimeSpan, TimeSpan)
+  public static void
     AccumulateValue<K>(this Dictionary<K, (TimeSpan, TimeSpan)> dict, K key,
                        TimeSpan value1, TimeSpan value2) {
-    if (dict.TryGetValue(key, out var currentValue)) {
-      // The TimeSpan + operator does an overflow check that is not relevant
-      // (and an exception undesirable), avoid it for some speedup.
-      long sum1 = currentValue.Item1.Ticks + value1.Ticks;
-      long sum2 = currentValue.Item2.Ticks + value2.Ticks;
-      var newValue = (TimeSpan.FromTicks(sum1), TimeSpan.FromTicks(sum2));
-      dict[key] = newValue;
-      return newValue;
-    }
-
-    var pair = (value1, value2);
-    dict[key] = pair;
-    return pair;
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    
+    // The TimeSpan + operator does an overflow check that is not relevant
+    // (and an exception undesirable), avoid it for some speedup.
+    long sum1 = currentValue.Item1.Ticks + value1.Ticks;
+    long sum2 = currentValue.Item2.Ticks + value2.Ticks;
+    var newValue1 = TimeSpan.FromTicks(sum1);
+    var newValue2 = TimeSpan.FromTicks(sum2);
+    currentValue.Item1 = newValue1;
+    currentValue.Item2 = newValue2;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

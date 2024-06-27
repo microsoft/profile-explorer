@@ -65,7 +65,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
     return new ChunkData();
   }
 
-  protected override void ProcessSample(ProfileSample sample, ResolvedProfileStack stack,
+  protected override void ProcessSample(ref ProfileSample sample, ResolvedProfileStack stack,
                                         int sampleIndex, object chunkData) {
     if (filterStackFuncts_ != null) {
       // Filtering of functions to a single instance is enabled,

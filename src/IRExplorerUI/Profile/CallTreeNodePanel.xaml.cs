@@ -27,8 +27,7 @@ namespace IRExplorerUI.Profile;
 
 public interface IFunctionProfileInfoProvider {
   List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node);
-  List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node);
-  List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node);
+  (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node);
 }
 
 public class ProfileCallTreeNodeEx : BindableObject {
@@ -268,13 +267,13 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     var markings = App.Settings.MarkingSettings.BuiltinMarkingCategories.FunctionColors;
     var task1 = Task.Run(() => funcInfoProvider_.GetBacktrace(CallTreeNode.CallTreeNode));
-    var task2 = Task.Run(() => funcInfoProvider_.GetTopFunctions(CallTreeNode.CallTreeNode));
-    var task3 = Task.Run(() => funcInfoProvider_.GetTopModules(CallTreeNode.CallTreeNode));
+    var task2 = Task.Run(() => funcInfoProvider_.GetTopFunctionsAndModules(CallTreeNode.CallTreeNode));
     var task4 = Task.Run(() => ProfilingUtils.CollectMarkedFunctions(markings, false,
                                                                      Session, CallTreeNode.CallTreeNode));
     BacktraceList.ShowFunctions(await task1);
-    FunctionList.ShowFunctions(await task2, settings_.FunctionListViewFilter);
-    ModuleList.ShowModules(await task3);
+    var (funcList, moduleList) = await task2;
+    FunctionList.ShowFunctions(funcList, settings_.FunctionListViewFilter);
+    ModuleList.ShowModules(moduleList);
     CategoryList.ShowCategories(await task4);
 
     ModuleList.SelectFirstItem();
@@ -333,11 +332,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   private void UpdateCategoryFunctions(FunctionMarkingCategory category) {
-    CategoryFunctionList.ShowFunctions(category.SortedFunctions);
+    CategoryFunctionList.ShowFunctions(category.SortedFunctions, settings_.FunctionListViewFilter);
   }
 
   private void UpdateModuleFunctions(ModuleProfileInfo moduleInfo) {
-    ModuleFunctionList.ShowFunctions(moduleInfo.Functions);
+    ModuleFunctionList.ShowFunctions(moduleInfo.Functions, settings_.FunctionListViewFilter);
   }
 
   private async Task SetupInstanceInfo(ProfileCallTreeNode node) {

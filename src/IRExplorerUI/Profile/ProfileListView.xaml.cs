@@ -478,10 +478,14 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
       }
 
+      // Filter out functions under the MinWeight threshold.
+      var minWeight = filter.FilterByWeight ? TimeSpan.FromMilliseconds(filter.MinWeight) : TimeSpan.MaxValue;
+      
       if (filter.FilterByWeight) {
         if (filter.SortByExclusiveTime) {
           foreach (var node in nodes) {
-            if (node.ExclusiveWeight.TotalMilliseconds > filter.MinWeight) {
+            if (node.ExclusiveWeight > minWeight) {
+              
               filteredNodes.Add(node);
             }
             else break;
@@ -489,7 +493,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         }
         else {
           foreach (var node in nodes) {
-            if (node.Weight.TotalMilliseconds > filter.MinWeight) {
+            if (node.Weight > minWeight) {
               filteredNodes.Add(node);
             }
             else break;
@@ -503,16 +507,34 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
           filteredNodes.Add(nodes[i]);
         }
       }
+      
+      itemList_ = new List<ProfileListViewItem>(filteredNodes.Count);
+
+      foreach (var node in filteredNodes) {
+        var item = ProfileListViewItem.From(node, Session.ProfileData,
+                                            Session.CompilerInfo.NameProvider.FormatFunctionName, Settings);
+        // Stop once weight percentage drops under threshold.
+        if (item.Percentage >= filter.MinPercentage ||
+            itemList_.Count < filter.MinItems ||
+            (item.Weight > minWeight && itemList_.Count < filter.MinItems * 10)) {
+          itemList_.Add(item);
+        }
+        else {
+          break;
+        }
+      }
+
     }
     else {
+      // No filtering applied.
       filteredNodes = nodes;
+      itemList_ = new List<ProfileListViewItem>(filteredNodes.Count);
+      filteredNodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
+                                                                           Session.CompilerInfo.NameProvider.
+                                                                             FormatFunctionName, Settings)));
     }
 
-    itemList_ = new List<ProfileListViewItem>(nodes.Count);
-    filteredNodes.ForEach(node => itemList_.Add(ProfileListViewItem.From(node, Session.ProfileData,
-                                                                         Session.CompilerInfo.NameProvider.
-                                                                           FormatFunctionName,
-                                                                         Settings)));
+ 
     UpdateMarkedFunctions();
     ItemList.ItemsSource = itemList_;
     GridViewColumnVisibility.UpdateListView(ItemList);

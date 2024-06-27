@@ -219,12 +219,8 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     return callTree_.GetBacktrace(node);
   }
 
-  public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-    return callTree_.GetTopModules(node);
-  }
-
-  public List<ProfileCallTreeNode> GetTopFunctions(ProfileCallTreeNode node) {
-    return callTree_.GetTopFunctions(node);
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
+    return callTree_.GetTopFunctionsAndModules(node);
   }
 
   public event PropertyChangedEventHandler PropertyChanged;

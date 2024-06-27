@@ -283,10 +283,7 @@ public class FunctionProcessingResult {
       if (tag != null) {
         var weight = elementMap.GetValueOr(instr, TimeSpan.Zero);
         var counters = counterMap.GetValueOrNull(instr);
-        var list = instrToLineMap.SampledElements.GetOrAddValue(tag.Line,
-                                                                () =>
-                                                                  new List<(IRElement Element, (TimeSpan Weight,
-                                                                    PerformanceCounterValueSet Counters))>());
+        var list = instrToLineMap.SampledElements.GetOrAddValue(tag.Line);
         list.Add((instr, (weight, counters)));
       }
     }
