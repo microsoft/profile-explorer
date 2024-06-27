@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
@@ -112,9 +113,11 @@ public class ProfileData {
     get {
       var list = new List<(int ThreadId, TimeSpan Weight)>();
       var threadWeights = new Dictionary<int, TimeSpan>();
+      var sampleSpan = CollectionsMarshal.AsSpan(Samples);
 
-      foreach (var (sample, stack) in Samples) {
-        threadWeights.AccumulateValue(stack.Context.ThreadId, sample.Weight);
+      for (int i = 0; i < sampleSpan.Length; i++) {
+        threadWeights.AccumulateValue(sampleSpan[i].Stack.Context.ThreadId,
+                                      sampleSpan[i].Sample.Weight);
       }
 
       foreach ((int threadId, var weight) in threadWeights) {
@@ -441,9 +444,10 @@ public class ProfileData {
     int sampleIndex = 0;
     int prevThreadId = -1;
     int prevSampleIndex = -1;
+    var sampleSpan = CollectionsMarshal.AsSpan(Samples);
 
-    foreach (var (sample, stack) in Samples) {
-      int threadId = stack.Context.ThreadId;
+    for (int i =0; i < sampleSpan.Length; i++) {
+      int threadId = sampleSpan[i].Stack.Context.ThreadId;
 
       if (threadId != prevThreadId) {
         if (prevThreadId != -1) {

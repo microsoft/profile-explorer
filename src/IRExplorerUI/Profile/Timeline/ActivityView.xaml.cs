@@ -1221,7 +1221,7 @@ public record SampleTimeRangeInfo(
   int EndSampleIndex,
   int ThreadId);
 
-public record SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
+public record struct SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
 
 //? TODO: Use SampleIndex in SampleTimePointInfo/Range
-public record SampleIndex(int Index, TimeSpan Time);
+public record struct SampleIndex(int Index, TimeSpan Time);
