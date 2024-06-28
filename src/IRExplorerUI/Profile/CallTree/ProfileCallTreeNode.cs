@@ -149,13 +149,6 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
       return (childNode, false);
     }
 
-    // Check again if another thread added the child in the meantime.
-    childNode = FindExistingNode(functionDebugInfo, function);
-
-    if (childNode != null) {
-      return (childNode, false);
-    }
-
     childNode = new ProfileCallTreeNode(functionDebugInfo, function, null, this);
     children_.Add(childNode);
     return (childNode, true);

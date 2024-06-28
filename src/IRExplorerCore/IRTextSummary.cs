@@ -9,7 +9,7 @@ using IRExplorerCore.Utilities;
 
 namespace IRExplorerCore;
 
-public class IRTextSummary {
+public class IRTextSummary : IEquatable<IRTextSummary> {
   private Dictionary<string, IRTextFunction> functionNameMap_;
   private Dictionary<string, IRTextFunction> unmangledFunctionNameMap_;
   private Dictionary<int, IRTextFunction> functionMap_;
@@ -117,11 +117,7 @@ public class IRTextSummary {
   }
 
   public override int GetHashCode() {
-    if (hashCode_ == 0) {
-      hashCode_ = HashCode.Combine(ModuleName);
-    }
-
-    return hashCode_;
+    return (ModuleName != null ? ModuleName.GetHashCode() : 0);
   }
 
   public override string ToString() {
@@ -129,5 +125,18 @@ public class IRTextSummary {
     sb.AppendLine($"Summary: {ModuleName}");
     sb.AppendLine($"Functions: {Functions.Count}");
     return sb.ToString();
+  }
+
+  public bool Equals(IRTextSummary other) {
+    if (ReferenceEquals(null, other)) return false;
+    if (ReferenceEquals(this, other)) return true;
+    return ModuleName.Equals(other.ModuleName, StringComparison.Ordinal);
+  }
+
+  public override bool Equals(object obj) {
+    if (ReferenceEquals(null, obj)) return false;
+    if (ReferenceEquals(this, obj)) return true;
+    if (obj.GetType() != this.GetType()) return false;
+    return Equals((IRTextSummary)obj);
   }
 }

@@ -62,7 +62,9 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
       return true;
     }
 
-    return Name.Equals(other.Name, StringComparison.Ordinal);
+    // Because name is interned, we can use reference equality.
+    return ReferenceEquals(Name, other.Name) &&
+           HasSameModule(other);
   }
 
   public override bool Equals(object obj) {
@@ -101,7 +103,7 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     }
 
     if (ParentSummary != null && other.ParentSummary != null) {
-      return ModuleName.Equals(other.ModuleName, StringComparison.Ordinal);
+      return ParentSummary.Equals(other.ParentSummary);
     }
 
     return ParentSummary == null && other.ParentSummary == null;
