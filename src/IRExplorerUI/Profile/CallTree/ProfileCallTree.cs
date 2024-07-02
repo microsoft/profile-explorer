@@ -371,8 +371,7 @@ public sealed class ProfileCallTree {
     var callSiteMap = new Dictionary<long, ProfileCallSite>();
     var threadsMap = new Dictionary<int, (TimeSpan, TimeSpan)>();
     var weight = TimeSpan.Zero;
-    var excWeight = TimeSpan.Zero;
-    var kind = ProfileCallTreeNodeKind.Unset;
+    var excWeight = TimeSpan.Zero; var kind = ProfileCallTreeNodeKind.Unset;
 
     foreach (var node in nodes) {
       // In case of recursive functions, the total time
@@ -566,6 +565,54 @@ public sealed class ProfileCallTree {
     if (node.HasChildren) {
       foreach (var childNode in node.Children) {
         CollectFunctionsAndModules(childNode, funcMap, moduleMap);
+      }
+    }
+  }
+
+  public void MergeWith(ProfileCallTree otherTree) {
+    // Recursively merge the common root nodes
+    // and copy over any new root nodes.
+    foreach (var rootNode in otherTree.rootNodes_) {
+      if (rootNodes_.TryGetValue(rootNode.Key, out var existingRootNode)) {
+        existingRootNode.MergeWith(rootNode.Value);
+      }
+      else {
+        rootNodes_[rootNode.Key] = rootNode.Value;
+      }
+    }
+
+    // Merge the other data structures.
+    if (otherTree.funcToNodesMap_ != null) {
+      funcToNodesMap_ ??= new();
+      var existingNodesSet = new HashSet<ProfileCallTreeNode>(nextNodeId_);
+      
+      foreach (var list in funcToNodesMap_.Values) {
+        foreach (var node in list) {
+          existingNodesSet.Add(node);
+        }
+      }
+      
+      foreach (var pair in otherTree.funcToNodesMap_) {
+        if (funcToNodesMap_.TryGetValue(pair.Key, out var existingList)) {
+          // A function present in both tree, add the nodes that are missing.
+          foreach (var node in pair.Value) {
+            if(!existingNodesSet.Contains(node)) {
+              existingList.Add(node);
+            }
+          }
+        }
+        else {
+          // A function present only in the other tree.
+          funcToNodesMap_[pair.Key] = pair.Value;
+        }
+      }
+    }
+
+    if (otherTree.nodeIdMap_ != null) {
+      nodeIdMap_ ??= new Dictionary<long, ProfileCallTreeNode>();
+
+      foreach (var pair in otherTree.nodeIdMap_) {
+        nodeIdMap_[pair.Key] = pair.Value;
       }
     }
   }

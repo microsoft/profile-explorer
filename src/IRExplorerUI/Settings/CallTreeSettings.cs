@@ -31,6 +31,8 @@ public class CallTreeSettings : SettingsBase {
   public int NodePopupDuration { get; set; }
   [ProtoMember(9)][OptionValue()]
   public ColumnSettings TreeListColumns { get; set; }
+  [ProtoMember(10)][OptionValue(true)]
+  public bool ExpandHottestPath { get; set; }
 
   public override void Reset() {
     ResetAllOptions(this);

@@ -169,6 +169,8 @@ public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfil
   }
 }
 
+// Stack-allocated version of ResolvedProfileStackFrameDetails, used only
+// when adding a new stack frame to reduce GC pressure if it already exists.
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct ResolvedProfileStackFrameKey : IEquatable<ResolvedProfileStackFrameKey> {
   public static readonly ResolvedProfileStackFrameKey Unknown = new();

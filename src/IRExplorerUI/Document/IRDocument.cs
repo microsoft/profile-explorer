@@ -1280,7 +1280,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
                                                         VerticalAlignment alignmentY,
                                                         double marginX, double marginY) {
     var overlay = IconElementOverlay.CreateDefault(icon, width, height,
-                                                   Brushes.Transparent,
+                                                   ColorBrushes.Transparent,
                                                    selectedStyle_.BackColor,
                                                    selectedStyle_.Border,
                                                    label, tooltip,
@@ -1402,7 +1402,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
                                                        string label = null, string tooltip = null,
                                                        bool prepend = false) {
     var overlay = IconElementOverlay.CreateDefault(icon, width, height,
-                                                   Brushes.Transparent,
+                                                   ColorBrushes.Transparent,
                                                    selectedStyle_.BackColor,
                                                    selectedStyle_.Border,
                                                    label, tooltip);

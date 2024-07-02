@@ -378,7 +378,7 @@ class ColorBrushOpacityConverter : IValueConverter {
     double opacity = double.Parse((string)parameter);
 
     if (brush == null) {
-      return Brushes.Transparent;
+      return ColorBrushes.Transparent;
     }
 
     return ColorBrushes.GetTransparentBrush(brush.Color, opacity);

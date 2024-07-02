@@ -186,7 +186,7 @@ public sealed class DiffLineHighlighter : IBackgroundRenderer {
         return minorModificationBrush_;
     }
 
-    return Brushes.Transparent;
+    return ColorBrushes.Transparent;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

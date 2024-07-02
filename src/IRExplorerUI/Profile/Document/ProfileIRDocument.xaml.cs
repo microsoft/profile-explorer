@@ -1339,7 +1339,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private void SetupSourceAssemblyFolding(bool defaultClosed) {
-    FoldingElementGenerator.TextBrush = Brushes.Transparent;
+    FoldingElementGenerator.TextBrush = ColorBrushes.Transparent;
     var foldingStrategy = new RangeFoldingStrategy(sourceProfileResult_.AssemblyRanges, defaultClosed);
     var foldings = TextView.SetupCustomBlockFolding(foldingStrategy);
 

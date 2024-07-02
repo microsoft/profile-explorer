@@ -216,8 +216,8 @@ public class ProfileStack : IEquatable<ProfileStack> {
 
     // FramePointers is allocated using interning, ref. equality is sufficient.
     return ContextId == other.ContextId &&
-           (FramePointers == other.FramePointers ||
-            StackComparer.AreEqual(FramePointers, other.FramePointers));
+           UserModeTransitionIndex == other.UserModeTransitionIndex &&
+           (FramePointers == other.FramePointers);
   }
 
   private long[] RentArray(int frameCount) {

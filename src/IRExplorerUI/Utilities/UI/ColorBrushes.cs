@@ -14,6 +14,10 @@ public static class ColorBrushes {
       return new Dictionary<Color, SolidColorBrush>();
     });
 
+  // Cache transparent brush, since using it from Brushes
+  // does a dictionary lookup.
+  public static Brush Transparent = Brushes.Transparent;
+
   public static SolidColorBrush GetBrush(string colorName) {
     return GetBrush(Utils.ColorFromString(colorName));
   }

@@ -3,33 +3,30 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 using IRExplorerCore;
 using IRExplorerCore.Collections;
 using IRExplorerUI.Compilers;
-using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
-[ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
-  [ProtoMember(1)]
+  public int Id { get; set; }
   public IRTextFunction Function { get; set; }
+  public ProfileCallTreeNodeKind Kind { get; set; }
   private TinyList<ProfileCallTreeNode> children_;
   private ProfileCallTreeNode caller_; // Can't be serialized, reconstructed.
   public FunctionDebugInfo FunctionDebugInfo { get; set; }
-  public TimeSpan Weight { get; set; }
-  public TimeSpan ExclusiveWeight { get; set; }
-  private Dictionary<long, ProfileCallSite> callSites_; //? Use Hybrid array/dict to save space
-  public object Tag { get; set; }
-  public int Id { get; set; }
-  public ProfileCallTreeNodeKind Kind { get; set; }
 
   //? TODO: Replace Threads dict and CallSites with a TinyDictionary-like data struct
   //? like TinyList, also consider DictionarySlim instead of Dictionary from
   //? https://github.com/dotnet/corefxlab/blob/archive/src/Microsoft.Experimental.Collections/Microsoft/Collections/Extensions/DictionarySlim
+  public Dictionary<long, ProfileCallSite> CallSites { get; set; }
   public Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)> ThreadWeights { get; set; }
-  public bool HasThreadWeights => ThreadWeights != null && ThreadWeights.Count > 0;
+  public TimeSpan Weight { get; set; }
+  public TimeSpan ExclusiveWeight { get; set; }
+  public object Tag { get; set; }
   public virtual List<ProfileCallTreeNode> Nodes => new() {this};
   public IList<ProfileCallTreeNode> Children => children_;
   public virtual List<ProfileCallTreeNode> Callers => new() {caller_};
@@ -39,11 +36,11 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 #else
   public ProfileCallTreeNode Caller => caller_;
 #endif
-  public Dictionary<long, ProfileCallSite> CallSites => callSites_;
   public virtual bool IsGroup => false;
   public bool HasChildren => Children != null && Children.Count > 0;
   public virtual bool HasCallers => caller_ != null;
   public bool HasCallSites => CallSites != null && CallSites.Count > 0;
+  public bool HasThreadWeights => ThreadWeights != null && ThreadWeights.Count > 0;
   public bool HasFunction => Function != null;
   public string FunctionName => Function.Name;
   public string ModuleName => Function.ModuleName;
@@ -70,7 +67,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
   }
 
-  public ProfileCallTreeNode() { }
+  protected ProfileCallTreeNode() { }
 
   public ProfileCallTreeNode(FunctionDebugInfo funcInfo, IRTextFunction function,
                              List<ProfileCallTreeNode> children = null,
@@ -82,7 +79,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     ThreadWeights = threadWeights ?? new Dictionary<int, (TimeSpan, TimeSpan)>();
     children_ = new TinyList<ProfileCallTreeNode>(children);
     caller_ = caller;
-    callSites_ = callSites;
+    CallSites = callSites;
   }
 
   public void AccumulateWeight(TimeSpan weight) {
@@ -155,10 +152,11 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   }
 
   public void AddCallSite(ProfileCallTreeNode childNode, long rva, TimeSpan weight) {
-    if (callSites_ == null || !callSites_.TryGetValue(rva, out var callsite)) {
-      callSites_ ??= new Dictionary<long, ProfileCallSite>();
+    CallSites ??= new Dictionary<long, ProfileCallSite>();
+    ref var callsite = ref CollectionsMarshal.GetValueRefOrAddDefault(CallSites, rva, out bool exists);
+
+    if (!exists) {
       callsite = new ProfileCallSite(rva);
-      callSites_[rva] = callsite;
     }
 
     callsite.AddTarget(childNode, weight);
@@ -174,6 +172,53 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     return null;
+  }
+
+  public void MergeWith(ProfileCallTreeNode otherNode) {
+    // Accumulate the weights and merge all data structures,
+    // then recursively merge the common child nodes
+    // and copy over any new child nodes.
+    Weight += otherNode.Weight;
+    ExclusiveWeight += otherNode.ExclusiveWeight;
+
+    if (otherNode.HasCallSites) {
+      CallSites ??= new Dictionary<long, ProfileCallSite>();
+
+      foreach (var callSite in otherNode.CallSites) {
+        ref var existingCallSite =
+          ref CollectionsMarshal.GetValueRefOrAddDefault(CallSites, callSite.Key, out bool exists);
+
+        if (!exists) {
+          existingCallSite = callSite.Value;
+        }
+        else {
+          existingCallSite.MergeWith(callSite.Value);
+        }
+      }
+    }
+
+    if (otherNode.HasThreadWeights) {
+      ThreadWeights ??= new Dictionary<int, (TimeSpan Weight, TimeSpan ExclusiveWeight)>();
+
+      foreach (var threadWeight in otherNode.ThreadWeights) {
+        AccumulateWeight(threadWeight.Value.Weight, threadWeight.Value.ExclusiveWeight, threadWeight.Key);
+      }
+    }
+
+    if (otherNode.HasChildren) {
+      foreach (var child in otherNode.children_) {
+        var existingChild = FindChildNode(child.Function);
+
+        if (existingChild != null) {
+          // Recursively merge child nodes.
+          existingChild.MergeWith(child);
+        }
+        else {
+          // Copy over the child from the other node.
+          children_.Add(child);
+        }
+      }
+    }
   }
 
   internal void Print(StringBuilder builder, int level = 0, bool caller = false) {
@@ -254,7 +299,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
       ExclusiveWeight = ExclusiveWeight,
       children_ = children_,
       caller_ = caller_,
-      callSites_ = callSites_
+      CallSites = CallSites
     };
   }
 }

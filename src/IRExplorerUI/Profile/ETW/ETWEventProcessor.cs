@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using IRExplorerCore;
@@ -117,7 +118,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
     // when it is not set in the trace (-1).
     var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
                                               ParserTrackingOptions.ThreadToProcess);
-    source_.Process(); // Handles ThreadDCStop to build mapping.
 
     ProfileProcess HandleProcessEvent(ProcessTraceData data) {
       var profileProcess = profile.GetOrCreateProcess(data.ProcessID);
@@ -197,10 +197,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
     long lastProfileImageTime = 0;
 
     // Info used to associate a sample with the last call stack running on a thread.
-    var perThreadLastTime = new Dictionary<int, double>();
-    var perThreadLastSample = new Dictionary<int, int>();
-    var perThreadLastKernelStack = new Dictionary<int, (int StackId, long Timestamp)>();
-    var perContextLastSample = new Dictionary<int, int>();
+    var perThreadLastTimeMap = new Dictionary<int, double>();
+    var perThreadLastSampleMap = new Dictionary<int, int>();
+    var perThreadLastKernelStackMap = new Dictionary<int, (int StackId, long Timestamp)>();
+    var perContextLastSampleMap = new Dictionary<int, int>();
     int lastReportedSample = 0;
 
     // Info used to handle compressed stack event
@@ -392,9 +392,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
       if (!isKernelStack && !isKernelStackStart) {
         // This is a user mode stack, check if before it an associated
         // kernel mode stack was recorded - if so, merge the two stacks.
-        var lastKernelStack = perThreadLastKernelStack.GetValueOrDefault(data.ThreadID);
+        ref var lastKernelStack =
+          ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastKernelStackMap, data.ThreadID, out bool exists);
 
-        if (lastKernelStack.StackId != 0 &&
+        if (exists && lastKernelStack.StackId != 0 &&
             lastKernelStack.Timestamp == data.EventTimeStampQPC) {
           //Trace.WriteLine($"  Found matching KernelStack {lastKernelStack.StackId} at {lastKernelStack.Timestamp} on CPU {data.ProcessorNumber}");
 
@@ -413,7 +414,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
           profile.ReplaceStackFramePointers(kstack, frames, context);
           kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
-          perThreadLastKernelStack[data.ThreadID] = (0, 0); // Clear the last kernel stack.
+          lastKernelStack = (0, 0); // Clear the last kernel stack.
         }
       }
 
@@ -437,7 +438,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         int stackId = profile.AddStack(stack, context);
 
         // Try to associate with a previous sample from the same context.
-        int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
+        int sampleId = perThreadLastSampleMap.GetValueOrDefault(data.ThreadID);
         long frameIp = (long)data.InstructionPointer(0);
 
         //? TODO: Check more than the last sample?
@@ -449,7 +450,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         if (isKernelStack) {
           //Trace.WriteLine($"    register KernelStack {stackId} on CPU {data.ProcessorNumber}");
-          perThreadLastKernelStack[data.ThreadID] = (stackId, data.EventTimeStampQPC);
+          perThreadLastKernelStackMap[data.ThreadID] = (stackId, data.EventTimeStampQPC);
         }
       }
 
@@ -464,13 +465,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
 
-      int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
+      int sampleId = perThreadLastSampleMap.GetValueOrDefault(data.ThreadID);
       var triggeringEventTimestamp = TimeSpan.FromMilliseconds(data.EventTimeStampRelativeMSec);
 
       // Check if the last sample on the core did not trigger this stack collection
       if (sampleId == 0 || profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
         // Check if the last sample from the context did not trigger this stack collection
-        if (!perContextLastSample.TryGetValue(contextId, out sampleId) ||
+        if (!perContextLastSampleMap.TryGetValue(contextId, out sampleId) ||
             profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
           // We don't know what sample this stack belongs to so we won't collect it
           return;
@@ -496,13 +497,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
 
-      int sampleId = perThreadLastSample.GetValueOrDefault(data.ThreadID);
+      int sampleId = perThreadLastSampleMap.GetValueOrDefault(data.ThreadID);
       var triggeringEventTimestamp = TimeSpan.FromMilliseconds(data.EventTimeStampRelativeMSec);
 
       // Check if the last sample on the core did not trigger this stack collection
       if (sampleId == 0 || profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
         // Check if the last sample from the context did not trigger this stack collection
-        if (!perContextLastSample.TryGetValue(contextId, out sampleId) ||
+        if (!perContextLastSampleMap.TryGetValue(contextId, out sampleId) ||
             profile.Samples[sampleId - 1].Time != triggeringEventTimestamp) {
           // We don't know what sample this stack belongs to so we won't collect it
           return;
@@ -638,13 +639,15 @@ public sealed partial class ETWEventProcessor : IDisposable {
       // it likely means that some samples were lost, use the sampling interval as the weight.
       int cpu = data.ProcessorNumber;
       double timestamp = data.TimeStampRelativeMSec;
-      double weight = timestamp - perThreadLastTime.GetValueOrDefault(data.ThreadID);
+
+      ref var perThreadLastTime = ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastTimeMap, data.ThreadID, out bool exists); 
+      double weight = timestamp - perThreadLastTime;
 
       if (weight > samplingIntervalLimitMS_) {
         weight = samplingIntervalMS_;
       }
 
-      perThreadLastTime[data.ThreadID] = timestamp;
+      perThreadLastTime = timestamp;
 
       // Skip unknown process.
       if (data.ProcessID < 0) {
@@ -671,8 +674,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
       // Trace.WriteLine($"Sample {sampleId}, timestamp {timestamp}, IP {data.InstructionPointer:X} kernel {isKernelCode}, CPU {cpu}, thread {data.ThreadID}");
 
       // Remember the sample, to be matched later with a call stack.
-      perThreadLastSample[data.ThreadID] = sampleId;
-      perContextLastSample[contextId] = sampleId;
+      perThreadLastSampleMap[data.ThreadID] = sampleId;
+      perContextLastSampleMap[contextId] = sampleId;
 
       // Report progress.
       if (progressCallback != null && sampleId - lastReportedSample >= SampleReportingInterval) {
