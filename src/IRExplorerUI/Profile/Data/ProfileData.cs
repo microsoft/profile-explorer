@@ -283,15 +283,14 @@ public class ProfileData {
 
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
-    // Don't use GetOrAdd that takes a Func<T> because
+    // Don't use GetOrAdd that takes a Func<T> lambda because
     // it would allocate a lambda for each invocation,
     // even if value already in in dictionary.
-    if (FunctionProfiles.TryGetValue(function, out var funcProfile)) {
-      return funcProfile;
-    }
+    return FunctionProfiles.GetOrAdd(function, CreateFunctionProfileData, debugInfo);
+  }
 
-    funcProfile = new FunctionProfileData(debugInfo);
-    return FunctionProfiles.GetOrAdd(function, funcProfile);
+  private static FunctionProfileData CreateFunctionProfileData(IRTextFunction function, FunctionDebugInfo debugInfo) {
+    return new FunctionProfileData(debugInfo);
   }
 
   public byte[] Serialize() {

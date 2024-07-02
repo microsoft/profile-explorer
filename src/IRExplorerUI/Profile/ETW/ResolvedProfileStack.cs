@@ -11,6 +11,9 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
+// Represents a resolved stack frame with details about the function and image it belongs to.
+// To reduce memory usage, the RVA field is stored in a derived class with the smallest possible size,
+// with the most common RVAs being values that fit in 16 or 32 bits.
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class ResolvedProfileStackFrame {
   public ResolvedProfileStackFrameDetails FrameDetails { get; set; }
@@ -42,6 +45,7 @@ public class ResolvedProfileStackFrame {
   public bool IsUnknown => FrameDetails.IsUnknown;
 }
 
+// Stack frame with 16-bit RVA, used to reduce memory usage.
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class ResolvedProfileStackFrame16 : ResolvedProfileStackFrame {
   private ushort frameRva_;
@@ -57,6 +61,7 @@ public class ResolvedProfileStackFrame16 : ResolvedProfileStackFrame {
   }
 }
 
+// Stack frame with 32-bit RVA, used to reduce memory usage.
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class ResolvedProfileStackFrame32 : ResolvedProfileStackFrame {
   private uint frameRva_;
@@ -72,9 +77,10 @@ public class ResolvedProfileStackFrame32 : ResolvedProfileStackFrame {
   }
 }
 
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public sealed class ResolvedProfileStack {
   // Used to deduplicate stack frames for the same function running in the same context.
-  public static ConcurrentDictionary<ResolvedProfileStackFrameDetails, ResolvedProfileStackFrameDetails> uniqueFrames_ =
+  public static ConcurrentDictionary<ResolvedProfileStackFrameKey, ResolvedProfileStackFrameDetails> uniqueFrames_ =
     new();
 
   // Stack frames with the same IP have a unique instance shared among all call stacks.
@@ -90,21 +96,28 @@ public sealed class ResolvedProfileStack {
   public ProfileContext Context { get; set; }
   public int FrameCount => StackFrames.Count;
 
-  public void AddFrame(long frameIP, long frameRVA, ResolvedProfileStackFrameDetails frameDetails, int frameIndex,
-                       ProfileStack stack) {
+  public void AddFrame(IRTextFunction function, long frameIP, long frameRVA, int frameIndex,
+                       ResolvedProfileStackFrameKey frameDetails, ProfileStack stack) {
     // Deduplicate the frame.
-    var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, frameDetails);
+    var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, CreateResolvedProfileStackFrameDetails, function);
     var rvaFrame = ResolvedProfileStackFrame.CreateStackFrame(frameRVA, uniqueFrame);
 
     // A stack frame IP can be called from both user and kernel mode code.
-    frameDetails.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
-    var existingFrame = frameDetails.IsKernelCode ?
+    uniqueFrame.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
+    var existingFrame = uniqueFrame.IsKernelCode ?
       kernelFrameInstances_.GetOrAdd(frameIP, rvaFrame) :
       frameInstances_.GetOrAdd(frameIP, rvaFrame);
     StackFrames.Add(existingFrame);
   }
+
+  private static ResolvedProfileStackFrameDetails CreateResolvedProfileStackFrameDetails(
+    ResolvedProfileStackFrameKey frameDetails, IRTextFunction function) {
+    return new ResolvedProfileStackFrameDetails(frameDetails.DebugInfo, function, frameDetails.Image,
+                                                frameDetails.IsManagedCode);
+  }
 }
 
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfileStackFrameDetails> {
   public static readonly ResolvedProfileStackFrameDetails Unknown = new();
 
@@ -153,5 +166,46 @@ public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfil
            Equals(Image, other.Image) &&
            IsKernelCode == other.IsKernelCode &&
            IsManagedCode == other.IsManagedCode;
+  }
+}
+
+// Stack-allocated version of ResolvedProfileStackFrameDetails, used only
+// when adding a new stack frame to reduce GC pressure if it already exists.
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct ResolvedProfileStackFrameKey : IEquatable<ResolvedProfileStackFrameKey> {
+  public static readonly ResolvedProfileStackFrameKey Unknown = new();
+
+  public ResolvedProfileStackFrameKey(FunctionDebugInfo debugInfo, 
+                                      ProfileImage image, bool isManagedCode) {
+    DebugInfo = debugInfo;
+    Image = image;
+    IsManagedCode = isManagedCode;
+  }
+  
+  public ResolvedProfileStackFrameKey() {}
+  
+  public FunctionDebugInfo DebugInfo;
+  public ProfileImage Image;
+  public bool IsManagedCode;
+
+  public override bool Equals(object obj) {
+    return ReferenceEquals(this, obj) || obj is ResolvedProfileStackFrameKey other && Equals(other);
+  }
+
+  public override int GetHashCode() {
+    return HashCode.Combine(DebugInfo, Image);
+  }
+
+  public bool Equals(ResolvedProfileStackFrameKey other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Equals(DebugInfo, other.DebugInfo) &&
+           Equals(Image, other.Image);
   }
 }

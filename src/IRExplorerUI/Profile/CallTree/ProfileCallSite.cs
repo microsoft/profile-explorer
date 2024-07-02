@@ -4,24 +4,19 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
-[ProtoContract(SkipConstructor = true)]
 public class ProfileCallSite : IEquatable<ProfileCallSite> {
   public ProfileCallSite(long rva) {
-    InitializeReferenceMembers();
+    Targets = new List<(ProfileCallTreeNode NodeId, TimeSpan Weight)>();
     RVA = rva;
     Weight = TimeSpan.Zero;
   }
 
-  [ProtoMember(1)]
   public long RVA { get; set; }
-  [ProtoMember(2)]
   public TimeSpan Weight { get; set; }
   //? TODO: Consider using TinyList
-  [ProtoMember(3)]
   public List<(ProfileCallTreeNode Node, TimeSpan Weight)> Targets { get; set; }
 
   public List<(ProfileCallTreeNode Node, TimeSpan Weight)> SortedTargets {
@@ -69,6 +64,14 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
     }
   }
 
+  public void MergeWith(ProfileCallSite otherCallSite) {
+    Weight += otherCallSite.Weight;
+
+    foreach (var target in otherCallSite.Targets) {
+      AddTarget(target.Node, target.Weight);
+    }
+  }
+
   public override bool Equals(object obj) {
     if (ReferenceEquals(null, obj)) {
       return false;
@@ -99,11 +102,6 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
     }
 
     return RVA == other.RVA;
-  }
-
-  [ProtoAfterDeserialization]
-  private void InitializeReferenceMembers() {
-    Targets ??= new List<(ProfileCallTreeNode NodeId, TimeSpan Weight)>();
   }
 
   public override string ToString() {

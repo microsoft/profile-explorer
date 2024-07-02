@@ -404,7 +404,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         if (frameImage == null) {
-          resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
+          resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack);
           continue;
         }
       }
@@ -415,7 +415,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       profileModuleBuilder = GetModuleBuilder(rawProfile, frameImage, context.ProcessId, symbolSettings);
 
       if (profileModuleBuilder == null) {
-        resolvedStack.AddFrame(frameIp, 0, ResolvedProfileStackFrameDetails.Unknown, frameIndex, stack);
+        resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack);
         continue;
       }
 
@@ -431,9 +431,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       // Create the function profile data, with the merged weight of all instances
       // of the func. across all call stacks.
-      var resolvedFrame = new ResolvedProfileStackFrameDetails(funcPair.DebugInfo, funcPair.Function,
-                                                               frameImage, profileModuleBuilder.IsManaged);
-      resolvedStack.AddFrame(frameIp, frameRva, resolvedFrame, frameIndex, stack);
+      var resolvedFrame = new ResolvedProfileStackFrameKey(funcPair.DebugInfo, frameImage,
+                                                           profileModuleBuilder.IsManaged);
+      resolvedStack.AddFrame(funcPair.Function, frameIp, frameRva, frameIndex, resolvedFrame, stack);
     }
 
     return resolvedStack;
@@ -520,7 +520,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Stop collecting after a couple seconds, it's good enough
       // for an approximated set of used modules.
       if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0 &&
-          timer.ElapsedMilliseconds > 2000) {
+          timer.ElapsedMilliseconds > 1000) {
         break;
       }
     }

@@ -381,6 +381,9 @@ public class RawProfileData : IDisposable {
       lastProcStacks_ = procStacks;
     }
 
+    //? TODO:  Stack hash computed 3 times,
+    //? do it once and inject it into the ProfileCallStack and StackComparer used by set
+    
     if (!procStacks.TryGetValue(stack, out int existingStackId)) {
       // De-duplicate the stack frame pointer array,
       // since lots of samples have identical stacks.
@@ -587,13 +590,14 @@ public class RawProfileData : IDisposable {
   }
 
   internal int AddContext(ProfileContext context) {
-    if (!contextsMap_.TryGetValue(context, out int existingContext)) {
+    ref var existingContextId = ref CollectionsMarshal.GetValueRefOrAddDefault(contextsMap_, context, out bool exists);
+    
+    if (!exists) {
       contexts_.Add(context);
-      existingContext = contexts_.Count;
-      contextsMap_[context] = contexts_.Count;
+      existingContextId = contexts_.Count;
     }
 
-    return existingContext;
+    return existingContextId;
   }
 
   internal ProfileStack RentTemporaryStack(int frameCount, int contextId) {

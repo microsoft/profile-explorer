@@ -58,16 +58,16 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     bool match = false;
 
     for (int k = 0; k < stack.StackFrames.Count; k++) {
-      var stackFrame = stack.StackFrames[k];
-
-      if (stackFrame.IsUnknown) {
-        continue;
-      }
-
       if (currentNode == null || currentNode.IsGroup) {
         // Mismatch along the call path leading to the function.
         match = false;
         break;
+      }
+
+      var stackFrame = stack.StackFrames[k];
+
+      if (stackFrame.IsUnknown) {
+        continue;
       }
 
       if (stackFrame.FrameDetails.Function.Equals(currentNode.Function)) {
