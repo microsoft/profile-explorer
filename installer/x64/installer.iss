@@ -3,7 +3,7 @@
 
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING .ISS SCRIPT FILES!
                                               
-#include "environment.iss"
+#include "../environment.iss"
 
 #define MyAppName "IR Explorer"
 #define MyAppExeName "irexplorer.exe"
