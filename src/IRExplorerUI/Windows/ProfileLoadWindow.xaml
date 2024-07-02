@@ -699,7 +699,8 @@
               Width="Auto"
               Height="Auto"
               HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch" />
+              VerticalAlignment="Stretch"
+              IsEnabled="{Binding InputControlsEnabled}"/>
           </TabItem>
 
           <TabItem Header="Options" Style="{StaticResource TabControlStyle}">
@@ -816,7 +817,7 @@
             Header="CPU counters"
             Style="{StaticResource TabControlStyle}"
             Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Grid Margin="0,4,0,8">
+            <Grid Margin="0,4,0,8" IsEnabled="{Binding InputControlsEnabled}">
               <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="2" />

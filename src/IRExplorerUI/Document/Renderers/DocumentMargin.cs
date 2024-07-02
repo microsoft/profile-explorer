@@ -556,7 +556,7 @@ public class DocumentMargin : AbstractMargin {
       //if (style == defaultBookmarkStyle_ &&
       //    segment.Kind != BookmarkSegmentKind.Bookmark)
       //{
-      //    style = new HighlightingStyle(Brushes.Transparent, null);
+      //    style = new HighlightingStyle(ColorBrushes.Transparent, null);
       //}
       //else
       //{

@@ -109,7 +109,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   public Brush PickBackColor(OptionalColumn column, int order, double percentage) {
     if (!ShouldUseBackColor(column)) {
-      return Brushes.Transparent;
+      return ColorBrushes.Transparent;
     }
 
     return column.Style.PickColorForPercentage &&
@@ -124,7 +124,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   private Brush PickBackColorForPercentage(OptionalColumn column, double percentage) {
     if (percentage < ElementWeightCutoff) {
-      return Brushes.Transparent;
+      return ColorBrushes.Transparent;
     }
 
     var palette = PickColorPalette(column);
@@ -133,7 +133,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
 
   private Brush PickBackColorForOrder(OptionalColumn column, int order, double percentage, bool inverted) {
     if (!IsSignificantValue(order, percentage)) {
-      return Brushes.Transparent;
+      return ColorBrushes.Transparent;
     }
 
     var palette = PickColorPalette(column);
@@ -151,7 +151,7 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
         PerformanceMetricBackColor.AsBrush();
     }
 
-    return Brushes.Transparent;
+    return ColorBrushes.Transparent;
   }
 
   public bool IsSignificantValue(int order, double percentage) {

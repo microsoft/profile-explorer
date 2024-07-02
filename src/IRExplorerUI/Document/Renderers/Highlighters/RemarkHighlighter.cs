@@ -155,13 +155,13 @@ public sealed class RemarkHighlighter : IBackgroundRenderer {
 
   private Brush GetRemarkBackgroundBrush(HighlightedSegmentGroup group) {
     if (!App.Settings.RemarkSettings.UseRemarkBackground) {
-      return Brushes.Transparent;
+      return ColorBrushes.Transparent;
     }
 
     var color = ((SolidColorBrush)group.BackColor).Color;
 
     if (color == Colors.Black || color == Colors.Transparent) {
-      return Brushes.Transparent;
+      return ColorBrushes.Transparent;
     }
 
     if (remarkBrushCache_.TryGetValue(color, out var brush)) {

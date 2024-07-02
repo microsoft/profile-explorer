@@ -71,6 +71,6 @@ public sealed class IconElementOverlay : ElementOverlayBase {
     }
 
     // For debugging, border around whole element.
-    // drawingContext.DrawRectangle(Brushes.Transparent, ColorPens.GetPen(Colors.Red), elementRect);
+    // drawingContext.DrawRectangle(ColorBrushes.Transparent, ColorPens.GetPen(Colors.Red), elementRect);
   }
 }
