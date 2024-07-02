@@ -17,6 +17,7 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Utilities;
+using ProtoBuf.WellKnownTypes;
 
 namespace IRExplorerUI.Profile;
 
@@ -95,6 +96,16 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
   public override TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
   public override string ModuleName =>
     CallTreeNode is {HasFunction: true} ? CallTreeNode.ModuleName : null;
+  public bool HasAnyChildren => Children is {Count: > 0};
+
+  public void AddChild(CallTreeListItem child) {
+    Children ??= new();
+    Children.Add(child);
+  }
+
+  public void ClearChildren() {
+    Children = null;
+  }
 
   public override string FunctionName {
     get {
@@ -159,6 +170,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private string searchResultText_;
   private OptionsPanelHostPopup optionsPanelPopup_;
   private CancelableTaskInstance loadTask_;
+  private double profileDurationReciprocal_;
 
   public CallTreePanel() {
     InitializeComponent();
@@ -267,6 +279,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     get => callTree_;
     set {
       SetField(ref callTree_, value);
+      profileDurationReciprocal_ = 1.0 / Session.ProfileData.ProfileWeight.Ticks;
       OnPropertyChanged(nameof(HasCallTree));
     }
   }
@@ -310,6 +323,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private static void SortCallTreeNodes(CallTreeListItem node) {
     // Sort children in descending order,
     // since that is not yet supported by the TreeListView control.
+    if (!node.HasAnyChildren) {
+      return;
+    }
+
     node.Children.Sort((a, b) => {
       int result = b.Time.CompareTo(a.Time);
       return result != 0 ? result : string.Compare(a.FunctionName, a.FunctionName, StringComparison.Ordinal);
@@ -338,9 +355,9 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     CallTree = Session.ProfileData.CallTree;
     callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
     CallTreeList.Model = callTreeEx_;
-    UpdateMarkedFunctions(true);
+    await UpdateMarkedFunctions(true);
 
-    if (true) { //? TODO: Use option from UI settings
+    if (settings_.ExpandHottestPath) {
       ExpandHottestFunctionPath();
     }
   }
@@ -353,7 +370,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
     CallTreeList.Model = callTreeEx_;
-    UpdateMarkedFunctions(true);
+    await UpdateMarkedFunctions(true);
     ExpandCallTreeTop();
     ignoreNextSelectionEvent_ = false;
   }
@@ -401,7 +418,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     return callTree_.GetBacktrace(node);
   }
 
-  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+    ProfileCallTreeNode node) {
     return callTree_.GetTopFunctionsAndModules(node);
   }
 
@@ -494,30 +512,25 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     // If children not populated yet, there is a single dummy node.
-    if (funcNode.Children.Count == 1 &&
+    if (funcNode.HasAnyChildren &&
+        funcNode.Children.Count == 1 &&
         funcNode.Children[0].Kind == CallTreeListItemKind.ChildrenPlaceholder) {
       var callNode = funcNode.CallTreeNode;
       var visitedNodes = new HashSet<ProfileCallTreeNode>();
 
       // Remove the dummy node and add the real children.
       // If the children have children on their own, new dummy nodes will be used.
-      funcNode.Children.Clear();
+      funcNode.ClearChildren();
       CallTreeListItem firstNodeEx = null;
 
       if (funcNode.Kind == CallTreeListItemKind.CalleeNode && callNode.HasChildren) {
-        var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-
         foreach (var childNode in callNode.Children) {
-          firstNodeEx ??= CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
-                                                visitedNodes, percentageFunc);
+          firstNodeEx ??= CreateProfileCallTree(childNode, funcNode, funcNode.Kind, visitedNodes);
         }
       }
       else if (funcNode.Kind == CallTreeListItemKind.CallerNode && callNode.HasCallers) {
-        var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-
         foreach (var childNode in callNode.Callers) {
-          firstNodeEx = CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
-                                              visitedNodes, percentageFunc);
+          firstNodeEx = CreateProfileCallTree(childNode, funcNode, funcNode.Kind, visitedNodes);
         }
       }
 
@@ -588,23 +601,22 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         instanceNode.Time = long.MaxValue; // Ensure Self is on top.
       }
 
-      rootNode.Children.Add(instanceNode);
+      rootNode.AddChild(instanceNode);
 
       if (instance.HasCallers) {
         // Percentage relative to entire profile for callers.
-        percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
         var callersNode = CreateProfileCallTreeHeader(CallTreeListItemKind.Header, "Callers", 2);
 
         if (nodeList.Count > 1) {
-          instanceNode.Children.Add(callersNode);
+          instanceNode.AddChild(callersNode);
         }
         else {
-          rootNode.Children.Add(callersNode);
+          rootNode.AddChild(callersNode);
         }
 
         foreach (var callerNode in instance.Callers) {
-          CreateProfileCallTree(callerNode, callersNode, instanceNode, CallTreeListItemKind.CallerNode,
-                                visitedNodes, percentageFunc);
+          CreateProfileCallTree(callerNode, callersNode, instanceNode,
+                                CallTreeListItemKind.CallerNode, visitedNodes);
         }
 
         visitedNodes.Clear();
@@ -618,15 +630,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           CreateProfileCallTreeHeader("Calling", childrenWeight, childrentExcWeight, percentageFunc, 1);
 
         if (nodeList.Count > 1) {
-          instanceNode.Children.Add(childrenNode);
+          instanceNode.AddChild(childrenNode);
         }
         else {
-          rootNode.Children.Add(childrenNode);
+          rootNode.AddChild(childrenNode);
         }
 
         foreach (var childNode in instance.Children) {
-          CreateProfileCallTree(childNode, childrenNode, instanceNode, CallTreeListItemKind.CalleeNode,
-                                visitedNodes, percentageFunc);
+          CreateProfileCallTree(childNode, childrenNode, instanceNode,
+                                CallTreeListItemKind.CalleeNode, visitedNodes, percentageFunc);
         }
 
         visitedNodes.Clear();
@@ -641,15 +653,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private CallTreeListItem CreateProfileCallTree() {
     var visitedNodes = new HashSet<ProfileCallTreeNode>();
-    var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-
     var rootNode = new CallTreeListItem(CallTreeListItemKind.Root, this);
     rootNode.Children = new List<CallTreeListItem>();
 
     foreach (var node in callTree_.RootNodes) {
       visitedNodes.Clear();
-      CreateProfileCallTree(node, rootNode, CallTreeListItemKind.CallTreeNode,
-                            visitedNodes, percentageFunc);
+      CreateProfileCallTree(node, rootNode, CallTreeListItemKind.CallTreeNode, visitedNodes);
     }
 
     return rootNode;
@@ -658,17 +667,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private CallTreeListItem CreateProfileCallTree(ProfileCallTreeNode node, CallTreeListItem parentNodeEx,
                                                  CallTreeListItemKind kind,
                                                  HashSet<ProfileCallTreeNode> visitedNodes,
-                                                 Func<TimeSpan, double> percentageFunc) {
+                                                 Func<TimeSpan, double> percentageFunc = null) {
     return CreateProfileCallTree(node, parentNodeEx, parentNodeEx, kind, visitedNodes, percentageFunc);
   }
 
   private CallTreeListItem CreateProfileCallTree(ProfileCallTreeNode node, CallTreeListItem parentNodeEx,
                                                  CallTreeListItem actualParentNode, CallTreeListItemKind kind,
                                                  HashSet<ProfileCallTreeNode> visitedNodes,
-                                                 Func<TimeSpan, double> percentageFunc) {
+                                                 Func<TimeSpan, double> percentageFunc = null) {
     bool newFunc = visitedNodes.Add(node);
     var nodeEx = CreateProfileCallTreeChild(node, kind, percentageFunc, parentNodeEx);
-    parentNodeEx.Children.Add(nodeEx);
+    parentNodeEx.AddChild(nodeEx);
 
     if (!newFunc) {
       return nodeEx; // Recursion in the call graph.
@@ -699,7 +708,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         // gets replaced by the real callee nodes.
         var dummyChildNode = CreateProfileCallTreeHeader(CallTreeListItemKind.ChildrenPlaceholder, "Placeholder", 0);
         dummyChildNode.CallTreeNode = node;
-        nodeEx.Children.Add(dummyChildNode);
+        nodeEx.AddChild(dummyChildNode);
         break;
       }
       case CallTreeListItemKind.CallerNode when node.HasCallers: {
@@ -707,7 +716,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         // gets replaced by the real caller (backtrace) nodes.
         var dummyChildNode = CreateProfileCallTreeHeader(CallTreeListItemKind.ChildrenPlaceholder, "Placeholder", 0);
         dummyChildNode.CallTreeNode = node;
-        nodeEx.Children.Add(dummyChildNode);
+        nodeEx.AddChild(dummyChildNode);
         break;
       }
     }
@@ -725,11 +734,19 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
+  private double ComputeNodePercentage(TimeSpan weight, Func<TimeSpan, double> percentageFunc) {
+    if (percentageFunc != null) {
+      return percentageFunc(weight);
+    }
+
+    return weight.Ticks * profileDurationReciprocal_;
+  }
+
   private CallTreeListItem CreateProfileCallTreeChild(ProfileCallTreeNode node, CallTreeListItemKind kind,
                                                       Func<TimeSpan, double> percentageFunc,
                                                       CallTreeListItem parentNodeEx = null) {
-    double weightPercentage = percentageFunc(node.Weight);
-    double exclusiveWeightPercentage = percentageFunc(node.ExclusiveWeight);
+    double weightPercentage = ComputeNodePercentage(node.Weight, percentageFunc);
+    double exclusiveWeightPercentage = ComputeNodePercentage(node.ExclusiveWeight, percentageFunc);
 
     var result = new CallTreeListItem(kind, this, Session.CompilerInfo.NameProvider.FormatFunctionName) {
       Function = node.Function,
@@ -750,8 +767,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private CallTreeListItem CreateProfileCallTreeHeader(string name, TimeSpan weight, TimeSpan exclusiveWeight,
                                                        Func<TimeSpan, double> percentageFunc, int priority) {
-    double weightPercentage = percentageFunc(weight);
-    double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
+    double weightPercentage = ComputeNodePercentage(weight, percentageFunc);
+    double exclusiveWeightPercentage = ComputeNodePercentage(exclusiveWeight, percentageFunc);
     return new CallTreeListItem(CallTreeListItemKind.Header, this) {
       CallTreeNode = new ProfileCallTreeNode(null, null) {Weight = weight, ExclusiveWeight = exclusiveWeight},
       Time = TimeSpan.MaxValue.Ticks - priority,

@@ -47,7 +47,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     overlaySegmentMap_ = new Dictionary<IRElement, IROverlaySegment>();
     SnapsToDevicePixels = true;
     IsHitTestVisible = true;
-    Background = Brushes.Transparent; // Needed for mouse events to fire...
+    Background = ColorBrushes.Transparent; // Needed for mouse events to fire...
     highlighter_ = highlighter;
     ClearConnectedElements();
   }

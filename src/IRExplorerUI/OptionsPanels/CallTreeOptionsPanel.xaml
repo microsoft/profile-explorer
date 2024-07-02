@@ -31,11 +31,11 @@
             Margin="0,2,0,2"
             ToolTip="Sync file displayed in the Source File panel with selection" />
           <Separator Margin="0,4,0,4" Background="LightGray" />
-          <TextBlock FontWeight="Medium" Text="Function node" />
+          <TextBlock FontWeight="Medium" Text="Function nodes" />
 
           <CheckBox
             Content="Auto-expand hottest call path"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding ExpandHottestPath, Mode=TwoWay}"
             Margin="0,2,0,2"
             ToolTip="Show the module name in front of the function name" />
 

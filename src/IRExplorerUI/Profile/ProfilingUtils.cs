@@ -793,7 +793,7 @@ public static class ProfilingUtils {
         PercentageBarBackColor = category.HottestFunction != null ?
           markerSettings.PercentageBarBackColor.AsBrush() :
           (Brush)Application.Current.FindResource("ProfileUncategorizedBrush"),
-        BackColor = !isCategoriesMenu ? category.Marking.Color.AsBrush() : Brushes.Transparent
+        BackColor = !isCategoriesMenu ? category.Marking.Color.AsBrush() : ColorBrushes.Transparent
       };
 
       var item = new MenuItem {

@@ -232,7 +232,7 @@ public class FunctionMarkingSettings : SettingsBase {
       return modulesPalette_.PickBrush(name);
     }
 
-    return Brushes.Transparent;
+    return ColorBrushes.Transparent;
   }
 
   public bool GetModuleColor(string name, out Color color) {
@@ -245,7 +245,7 @@ public class FunctionMarkingSettings : SettingsBase {
       return true;
     }
 
-    brush = Brushes.Transparent;
+    brush = ColorBrushes.Transparent;
     return false;
   }
 
