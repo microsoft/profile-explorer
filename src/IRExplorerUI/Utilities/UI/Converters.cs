@@ -26,7 +26,7 @@ public class FontFamilyConverter : IValueConverter {
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-    return ((FontFamily)value).Source;
+    return ((FontFamily)value)?.Source;
   }
 }
 
@@ -41,7 +41,7 @@ public class ColorPaletteConverter : IValueConverter {
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-    return ((ColorPalette)value).Name;
+    return ((ColorPalette)value)?.Name;
   }
 }
 
@@ -266,17 +266,17 @@ class BoolToVisibilityConverter : BooleanConverter<Visibility> {
 
 class EnumBooleanConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-    return value.Equals(parameter);
+    return value != null && value.Equals(parameter);
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-    return (bool)value ? parameter : Binding.DoNothing;
+    return value != null && (bool)value ? parameter : Binding.DoNothing;
   }
 }
 
 class BoolToParameterConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-    if ((bool)value) {
+    if (value != null && (bool)value) {
       return new SolidColorBrush(Utils.ColorFromString((string)parameter));
     }
 
@@ -290,6 +290,10 @@ class BoolToParameterConverter : IValueConverter {
 
 class DoubleScalingConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (value == null) {
+      return 0.0;
+    }
+
     double doubleValue = (double)value;
 
     if (doubleValue == 0.0 || Math.Abs(doubleValue) < double.Epsilon) {
@@ -301,6 +305,10 @@ class DoubleScalingConverter : IValueConverter {
   }
 
   public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (value == null) {
+      return 0.0;
+    }
+
     double doubleValue = (double)value;
     double maxValue = double.Parse((string)parameter);
 

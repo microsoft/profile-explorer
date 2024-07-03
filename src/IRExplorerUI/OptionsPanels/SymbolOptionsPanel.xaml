@@ -37,10 +37,11 @@
         <xctk:DoubleUpDown
           Width="70"
           Margin="8,0,0,0"
-          Maximum="1000"
-          Minimum="0"
-          ParsingNumberStyle="AllowThousands"
+          Maximum="50"
+          Minimum="0.1"
+          Increment="0.1"
           ShowButtonSpinner="True"
+          FormatString="F1"
           ToolTip="Exclude modules with a number of samples below this percentage"
           Value="{Binding Path=LowSampleModuleCutoff, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
         <Button

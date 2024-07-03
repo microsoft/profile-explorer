@@ -17,7 +17,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultSymbolCachePath = @"C:\Symbols";
   private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
   public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
-  public const double DefaultLowSampleModuleCutoff = 0.001; // 0.1%
+  public const double DefaultLowSampleModuleCutoff = 0.002; // 0.2%
 
   public SymbolFileSourceSettings() {
     Reset();
@@ -49,7 +49,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool CacheSymbolFiles { get; set; }
   [ProtoMember(13)][OptionValue("")]
   public string CustomSymbolCacheDirectory { get; set; }
-  [ProtoMember(14)][OptionValue(0.001)] // 0.1%
+  [ProtoMember(14)][OptionValue(0.002)] // 0.2%
   public double LowSampleModuleCutoff { get; set; }
 
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);

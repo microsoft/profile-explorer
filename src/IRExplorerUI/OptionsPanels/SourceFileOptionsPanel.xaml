@@ -105,6 +105,7 @@
               Margin="4,0,0,0"
               Maximum="36.0"
               Minimum="5.0"
+              Increment="1"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
               Value="{Binding Path=FontSize, Mode=TwoWay}" />

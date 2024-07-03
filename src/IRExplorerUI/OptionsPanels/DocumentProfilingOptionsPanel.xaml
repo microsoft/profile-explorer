@@ -102,10 +102,10 @@
         <xctk:DoubleUpDown
           Width="65"
           Margin="14,0,0,0"
-          Increment="1"
+          Increment="0.1"
           Maximum="100"
           Minimum="0"
-          ParsingNumberStyle="AllowThousands"
+          FormatString="F2"
           ShowButtonSpinner="True"
           ToolTip="Only show lines with a weight greater than this value"
           Value="{Binding Path=ElementWeightCutoff, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />

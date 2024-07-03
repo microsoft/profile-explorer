@@ -64,6 +64,7 @@
               Margin="8,0,0,0"
               Maximum="5000"
               Minimum="50"
+              Increment="100"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
               Value="{Binding Path=NodePopupDuration, Mode=TwoWay}" />
@@ -520,7 +521,7 @@
                 Margin="8,0,0,0"
                 Maximum="1000"
                 Minimum="0"
-                ParsingNumberStyle="AllowThousands"
+                Increment="100"
                 ShowButtonSpinner="True"
                 ToolTip="Filter out functions with a time less than this value"
                 Value="{Binding Path=MinWeight, Mode=TwoWay}" />

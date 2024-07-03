@@ -33,7 +33,6 @@
           Minimum="50"
           Increment="5"
           FormatString="F0"
-          ParsingNumberStyle="AllowThousands"
           ShowButtonSpinner="True"
           VerticalAlignment="Center"
           ToolTip="Resize the entire application UI"
