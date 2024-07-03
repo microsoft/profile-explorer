@@ -144,6 +144,7 @@ public sealed class ProfileModuleBuilder {
 
     // Find function outside lock to reduce contention.
     FunctionDebugInfo debugInfo = null;
+    long funcStartAddress = funcAddress;
 
     if (HasDebugInfo) {
       // Search for the function at this RVA.
@@ -155,12 +156,17 @@ public sealed class ProfileModuleBuilder {
       string placeholderName = $"{funcAddress:X}";
       debugInfo = new FunctionDebugInfo(placeholderName, funcAddress, 0);
     }
+    else {
+      // Use the function start address from now on, this ensures
+      // that a single instance of it is created.
+      funcStartAddress = debugInfo.StartRVA;
+    }
 
     // Acquire write lock to create an entry for the function.
     lock_.EnterWriteLock();
 
     // Check again under the write lock.
-    if (functionMap_.TryGetValue(funcAddress, out pair)) {
+    if (functionMap_.TryGetValue(funcStartAddress, out pair)) {
       lock_.ExitWriteLock();
       return pair;
     }
@@ -172,12 +178,15 @@ public sealed class ProfileModuleBuilder {
       disassemblerSectionLoader.RegisterFunction(func, debugInfo);
     }
 
-    // Updating the function map done outside lock.
-    lock_.ExitWriteLock();
-
     // Cache RVA -> function mapping.
     pair = (func, debugInfo);
     functionMap_.TryAdd(funcAddress, pair);
+
+    if (funcStartAddress != funcAddress) {
+      functionMap_.TryAdd(funcStartAddress, pair);
+    }
+
+    lock_.ExitWriteLock();
     return pair;
   }
 

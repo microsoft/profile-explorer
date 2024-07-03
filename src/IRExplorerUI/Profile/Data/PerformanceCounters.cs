@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Runtime.InteropServices;
 using ProtoBuf;
 

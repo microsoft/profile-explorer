@@ -72,7 +72,7 @@ public class ProfileData {
 
   public ProfileData() {
     ProfileWeight = TimeSpan.Zero;
-    FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
+    FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();
     ModuleWeights = new Dictionary<int, TimeSpan>();
     PerformanceCounters = new Dictionary<int, PerformanceCounter>();
     ModuleCounters = new Dictionary<string, PerformanceCounterValueSet>();
@@ -86,7 +86,7 @@ public class ProfileData {
 
   public TimeSpan ProfileWeight { get; set; }
   public TimeSpan TotalWeight { get; set; }
-  public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
+  public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
   public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
   public Dictionary<string, PerformanceCounterValueSet> ModuleCounters { get; set; }
   public Dictionary<int, PerformanceCounter> PerformanceCounters { get; set; }
@@ -283,14 +283,14 @@ public class ProfileData {
 
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
-    // Don't use GetOrAdd that takes a Func<T> lambda because
-    // it would allocate a lambda for each invocation,
-    // even if value already in in dictionary.
-    return FunctionProfiles.GetOrAdd(function, CreateFunctionProfileData, debugInfo);
-  }
+    ref var funcProfile =
+      ref CollectionsMarshal.GetValueRefOrAddDefault(FunctionProfiles, function, out var exists);
 
-  private static FunctionProfileData CreateFunctionProfileData(IRTextFunction function, FunctionDebugInfo debugInfo) {
-    return new FunctionProfileData(debugInfo);
+    if (!exists) {
+      funcProfile = new FunctionProfileData(debugInfo);
+    }
+
+    return funcProfile;
   }
 
   public byte[] Serialize() {
@@ -375,7 +375,7 @@ public class ProfileData {
 
     CallTree?.ResetTags();
     ModuleWeights = new Dictionary<int, TimeSpan>();
-    FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
+    FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();
     ProfileWeight = TimeSpan.Zero;
     TotalWeight = TimeSpan.Zero;
 
@@ -484,7 +484,7 @@ public class ProfileData {
 
   public class ProcessingResult {
     public ProfileSampleFilter Filter { get; set; }
-    public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
+    public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
     public ProfileCallTree CallTree { get; set; }
     public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
     public TimeSpan ProfileWeight { get; set; }

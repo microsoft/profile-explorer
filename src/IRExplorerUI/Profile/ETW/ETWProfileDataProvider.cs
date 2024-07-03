@@ -238,8 +238,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         profileData_.ComputeThreadSampleRanges();
         profileData_.FilterFunctionProfile(new ProfileSampleFilter());
 
-        Trace.WriteLine($"Done compute func profile/call tree in {sw2.Elapsed}");
-        Trace.WriteLine($"Done processing trace in {sw.Elapsed}");
+        Trace.WriteLine($"Done compute func profile/call tree in {sw2.Elapsed}, {sw2.ElapsedMilliseconds} ms");
+        Trace.WriteLine($"Done processing trace in {sw.Elapsed}, {sw.ElapsedMilliseconds} ms");
 
         if (rawProfile.HasPerformanceCountersEvents) {
           // Process performance counters.

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -14,8 +15,6 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionProfileData {
-  //? TODO: save unique stacks with inclusive samples for each frame
-
   public FunctionProfileData() {
     InitializeReferenceMembers();
   }
@@ -38,6 +37,34 @@ public class FunctionProfileData {
   public int SampleStartIndex { get; set; }
   public int SampleEndIndex { get; set; }
   public bool HasPerformanceCounters => InstructionCounters is {Count: > 0};
+
+  public void MergeWith(FunctionProfileData otherData) {
+    Weight += otherData.Weight;
+    ExclusiveWeight += otherData.ExclusiveWeight;
+    SampleStartIndex = Math.Min(SampleStartIndex, otherData.SampleStartIndex);
+    SampleEndIndex = Math.Max(SampleEndIndex, otherData.SampleEndIndex);
+
+    foreach (var pair in otherData.InstructionWeight) {
+      ref var existingValue = ref CollectionsMarshal.GetValueRefOrAddDefault(InstructionWeight, pair.Key, out bool exists);
+      existingValue += pair.Value;
+    }
+
+    if (otherData.HasPerformanceCounters) {
+      InstructionCounters ??= new();
+
+      foreach (var pair in otherData.InstructionCounters) {
+        ref var existingValue =
+          ref CollectionsMarshal.GetValueRefOrAddDefault(InstructionCounters, pair.Key, out bool exists);
+
+        if (exists) {
+          existingValue.Add(pair.Value);
+        }
+        else {
+          existingValue = pair.Value;
+        }
+      }
+    }
+  }
 
   public static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
                                              ICompilerIRInfo ir,
