@@ -22,13 +22,13 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
   public const double MinimumWidth = 350;
 
   private SymbolFileSourceSettings symbolSettings_;
-  
+
   public SymbolOptionsPanel() {
     InitializeComponent();
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
-  
+
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     symbolSettings_ = (SymbolFileSourceSettings)Settings;
@@ -38,7 +38,7 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
   public override void OnSettingsChanged(object newSettings) {
     symbolSettings_ = (SymbolFileSourceSettings)newSettings;
   }
-  
+
   private void ClearRejectedButton_Click(object sender, RoutedEventArgs e) {
     if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries and symbols?", this) ==
         MessageBoxResult.Yes) {
@@ -104,8 +104,8 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
   private void OpenSymbolCacheButton_Click(object sender, RoutedEventArgs e) {
     Utils.OpenExplorerAtFile(symbolSettings_.SymbolCacheDirectoryPath);
   }
-  
-  
+
+
   private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
     var textBox = sender as FileSystemTextBox;
     UpdateSymbolPath(textBox);
@@ -138,7 +138,7 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
     // Update list with the new text.
     var newSymbolPath = Utils.RemovePathQuotes(textBox.Text);
     textBox.Text = newSymbolPath;
-    
+
     if (symbolSettings_.SymbolPaths[index] != newSymbolPath) {
       symbolSettings_.SymbolPaths[index] = newSymbolPath;
       ReloadSymbolPathsList();
@@ -233,5 +233,10 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
 
   public void OnPropertyChange(string propertyname) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+  }
+
+  private void ResetFilterModuleSamplesButton_Click(object sender, RoutedEventArgs e) {
+    symbolSettings_.LowSampleModuleCutoff = SymbolFileSourceSettings.DefaultLowSampleModuleCutoff;
+    ReloadSettings();
   }
 }

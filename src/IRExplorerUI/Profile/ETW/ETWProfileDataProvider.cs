@@ -557,8 +557,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // Find the modules with samples, sorted by sample count.
     // Used to skip loading of insignificant modules with few samples.
     var topModules = CollectTopModules(rawProfile, mainProcess);
-    int moduleSampleCutOff = symbolSettings.SkipLowSampleModules ?
-      SymbolFileSourceSettings.LowSampleModuleCutoff : 0;
+    int moduleSampleCutOff = 0;
+
+    if (symbolSettings.SkipLowSampleModules) {
+      moduleSampleCutOff = (int)(symbolSettings.LowSampleModuleCutoff * rawProfile.Samples.Count);
+    }
 
     // Locate the referenced binary files in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.

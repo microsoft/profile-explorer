@@ -162,7 +162,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
   }
 
-  public bool InputControlsEnabled => !IsLoadingProfile;
+  public bool InputControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
   public bool ProcessListEnabled => !IsLoadingProfile || IsLoadingProcessList;
   public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
   public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;

@@ -16,8 +16,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
   private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
-  public const int LowSampleModuleCutoff = 10;
   public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
+  public const double DefaultLowSampleModuleCutoff = 0.001; // 0.1%
 
   public SymbolFileSourceSettings() {
     Reset();
@@ -49,6 +49,9 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool CacheSymbolFiles { get; set; }
   [ProtoMember(13)][OptionValue("")]
   public string CustomSymbolCacheDirectory { get; set; }
+  [ProtoMember(14)][OptionValue(0.001)] // 0.1%
+  public double LowSampleModuleCutoff { get; set; }
+
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public string SymbolCacheDirectoryPath => !string.IsNullOrEmpty(CustomSymbolCacheDirectory) ?
     CustomSymbolCacheDirectory :
