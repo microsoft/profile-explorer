@@ -11,23 +11,15 @@ namespace IRExplorerUI.Profile;
 public sealed class CallTreeProcessor : ProfileSampleProcessor {
   public ProfileCallTree CallTree { get; set; } = new();
   private List<ProfileCallTree> chunks_;
-  public Stopwatch sw;
 
   public CallTreeProcessor() {
     chunks_ = new();
-
-    //? TODO: Remove Stopwatch, pick thread count as half of logical processors from caller.
-    sw = Stopwatch.StartNew();
   }
 
   public static ProfileCallTree Compute(ProfileData profile, ProfileSampleFilter filter,
                                         int maxChunks = int.MaxValue) {
     var funcProcessor = new CallTreeProcessor();
-    var sw = Stopwatch.StartNew();
     funcProcessor.ProcessSampleChunk(profile, filter, 8);
-
-    Trace.WriteLine($"=> Tree Done: {sw.ElapsedMilliseconds} ms");
-    Trace.Flush();
     return funcProcessor.CallTree;
   }
 
@@ -49,10 +41,6 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
 
   protected override void Complete() {
     lock (chunks_) {
-      Trace.WriteLine($"=> All {chunks_.Count} chunks in {sw.ElapsedMilliseconds} ms");
-      Trace.Flush();
-      sw.Restart();
-
       // Multi-threaded merging of partial call trees.
       while (chunks_.Count > 1) {
         int step = Math.Min(chunks_.Count, 2);
@@ -88,8 +76,6 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
         chunks_ = newChunks;
       }
 
-      sw.Stop();
-      Trace.WriteLine($"=> Merge trees in {sw.ElapsedMilliseconds} ms");
       CallTree = chunks_[0];
     }
   }

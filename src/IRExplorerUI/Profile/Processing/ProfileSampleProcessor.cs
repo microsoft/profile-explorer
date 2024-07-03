@@ -13,6 +13,8 @@ namespace IRExplorerUI.Profile;
 // in parallel, by splitting the samples into multiple chunks, each
 // processed on a different thread.
 public abstract class ProfileSampleProcessor {
+  public static int MaxThreadCount => Math.Min(16, Environment.ProcessorCount * 3 / 4);
+
   protected virtual object InitializeChunk(int k) {
     return null;
   }
@@ -26,7 +28,7 @@ public abstract class ProfileSampleProcessor {
   protected virtual void Complete() {
   }
 
-  protected virtual int DefaultThreadCount => Environment.ProcessorCount * 3 / 4;
+  protected virtual int DefaultThreadCount => MaxThreadCount;
 
   protected void ProcessSampleChunk(ProfileData profile, ProfileSampleFilter filter,
                                     int maxChunks = int.MaxValue) {
@@ -38,7 +40,7 @@ public abstract class ProfileSampleProcessor {
     int chunks = Math.Min(maxChunks, DefaultThreadCount);
     //Trace.WriteLine($"ProfileSampleProcessor: Using {chunks} chunks");
     //var sw = Stopwatch.StartNew();
-    
+
     int chunkSize = sampleCount / chunks;
     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
     var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);

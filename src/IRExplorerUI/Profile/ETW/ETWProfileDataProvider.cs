@@ -170,7 +170,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         var sw = Stopwatch.StartNew();
 
         // Split sample processing in multiple chunks, each done by another thread.
-        int chunks = Math.Min(24, Environment.ProcessorCount * 3 / 4);
+        int chunks = ProfileSampleProcessor.MaxThreadCount;
 #if DEBUG
         chunks = 1;
 #endif

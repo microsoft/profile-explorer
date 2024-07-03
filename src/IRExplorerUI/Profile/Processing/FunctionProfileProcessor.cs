@@ -23,7 +23,6 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
   private ProfileSampleFilter filter_;
   private List<List<IRTextFunction>> filterStackFuncts_;
   private List<ChunkData> chunks_;
-  public Stopwatch sw; //? TODO: Remove
 
   private FunctionProfileProcessor(ProfileSampleFilter filter) {
     filter_ = filter;
@@ -45,9 +44,6 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
         }
       }
     }
-
-    //? TODO: Remove Stopwatch, pick thread count as half of logical processors from caller.
-    sw = Stopwatch.StartNew();
   }
 
   private void AddInstanceFilter(ProfileCallTreeNode node) {
@@ -185,11 +181,6 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
 
   protected override void Complete() {
     lock (chunks_) {
-      Trace.WriteLine($"=> FunctionProfileProcessor {chunks_.Count} in {sw.ElapsedMilliseconds} ms");
-      Trace.Flush();
-
-      var sw2 = Stopwatch.StartNew();
-
       while (chunks_.Count > 1) {
         int step = Math.Min(chunks_.Count, 2);
         // Trace.WriteLine($"=> Merging {chunks_.Count} chunks, step {step}");
@@ -228,9 +219,6 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
       lock (Profile) {
         Profile.FunctionProfiles = chunks_[0].FunctionProfiles;
       }
-
-      Trace.WriteLine($"=> FunctionProfileProcessor copmlete in {sw2.ElapsedMilliseconds} ms");
-      Trace.WriteLine($"=> FunctionProfileProcessor all  {sw.ElapsedMilliseconds} ms");
     }
   }
 
