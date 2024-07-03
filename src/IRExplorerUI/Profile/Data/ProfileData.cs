@@ -414,6 +414,11 @@ public class ProfileData {
     // Compute the call tree in parallel with the per-function profiles.
     var tasks = new List<Task>();
 
+    if (maxChunks == int.MaxValue) {
+      // Use half the threads for each task.
+      maxChunks = Math.Max(2, ProfileSampleProcessor.MaxThreadCount / 2);
+    }
+
     var callTreeTask = Task.Run(() => {
       if (computeCallTree) {
         return CallTreeProcessor.Compute(baseProfile, filter, maxChunks);
