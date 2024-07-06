@@ -279,6 +279,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     get => callTree_;
     set {
       SetField(ref callTree_, value);
+
+      if (Session?.ProfileData == null) {
+        return;
+      }
+
       profileDurationReciprocal_ = 1.0 / Session.ProfileData.ProfileWeight.Ticks;
       OnPropertyChanged(nameof(HasCallTree));
     }

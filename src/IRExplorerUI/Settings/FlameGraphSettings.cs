@@ -11,7 +11,7 @@ namespace IRExplorerUI;
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
   public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
-  public Dictionary<ProfileCallTreeNodeKind, ColorPalette> Palettes { get; set; }
+  public ColorPalette[] Palettes { get; set; }
   public ColorPalette ModulesPalette { get; set; }
 
   public FlameGraphSettings() {
@@ -77,7 +77,8 @@ public class FlameGraphSettings : SettingsBase {
 
   public Brush GetNodeDefaultBrush(FlameGraphNode node) {
     CachePalettes();
-    var palette = node.HasFunction ? Palettes[node.CallTreeNode.Kind] : Palettes[ProfileCallTreeNodeKind.Unset];
+    var palette = node.HasFunction ? Palettes[(int)node.CallTreeNode.Kind] :
+      Palettes[(int)ProfileCallTreeNodeKind.Unset];
     int colorIndex = node.Depth % palette.Count;
     return palette.PickBrush(palette.Count - colorIndex - 1);
   }
@@ -98,16 +99,17 @@ public class FlameGraphSettings : SettingsBase {
 
   private void CachePalettes() {
     if (Palettes == null) {
-      Palettes = new Dictionary<ProfileCallTreeNodeKind, ColorPalette> {
-        [ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(DefaultColorPalette),
-        [ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(DefaultColorPalette),
-        [ProfileCallTreeNodeKind.NativeKernel] = UseKernelColorPalette ?
-          ColorPalette.GetPalette(KernelColorPalette) :
-          ColorPalette.GetPalette(DefaultColorPalette),
-        [ProfileCallTreeNodeKind.Managed] = UseManagedColorPalette ?
-          ColorPalette.GetPalette(ManagedColorPalette) :
-          ColorPalette.GetPalette(DefaultColorPalette)
-      };
+      // Mapping from node kind to palette done usign an array
+      // to avoid a dictionary lookup.
+      Palettes = new ColorPalette[4];
+      Palettes[(int)ProfileCallTreeNodeKind.Unset] = ColorPalette.GetPalette(DefaultColorPalette);
+      Palettes[(int)ProfileCallTreeNodeKind.NativeUser] = ColorPalette.GetPalette(DefaultColorPalette);
+      Palettes[(int)ProfileCallTreeNodeKind.NativeKernel] = UseKernelColorPalette ?
+        ColorPalette.GetPalette(KernelColorPalette) :
+        ColorPalette.GetPalette(DefaultColorPalette);
+      Palettes[(int)ProfileCallTreeNodeKind.Managed] = UseManagedColorPalette ?
+        ColorPalette.GetPalette(ManagedColorPalette) :
+        ColorPalette.GetPalette(DefaultColorPalette);
     }
   }
 

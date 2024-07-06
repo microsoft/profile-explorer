@@ -272,7 +272,7 @@ public static class CollectionExtensionMethods {
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static void AccumulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
     ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
-    
+
     // The TimeSpan + operator does an overflow check that is not relevant
     // (and an exception undesirable), avoid it for some speedup.
     long sum = currentValue.Ticks + value.Ticks;
@@ -285,7 +285,7 @@ public static class CollectionExtensionMethods {
     AccumulateValue<K>(this Dictionary<K, (TimeSpan, TimeSpan)> dict, K key,
                        TimeSpan value1, TimeSpan value2) {
     ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
-    
+
     // The TimeSpan + operator does an overflow check that is not relevant
     // (and an exception undesirable), avoid it for some speedup.
     long sum1 = currentValue.Item1.Ticks + value1.Ticks;
@@ -298,46 +298,52 @@ public static class CollectionExtensionMethods {
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static int CollectMaxValue<K>(this Dictionary<K, int> dict, K key, int value) {
-    if (dict.TryGetValue(key, out int currentValue)) {
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+
+    if (exists) {
       if (value > currentValue) {
-        dict[key] = value;
+        currentValue = value;
         return value;
       }
 
       return currentValue;
     }
 
-    dict[key] = value;
+    currentValue = value;
     return value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static double CollectMaxValue<K>(this Dictionary<K, double> dict, K key, double value) {
-    if (dict.TryGetValue(key, out double currentValue)) {
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+
+    if (exists) {
       if (value > currentValue) {
-        dict[key] = value;
+        currentValue = value;
         return value;
       }
 
       return currentValue;
     }
 
-    dict[key] = value;
+    currentValue = value;
     return value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static TimeSpan CollectMaxValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
-    if (dict.TryGetValue(key, out var currentValue)) {
+    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+
+    if (exists) {
       if (value > currentValue) {
-        dict[key] = value;
+        currentValue = value;
         return value;
       }
 
       return currentValue;
     }
 
-    dict[key] = value;
+    currentValue = value;
     return value;
   }
 }

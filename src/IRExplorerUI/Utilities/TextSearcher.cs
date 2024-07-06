@@ -125,6 +125,13 @@ public class TextSearcher {
     return offset != -1;
   }
 
+  public static bool Contains(string text,
+                              string searchedText,
+                              TextSearchKind searchKind = TextSearchKind.Default) {
+    (int offset, _) = IndexOf(text, searchedText, 0, searchKind);
+    return offset != -1;
+  }
+
   public static List<TextSearchResult> AllIndexesOf(string text, string searchedText,
                                                     int startOffset = 0,
                                                     TextSearchKind searchKind = TextSearchKind.Default,
@@ -140,18 +147,13 @@ public class TextSearcher {
                         startOffset, searchKind);
   }
 
-  public static bool Contains(string text, string searchedText,
-                              TextSearchKind searchKind = TextSearchKind.Default) {
-    return Contains(text.AsMemory(), searchedText.AsMemory(), searchKind);
-  }
-
   public bool Includes(string text, string searchedText,
                        TextSearchKind searchKind = TextSearchKind.Default) {
     if (searchKind.HasFlag(TextSearchKind.Regex)) {
       cachedRegex_ ??= CreateRegex(searchedText, searchKind);
     }
 
-    (int offset, _) = IndexOf(text.AsMemory(), searchedText.AsMemory(), 0, searchKind, cachedRegex_);
+    (int offset, _) = IndexOf(text, searchedText, 0, searchKind, cachedRegex_);
     return offset != -1;
   }
 
@@ -160,7 +162,7 @@ public class TextSearcher {
       cachedRegex_ ??= CreateRegex(searchedText_, searchKind_);
     }
 
-    (int offset, _) = IndexOf(text.AsMemory(), searchedText_.AsMemory(), 0, searchKind_, cachedRegex_);
+    (int offset, _) = IndexOf(text, searchedText_, 0, searchKind_, cachedRegex_);
     return offset != -1;
   }
 
@@ -265,6 +267,61 @@ public class TextSearcher {
 
       if (searchKind.HasFlag(TextSearchKind.WholeWord)) {
         if (!IsWholeWord(searchedText.Span, text.Span, index + startOffset)) {
+          return (-1, searchedText.Length);
+        }
+      }
+
+      return (startOffset + index, searchedText.Length);
+    }
+
+    return (-1, searchedText.Length);
+  }
+
+  private static (int, int) IndexOf(string text, string searchedText, int startOffset = 0,
+                                    TextSearchKind searchKind = TextSearchKind.Default,
+                                    Regex regex = null) {
+    if (text.Length == 0 || searchedText.Length == 0) {
+      return (-1, 0);
+    }
+
+    if (searchKind.HasFlag(TextSearchKind.Regex)) {
+      try {
+        regex ??= CreateRegex(searchedText, searchKind);
+
+        if (regex == null) {
+          // Regex pattern is invalid if it cannot be created.
+          return (-1, searchedText.Length);
+        }
+
+        var result = regex.Matches(text, startOffset);
+
+        if (result.Count > 0) {
+          return (result[0].Index, result[0].Length);
+        }
+      }
+      catch (Exception ex) {
+        //? TODO: Handle invalid regex, report in UI
+        Debug.WriteLine($"Failed regex text search: {ex}");
+      }
+    }
+    else if (searchKind.HasFlag(TextSearchKind.Wildcard)) {
+      if (FileSystemName.MatchesSimpleExpression(searchedText, text,
+                                                 searchKind.HasFlag(TextSearchKind.CaseInsensitive))) {
+        return (startOffset, searchedText.Length);
+      }
+    }
+    else {
+      var comparisonKind = searchKind.HasFlag(TextSearchKind.CaseInsensitive) ?
+        StringComparison.OrdinalIgnoreCase :
+        StringComparison.Ordinal;
+      int index = text.IndexOf(searchedText, startOffset, comparisonKind);
+
+      if (index == -1) {
+        return (-1, searchedText.Length);
+      }
+
+      if (searchKind.HasFlag(TextSearchKind.WholeWord)) {
+        if (!IsWholeWord(searchedText.AsSpan(), text.AsSpan(), index + startOffset)) {
           return (-1, searchedText.Length);
         }
       }

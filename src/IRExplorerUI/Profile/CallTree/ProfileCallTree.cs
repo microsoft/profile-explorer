@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using IRExplorerCore;
@@ -15,10 +16,10 @@ using ProtoBuf;
 namespace IRExplorerUI.Profile;
 
 public enum ProfileCallTreeNodeKind {
-  Unset,
-  NativeUser,
-  NativeKernel,
-  Managed
+  Unset = 0,
+  NativeUser = 1,
+  NativeKernel = 2,
+  Managed = 3
 }
 
 public sealed class ProfileCallTree {
@@ -26,8 +27,6 @@ public sealed class ProfileCallTree {
   private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
   private Dictionary<long, ProfileCallTreeNode> nodeIdMap_;
   private int nextNodeId_;
-  //private ReaderWriterLockSlim lock_;
-  //private ReaderWriterLockSlim funcLock_;
 
   public ProfileCallTree(int startId = 0) {
     nextNodeId_ = startId;
@@ -190,7 +189,7 @@ public sealed class ProfileCallTree {
     return StateSerializer.Serialize(state);
   }
 
-  public ProfileCallTreeNode AddRootNode(FunctionDebugInfo funcInfo, IRTextFunction function) {
+  private ProfileCallTreeNode AddRootNode(FunctionDebugInfo funcInfo, IRTextFunction function) {
     if (rootNodes_.TryGetValue(function, out var existingNode)) {
       return existingNode;
     }
@@ -200,8 +199,8 @@ public sealed class ProfileCallTree {
     return node;
   }
 
-  public ProfileCallTreeNode AddChildNode(ProfileCallTreeNode node, FunctionDebugInfo funcInfo,
-                                          IRTextFunction function) {
+  private ProfileCallTreeNode AddChildNode(ProfileCallTreeNode node, FunctionDebugInfo funcInfo,
+                                           IRTextFunction function) {
     (var childNode, bool isNewNode) = node.AddChild(funcInfo, function);
 
     if (isNewNode) {
@@ -211,51 +210,29 @@ public sealed class ProfileCallTree {
     return childNode;
   }
 
-  public void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
+  private void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
     // Add an unique instance of the node for a function.
     node.Id = Interlocked.Increment(ref nextNodeId_);
-    List<ProfileCallTreeNode> nodeList = null;
+    ref var nodeList = ref CollectionsMarshal.GetValueRefOrAddDefault(funcToNodesMap_, node.Function, out bool exists);
 
-    try {
-      //funcLock_.EnterUpgradeableReadLock();
-
-      if (!funcToNodesMap_.TryGetValue(node.Function, out nodeList)) {
-        //funcLock_.EnterWriteLock();
-
-        try {
-          nodeList = new List<ProfileCallTreeNode>();
-          funcToNodesMap_[node.Function] = nodeList;
-        }
-        finally {
-          //funcLock_.ExitWriteLock();
-        }
-      }
-
-      nodeList.Add(node);
+    if (!exists) {
+      nodeList = new List<ProfileCallTreeNode>();
     }
-    finally {
-      //funcLock_.ExitUpgradeableReadLock();
-    }
+
+    nodeList.Add(node);
   }
 
   public ProfileCallTreeNode FindNode(long nodeId) {
     // Build mapping on-demand.
     if (nodeIdMap_ == null) {
-      try {
-        //funcLock_.EnterWriteLock();
+      if (nodeIdMap_ == null) {
+        nodeIdMap_ = new Dictionary<long, ProfileCallTreeNode>(funcToNodesMap_.Count);
 
-        if (nodeIdMap_ == null) {
-          nodeIdMap_ = new Dictionary<long, ProfileCallTreeNode>(funcToNodesMap_.Count);
-
-          foreach (var list in funcToNodesMap_.Values) {
-            foreach (var node in list) {
-              nodeIdMap_[node.Id] = node;
-            }
+        foreach (var list in funcToNodesMap_.Values) {
+          foreach (var node in list) {
+            nodeIdMap_[node.Id] = node;
           }
         }
-      }
-      finally {
-        //funcLock_.ExitWriteLock();
       }
     }
 
@@ -302,15 +279,8 @@ public sealed class ProfileCallTree {
   }
 
   public List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function) {
-    try {
-      //funcLock_.EnterReadLock();
-
-      if (funcToNodesMap_.TryGetValue(function, out var nodeList)) {
-        return nodeList;
-      }
-    }
-    finally {
-      //funcLock_.ExitReadLock();
+    if (funcToNodesMap_.TryGetValue(function, out var nodeList)) {
+      return nodeList;
     }
 
     return new List<ProfileCallTreeNode>();
@@ -372,7 +342,8 @@ public sealed class ProfileCallTree {
     var callSiteMap = new Dictionary<long, ProfileCallSite>();
     var threadsMap = new Dictionary<int, (TimeSpan, TimeSpan)>();
     var weight = TimeSpan.Zero;
-    var excWeight = TimeSpan.Zero; var kind = ProfileCallTreeNodeKind.Unset;
+    var excWeight = TimeSpan.Zero;
+    var kind = ProfileCallTreeNodeKind.Unset;
 
     foreach (var node in nodes) {
       // In case of recursive functions, the total time
@@ -457,9 +428,10 @@ public sealed class ProfileCallTree {
 
       if (combineLists && node.HasCallSites) {
         foreach (var pair in node.CallSites) {
-          if (!callSiteMap.TryGetValue(pair.Key, out var callsite)) {
+          ref var callsite = ref CollectionsMarshal.GetValueRefOrAddDefault(callSiteMap, pair.Key, out bool exists);
+
+          if (!exists) {
             callsite = new ProfileCallSite(pair.Key);
-            callSiteMap[pair.Key] = callsite;
           }
 
           foreach (var target in pair.Value.Targets) {
@@ -519,8 +491,8 @@ public sealed class ProfileCallTree {
     var funcMap = new Dictionary<IRTextFunction, ProfileCallTreeNode>();
 
     if (node is ProfileCallTreeGroupNode groupNode) {
-      foreach (var n in groupNode.Nodes) {
-        CollectFunctionsAndModules(n, funcMap, moduleMap);
+      foreach (var nestedNode in groupNode.Nodes) {
+        CollectFunctionsAndModules(nestedNode, funcMap, moduleMap);
       }
     }
     else {
@@ -544,9 +516,10 @@ public sealed class ProfileCallTree {
                                           Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap,
                                           Dictionary<string, ModuleProfileInfo> moduleMap) {
     // Combine all instances of a function under the node.
-    if (!funcMap.TryGetValue(node.Function, out var entry)) {
+    ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(funcMap, node.Function, out var exists);
+
+    if (!exists) {
       entry = new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function, node.Kind);
-      funcMap[node.Function] = entry;
     }
 
     var groupEntry = (ProfileCallTreeGroupNode)entry;
@@ -555,9 +528,10 @@ public sealed class ProfileCallTree {
     groupEntry.AccumulateExclusiveWeight(node.ExclusiveWeight);
 
     // Collect time and functions per module.
-    if (!moduleMap.TryGetValue(node.ModuleName, out var moduleEntry)) {
+    ref var moduleEntry = ref CollectionsMarshal.GetValueRefOrAddDefault(moduleMap, node.ModuleName, out var moduleExists);
+
+    if (!moduleExists) {
       moduleEntry = new ModuleProfileInfo(node.ModuleName);
-      moduleMap[node.ModuleName] = moduleEntry;
     }
 
     moduleEntry.Weight += node.ExclusiveWeight;
@@ -594,17 +568,19 @@ public sealed class ProfileCallTree {
       }
 
       foreach (var pair in otherTree.funcToNodesMap_) {
-        if (funcToNodesMap_.TryGetValue(pair.Key, out var existingList)) {
+        ref var existingList = ref CollectionsMarshal.GetValueRefOrAddDefault(funcToNodesMap_, pair.Key, out bool exists);
+
+        if (exists) {
           // A function present in both tree, add the nodes that are missing.
           foreach (var node in pair.Value) {
-            if(!existingNodesSet.Contains(node)) {
+            if (!existingNodesSet.Contains(node)) {
               existingList.Add(node);
             }
           }
         }
         else {
           // A function present only in the other tree.
-          funcToNodesMap_[pair.Key] = pair.Value;
+          existingList = pair.Value;
         }
       }
     }
@@ -662,8 +638,6 @@ public sealed class ProfileCallTree {
   private void InitializeReferenceMembers() {
     rootNodes_ ??= new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
     funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
-    //lock_ ??= new ReaderWriterLockSlim();
-    //funcLock_ ??= new ReaderWriterLockSlim();
   }
 
   [ProtoContract(SkipConstructor = true)]
