@@ -515,22 +515,17 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (diff > 0.01 || diff < 0) {
         lastProgressPercentage_ = percentage;
       }
-      else {
+      else if (progressInfo.Processes == null) {
         return;
       }
     }
 
     Dispatcher.Invoke(() => {
-      if (progressInfo == null) {
-        return;
-      }
-
       LoadProgressBar.Maximum = progressInfo.Total;
       LoadProgressBar.Value = progressInfo.Current;
 
       if (progressInfo.Total != 0) {
         ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
-        LoadProgressLabel.Text = "Building process list";
         LoadProgressBar.IsIndeterminate = false;
       }
       else {
@@ -569,8 +564,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Value = 0;
       ResetProcessList();
 
-      var list = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback,
-                                                                 task);
+      var list = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_,
+                                                                 ProcessListProgressCallback, task);
       IsLoadingProcessList = false;
 
       if (!IsLoadingProfile) {

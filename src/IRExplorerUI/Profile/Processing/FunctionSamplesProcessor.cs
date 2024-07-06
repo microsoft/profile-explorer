@@ -41,7 +41,7 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
     return funcProcessor.threadListMap_;
   }
 
-  protected override object InitializeChunk(int k) {
+  protected override object InitializeChunk(int k, int samplesPerChunk) {
     var chunk = new ChunkData();
 
     lock (chunks_) {

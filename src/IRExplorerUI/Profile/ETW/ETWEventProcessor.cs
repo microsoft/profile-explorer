@@ -215,10 +215,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
                                               ParserTrackingOptions.ThreadToProcess);
     UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
 
-    if (!isRealTime_) {
-      source_.Process(); // Handles ThreadDCStop to build mapping.
-    }
-
     // For ETL file, the image timestamp (needed to find a binary on a symbol server)
     // can show up in the ImageID event instead the usual Kernel.ImageGroup.
     var symbolParser = new SymbolTraceEventParser(source_);
@@ -640,7 +636,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       int cpu = data.ProcessorNumber;
       double timestamp = data.TimeStampRelativeMSec;
 
-      ref var perThreadLastTime = ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastTimeMap, data.ThreadID, out bool exists); 
+      ref var perThreadLastTime = ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastTimeMap, data.ThreadID, out bool exists);
       double weight = timestamp - perThreadLastTime;
 
       if (weight > samplingIntervalLimitMS_) {

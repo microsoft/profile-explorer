@@ -15,7 +15,7 @@ namespace IRExplorerUI.Profile;
 public abstract class ProfileSampleProcessor {
   public static int MaxThreadCount => Math.Min(16, Environment.ProcessorCount * 3 / 4);
 
-  protected virtual object InitializeChunk(int k) {
+  protected virtual object InitializeChunk(int k, int samplesPerChunk) {
     return null;
   }
 
@@ -48,7 +48,7 @@ public abstract class ProfileSampleProcessor {
 
     for (int k = 0; k < chunks; k++) {
       int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
-      int end = Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
+      int end = (k == chunks - 1) ? sampleEndIndex : Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
 
       // If a single thread is selected, only process the samples for that thread
       // by going through the thread sample ranges.
@@ -61,7 +61,8 @@ public abstract class ProfileSampleProcessor {
 
       int kCopy = k; // Pass value copy.
       tasks.Add(taskFactory.StartNew(() => {
-        object chunkData = InitializeChunk(kCopy);
+        int samplesPerChunk = (int)Math.Ceiling((double)sampleCount / chunks);
+        object chunkData = InitializeChunk(kCopy, samplesPerChunk);
 
         // Find the ranges of samples that overlap with the filter time range.
         int startRangeIndex = 0;

@@ -29,7 +29,7 @@ public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
     return funcProcessor.functionSet_;
   }
 
-  protected override object InitializeChunk(int k) {
+  protected override object InitializeChunk(int k, int samplesPerChunk) {
     var chunk = new ChunkData();
 
     lock (chunks_) {

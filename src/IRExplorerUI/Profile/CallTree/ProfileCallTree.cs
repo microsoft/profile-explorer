@@ -29,7 +29,8 @@ public sealed class ProfileCallTree {
   //private ReaderWriterLockSlim lock_;
   //private ReaderWriterLockSlim funcLock_;
 
-  public ProfileCallTree() {
+  public ProfileCallTree(int startId = 0) {
+    nextNodeId_ = startId;
     InitializeReferenceMembers();
   }
 
@@ -585,13 +586,13 @@ public sealed class ProfileCallTree {
     if (otherTree.funcToNodesMap_ != null) {
       funcToNodesMap_ ??= new();
       var existingNodesSet = new HashSet<ProfileCallTreeNode>(nextNodeId_);
-      
+
       foreach (var list in funcToNodesMap_.Values) {
         foreach (var node in list) {
           existingNodesSet.Add(node);
         }
       }
-      
+
       foreach (var pair in otherTree.funcToNodesMap_) {
         if (funcToNodesMap_.TryGetValue(pair.Key, out var existingList)) {
           // A function present in both tree, add the nodes that are missing.
@@ -627,6 +628,30 @@ public sealed class ProfileCallTree {
     }
 
     return builder.ToString();
+  }
+
+  public void VerifyCycles() {
+    var nodeMap = new HashSet<ProfileCallTreeNode>();
+
+    foreach (var node in rootNodes_) {
+      nodeMap.Clear();
+      VerifyCycles(node.Value, nodeMap);
+    }
+  }
+
+  private void VerifyCycles(ProfileCallTreeNode node,
+                            HashSet<ProfileCallTreeNode> nodeMap) {
+    if (!nodeMap.Add(node)) {
+      Trace.WriteLine($"Found cycle in CallTree for node {node}");
+      Debug.Assert(false);
+      return;
+    }
+
+    if (node.HasChildren) {
+      foreach (var childNode in node.Children) {
+        VerifyCycles(childNode, nodeMap);
+      }
+    }
   }
 
   public override string ToString() {

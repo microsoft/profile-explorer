@@ -19,7 +19,7 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
   public static ProfileCallTree Compute(ProfileData profile, ProfileSampleFilter filter,
                                         int maxChunks = int.MaxValue) {
     var funcProcessor = new CallTreeProcessor();
-    funcProcessor.ProcessSampleChunk(profile, filter, 8);
+    funcProcessor.ProcessSampleChunk(profile, filter, maxChunks);
     return funcProcessor.CallTree;
   }
 
@@ -29,8 +29,12 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
     callTree.UpdateCallTree(ref sample, stack);
   }
 
-  protected override object InitializeChunk(int k) {
-    var chunk = new ProfileCallTree();
+  protected override object InitializeChunk(int k, int samplesPerChunk) {
+    // Partition the node IDs into namespaces based on the chunk
+    // of samples they are created from - this ensures that each
+    // call tree will usue unique node IDs when compared to other call trees.
+    int startNodeId = k * samplesPerChunk;
+    var chunk = new ProfileCallTree(startNodeId);
 
     lock (chunks_) {
       chunks_.Add(chunk);
@@ -68,7 +72,6 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
           int lastHandledIndex = (chunks_.Count / step) * step;
 
           for (int i = lastHandledIndex; i < chunks_.Count; i++) {
-            Trace.WriteLine($"Merge extra {i}");
             chunks_[0].MergeWith(chunks_[i]);
           }
         }
@@ -77,6 +80,9 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
       }
 
       CallTree = chunks_[0];
+#if DEBUG
+      CallTree.VerifyCycles();
+#endif
     }
   }
 }
