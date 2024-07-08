@@ -17,6 +17,13 @@ using ProtoBuf;
 namespace IRExplorerUI.Profile;
 
 public sealed class ProfileModuleBuilder {
+#if DEBUG
+  private static volatile int FuncQueries;
+  private static volatile int FuncFoundByAddress;
+  private static volatile int FuncFoundByFuncAddress;
+  private static volatile int FuncFoundByFuncAddressLocked;
+  private static volatile int FuncCreated;
+#endif
   private ISession session_;
   private BinaryFileDescriptor binaryInfo_;
   private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
@@ -134,11 +141,15 @@ public sealed class ProfileModuleBuilder {
 
   public (IRTextFunction Function, FunctionDebugInfo DebugInfo)
     GetOrCreateFunction(long funcAddress) {
+#if DEBUG
+    Interlocked.Increment(ref FuncQueries);
+#endif
+
     // Try to get it form the concurrent dictionary first.
-    //? TODO: Ideally a range tree would be used to capture all
-    //? the RVAs of a function, which would avoid multiple queries
-    //? of the debug info under the write lock.
     if (functionMap_.TryGetValue(funcAddress, out var pair)) {
+#if DEBUG
+      Interlocked.Increment(ref FuncFoundByAddress);
+#endif
       return pair;
     }
 
@@ -162,11 +173,22 @@ public sealed class ProfileModuleBuilder {
       funcStartAddress = debugInfo.StartRVA;
     }
 
+    // Check again under the write lock.
+    if (functionMap_.TryGetValue(funcStartAddress, out pair)) {
+#if DEBUG
+      Interlocked.Increment(ref FuncFoundByFuncAddress);
+#endif
+      return pair;
+    }
+
     // Acquire write lock to create an entry for the function.
     lock_.EnterWriteLock();
 
     // Check again under the write lock.
     if (functionMap_.TryGetValue(funcStartAddress, out pair)) {
+#if DEBUG
+      Interlocked.Increment(ref FuncFoundByFuncAddressLocked);
+#endif
       lock_.ExitWriteLock();
       return pair;
     }
@@ -178,17 +200,31 @@ public sealed class ProfileModuleBuilder {
       disassemblerSectionLoader.RegisterFunction(func, debugInfo);
     }
 
+#if DEBUG
+    Interlocked.Increment(ref FuncCreated);
+#endif
     // Cache RVA -> function mapping.
     pair = (func, debugInfo);
-    functionMap_.TryAdd(funcAddress, pair);
 
     if (funcStartAddress != funcAddress) {
       functionMap_.TryAdd(funcStartAddress, pair);
     }
 
     lock_.ExitWriteLock();
+
+    functionMap_.TryAdd(funcAddress, pair);
     return pair;
   }
+
+#if DEBUG
+  public static void PrintStatistics() {
+    Trace.WriteLine($"FuncQueries: {FuncQueries}");
+    Trace.WriteLine($"FuncFoundByAddress: {FuncFoundByAddress}");
+    Trace.WriteLine($"FuncFoundByFuncAddress: {FuncFoundByFuncAddress}");
+    Trace.WriteLine($"FuncFoundByFuncAddressLocked: {FuncFoundByFuncAddressLocked}");
+    Trace.WriteLine($"FuncCreated: {FuncCreated}");
+  }
+#endif
 
   private void CreateDummyDocument(BinaryFileDescriptor binaryInfo) {
     // Create a dummy document to represent the module,

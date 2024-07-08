@@ -449,6 +449,11 @@ public class Disassembler : IDisposable {
       // dataIteratorPtr is being incremented by the native API.
       if (Interop.Iterate(disasmHandle_, ref dataIteratorPtr, ref remainingLength, ref startAddress, instrBuffer)) {
         IntPtr instrPtr = instrBuffer.DangerousGetHandle();
+
+        if (instrPtr == IntPtr.Zero) {
+          return;
+        }
+
         var instruction = (Interop.Instruction)Marshal.PtrToStructure(instrPtr, typeof(Interop.Instruction));
         action(instruction);
       }
@@ -653,19 +658,29 @@ public class Disassembler : IDisposable {
       return new InstructionHandle(CreateInstruction(handle));
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Explicit, Size = 256)]
     public unsafe struct Instruction {
       public const int MnemonicLength = 32;
       public const int OperandLength = 160;
+      [FieldOffset(0)]
       public int Id;
+      [FieldOffset(8)]
       public long AliasId;
+      [FieldOffset(16)]
       public long Address;
+      [FieldOffset(24)]
       public short Size;
+      [FieldOffset(26)]
       public fixed byte Bytes[24];
+      [FieldOffset(50)]
       public fixed byte Mnemonic[32];
+      [FieldOffset(82)]
       public fixed byte Operand[160];
+      [FieldOffset(242)]
       public bool IsAlias;
+      [FieldOffset(243)]
       public bool UsesAliasDetails;
+      [FieldOffset(248)]
       public IntPtr Details;
 
       public byte[] BytesArray {
