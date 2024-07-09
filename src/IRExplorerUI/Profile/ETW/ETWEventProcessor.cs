@@ -808,17 +808,17 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
 
       sw.Stop();
-      Trace.WriteLine($"Took: {sw.ElapsedMilliseconds} ms");
+      Trace.WriteLine($"Done processing ETW events: {sw}, {sw.ElapsedMilliseconds} ms");
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to process ETW events: {ex.Message}");
     }
 
-    Trace.WriteLine("Done processing ETW events");
-    Trace.WriteLine($"  samples: {profile.Samples.Count}");
-    Trace.WriteLine($"  events: {profile.PerformanceCountersEvents?.Count}");
-    //Trace.Flush();
+    Trace.WriteLine("ETW events summary");
+    Trace.WriteLine($"  - samples: {profile.Samples.Count}");
+    Trace.WriteLine($"  - pmc events: {profile.PerformanceCountersEvents?.Count}");
 
+    // Free temporary data structures.
     profile.LoadingCompleted();
 
     if (handleDotNetEvents_) {

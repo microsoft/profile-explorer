@@ -34,6 +34,7 @@ public partial class MainWindow : Window, ISession {
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
+    var sw = Stopwatch.StartNew();
     using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
@@ -50,6 +51,8 @@ public partial class MainWindow : Window, ISession {
       UnloadProfilingDebugInfo();
     }
 
+    Trace.WriteLine($"Done profile load and setup: {sw}, {sw.ElapsedMilliseconds} ms");
+    Trace.Flush();
     return result != null;
   }
 
@@ -59,6 +62,7 @@ public partial class MainWindow : Window, ISession {
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
+    var sw = Stopwatch.StartNew();
     using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(data, processIds,
                                                options, symbolSettings,
@@ -75,6 +79,8 @@ public partial class MainWindow : Window, ISession {
       UnloadProfilingDebugInfo();
     }
 
+    Trace.WriteLine($"Done profile load and setup: {sw}, {sw.ElapsedMilliseconds} ms");
+    Trace.Flush();
     return result != null;
   }
 

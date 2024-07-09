@@ -2,7 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Profile;
@@ -92,37 +91,58 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   }
 
   protected override void Complete() {
-    // Compute the sample list size for each thread
-    // across all chunks to pre-allocate memory.
-    var countMap = new Dictionary<int, int>();
+    lock (chunks_) {
+      // Compute the sample list size for each thread
+      // across all chunks to pre-allocate memory.
+      var countMap = new Dictionary<int, int>();
+      var chunkThreadListMap = new Dictionary<int, List<List<SampleIndex>>>();
 
-    foreach (var chunk in chunks_) {
-      foreach (var pair in chunk.ThreadListMap) {
-        countMap.AccumulateValue(pair.Key, pair.Value.Count);
+      foreach (var chunk in chunks_) {
+        foreach (var pair in chunk.ThreadListMap) {
+          countMap.AccumulateValue(pair.Key, pair.Value.Count);
+
+          if (pair.Value.Count > 0) {
+            chunkThreadListMap.GetOrAddValue(pair.Key).Add(pair.Value);
+          }
+        }
+      }
+
+      // Pre-allocate memory for the merged per-thread sample lists.
+      threadListMap_ = new Dictionary<int, List<SampleIndex>>(countMap.Count);
+
+      foreach (var pair in countMap) {
+        threadListMap_[pair.Key] = new List<SampleIndex>(pair.Value);
+      }
+
+      // The per-thread sample lists are already sorted,
+      // now put them in the correct order across all chunks.
+      foreach (var chunkList in chunkThreadListMap.Values) {
+        chunkList.Sort((a, b) => a[0].Index.CompareTo(b[0].Index));
+      }
+
+      var map = new Dictionary<int, int>();
+
+      // Merge the per-thread sample lists.
+      foreach (var pair in chunkThreadListMap) {
+        var threadList = threadListMap_[pair.Key];
+        var chunkLists = pair.Value;
+
+        foreach (var list in chunkLists) {
+          threadList.AddRange(list);
+        }
+
+        for (int i = 1; i < threadList.Count; i++) {
+          int dist = threadList[i].Index - threadList[i - 1].Index;
+          map.AccumulateValue(dist, 1);
+        }
+
+#if DEBUG
+        // Validate sample ordering.
+        for (int i = 1; i < chunkLists.Count; i++) {
+          Debug.Assert(chunkLists[i][0].Index > chunkLists[i - 1][^1].Index);
+        }
+#endif
       }
     }
-
-    threadListMap_ = new Dictionary<int, List<SampleIndex>>(countMap.Count);
-
-    foreach (var pair in countMap) {
-      threadListMap_[pair.Key] = new List<SampleIndex>(pair.Value);
-    }
-
-    // Merge the per-thread sample lists.
-    foreach (var chunk in chunks_) {
-      foreach (var pair in chunk.ThreadListMap) {
-        threadListMap_[pair.Key].AddRange(pair.Value);
-      }
-    }
-
-    // Sort each list in parallel, since samples may not be in order.
-    var sortTasks = new List<Task>();
-
-    foreach (var pair in threadListMap_) {
-      var list = pair.Value;
-      sortTasks.Add(Task.Run(() => list.Sort((a, b) => a.Index.CompareTo(b.Index))));
-    }
-
-    Task.WaitAll(sortTasks.ToArray());
   }
 }
