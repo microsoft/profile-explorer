@@ -144,32 +144,50 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public long EndRVA => RVA + Size - 1;
   public bool IsUnknown => RVA == 0 && Size == 0;
 
-  public static T BinarySearch<T>(List<T> ranges, long value) where T : IComparable<long> {
-    int min = 0;
-    int max = ranges.Count - 1;
+  public static FunctionDebugInfo BinarySearch(List<FunctionDebugInfo> ranges, long value,
+                                                bool hasOverlappingFuncts = false) {
+    int low = 0;
+    int high = ranges.Count - 1;
 
-    while (min <= max) {
-      int mid = (min + max) / 2;
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
       var range = ranges[mid];
-      int comparison = range.CompareTo(value);
+      int result = range.CompareTo(value);
 
-      if (comparison == 0) {
+      if (result == 0) {
+        // With code written in assembly, it's possible to have overlapping functions
+        // (or rather, one function with multiple entry points). In such a case,
+        // pick the outer function that contains the given RVA.
+        // |F1------------------|--
+        // -----|F2----|-----------
+        // ----------------|F3|----
+        // If the RVA is inside F2 or F3, pick F1 instead since it covers the whole range. 
+        if (hasOverlappingFuncts) {
+          int count = 0;
+          
+          while (--mid >= 0 && count++ < 10) {
+            var otherRange = ranges[mid];
+
+            if (otherRange.CompareTo(value) == 0 &&
+                (otherRange.StartRVA != range.StartRVA ||
+                 otherRange.Size > range.Size) ) {
+              return otherRange;
+            }
+          }
+        }
+
         return range;
       }
 
-      if (comparison < 0) {
-        min = mid + 1;
+      if (result < 0) {
+        low = mid + 1;
       }
       else {
-        max = mid - 1;
+        high = mid - 1;
       }
     }
 
-    return default(T);
-  }
-
-  public void UpdateName(string newName) {
-    Name = newName != null ? string.Intern(newName) : null;
+    return null;
   }
 
   public void AddSourceLine(SourceLineDebugInfo sourceLine) {
@@ -214,7 +232,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 
   public override int GetHashCode() {
     if (cachedHashCode_ == 0) {
-      cachedHashCode_ = HashCode.Combine(Name, RVA, Id, AuxiliaryId);
+      cachedHashCode_ = HashCode.Combine(Name, RVA, Id);
     }
 
     return cachedHashCode_;
@@ -227,11 +245,11 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public int CompareTo(FunctionDebugInfo other) {
     if (other == null) return 0;
 
-    if (StartRVA < other.StartRVA && EndRVA < other.EndRVA) {
+    if (StartRVA < other.StartRVA) {
       return -1;
     }
 
-    if (StartRVA > other.StartRVA && EndRVA > other.EndRVA) {
+    if (StartRVA > other.StartRVA) {
       return 1;
     }
 

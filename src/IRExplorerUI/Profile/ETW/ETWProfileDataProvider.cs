@@ -175,6 +175,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         chunks = 1;
 #endif
         int chunkSize = rawProfile.ComputeSampleChunkLength(chunks);
+        int sampleCount = rawProfile.Samples.Count;
 
         Trace.WriteLine($"Using {chunks} threads");
         var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
@@ -184,12 +185,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // Process the raw samples and stacks by resolving stack frame symbols
         // and creating the function profiles.
         for (int k = 0; k < chunks; k++) {
-          int start = Math.Min(k * chunkSize, rawProfile.Samples.Count);
-          int end = Math.Min((k + 1) * chunkSize, rawProfile.Samples.Count);
-
-          if (start == end) {
-            continue;
-          }
+          int start = Math.Min(k * chunkSize, sampleCount);
+          int end = (k == chunks - 1) ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
 
           tasks.Add(taskFactory.StartNew(() => {
             var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,

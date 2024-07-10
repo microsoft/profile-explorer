@@ -168,11 +168,12 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
   private bool hideToolbarTray_;
   private bool hideSearchedText_;
   private string optionalText_;
-  private bool switching;
-
+  private CancelableTaskInstance loadTask_;
+  
   public SearchResultsPanel() {
     InitializeComponent();
     DataContext = this;
+    loadTask_ = new CancelableTaskInstance(false);
   }
 
   public event EventHandler<OpenSectionEventArgs> OpenSection;
@@ -223,15 +224,9 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
 
   private async Task JumpToSearchResult(SearchResultInfo result) {
     //? TODO: If the document is in the middle of switching a section
-    //? from the previous jump, this must wait for it to complete, otherwise
+    //? from the previous jump, wait for it to complete, otherwise
     //? the document text can get out of sync and assert.
-    if (switching) {
-#if DEBUG
-      throw new Exception("Switching...");
-#endif
-    }
-
-    switching = true;
+    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     var documentHost = Session.FindAssociatedDocumentHost(this);
 
     if (documentHost == null) {
@@ -246,7 +241,6 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
     }
 
     documentHost.JumpToSearchResult(result.Result, result.Index - 1);
-    switching = false;
   }
 
   private async Task JumpToSelectedSearchResult() {

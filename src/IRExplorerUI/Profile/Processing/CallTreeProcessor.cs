@@ -66,7 +66,7 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
 
         Task.WaitAll(tasks);
 
-        // Handle any chuncks that were not paired during the parallel phase.
+        // Handle any chunks that were not paired during the parallel phase.
         // With a step of 2 this can happen only in the first round.
         if (chunks_.Count % step != 0) {
           int lastHandledIndex = (chunks_.Count / step) * step;

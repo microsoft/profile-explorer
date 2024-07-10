@@ -94,6 +94,30 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
   [ProtoMember(5)]
   public int Size { get; }
 
+  public static ManagedMethodMapping BinarySearch(List<ManagedMethodMapping> ranges, long value) {
+    int low = 0;
+    int high = ranges.Count - 1;
+
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      var range = ranges[mid];
+      int result = range.CompareTo(value);
+
+      if (result == 0) {
+        return range;
+      }
+
+      if (result < 0) {
+        low = mid + 1;
+      }
+      else {
+        high = mid - 1;
+      }
+    }
+
+    return null;
+  }
+  
   public override bool Equals(object obj) {
     return obj is ManagedMethodMapping other && Equals(other);
   }

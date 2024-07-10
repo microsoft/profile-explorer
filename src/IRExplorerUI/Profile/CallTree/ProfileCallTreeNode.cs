@@ -12,6 +12,8 @@ using IRExplorerUI.Compilers;
 namespace IRExplorerUI.Profile;
 
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
+  public static readonly object MergedNodeTag = new();
+  
   public int Id { get; set; }
   public IRTextFunction Function { get; set; }
   public ProfileCallTreeNodeKind Kind { get; set; }
@@ -178,6 +180,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     // Accumulate the weights and merge all data structures,
     // then recursively merge the common child nodes
     // and copy over any new child nodes.
+    otherNode.Tag = MergedNodeTag; // Mark node as merged to be discarded later.
     Weight += otherNode.Weight;
     ExclusiveWeight += otherNode.ExclusiveWeight;
 
@@ -219,6 +222,14 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
       }
     }
+  }
+
+  public bool IsMergeNode() {
+    return Tag == MergedNodeTag;
+  }
+
+  public void ClearIsMergedNode() {
+    Tag = null;
   }
 
   internal void Print(StringBuilder builder, int level = 0, bool caller = false) {

@@ -573,9 +573,11 @@ public sealed class ProfileCallTree {
         if (exists) {
           // A function present in both tree, add the nodes that are missing.
           foreach (var node in pair.Value) {
-            if (!existingNodesSet.Contains(node)) {
+            if (!node.IsMergeNode() && !existingNodesSet.Contains(node)) {
               existingList.Add(node);
             }
+            
+            node.ClearIsMergedNode();
           }
         }
         else {
@@ -626,6 +628,61 @@ public sealed class ProfileCallTree {
     if (node.HasChildren) {
       foreach (var childNode in node.Children) {
         VerifyCycles(childNode, nodeMap);
+      }
+    }
+  }
+  
+  public string PrintNodeInstances(string funcName, bool printStack = false) {
+    var list = new List<ProfileCallTreeNode>();
+
+    foreach (var pair in rootNodes_) {
+      CollectNodeInstances(pair.Value, funcName, list);
+    }
+
+    list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+    var weight = TimeSpan.Zero;
+    var excWeight = TimeSpan.Zero;
+
+    foreach (var node in list) {
+      weight += node.Weight;
+      excWeight += node.ExclusiveWeight;
+    }
+
+    var sb = new StringBuilder();
+    sb.AppendLine($"Instances for {funcName}: {list.Count}");
+    sb.AppendLine($" - Total weight: {weight} ({weight.TotalMilliseconds} ms), excl weight: {excWeight} ({excWeight.TotalMilliseconds} ms)");
+
+    foreach (var node in list) {
+      sb.AppendLine(        $" - Weight: {node.Weight} ({node.Weight.TotalMilliseconds} ms), excl weight: {node.ExclusiveWeight} ({node.ExclusiveWeight.TotalMilliseconds} ms), children: {(node.HasChildren ? node.Children.Count : 0)}");
+      weight += node.Weight;
+      excWeight += node.ExclusiveWeight;
+
+      if (printStack) {
+        sb.AppendLine("  - Stack:");
+        var stackNode = node;
+        int index = 0;
+
+        while (stackNode != null) {
+          sb.AppendLine($"     {index}: {stackNode.FunctionName}");
+          stackNode = stackNode.Caller;
+          index++;
+        }
+        
+        sb.AppendLine($"  ------------------------------");
+      }
+    }
+
+    return sb.ToString();
+  }
+  
+  public void CollectNodeInstances(ProfileCallTreeNode node, string funcName, List<ProfileCallTreeNode> list) {
+    if (node.FunctionName.Equals(funcName, StringComparison.Ordinal)) {
+      list.Add(node);
+    }
+
+    if (node.HasChildren) {
+      foreach (var child in node.Children) {
+        CollectNodeInstances(child, funcName, list);
       }
     }
   }

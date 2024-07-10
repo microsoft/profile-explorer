@@ -36,6 +36,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
   private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
   private static object undecorateLock_ = new();
+  private object cacheLock_ = new();
   private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
   private SymbolFileCache symbolCache_;
@@ -47,6 +48,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private IDiaSession session_;
   private IDiaSymbol globalSymbol_;
   private List<FunctionDebugInfo> sortedFuncList_;
+  private bool sortedFuncListOverlapping_;
   private volatile int funcCacheMisses_;
   private bool loadFailed_;
   private bool disposed_;
@@ -154,7 +156,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public static string DemangleFunctionName(string name, FunctionNameDemanglingOptions options =
                                               FunctionNameDemanglingOptions.Default) {
-    // Mangled MSVC C++ names always start with a ? char. 
+    // Mangled MSVC C++ names always start with a ? char.
     if (string.IsNullOrEmpty(name) || !name.StartsWith('?')) {
       return name;
     }
@@ -231,11 +233,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if (other is PDBDebugInfoProvider otherPdb) {
       // Copy the already loaded function list from another PDB
       // provider that was created on another thread and is unusable otherwise.
-      lock (this) {
-        symbolCache_ = otherPdb.symbolCache_;
-        sortedFuncList_ = otherPdb.sortedFuncList_;
-      }
+      symbolCache_ = otherPdb.symbolCache_;
+      sortedFuncList_ = otherPdb.sortedFuncList_;
     }
+
 
     return true;
   }
@@ -340,16 +341,16 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   public FunctionDebugInfo FindFunctionByRVA(long rva) {
     try {
       if (sortedFuncList_ != null) {
-        return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
+        return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
       }
 
       // Preload the function list only when there are enough queries
       // to justify the time spent in reading the entire PDB.
       if (Interlocked.Increment(ref funcCacheMisses_) >= FunctionCacheMissThreshold) {
-        var funcList = GetSortedFunctions();
+        GetSortedFunctions();
 
-        if (funcList != null) {
-          return FunctionDebugInfo.BinarySearch(funcList, rva);
+        if (sortedFuncList_ != null) {
+          return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
         }
       }
 
@@ -381,8 +382,22 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return sortedFuncList_;
     }
 
-    lock (this) {
-      return Utils.RunSync(GetSortedFunctionsAsync);
+    lock (cacheLock_) {
+      var result = Utils.RunSync(GetSortedFunctionsAsync);
+#if DEBUG
+      ValidateSortedList(result);
+#endif
+      return result;
+    }
+  }
+  
+  private void ValidateSortedList(List<FunctionDebugInfo> list) {
+    for (int i = 1; i < list.Count; i++) {
+      if (list[i].StartRVA < list[i - 1].StartRVA &&
+          list[i].StartRVA != 0 &&
+          list[i - 1].StartRVA != 0) {
+        Debug.Assert(false, "Function list is not sorted by RVA");
+      }
     }
   }
 
@@ -411,7 +426,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       }
 
       funcList.Sort();
-      Interlocked.MemoryBarrier();
       sortedFuncList_ = funcList;
 
       if (settings_.CacheSymbolFiles) {
@@ -421,13 +435,38 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           FunctionList = sortedFuncList_
         };
 
+        //? TODO: Saving can be done on another thread
+        //? to return faster from this function.
         await SymbolFileCache.SerializeAsync(symbolCache_, settings_.SymbolCacheDirectoryPath).
           ConfigureAwait(false);
         Trace.WriteLine($"PDB cache created for {symbolFile_.FileName}");
       }
     }
 
+    sortedFuncListOverlapping_ = HasOverlappingFunctions(sortedFuncList_);
     return sortedFuncList_;
+  }
+
+  private bool HasOverlappingFunctions(List<FunctionDebugInfo> sortedFuncList) {
+    if (sortedFuncList == null || sortedFuncList.Count < 2) {
+      return false;
+    }
+
+    for (int i = 1; i < sortedFuncList.Count; i++) {
+      if (sortedFuncList[i].StartRVA == 0) {
+        continue;
+      }
+      
+      for (int k = i - 1; k >= 0 && (i - k) < 10; k--) {
+        if (sortedFuncList[k].StartRVA != 0 &&
+            sortedFuncList[k].StartRVA <= sortedFuncList[i].StartRVA &&
+            sortedFuncList[k].EndRVA > sortedFuncList[i].EndRVA) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public void Dispose() {
@@ -768,26 +807,27 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return null;
     }
 
-    List<FunctionDebugInfo> funcSymbols = null;
     IDiaEnumSymbols symbolEnum = null;
     IDiaEnumSymbols publicSymbolEnum = null;
 
     try {
       globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
       globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
-      funcSymbols = new List<FunctionDebugInfo>(symbolEnum.count + publicSymbolEnum.count);
+      var funcSymbolsSet = new HashSet<FunctionDebugInfo>(symbolEnum.count + publicSymbolEnum.count);
 
       foreach (IDiaSymbol sym in symbolEnum) {
         //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
         var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
-        funcSymbols.Add(funcInfo);
+        funcSymbolsSet.Add(funcInfo);
       }
 
       foreach (IDiaSymbol sym in publicSymbolEnum) {
         //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
         var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
-        funcSymbols.Add(funcInfo);
+        funcSymbolsSet.Add(funcInfo);
       }
+
+      return funcSymbolsSet.ToList();
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
@@ -802,7 +842,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       }
     }
 
-    return funcSymbols;
+    return null;
   }
 
   private IDiaSymbol FindFunctionSymbol(string functionName) {
@@ -834,6 +874,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       if (pubSym != null) {
         return pubSym;
       }
+
+      return funcSym;
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to find function symbol for RVA {rva}: {ex.Message}");

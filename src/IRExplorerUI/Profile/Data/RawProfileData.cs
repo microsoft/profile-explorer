@@ -162,7 +162,7 @@ public class RawProfileData : IDisposable {
 
   public ManagedMethodMapping FindManagedMethodForIP(long ip, int processId) {
     var data = GetOrCreateManagedData(processId);
-    return FunctionDebugInfo.BinarySearch(data.managedMethods_, ip);
+    return ManagedMethodMapping.BinarySearch(data.managedMethods_, ip);
   }
 
   public ManagedMethodMapping FindManagedMethod(long id, long rejitId, int processId) {
