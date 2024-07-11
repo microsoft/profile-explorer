@@ -11,15 +11,12 @@ using System.Windows.Threading;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class SourceFileOptionsPanel : OptionsPanelBase {
+  public override double DefaultHeight => 450;
+  public override double DefaultWidth => 400;
   private SourceFileSettings settings_;
-  public const double DefaultHeight = 320;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
 
   public SourceFileOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
@@ -34,18 +31,6 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
     settings_ = (SourceFileSettings)newSettings;
     ProfilingOptionsPanel.DataContext = null;
     ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
-  }
-
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 
   private void ReloadMappedPathsList() {

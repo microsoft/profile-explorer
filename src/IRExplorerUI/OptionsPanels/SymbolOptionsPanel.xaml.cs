@@ -16,11 +16,6 @@ using Microsoft.Win32;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChanged {
-  public const double DefaultHeight = 320;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
-
   private SymbolFileSourceSettings symbolSettings_;
 
   public SymbolOptionsPanel() {

@@ -475,10 +475,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private Dictionary<IRTextFunction, IRTextFunctionEx> functionExtMap_;
   private ScrollViewer sectionsScrollViewer_;
   private OptionsPanelHostPopup optionsPanelPopup_;
-  private bool optionsPanelVisible_;
   private GridViewColumnValueSorter<FunctionFieldKind> functionValueSorter_;
   private GridViewColumnValueSorter<SectionFieldKind> sectionValueSorter_;
-  private GridViewColumnValueSorter<ChildFunctionFieldKind> childFunctionValueSorter_;
   private GridViewColumnValueSorter<ModuleFieldKind> moduleValueSorter_;
   private ConcurrentDictionary<IRTextSummary, CallGraph> callGraphCache_;
   private ModuleReport moduleReport_;
@@ -2312,66 +2310,27 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private async void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
-    if (optionsPanelVisible_) {
-      await CloseOptionsPanel();
-    }
-    else {
-      ShowOptionsPanel();
-    }
+  private void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
+    ShowOptionsPanel();
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelVisible_) {
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
-    double width = Math.Max(SectionOptionsPanel.MinimumWidth,
-                            Math.Min(SectionList.ActualWidth, SectionOptionsPanel.DefaultWidth));
-    double height = Math.Max(SectionOptionsPanel.MinimumHeight,
-                             Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
-    var position = new Point(SectionList.ActualWidth - width, 0);
-    initialMarkingSettings_ = MarkingSettings.Clone();
-    optionsPanelPopup_ = new OptionsPanelHostPopup(new SectionOptionsPanel(),
-                                                   position, width, height, SectionList,
-                                                   settings_.Clone(), Session);
-    optionsPanelPopup_.PanelClosed += OptionsPanel_PanelClosed;
-    optionsPanelPopup_.PanelReset += OptionsPanel_PanelReset;
-    optionsPanelPopup_.SettingsChanged += OptionsPanel_SettingsChanged;
-    optionsPanelPopup_.IsOpen = true;
-    optionsPanelVisible_ = true;
-  }
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, SectionSettings>(
+      Settings.Clone(), SectionList, Session,
+      async (newSettings, commit) => {
+        if (!newSettings.Equals(Settings)) {
+          await HandleNewSettings(newSettings, commit);
+        }
 
-  private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
-    var newSettings = (SectionSettings)optionsPanelPopup_.Settings;
-    await HandleNewSettings(newSettings, false);
-    optionsPanelPopup_.Settings = settings_.Clone();
-  }
-
-  private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
-    await HandleNewSettings(new SectionSettings(), true);
-    optionsPanelPopup_.Settings = settings_.Clone();
-  }
-
-  private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
-    await CloseOptionsPanel();
-  }
-
-  private async Task CloseOptionsPanel() {
-    if (!optionsPanelVisible_) {
-      return;
-    }
-
-    optionsPanelPopup_.IsOpen = false;
-    optionsPanelPopup_.PanelClosed -= OptionsPanel_PanelClosed;
-    optionsPanelPopup_.PanelReset -= OptionsPanel_PanelReset;
-    optionsPanelPopup_.SettingsChanged -= OptionsPanel_SettingsChanged;
-
-    var newSettings = (SectionSettings)optionsPanelPopup_.Settings;
-    await HandleNewSettings(newSettings, true);
-
-    optionsPanelPopup_ = null;
-    optionsPanelVisible_ = false;
+        return newSettings.Clone();
+      },
+      () => optionsPanelPopup_ = null);
   }
 
   public override Task OnReloadSettings() {
@@ -2624,14 +2583,14 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
           }
         }, cancelableTask.Token));
       }
-      
+
       await Task.WhenAll(cgTasks.ToArray());
     }
 
     var tasks = new List<Task>();
     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
     var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-    
+
     foreach (var function in functions) {
       if (function.SectionCount == 0) {
         continue;

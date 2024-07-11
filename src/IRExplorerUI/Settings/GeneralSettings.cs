@@ -11,6 +11,7 @@ public class GeneralSettings : SettingsBase {
   private static readonly double MinZoomAmount = 0.5;
   private static readonly double MaxZoomAmount = 2;
   private static readonly double ZoomStep = 0.05;
+  public static readonly double DefaultCpuCoreLimit = 0.75;
 
   public GeneralSettings() {
     Reset();
@@ -24,6 +25,10 @@ public class GeneralSettings : SettingsBase {
   public double WindowScaling { get; set; }
   [ProtoMember(4)][OptionValue(0)]
   public int ThemeIndex { get; set; }
+  [ProtoMember(5)][OptionValue(0.75)]
+  public double CpuCoreLimit { get; set; }
+
+  public int CurrentCpuCoreLimit => (int)Math.Max(1, Math.Floor(CpuCoreLimit * Environment.ProcessorCount));
 
   public override void Reset() {
     ResetAllOptions(this);

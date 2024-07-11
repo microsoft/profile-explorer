@@ -110,6 +110,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
+    // Fill in report details.
     var mainProcess = rawProfile.FindProcess(processIds[0]);
     report_ = report;
     report_.Process = mainProcess;
@@ -141,12 +142,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       // The entire ETW processing must be done on the same thread.
       bool result = await Task.Run(async () => {
-        var totalSw = Stopwatch.StartNew();
-
         // Start getting the function address data while the trace is loading.
+        var totalSw = Stopwatch.StartNew();
         UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
-        ProfileImage prevImage = null;
-        ProfileModuleBuilder prevProfileModuleBuilder = null;
 
         // Start getting the function address data while the trace is loading.
         if (cancelableTask is {IsCanceled: true}) {
@@ -166,8 +164,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // Start main processing part, resolving stack frames,
         // mapping IPs/RVAs to functions using the debug info.
         UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, rawProfile.Samples.Count);
-
-        var sw = Stopwatch.StartNew();
+        var processingSw = Stopwatch.StartNew();
 
         // Split sample processing in multiple chunks, each done by another thread.
         int chunks = ProfileSampleProcessor.MaxThreadCount;
@@ -177,7 +174,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         int chunkSize = rawProfile.ComputeSampleChunkLength(chunks);
         int sampleCount = rawProfile.Samples.Count;
 
-        Trace.WriteLine($"Using {chunks} threads");
+        Trace.WriteLine($"LoadTraceAsync: Using {chunks} threads");
         var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
         var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
         var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
@@ -197,9 +194,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         await Task.WhenAll(tasks.ToArray());
-        Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
-        // Trace.Flush();
-        // Environment.Exit(0);
+        Trace.WriteLine($"LoadTraceAsync: Done processing samples in {processingSw.Elapsed}");
 
         // Collect samples from tasks.
         var samples = new List<(ProfileSample, ResolvedProfileStack)>[tasks.Count];
@@ -230,20 +225,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         // Create the per-function profile and call tree.
-        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, rawProfile.Samples.Count);
-        var sw2 = Stopwatch.StartNew();
+        UpdateProgress(progressCallback, ProfileLoadStage.ComputeCallTree, 0, rawProfile.Samples.Count);
+        var callTreeSw = Stopwatch.StartNew();
         profileData_.ComputeThreadSampleRanges();
         profileData_.FilterFunctionProfile(new ProfileSampleFilter());
 
-        Trace.WriteLine($"Done compute func profile/call tree in {sw2.Elapsed}, {sw2.ElapsedMilliseconds} ms");
-        Trace.WriteLine($"Done processing trace in {sw.Elapsed}, {sw.ElapsedMilliseconds} ms");
+        Trace.WriteLine($"LoadTraceAsync: Done compute func profile/call tree in {callTreeSw.Elapsed}, {callTreeSw.ElapsedMilliseconds} ms");
+        Trace.WriteLine($"LoadTraceAsync: Done processing trace in {processingSw.Elapsed}, {processingSw.ElapsedMilliseconds} ms");
 
+        // Process performance counters.
         if (rawProfile.HasPerformanceCountersEvents) {
-          // Process performance counters.
           ProcessPerformanceCounters(rawProfile, processIds, symbolSettings, progressCallback, cancelableTask);
         }
 
-        Trace.WriteLine($"Done loading profile in {totalSw.Elapsed}");
+        Trace.WriteLine($"LoadTraceAsync: Done loading profile in {totalSw.Elapsed}");
         return true;
       });
 
@@ -905,10 +900,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
 
       if (frameImage != null) {
-        lock (lockObject_) {
-          profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
-        }
-
+        profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
         var profileModuleBuilder = GetModuleBuilder(rawProfile, frameImage, context.ProcessId, symbolSettings);
 
         if (profileModuleBuilder == null) {
@@ -927,13 +919,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         long funcRva = funcPair.DebugInfo.RVA;
         long offset = frameRva - funcRva;
 
-        FunctionProfileData profile = null;
-
-        //? TODO: Use RW lock
-        lock (lockObject_) {
-          profile = profileData_.GetOrCreateFunctionProfile(funcPair.Function, funcPair.DebugInfo);
-          profile.AddCounterSample(offset, counter.CounterId, 1);
-        }
+        var profile = profileData_.GetOrCreateFunctionProfile(funcPair.Function, funcPair.DebugInfo);
+        profile.AddCounterSample(offset, counter.CounterId, 1);
       }
 
       // profileData_.Events.Add((counter, null));

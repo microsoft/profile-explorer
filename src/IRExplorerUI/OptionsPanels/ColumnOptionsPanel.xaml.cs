@@ -26,22 +26,5 @@ public partial class ColumnOptionsPanel : OptionsPanelBase {
     ShowIconsComboBox.ItemsSource = PartVisibilityKinds;
     ShowBackgroundComboBox.ItemsSource = PartVisibilityKinds;
     ShowPercentageComboBox.ItemsSource = PartVisibilityKinds;
-
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-  }
-
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
-  }
-
-  private void MaxWidthButton_Click(object sender, RoutedEventArgs e) {
   }
 }

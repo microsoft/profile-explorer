@@ -11,18 +11,5 @@ public partial class PreviewPopupOptionsPanel : OptionsPanelBase {
 
   public PreviewPopupOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-  }
-
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 }

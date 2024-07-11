@@ -59,6 +59,12 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
     Settings = temp;
   }
 
+  protected virtual void NotifySettingsChanged() {
+    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
+      RaiseSettingsChanged(null);
+    });
+  }
+
   public void RaisePanelClosed(EventArgs e) {
     PanelClosed?.Invoke(this, e);
   }
@@ -79,6 +85,18 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
     Parent = parent;
     Settings = settings;
     Session = session;
+    PreviewMouseUp += (sender, args) => {
+      if (Utils.IsOptionsUpdateEvent(args)) {
+        NotifySettingsChanged();
+      }
+    };
+
+    PreviewKeyUp += (sender, args) => {
+      if (Utils.IsOptionsUpdateEvent(args)) {
+        NotifySettingsChanged();
+      }
+    };
+
     initialized_ = true;
   }
 

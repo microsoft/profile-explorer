@@ -8,26 +8,8 @@ using System.Windows.Input;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class TimelineOptionsPanel : OptionsPanelBase {
-  public const double DefaultHeight = 320;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
-
   public TimelineOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
-  }
-
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 
   private void ResetNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {

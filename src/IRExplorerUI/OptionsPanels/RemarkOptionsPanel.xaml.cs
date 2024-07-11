@@ -10,18 +10,12 @@ using System.Windows.Input;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class RemarkOptionsPanel : OptionsPanelBase {
-  public const double DefaultHeight = 480;
-  public const double MinimumHeight = 300;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
   public const double LeftMargin = 200;
   private List<CheckBox> kindCheckboxes_;
   private List<CheckBox> categoryCheckboxes_;
 
   public RemarkOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += RemarkOptionsPanel_PreviewMouseUp;
-
     kindCheckboxes_ = new List<CheckBox>();
     kindCheckboxes_.Add(OptimizationCheckbox);
     kindCheckboxes_.Add(AnalysisCheckbox);
@@ -37,10 +31,6 @@ public partial class RemarkOptionsPanel : OptionsPanelBase {
 
   private void SetCheckboxesState(List<CheckBox> list, bool state) {
     list.ForEach(item => item.IsChecked = state);
-  }
-
-  private void RemarkOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
   }
 
   private bool PopulateCategoryList() {
@@ -103,12 +93,6 @@ public partial class RemarkOptionsPanel : OptionsPanelBase {
       var category = (RemarkCategory)checkbox.Tag;
       remarkSettings.CategoryFilter[category.Title] = checkbox.IsChecked.HasValue && checkbox.IsChecked.Value;
     }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 
   private void SetAllKindCheckboxesButton_Click(object sender, RoutedEventArgs e) {

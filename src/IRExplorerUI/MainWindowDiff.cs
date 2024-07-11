@@ -800,6 +800,7 @@ public partial class MainWindow : Window, ISession {
     DiffControlsPanel.Visibility = Visibility.Visible;
   }
 
+  //? TODO: Switch to OptionsPanelHostPopup.Create
   private void ShowDiffOptionsPanel() {
     if (diffOptionsVisible_) {
       return;

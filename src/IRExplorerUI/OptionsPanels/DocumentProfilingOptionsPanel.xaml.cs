@@ -10,10 +10,6 @@ using static IRExplorerUI.ProfileDocumentMarkerSettings;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
-  public const double DefaultHeight = 320;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
   private bool showsDocumentSettings_;
   public Dictionary<ValueUnitKind, string>
     ValueUnitKinds { get; } =
@@ -27,7 +23,6 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
   public DocumentProfilingOptionsPanel() {
     InitializeComponent();
     ValueUnitComboBox.ItemsSource = ValueUnitKinds;
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
 
   public bool ShowsDocumentSettings {
@@ -35,17 +30,6 @@ public partial class DocumentProfilingOptionsPanel : OptionsPanelBase {
     set => SetField(ref showsDocumentSettings_, value);
   }
 
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
-  }
 
   private void MaxWidthButton_Click(object sender, RoutedEventArgs e) {
     ((ProfileDocumentMarkerSettings)Settings).MaxPercentageBarWidth =

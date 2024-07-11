@@ -479,6 +479,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressLabel.Text = progressInfo.Stage switch {
         ProfileLoadStage.TraceReading    => "Reading trace",
         ProfileLoadStage.TraceProcessing => "Processing trace",
+        ProfileLoadStage.ComputeCallTree => "Computing Call Tree",
         ProfileLoadStage.BinaryLoading => "Loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
                                             $" ({progressInfo.Optional.TrimToLength(15)})" : ""),

@@ -467,7 +467,7 @@
         SettingsClicked="PanelToolbarTray_SettingsClicked" />
     </Grid>
 
-    <Grid Grid.Row="1">
+    <Grid Grid.Row="1" x:Name="GraphDetailsPanelHost">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />

@@ -79,7 +79,8 @@ public static class ErrorReporting {
       }
 
       // Report exception to telemetry service.
-      string stackTracePath = CreateStackTraceDump(stackTrace);
+      var trace = $"Message: {exception.Message}\nStack trace:\n{stackTrace}";
+      string stackTracePath = CreateStackTraceDump(trace);
       string sectionPath = CreateSectionDump();
 
       if (showUIPrompt) {

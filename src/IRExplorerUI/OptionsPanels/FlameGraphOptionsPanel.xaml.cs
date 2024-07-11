@@ -21,7 +21,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     //? TODO: Change to calling Initialize
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
@@ -51,18 +50,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   public override void PanelResetting() {
     base.PanelResetting();
     App.Settings.CallTreeNodeSettings.Reset();
-  }
-
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 
   private void ResetNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {

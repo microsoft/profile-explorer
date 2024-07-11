@@ -24,6 +24,19 @@ public class CancelableTaskInstance : IDisposable {
 
   public delegate void CancelableTaskDelegate(CancelableTask task);
 
+  public CancelableTask CurrentInstance {
+    get
+    {
+      lock (lockObject_) {
+        if (taskInstance_ == null) {
+          throw new InvalidOperationException("No task instance running!");
+        }
+
+        return taskInstance_;
+      }
+    }
+  }
+
   public CancelableTask CreateTask() {
     lock (lockObject_) {
       if (taskInstance_ != null) {

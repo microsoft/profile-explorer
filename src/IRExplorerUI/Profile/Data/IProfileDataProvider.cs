@@ -24,7 +24,8 @@ public enum ProfileLoadStage {
   BinaryLoading,
   SymbolLoading,
   TraceProcessing,
-  PerfCounterProcessing
+  PerfCounterProcessing,
+  ComputeCallTree
 }
 
 public enum ProfileSessionKind {

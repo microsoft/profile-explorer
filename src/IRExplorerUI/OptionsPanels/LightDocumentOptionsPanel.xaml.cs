@@ -8,14 +8,8 @@ using System.Windows.Input;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class LightDocumentOptionsPanel : OptionsPanelBase {
-  public const double DefaultHeight = 500;
-  public const double MinimumHeight = 300;
-  public const double DefaultWidth = 360;
-  public const double MinimumWidth = 360;
-
   public LightDocumentOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
   }
 
   public bool SyntaxFileChanged { get; set; }
@@ -31,15 +25,5 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
   }
 
   public override void PanelResetting() {
-  }
-
-  private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 }

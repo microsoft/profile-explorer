@@ -1028,16 +1028,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
-    var newOptions = new DocumentSettings();
-    await LoadNewSettings(newOptions, true, false);
-    optionsPanelPopup_.Settings = newOptions;
-  }
-
-  private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
-    await CloseOptionsPanel(optionsPanel_.SyntaxFileChanged);
-  }
-
   private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
     //CloseSectionPanel();
   }
@@ -1755,56 +1745,31 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
-    if (optionsPanelVisible_) {
-      await CloseOptionsPanel(false);
-    }
-    else {
-      ShowOptionsPanel();
-    }
+    ShowOptionsPanel();
   }
 
   private void ShowOptionsPanel() {
-    if (optionsPanelVisible_) {
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
-
-    double width = Math.Max(DocumentOptionsPanel.MinimumWidth,
-                            Math.Min(TextView.ActualWidth, DocumentOptionsPanel.DefaultWidth));
-    double height = Math.Max(DocumentOptionsPanel.MinimumHeight,
-                             Math.Min(TextView.ActualHeight, DocumentOptionsPanel.DefaultHeight));
 
     FrameworkElement relativeElement = ProfileVisible ? ProfileColumns : TextView;
-    var position = new Point(relativeElement.ActualWidth - width, 0);
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<DocumentOptionsPanel, DocumentSettings>(
+      Settings.Clone(), relativeElement, Session,
+      async (newSettings, commit) => {
+        if (!newSettings.Equals(Settings)) {
+          await LoadNewSettings(newSettings, true, commit);
+        }
 
-    optionsPanel_ = new DocumentOptionsPanel();
-    optionsPanelPopup_ = new OptionsPanelHostPopup(optionsPanel_, position, width, height, relativeElement,
-                                                   settings_.Clone(), Session);
+        if (commit) {
+          TextView.EnableOverlayEventHandlers();
+        }
 
-    optionsPanelPopup_.PanelClosed += OptionsPanel_PanelClosed;
-    optionsPanelPopup_.PanelReset += OptionsPanel_PanelReset;
-    optionsPanelPopup_.SettingsChanged += OptionsPanel_SettingsChanged;
-    optionsPanelPopup_.IsOpen = true;
-    optionsPanelVisible_ = true;
-    TextView.DisableOverlayEventHandlers();
-  }
-
-  private async Task CloseOptionsPanel(bool syntaxFileChanged) {
-    if (!optionsPanelVisible_) {
-      return;
-    }
-
-    optionsPanelPopup_.IsOpen = false;
-    optionsPanelPopup_.PanelClosed -= OptionsPanel_PanelClosed;
-    optionsPanelPopup_.PanelReset -= OptionsPanel_PanelReset;
-    optionsPanelPopup_.SettingsChanged -= OptionsPanel_SettingsChanged;
-
-    var newSettings = (DocumentSettings)optionsPanelPopup_.Settings;
-    await LoadNewSettings(newSettings, syntaxFileChanged, true);
-    TextView.EnableOverlayEventHandlers();
-
-    optionsPanel_ = null;
-    optionsPanelPopup_ = null;
-    optionsPanelVisible_ = false;
+        return newSettings.Clone();
+      },
+      () => optionsPanelPopup_ = null);
   }
 
   private void ShowRemarkOptionsPanel() {
@@ -1812,19 +1777,19 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    double width = Math.Max(RemarkOptionsPanel.MinimumWidth,
-                            Math.Min(TextView.ActualWidth, RemarkOptionsPanel.DefaultWidth));
-    double height = Math.Max(RemarkOptionsPanel.MinimumHeight,
-                             Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
-    var position = new Point(RemarkOptionsPanel.LeftMargin, 0);
-
-    remarkOptionsPanelPopup_ = new OptionsPanelHostPopup(new RemarkOptionsPanel(),
-                                                         position, width, height, TextView,
-                                                         remarkSettings_.Clone(), Session);
-    remarkOptionsPanelPopup_.PanelClosed += RemarkOptionsPanel_PanelClosed;
-    remarkOptionsPanelPopup_.PanelReset += RemarkOptionsPanel_PanelReset;
-    remarkOptionsPanelPopup_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
-    remarkOptionsPanelPopup_.IsOpen = true;
+    // double width = Math.Max(RemarkOptionsPanel.MinimumWidth,
+    //                         Math.Min(TextView.ActualWidth, RemarkOptionsPanel.DefaultWidth));
+    // double height = Math.Max(RemarkOptionsPanel.MinimumHeight,
+    //                          Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
+    // var position = new Point(RemarkOptionsPanel.LeftMargin, 0);
+    //
+    // remarkOptionsPanelPopup_ = new OptionsPanelHostPopup(new RemarkOptionsPanel(),
+    //                                                      position, width, height, TextView,
+    //                                                      remarkSettings_.Clone(), Session);
+    // remarkOptionsPanelPopup_.PanelClosed += RemarkOptionsPanel_PanelClosed;
+    // remarkOptionsPanelPopup_.PanelReset += RemarkOptionsPanel_PanelReset;
+    // remarkOptionsPanelPopup_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
+    // remarkOptionsPanelPopup_.IsOpen = true;
     remarkOptionsPanelVisible_ = true;
   }
 
@@ -1865,13 +1830,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                              newSettings.ShowPreviousSections &&
                              (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
                               newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
     App.Settings.RemarkSettings = newSettings;
     await UpdateRemarkSettings(newSettings);
 
     if (rebuildRemarkList) {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");
-      await ReloadRemarks(task);
+      await ReloadRemarks(loadTask_.CurrentInstance);
     }
     else {
       Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load remarks");

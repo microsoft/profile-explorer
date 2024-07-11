@@ -14,10 +14,6 @@ using System.Xml;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class DocumentOptionsPanel : OptionsPanelBase {
-  public const double DefaultHeight = 500;
-  public const double MinimumHeight = 300;
-  public const double DefaultWidth = 360;
-  public const double MinimumWidth = 360;
   private const string DocumentStylesFilePath = @"documentStyles.xml";
   private bool syntaxEditPanelVisible_;
   private List<ColorPickerInfo> syntaxHighlightingColors_;
@@ -28,7 +24,6 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
 
   public DocumentOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
   }
 
   public bool SyntaxFileChanged { get; set; }
@@ -78,15 +73,9 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
     IRSyntaxCombobox.SelectionChanged += IRSyntaxCombobox_SelectionChanged;
   }
 
-  private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    NotifySettingsChanged();
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      SyntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
-      RaiseSettingsChanged(null);
-    });
+  protected override void NotifySettingsChanged() {
+    SyntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
+    base.NotifySettingsChanged();
   }
 
   private void StyleButton_Click(object sender, RoutedEventArgs e) {

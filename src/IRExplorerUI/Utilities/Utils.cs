@@ -1320,8 +1320,27 @@ public static class Utils {
     }
   }
 
-  public static bool SourceIsTextBox(MouseButtonEventArgs e) {
+  public static bool EventSourceIsTextBox(MouseButtonEventArgs e) {
     return e.OriginalSource.GetType().Name == "TextBoxView";
+  }
+
+  public static bool IsOptionsUpdateEvent(MouseButtonEventArgs e) {
+    var sourceName = e.OriginalSource.GetType().Name;
+    return IsOptionsUpdateEvent(sourceName);
+  }
+
+
+  public static bool IsOptionsUpdateEvent(KeyEventArgs e) {
+    var sourceName = e.OriginalSource.GetType().Name;
+    return IsOptionsUpdateEvent(sourceName);
+  }
+
+  private static bool IsOptionsUpdateEvent(string sourceName) {
+    return sourceName != "Button" &&
+           sourceName != "ToggleButton" &&
+           sourceName != "TextBox" &&
+           sourceName != "TextBoxView" &&
+           sourceName != "TextBlock";
   }
 
   public static Typeface GetTextTypeface(Control element) {

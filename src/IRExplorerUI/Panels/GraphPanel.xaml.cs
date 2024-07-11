@@ -63,11 +63,10 @@ public partial class GraphPanel : ToolPanelControl {
   private Point draggingStart_;
   private Point draggingViewStart_;
   private Graph graph_;
-  private OptionsPanelHostPopup graphOptionsPanel_;
+  private OptionsPanelHostPopup optionsPanelPopup_;
   private GraphNode hoveredNode_;
   private bool ignoreNextHover_;
   private CancelableTask loadTask_;
-  private bool optionsPanelVisible_;
   private IRDocumentPopup previewPopup_;
   private GraphQueryInfo queryInfo_;
   private bool queryPanelVisible_;
@@ -217,16 +216,6 @@ public partial class GraphPanel : ToolPanelControl {
     var hover = new MouseHoverLogic(this);
     hover.MouseHover += Hover_MouseHover;
     hover.MouseHoverStopped += Hover_MouseHoverStopped;
-  }
-
-  private void OptionsPanel_PanelReset(object sender, EventArgs e) {
-    Settings.Reset();
-    ReloadSettings();
-    graphOptionsPanel_.Settings = Settings.Clone();
-  }
-
-  private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
-    CloseOptionsPanel();
   }
 
   private void GraphPanel_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
@@ -661,12 +650,7 @@ public partial class GraphPanel : ToolPanelControl {
   }
 
   private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
-    if (optionsPanelVisible_) {
-      CloseOptionsPanel();
-    }
-    else {
-      ShowOptionsPanel();
-    }
+    ShowOptionsPanel();
   }
 
   private async void SetQueryBlock1(BlockIR block) {
@@ -730,69 +714,47 @@ public partial class GraphPanel : ToolPanelControl {
     queryPanelVisible_ = false;
   }
 
-  //? TODO: Should be a virtual overriden in the expr panel
   private void ShowOptionsPanel() {
-    if (optionsPanelVisible_) {
+    if (optionsPanelPopup_ != null) {
+      optionsPanelPopup_.ClosePopup();
+      optionsPanelPopup_ = null;
       return;
     }
 
     if (PanelKind == ToolPanelKind.ExpressionGraph) {
-      double width = Math.Max(ExpressionGraphOptionsPanel.MinimumWidth,
-                              Math.Min(GraphHost.ActualWidth, ExpressionGraphOptionsPanel.DefaultWidth));
-      double height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
-                               Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
-      var position = new Point(GraphHost.ActualWidth - width, 0);
-      graphOptionsPanel_ = new OptionsPanelHostPopup(new ExpressionGraphOptionsPanel(),
-                                                     position, width, height, GraphHost,
-                                                     Settings.Clone(), Session);
+      optionsPanelPopup_ = OptionsPanelHostPopup.Create<ExpressionGraphOptionsPanel, ExpressionGraphSettings>(
+        Settings.Clone(), GraphHost, Session,
+        async (newSettings, commit) => {
+          if (!newSettings.Equals(Settings)) {
+            App.Settings.ExpressionGraphSettings = newSettings;
+            ReloadSettings();
+
+            if (commit) {
+              App.SaveApplicationSettings();
+            }
+          }
+
+          return newSettings.Clone();
+        },
+        () => optionsPanelPopup_ = null);
     }
     else {
-      double width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
-                              Math.Min(GraphHost.ActualWidth, FlowGraphOptionsPanel.DefaultWidth));
-      double height = Math.Max(FlowGraphOptionsPanel.MinimumHeight,
-                               Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
-      var position = new Point(GraphHost.ActualWidth - width, 0);
-      graphOptionsPanel_ = new OptionsPanelHostPopup(new FlowGraphOptionsPanel(),
-                                                     position, width, height, GraphHost,
-                                                     Settings.Clone(), Session);
+      optionsPanelPopup_ = OptionsPanelHostPopup.Create<FlowGraphOptionsPanel, FlowGraphSettings>(
+        Settings.Clone(), GraphHost, Session,
+        async (newSettings, commit) => {
+          if (!newSettings.Equals(Settings)) {
+            App.Settings.FlowGraphSettings = newSettings;
+            ReloadSettings();
+
+            if (commit) {
+              App.SaveApplicationSettings();
+            }
+          }
+
+          return newSettings.Clone();
+        },
+        () => optionsPanelPopup_ = null);
     }
-
-    graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
-    graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
-    graphOptionsPanel_.IsOpen = true;
-    optionsPanelVisible_ = true;
-  }
-
-  private void CloseOptionsPanel() {
-    if (!optionsPanelVisible_) {
-      return;
-    }
-
-    graphOptionsPanel_.IsOpen = false;
-    graphOptionsPanel_.PanelClosed -= OptionsPanel_PanelClosed;
-    graphOptionsPanel_.PanelReset -= OptionsPanel_PanelReset;
-
-    if (PanelKind == ToolPanelKind.ExpressionGraph) {
-      var newSettings = (ExpressionGraphSettings)graphOptionsPanel_.Settings;
-
-      if (!newSettings.Equals(Settings)) {
-        App.Settings.ExpressionGraphSettings = newSettings;
-        App.SaveApplicationSettings();
-        ReloadSettings();
-      }
-    }
-    else {
-      var newSettings = (FlowGraphSettings)graphOptionsPanel_.Settings;
-
-      if (!newSettings.Equals(Settings)) {
-        App.Settings.FlowGraphSettings = newSettings;
-        App.SaveApplicationSettings();
-        ReloadSettings();
-      }
-    }
-
-    graphOptionsPanel_ = null;
-    optionsPanelVisible_ = false;
   }
 
   private void SetupCommands() {

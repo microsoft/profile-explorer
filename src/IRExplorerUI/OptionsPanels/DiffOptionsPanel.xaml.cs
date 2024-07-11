@@ -17,23 +17,7 @@ public partial class DiffOptionsPanel : OptionsPanelBase {
 
   public DiffOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += DiffOptionsPanel_PreviewMouseUp;
     ExternalAppPathTextbox.ExtensionFilter = "*.exe";
-  }
-
-  private void DiffOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (ExternalAppPathButton.IsMouseDirectlyOver ||
-        ExternalAppPathTextbox.IsKeyboardFocusWithin) {
-      return;
-    }
-
-    NotifySettingsChanged();
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
   }
 
   private void ExternalAppPathButton_Click(object sender, RoutedEventArgs e) {

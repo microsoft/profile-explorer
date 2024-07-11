@@ -9,14 +9,8 @@ namespace IRExplorerUI.OptionsPanels;
 
 public partial class GeneralOptionsPanel : OptionsPanelBase {
   private GeneralSettings settings_;
-  public const double DefaultHeight = 320;
-  public const double MinimumHeight = 200;
-  public const double DefaultWidth = 350;
-  public const double MinimumWidth = 350;
-
   public GeneralOptionsPanel() {
     InitializeComponent();
-    PreviewMouseUp += SectionOptionsPanel_PreviewMouseUp;
   }
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
@@ -28,20 +22,17 @@ public partial class GeneralOptionsPanel : OptionsPanelBase {
     settings_ = (GeneralSettings)newSettings;
   }
 
-  private void SectionOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-    if (!Utils.SourceIsTextBox(e)) {
-      NotifySettingsChanged();
-    }
-  }
-
-  private void NotifySettingsChanged() {
-    DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-      RaiseSettingsChanged(null);
-    });
-  }
-
   private void ResetUIZoomButton_Click(object sender, RoutedEventArgs e) {
     settings_.WindowScaling = 1.0;
+    ReloadSettings();
+  }
+
+  private void CpuCoreLimitButton_Click(object sender, RoutedEventArgs e) {
+    settings_.CpuCoreLimit = GeneralSettings.DefaultCpuCoreLimit;
+    ReloadSettings();
+  }
+
+  private void CpuCoreLimit_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
     ReloadSettings();
   }
 }
