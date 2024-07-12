@@ -388,9 +388,7 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
   [ProtoMember(8)]
   public long Checksum { get; set; }
   public long BaseAddressEnd => BaseAddress + Size;
-  public string ModuleName => !string.IsNullOrWhiteSpace(OriginalFileName) ?
-    Utils.TryGetFileName(OriginalFileName) :
-    Utils.TryGetFileName(FilePath);
+  public string ModuleName => Utils.TryGetFileName(FilePath);
 
   public static bool operator ==(ProfileImage left, ProfileImage right) {
     return Equals(left, right);

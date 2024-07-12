@@ -185,7 +185,18 @@ public class RawProfileData : IDisposable {
   }
 
   public SymbolFileDescriptor GetDebugFileForImage(ProfileImage image, int processId) {
+    // If the module is loaded in kernel address space,
+    // look for the debug info entry in the kernel process.
+    if (ETWEventProcessor.IsKernelAddress((ulong)image.BaseAddress, TraceInfo.PointerSize)) {
+      processId = ETWEventProcessor.KernelProcessId;
+    }
+
     var procImageSymbols = imageSymbols_.GetOrAddValue(processId);
+
+    if (procImageSymbols == null) {
+      return null;
+    }
+
     return procImageSymbols.GetValueOrNull(image.BaseAddress);
   }
 
@@ -383,7 +394,7 @@ public class RawProfileData : IDisposable {
 
     //? TODO:  Stack hash computed 3 times,
     //? do it once and inject it into the ProfileCallStack and StackComparer used by set
-    
+
     if (!procStacks.TryGetValue(stack, out int existingStackId)) {
       // De-duplicate the stack frame pointer array,
       // since lots of samples have identical stacks.
@@ -591,7 +602,7 @@ public class RawProfileData : IDisposable {
 
   internal int AddContext(ProfileContext context) {
     ref var existingContextId = ref CollectionsMarshal.GetValueRefOrAddDefault(contextsMap_, context, out bool exists);
-    
+
     if (!exists) {
       contexts_.Add(context);
       existingContextId = contexts_.Count;

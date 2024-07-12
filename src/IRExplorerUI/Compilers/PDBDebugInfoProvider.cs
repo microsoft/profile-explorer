@@ -390,15 +390,18 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return result;
     }
   }
-  
-  private void ValidateSortedList(List<FunctionDebugInfo> list) {
+
+  private bool ValidateSortedList(List<FunctionDebugInfo> list) {
     for (int i = 1; i < list.Count; i++) {
       if (list[i].StartRVA < list[i - 1].StartRVA &&
           list[i].StartRVA != 0 &&
           list[i - 1].StartRVA != 0) {
         Debug.Assert(false, "Function list is not sorted by RVA");
+        return false;
       }
     }
+
+    return true;
   }
 
   private async Task<List<FunctionDebugInfo>> GetSortedFunctionsAsync() {
@@ -418,15 +421,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
     else {
       // Create sorted list of functions and public symbols.
-      var funcList = CollectFunctionDebugInfo();
+      sortedFuncList_ = CollectFunctionDebugInfo();
 
-      if (funcList == null) {
-        sortedFuncList_ = null;
+      if (sortedFuncList_ == null) {
         return null;
       }
-
-      funcList.Sort();
-      sortedFuncList_ = funcList;
 
       if (settings_.CacheSymbolFiles) {
         // Save symbol cache file.
@@ -443,6 +442,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       }
     }
 
+    // Sorting needed for binary search later.
+    sortedFuncList_.Sort();
     sortedFuncListOverlapping_ = HasOverlappingFunctions(sortedFuncList_);
     return sortedFuncList_;
   }
@@ -456,7 +457,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       if (sortedFuncList[i].StartRVA == 0) {
         continue;
       }
-      
+
       for (int k = i - 1; k >= 0 && (i - k) < 10; k--) {
         if (sortedFuncList[k].StartRVA != 0 &&
             sortedFuncList[k].StartRVA <= sortedFuncList[i].StartRVA &&

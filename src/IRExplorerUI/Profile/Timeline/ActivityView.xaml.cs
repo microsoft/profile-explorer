@@ -617,7 +617,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
               TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
               MaxSlices = (int)slices
             };
-            
+
             sliceSeriesDict[queryThreadId] = sliceList;
           }
 
@@ -1061,8 +1061,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     if (backColor != null) {
+      double boxWidth = glyphInfo.TextWidth + textMargin.Right;
+      double boxHeight = glyphInfo.TextHeight + textMargin.Bottom;
+
+      //? TODO: Try to repro and understand how this can happen.
+      if (boxWidth < 0 || boxHeight < 0) {
+        return;
+      }
+
       var textRect = new Rect(x - textMargin.Left, y - textMargin.Top,
-                              glyphInfo.TextWidth + textMargin.Right, glyphInfo.TextHeight + textMargin.Bottom);
+                              boxWidth, boxHeight);
       dc.DrawRectangle(backColor, borderColor, textRect);
     }
 

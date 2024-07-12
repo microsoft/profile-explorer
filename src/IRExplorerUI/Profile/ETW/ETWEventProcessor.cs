@@ -239,7 +239,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     symbolParser.ImageIDDbgID_RSDS += data => {
       if (IsAcceptedProcess(data.ProcessID)) {
 #if DEBUG
-        Trace.WriteLine($"PDB signature: imageBase: {data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}");
+        Trace.WriteLine($"PDB signature: imageBase: {(long)data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}, timestamp: {data.TimeStamp}");
 #endif
         var symbolFile = new SymbolFileDescriptor(data.PdbFileName, data.GuidSig, data.Age);
         profile.AddDebugFileForImage(symbolFile, (long)data.ImageBase, data.ProcessID);
@@ -306,6 +306,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
           timeStamp = imageInfo.TimeStamp;
         }
       }
+
+#if DEBUG
+      Trace.WriteLine($"ImageGroup: imageBase: {(long)data.ImageBase}, file: {data.FileName}, timestamp: {timeStamp}, checksum: {data.ImageChecksum}");
+#endif
 
       var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,
                                    (long)data.DefaultBase, data.ImageSize,

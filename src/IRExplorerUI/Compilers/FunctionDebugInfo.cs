@@ -161,10 +161,10 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
         // |F1------------------|--
         // -----|F2----|-----------
         // ----------------|F3|----
-        // If the RVA is inside F2 or F3, pick F1 instead since it covers the whole range. 
+        // If the RVA is inside F2 or F3, pick F1 instead since it covers the whole range.
         if (hasOverlappingFuncts) {
           int count = 0;
-          
+
           while (--mid >= 0 && count++ < 10) {
             var otherRange = ranges[mid];
 
@@ -243,20 +243,22 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   }
 
   public int CompareTo(FunctionDebugInfo other) {
+    // Userd by sorting.
     if (other == null) return 0;
 
-    if (StartRVA < other.StartRVA) {
-      return -1;
+    if (other.StartRVA < StartRVA) {
+      return 1;
     }
 
-    if (StartRVA > other.StartRVA) {
-      return 1;
+    if (other.StartRVA > StartRVA) {
+      return -1;
     }
 
     return 0;
   }
 
   public int CompareTo(long value) {
+    // Used by binary search.
     if (value < StartRVA) {
       return 1;
     }
