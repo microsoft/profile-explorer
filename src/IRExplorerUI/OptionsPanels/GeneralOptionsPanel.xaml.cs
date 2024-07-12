@@ -31,8 +31,4 @@ public partial class GeneralOptionsPanel : OptionsPanelBase {
     settings_.CpuCoreLimit = GeneralSettings.DefaultCpuCoreLimit;
     ReloadSettings();
   }
-
-  private void CpuCoreLimit_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-    ReloadSettings();
-  }
 }

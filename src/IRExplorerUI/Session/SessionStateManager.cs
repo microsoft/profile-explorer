@@ -390,10 +390,6 @@ public class SessionStateManager : IDisposable {
       state.SectionDiffState.RightSection = CreateOpenSectionState(SectionDiffState.RightSection);
     }
 
-    if (ProfileData != null) {
-      state.ProfileState = ProfileData.Serialize();
-    }
-
     return Task.Run(() => {
       byte[] data = StateSerializer.Serialize(state);
       byte[] compressedData = CompressionUtils.Compress(data);

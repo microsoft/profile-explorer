@@ -187,7 +187,7 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
       return new List<Remark>(); // Failed to load settings, bail out.
     }
 
-    int maxConcurrency = Math.Min(sections.Count, Math.Min(8, Environment.ProcessorCount));
+    int maxConcurrency = App.Settings.GeneralSettings.CurrentCpuCoreLimit;
     var tasks = new Task<List<Remark>>[sections.Count];
     using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
     int index = 0;

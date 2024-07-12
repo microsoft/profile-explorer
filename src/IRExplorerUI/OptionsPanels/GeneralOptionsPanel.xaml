@@ -62,7 +62,6 @@
           FormatString="F0"
           ShowButtonSpinner="True"
           VerticalAlignment="Center"
-          ValueChanged="CpuCoreLimit_ValueChanged"
           ToolTip="Maximum number of CPU logical cores used when loading profiling traces and other UI tasks"
           Value="{Binding Path=CpuCoreLimit, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
         <TextBlock Margin="4,0,0,0" Text="%" VerticalAlignment="Center" />
@@ -75,8 +74,6 @@
           Click="CpuCoreLimitButton_Click"
           Content="Default"
           ToolTip="Reset the application UI scaling to 100%" />
-        <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" Text="Current limit:" />
-        <TextBlock VerticalAlignment="Center" Margin="4,0,0,0" Text="{Binding CurrentCpuCoreLimit}" />
       </StackPanel>
       <TextBlock
         Margin="0,24,0,0"

@@ -8,6 +8,8 @@ namespace IRExplorerUI;
 
 [ProtoContract(SkipConstructor = true)]
 public class GeneralSettings : SettingsBase {
+  private static int MinCpuCoreLimit = 1;
+  private static int MaxCpuCoreLimit = 16;
   private static readonly double MinZoomAmount = 0.5;
   private static readonly double MaxZoomAmount = 2;
   private static readonly double ZoomStep = 0.05;
@@ -28,7 +30,8 @@ public class GeneralSettings : SettingsBase {
   [ProtoMember(5)][OptionValue(0.75)]
   public double CpuCoreLimit { get; set; }
 
-  public int CurrentCpuCoreLimit => (int)Math.Max(1, Math.Floor(CpuCoreLimit * Environment.ProcessorCount));
+  public int CurrentCpuCoreLimit => (int)Math.Clamp(Math.Floor(CpuCoreLimit * Environment.ProcessorCount),
+                                                    MinCpuCoreLimit, MaxCpuCoreLimit);
 
   public override void Reset() {
     ResetAllOptions(this);

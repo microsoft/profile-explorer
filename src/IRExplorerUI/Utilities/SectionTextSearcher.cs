@@ -28,7 +28,7 @@ public class SectionTextSearcherOptions {
     SearchAfterOutput = false;
     KeepSectionText = true;
     UseRawSectionText = false;
-    MaxThreadCount = Math.Min(16, Environment.ProcessorCount);
+    MaxThreadCount = App.Settings.GeneralSettings.CurrentCpuCoreLimit;
   }
 
   public bool SearchBeforeOutput { get; set; }

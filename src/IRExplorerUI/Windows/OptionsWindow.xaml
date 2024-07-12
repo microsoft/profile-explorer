@@ -59,10 +59,10 @@
             VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
-      <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
+      <TabItem Header="Profile Marking" Style="{StaticResource TabControlStyle}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-          <options:SectionOptionsPanel
-            x:Name="SummaryOptionsPanel"
+          <options:FunctionMarkingOptionsPanel
+            x:Name="FunctionMarkingOptionsPanel"
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
@@ -83,6 +83,16 @@
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <options:SourceFileOptionsPanel
             x:Name="SourceFileOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Summary" Style="{StaticResource TabControlStyle}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <options:SectionOptionsPanel
+            x:Name="SummaryOptionsPanel"
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"

@@ -36,6 +36,7 @@ public partial class OptionsWindow : Window {
     CallerCalleeOptionsPanel.Initialize(this, App.Settings.CallerCalleeSettings, Session);
     SourceFileOptionsPanel.Initialize(this, App.Settings.SourceFileSettings, Session);
     PreviewPopupOptionsPanel.Initialize(this, App.Settings.PreviewPopupSettings, Session);
+    FunctionMarkingOptionsPanel.Initialize(this, App.Settings.MarkingSettings, Session);
   }
 
   private async Task SaveAndReloadSettings() {

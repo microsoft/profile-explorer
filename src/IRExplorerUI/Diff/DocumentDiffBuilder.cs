@@ -82,7 +82,7 @@ public class DocumentDiffBuilder {
   public async Task<List<DocumentDiffResult>> AreSectionsDifferent(
     List<(IRTextSection, IRTextSection)> comparedSections, IRTextSectionLoader leftDocLoader,
     IRTextSectionLoader rightDocLoader, ICompilerInfoProvider irInfo, bool quickMode, CancelableTask cancelableTask) {
-    int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
+    int maxConcurrency = App.Settings.GeneralSettings.CurrentCpuCoreLimit;
     var tasks = new Task<DocumentDiffResult>[comparedSections.Count];
 
     await Task.Run(() => AreSectionsDifferentImpl(comparedSections, leftDocLoader, rightDocLoader,

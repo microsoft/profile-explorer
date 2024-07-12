@@ -631,12 +631,6 @@ public partial class MainWindow : Window, ISession {
       }
     }
 
-    // Restore profile info.
-    if (state.ProfileState != null) {
-      var summaries = sessionState_.Documents.ConvertAll(d => d.Summary);
-      sessionState_.ProfileData = ProfileData.Deserialize(state.ProfileState, summaries);
-    }
-
     foreach (var panelState in state.GlobalPanelStates) {
       var panelInfo = FindActivePanel(panelState.PanelKind);
       sessionState_.SavePanelState(panelState.StateObject, panelInfo.Panel, null);

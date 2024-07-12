@@ -47,56 +47,6 @@ public sealed class ProfileCallTree {
     }
   }
 
-  public static ProfileCallTree Deserialize(byte[] data, Dictionary<Guid, IRTextSummary> summaryMap) {
-    var state = StateSerializer.Deserialize<ProfileCallTreeState>(data);
-    var callTree = new ProfileCallTree();
-
-    callTree.nextNodeId_ = state.NextNodeId;
-    callTree.nodeIdMap_ = new Dictionary<long, ProfileCallTreeNode>(state.FunctionNodeIdMap.Count);
-
-    foreach (var pair in state.FunctionNodeIdMap) {
-      var summary = summaryMap[pair.Key.SummaryId];
-      var function = summary.GetFunctionWithId(pair.Key.FunctionNumber);
-
-      if (function == null) {
-        Debug.Assert(false, "Could not find node for func");
-        continue;
-      }
-
-      var nodeList = new List<ProfileCallTreeNode>(pair.Value.Length);
-
-      foreach (long nodeId in pair.Value) {
-        var node = state.NodeIdMap[nodeId];
-        //node.InitializeFunction(summaryMap);
-        nodeList.Add(node);
-        callTree.nodeIdMap_[nodeId] = node;
-
-        if (state.ChildrenIds.TryGetValue(nodeId, out long[] childrenIds)) {
-          var childrenNodes = new List<ProfileCallTreeNode>(childrenIds.Length);
-
-          foreach (long childNodeId in childrenIds) {
-            var childNode = state.NodeIdMap[childNodeId];
-            childNode.SetParent(node);
-            childrenNodes.Add(childNode);
-          }
-
-          node.SetChildrenNoLock(childrenNodes);
-        }
-      }
-
-      callTree.funcToNodesMap_[function] = nodeList;
-    }
-
-    callTree.rootNodes_ = new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
-
-    foreach (long nodeId in state.RootNodeIds) {
-      var node = state.NodeIdMap[nodeId];
-      callTree.rootNodes_.TryAdd(node.Function, node);
-    }
-
-    return callTree;
-  }
-
   public void UpdateCallTree(ref ProfileSample sample, ResolvedProfileStack resolvedStack) {
     // Build call tree. Note that the call tree methods themselves are thread-safe.
     bool isRootFrame = true;
@@ -151,42 +101,6 @@ public sealed class ProfileCallTree {
       prevNode.AccumulateExclusiveWeight(sampleWeight);
       prevNode.AccumulateWeight(TimeSpan.Zero, sampleWeight, resolvedStack.Context.ThreadId);
     }
-  }
-
-  public byte[] Serialize() {
-    var state = new ProfileCallTreeState(this);
-    int index = 0;
-
-    foreach (var node in rootNodes_) {
-      state.RootNodeIds[index++] = node.Value.Id;
-    }
-
-    foreach (var pair in funcToNodesMap_) {
-      long[] funcNodeIds = new long[pair.Value.Count];
-      index = 0;
-
-      foreach (var node in pair.Value) {
-        state.NodeIdMap[node.Id] = node;
-        funcNodeIds[index++] = node.Id;
-
-        // Save children IDs.
-        if (node.HasChildren) {
-          long[] childNodeIds = new long[node.Children.Count];
-          int childIndex = 0;
-
-          foreach (var childNode in node.Children) {
-            childNodeIds[childIndex++] = childNode.Id;
-          }
-
-          state.ChildrenIds[node.Id] = childNodeIds;
-        }
-      }
-
-      // Save mapping from function to all node instance IDs.
-      state.FunctionNodeIdMap[pair.Key] = funcNodeIds;
-    }
-
-    return StateSerializer.Serialize(state);
   }
 
   private ProfileCallTreeNode AddRootNode(FunctionDebugInfo funcInfo, IRTextFunction function) {
@@ -576,7 +490,7 @@ public sealed class ProfileCallTree {
             if (!node.IsMergeNode() && !existingNodesSet.Contains(node)) {
               existingList.Add(node);
             }
-            
+
             node.ClearIsMergedNode();
           }
         }
@@ -631,7 +545,7 @@ public sealed class ProfileCallTree {
       }
     }
   }
-  
+
   public string PrintNodeInstances(string funcName, bool printStack = false) {
     var list = new List<ProfileCallTreeNode>();
 
@@ -667,14 +581,14 @@ public sealed class ProfileCallTree {
           stackNode = stackNode.Caller;
           index++;
         }
-        
+
         sb.AppendLine($"  ------------------------------");
       }
     }
 
     return sb.ToString();
   }
-  
+
   public void CollectNodeInstances(ProfileCallTreeNode node, string funcName, List<ProfileCallTreeNode> list) {
     if (node.FunctionName.Equals(funcName, StringComparison.Ordinal)) {
       list.Add(node);
@@ -695,28 +609,6 @@ public sealed class ProfileCallTree {
   private void InitializeReferenceMembers() {
     rootNodes_ ??= new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
     funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
-  }
-
-  [ProtoContract(SkipConstructor = true)]
-  public class ProfileCallTreeState {
-    [ProtoMember(1)]
-    public Dictionary<long, ProfileCallTreeNode> NodeIdMap;
-    [ProtoMember(2)]
-    public Dictionary<IRTextFunctionId, long[]> FunctionNodeIdMap;
-    [ProtoMember(3)]
-    public Dictionary<long, long[]> ChildrenIds; // Node ID to list of child IDs.
-    [ProtoMember(4)]
-    public long[] RootNodeIds;
-    [ProtoMember(5)]
-    public int NextNodeId;
-
-    public ProfileCallTreeState(ProfileCallTree callTree) {
-      NodeIdMap = new Dictionary<long, ProfileCallTreeNode>(callTree.funcToNodesMap_.Count * 2);
-      FunctionNodeIdMap = new Dictionary<IRTextFunctionId, long[]>(callTree.funcToNodesMap_.Count);
-      ChildrenIds = new Dictionary<long, long[]>(callTree.funcToNodesMap_.Count * 2);
-      RootNodeIds = new long[callTree.rootNodes_.Count];
-      NextNodeId = callTree.nextNodeId_;
-    }
   }
 
   public void ResetTags() {

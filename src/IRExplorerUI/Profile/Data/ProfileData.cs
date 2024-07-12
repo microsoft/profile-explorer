@@ -10,59 +10,8 @@ using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
-using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
-
-[ProtoContract(SkipConstructor = true)]
-public struct IRTextFunctionId : IEquatable<IRTextFunctionId> {
-  [ProtoMember(1)] public Guid SummaryId { get; set; }
-  [ProtoMember(2)] public int FunctionNumber { get; set; }
-
-  public IRTextFunctionId(Guid summaryId, int funcNumber) {
-    SummaryId = summaryId;
-    FunctionNumber = funcNumber;
-  }
-
-  public IRTextFunctionId(IRTextFunction func) {
-    SummaryId = func.ParentSummary.Id;
-    FunctionNumber = func.Number;
-  }
-
-  public bool Equals(IRTextFunctionId other) {
-    return FunctionNumber == other.FunctionNumber && SummaryId.Equals(other.SummaryId);
-  }
-
-  public override bool Equals(object obj) {
-    return obj is IRTextFunctionId other && Equals(other);
-  }
-
-  public override int GetHashCode() {
-    return HashCode.Combine(SummaryId, FunctionNumber);
-  }
-
-  public override string ToString() {
-    return $"{FunctionNumber}@{SummaryId}";
-  }
-
-  public static bool operator ==(IRTextFunctionId left, IRTextFunctionId right) {
-    return left.Equals(right);
-  }
-
-  public static bool operator !=(IRTextFunctionId left, IRTextFunctionId right) {
-    return !left.Equals(right);
-  }
-
-  public static implicit operator IRTextFunctionId(IRTextFunction func) {
-    return new IRTextFunctionId(func);
-  }
-}
-
-// Represents a contiguous range of samples running on the same thread.
-public struct ThreadSampleRange {
-  public int StartIndex;
-  public int EndIndex;
-}
 
 public class ProfileData {
   public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
@@ -148,70 +97,6 @@ public class ProfileData {
     return new ProfileData {Samples = samples};
   }
 
-  public static ProfileData Deserialize(byte[] data, List<IRTextSummary> summaries) {
-    var state = StateSerializer.Deserialize<ProfileDataState>(data);
-    var profileData = new ProfileData(state.ProfileWeight, state.TotalWeight);
-    profileData.PerformanceCounters = state.PerformanceCounters;
-    profileData.ModuleWeights = state.ModuleWeights;
-
-    var summaryMap = new Dictionary<Guid, IRTextSummary>();
-
-    foreach (var summary in summaries) {
-      summaryMap[summary.Id] = summary;
-    }
-
-    foreach (var pair in state.FunctionProfiles) {
-      var summary = summaryMap[pair.Key.SummaryId];
-      var function = summary.GetFunctionWithId(pair.Key.FunctionNumber);
-
-      if (function == null) {
-        Trace.TraceWarning($"No func for {pair.Key}");
-        continue;
-      }
-
-      profileData.FunctionProfiles[function] = pair.Value;
-    }
-
-    profileData.Process = state.Process;
-    profileData.Threads = state.Threads;
-    profileData.Modules = state.Modules;
-    profileData.Report = state.Report;
-    profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
-    DeserializeSamples(profileData, state, summaryMap);
-    return profileData;
-  }
-
-  private static void DeserializeSamples(ProfileData profileData, ProfileDataState state,
-                                         Dictionary<Guid, IRTextSummary> summaryMap) {
-    if (state.Samples == null) {
-      return;
-    }
-
-    profileData.Samples = state.Samples;
-
-    foreach (var pair in profileData.Samples) {
-      foreach (var frame in pair.Stack.StackFrames) {
-        if (frame.FrameDetails.Function == null) {
-          continue; // Unknown frame.
-        }
-
-        // if (!summaryMap.ContainsKey(frame.FrameDetails.Function.Id.SummaryId)) {
-        //   continue;
-        // }
-        //
-        // var summary = summaryMap[frame.FrameDetails.Function.Id.SummaryId];
-        // var function = summary.GetFunctionWithId(frame.FrameDetails.Function.Id.FunctionNumber);
-
-        // if (function == null) {
-        //   Debug.Assert(false, "Could not find node for func");
-        //   continue;
-        // }
-        //
-        // frame.FrameDetails.Function = function;
-      }
-    }
-  }
-
   public void RegisterModuleDebugInfo(string moduleName, IDebugInfoProvider provider) {
     ModuleDebugInfo[moduleName] = provider;
   }
@@ -291,25 +176,6 @@ public class ProfileData {
     }
 
     return funcProfile;
-  }
-
-  public byte[] Serialize() {
-    var state = new ProfileDataState(ProfileWeight, TotalWeight);
-    state.PerformanceCounters = PerformanceCounters;
-    state.ModuleWeights = ModuleWeights;
-    state.Report = Report;
-    state.CallTreeState = CallTree.Serialize();
-    state.Samples = Samples;
-    state.Process = Process;
-    state.Threads = Threads;
-    state.Modules = Modules;
-
-    foreach (var pair in FunctionProfiles) {
-      var funcId = new IRTextFunctionId(pair.Key);
-      state.FunctionProfiles[funcId] = pair.Value;
-    }
-
-    return StateSerializer.Serialize(state);
   }
 
   public List<(IRTextFunction, FunctionProfileData)> GetSortedFunctions() {
@@ -416,7 +282,7 @@ public class ProfileData {
 
     if (maxChunks == int.MaxValue) {
       // Use half the threads for each task.
-      maxChunks = Math.Max(2, ProfileSampleProcessor.MaxThreadCount / 2);
+      maxChunks = Math.Max(1, App.Settings.GeneralSettings.CurrentCpuCoreLimit / 2);
     }
 
     var callTreeTask = Task.Run(() => {
@@ -450,7 +316,7 @@ public class ProfileData {
     int prevSampleIndex = -1;
     var sampleSpan = CollectionsMarshal.AsSpan(Samples);
 
-    for (int i =0; i < sampleSpan.Length; i++) {
+    for (int i = 0; i < sampleSpan.Length; i++) {
       int threadId = sampleSpan[i].Stack.Context.ThreadId;
 
       if (threadId != prevThreadId) {
@@ -500,62 +366,12 @@ public class ProfileData {
              $"FunctionProfiles: {FunctionProfiles.Count}, CallTree: {CallTree}";
     }
   }
-
-  [ProtoContract(SkipConstructor = true)]
-  public class ProfileDataState {
-    [ProtoMember(7)] public byte[] CallTreeState; //? TODO: Reimplement, super slow!
-
-    public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
-      ProfileWeight = profileWeight;
-      TotalWeight = totalWeight;
-      FunctionProfiles = new Dictionary<IRTextFunctionId, FunctionProfileData>();
-    }
-
-    [ProtoMember(1)] public TimeSpan ProfileWeight { get; set; }
-    [ProtoMember(2)] public TimeSpan TotalWeight { get; set; }
-    [ProtoMember(3)] public Dictionary<IRTextFunctionId, FunctionProfileData> FunctionProfiles { get; set; }
-    [ProtoMember(4)] public Dictionary<int, PerformanceCounter> PerformanceCounters { get; set; }
-    [ProtoMember(5)] public Dictionary<int, TimeSpan> ModuleWeights { get; set; }
-    [ProtoMember(6)] public ProfileDataReport Report { get; set; }
-    [ProtoMember(8)] public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
-    [ProtoMember(9)] public ProfileProcess Process { get; set; }
-    [ProtoMember(10)]
-    public Dictionary<int, ProfileThread> Threads { get; set; }
-    [ProtoMember(10)]
-    public Dictionary<int, ProfileImage> Modules { get; set; }
-  }
-
-  [ProtoContract(SkipConstructor = true)]
-  private class SampleStore {
-    [ProtoMember(1)] public List<(ProfileSample Sample, ResolvedProfileStack Stack)> Samples { get; set; }
-  }
 }
 
-[ProtoContract(SkipConstructor = true)]
-public class IRTextFunctionReference {
-  [ProtoMember(1)] public IRTextFunctionId Id;
-  public IRTextFunction Value;
-
-  public IRTextFunctionReference() {
-  }
-
-  public IRTextFunctionReference(IRTextFunction func) {
-    Id = new IRTextFunctionId(func);
-    Value = func;
-  }
-
-  public IRTextFunctionReference(IRTextFunctionId id, IRTextFunction func = null) {
-    Id = id;
-    Value = func;
-  }
-
-  public static implicit operator IRTextFunctionReference(IRTextFunction func) {
-    return new IRTextFunctionReference(func);
-  }
-
-  public static implicit operator IRTextFunction(IRTextFunctionReference funcRef) {
-    return funcRef.Value;
-  }
+// Represents a contiguous range of samples running on the same thread.
+public struct ThreadSampleRange {
+  public int StartIndex;
+  public int EndIndex;
 }
 
 // Represents a set of sample ranges for each thread.

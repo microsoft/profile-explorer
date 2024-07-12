@@ -13,26 +13,21 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
-[ProtoContract(SkipConstructor = true)]
 public class FunctionProfileData {
   public FunctionProfileData() {
-    InitializeReferenceMembers();
+    InstructionWeight = new Dictionary<long, TimeSpan>();
+    SampleStartIndex = int.MaxValue;
+    SampleEndIndex = int.MinValue;
   }
 
-  public FunctionProfileData(FunctionDebugInfo debugInfo) {
+  public FunctionProfileData(FunctionDebugInfo debugInfo) : this() {
     FunctionDebugInfo = debugInfo;
-    InitializeReferenceMembers(debugInfo);
   }
 
-  [ProtoMember(2)]
   public TimeSpan Weight { get; set; }
-  [ProtoMember(3)]
   public TimeSpan ExclusiveWeight { get; set; }
-  [ProtoMember(4)]
   public Dictionary<long, TimeSpan> InstructionWeight { get; set; } // Instr. offset mapping
-  [ProtoMember(5)]
   public Dictionary<long, PerformanceCounterValueSet> InstructionCounters { get; set; }
-  [ProtoMember(8)]
   public FunctionDebugInfo FunctionDebugInfo { get; set; }
   public int SampleStartIndex { get; set; }
   public int SampleEndIndex { get; set; }
@@ -236,26 +231,6 @@ public class FunctionProfileData {
     SampleEndIndex = int.MinValue;
     InstructionWeight?.Clear();
     InstructionCounters?.Clear();
-  }
-
-  [ProtoAfterDeserialization]
-  private void InitializeReferenceMembers() {
-    InstructionWeight ??= new Dictionary<long, TimeSpan>();
-    SampleStartIndex = int.MaxValue;
-    SampleEndIndex = int.MinValue;
-  }
-
-  private void InitializeReferenceMembers(FunctionDebugInfo debugInfo) {
-    if (debugInfo != null) {
-      int size = (int)debugInfo.Size / 4; // Assume 4 bytes per instruction.
-      InstructionWeight ??= new Dictionary<long, TimeSpan>(size);
-    }
-    else {
-      InstructionWeight ??= new Dictionary<long, TimeSpan>();
-    }
-
-    SampleStartIndex = int.MaxValue;
-    SampleEndIndex = int.MinValue;
   }
 }
 
