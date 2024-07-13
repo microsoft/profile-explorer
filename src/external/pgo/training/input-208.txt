@@ -1,0 +1,9 @@
+digraph {
+
+n0[shape=rectangle, label="B0"];
+n562949953421312[shape=rectangle, label="B1"];
+n281474976710656[shape=rectangle, label="B2"];
+n0 -> n281474976710656;
+n0 -> n562949953421312;
+
+}

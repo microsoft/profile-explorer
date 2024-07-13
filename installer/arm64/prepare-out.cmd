@@ -26,7 +26,7 @@ copy %_EXTERNALS_PATH%\graphviz\build\lib\gvc\Release\gvc.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\lib\pathplan\Release\pathplan.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\lib\xdot\Release\xdot.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\plugin\core\Release\gvplugin_core.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\plugin\core\Release\gvplugin_dot_layout.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build\plugin\dot_layout\Release\gvplugin_dot_layout.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\zlib1.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\libexpat.dll %_OUT_PATH%
 
