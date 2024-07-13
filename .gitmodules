@@ -1,3 +1,6 @@
 [submodule "src/external/capstone"]
 	path = src/external/capstone
 	url = https://github.com/capstone-engine/capstone.git
+[submodule "src/external/graphviz"]
+	path = src/external/graphviz
+	url = https://gitlab.com/graphviz/graphviz.git

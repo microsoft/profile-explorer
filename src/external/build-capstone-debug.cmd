@@ -1,4 +1,5 @@
 cd capstone
+git submodule update --init --recursive
 rmdir /s /q build
 mkdir build
 cd build

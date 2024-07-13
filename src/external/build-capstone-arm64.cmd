@@ -1,5 +1,5 @@
 cd capstone
-pushd
+git submodule update --init --recursive
 rmdir /s /q build_arm64
 mkdir build_arm64
 cd build_arm64
@@ -7,7 +7,6 @@ cmake -G "Visual Studio 17 2022" -A ARM64 -DBUILD_SHARED_LIBS=1 -DCAPSTONE_BUILD
 cmake --build .  --config Release -j 16
 cd ..
 
-pushd
 rmdir /s /q build_arm64_static
 mkdir build_arm64_static
 cd build_arm64_static
