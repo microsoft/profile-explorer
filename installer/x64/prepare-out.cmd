@@ -1,4 +1,3 @@
-set _GRAPHVIZ_PATH="..\..\src\external\GraphViz"
 set _PUBLISH_PATH="publish"
 set _BUILD_TARGET="..\..\src\IRExplorerUI\IRExplorerUI.csproj"
 set _EXTERNALS_PATH="..\..\src\external"
@@ -15,7 +14,6 @@ popd
 
 dotnet publish -c "Release" -r win-x64 --self-contained  --output %_PUBLISH_PATH% %_BUILD_TARGET%
 
-xcopy %_GRAPHVIZ_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_EXTERNALS_PATH%\*.dll %_OUT_PATH% /i /c /y
