@@ -1,6 +1,6 @@
 cd graphviz
 git submodule update --init --recursive
-set PATH=%PATH%;%~dp0\windows\dependencies\graphviz-build-utilities;%~dp0\windows\dependencies\graphviz-build-utilities\winflexbison
+set PATH=%PATH%;%cd%\windows\dependencies\graphviz-build-utilities;%cd%\windows\dependencies\graphviz-build-utilities\winflexbison
 rmdir /s /q build
 mkdir build
 
