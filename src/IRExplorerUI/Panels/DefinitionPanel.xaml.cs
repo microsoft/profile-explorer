@@ -88,7 +88,7 @@ public partial class DefinitionPanel : ToolPanelControl {
   }
 
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (TextView.Section == section) {
       return;
@@ -114,7 +114,7 @@ public partial class DefinitionPanel : ToolPanelControl {
   }
 
   public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (TextView.Section != section) {
       return;

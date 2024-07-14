@@ -351,7 +351,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task ReloadSettings(bool hasProfilingChanges = true) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     await HandleNewRemarkSettings(App.Settings.RemarkSettings, false, true);
     TextView.Initialize(settings_, session_);
 
@@ -362,7 +362,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
     // Cancel any running tasks and hide panels.
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (Section != section) {
       return;
@@ -437,7 +437,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task LoadSectionMinimal(ParsedIRTextSection parsedSection) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     // Save state of currently loaded function for going back.
     if (TextView.IsLoaded) {
@@ -449,7 +449,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     duringSectionSwitching_ = true;
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
@@ -617,7 +617,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     await TextView.LoadDiffedFunction(diffResult, newSection);
 
     if (PassOutputVisible) {
@@ -1308,7 +1308,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task ApplyProfileFilter() {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (profileFilter_ is {IncludesAll: false}) {
       await LoadProfileInstance();

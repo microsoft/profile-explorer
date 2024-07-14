@@ -315,7 +315,7 @@ public partial class GraphPanel : ToolPanelControl {
 
       if (loadTask_ != null) {
         Session.SessionState.UnregisterCancelableTask(loadTask_);
-        loadTask_.Completed();
+        loadTask_.Complete();
         loadTask_.Dispose();
         loadTask_ = null;
       }

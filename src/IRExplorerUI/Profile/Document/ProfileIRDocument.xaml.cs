@@ -489,7 +489,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
 
   public async Task<bool> LoadAssembly(ParsedIRTextSection parsedSection,
                                        ProfileSampleFilter profileFilter = null) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (TextView.IsLoaded && !IsSourceFileDocument) {
       historyManager_.SaveCurrentState();
@@ -858,7 +858,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                          SourceStackFrame inlinee = null,
                                          SourceFileState previousState = null) {
     try {
-      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+      using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
       ResetInstance();
       IsSourceFileDocument = true;
 
@@ -1393,7 +1393,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async Task ApplyProfileFilter() {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (isSourceFileDocument_) {
       if (profileFilter_ is {IncludesAll: false}) {
@@ -1720,7 +1720,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task Reset() {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     ResetProfilingMenus();
     ResetInstance();
     ProfileFilter = new ProfileSampleFilter();

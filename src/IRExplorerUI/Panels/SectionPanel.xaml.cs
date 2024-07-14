@@ -2520,7 +2520,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private async Task ComputeFunctionStatistics(List<IRTextFunctionEx> functions) {
     Trace.TraceInformation("ComputeFunctionStatistics: start");
-    using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await statisticsTask_.CancelCurrentAndCreateTaskAsync();
 
     if (functionStatMap_ == null || functionStatMap_.Count < functions.Count) {
       functionStatMap_ = await ComputeFunctionStatisticsImpl(functions, cancelableTask);
@@ -2632,7 +2632,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     if (cancelableTask.IsCanceled) {
       // Complete only now after all tasks were canceled,
       // otherwise the session ending would move on and break the tasks still executing.
-      cancelableTask.Completed();
+      cancelableTask.Complete();
     }
 
     foreach (var loadedDoc in Session.SessionState.Documents) {
@@ -3231,7 +3231,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     Session.SetApplicationProgress(true, double.NaN, "Generating call graph");
-    using var cancelableTask = await callGraphTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await callGraphTask_.CancelCurrentAndCreateTaskAsync();
 
     var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
     callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
@@ -3242,7 +3242,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       callGraphCache_.TryAdd(summary, callGraph);
     }
 
-    callGraphTask_.CompleteTask(cancelableTask);
+    cancelableTask.Complete();
     Session.SetApplicationProgress(false, 0);
     return callGraph;
   }

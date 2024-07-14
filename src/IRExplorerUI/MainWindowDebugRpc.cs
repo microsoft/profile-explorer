@@ -489,7 +489,7 @@ public partial class MainWindow : Window, ISession {
 
         // Mark session started.
         Trace.WriteLine("<= OnSessionStarted\n");
-        sessionStartTask_.Completed();
+        sessionStartTask_.Complete();
       }
       catch (Exception ex) {
         Trace.TraceError("Failed to start debug session: {0}", $"{ex.Message}\n{ex.StackTrace}");

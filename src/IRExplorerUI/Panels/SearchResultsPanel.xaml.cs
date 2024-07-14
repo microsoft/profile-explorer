@@ -226,7 +226,7 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
     //? TODO: If the document is in the middle of switching a section
     //? from the previous jump, wait for it to complete, otherwise
     //? the document text can get out of sync and assert.
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     var documentHost = Session.FindAssociatedDocumentHost(this);
 
     if (documentHost == null) {

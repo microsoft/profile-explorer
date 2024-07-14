@@ -134,7 +134,7 @@ public partial class DocumentSearchPanel : DraggablePopup {
       return null;
     }
 
-    searchTask.Completed();
+    searchTask.Complete();
 
     lock (this) {
       if (searchTask_ == searchTask) {

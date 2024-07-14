@@ -50,12 +50,11 @@ public class CancelableTaskInstance : IDisposable {
     }
   }
 
-  public async Task<CancelableTask> CancelPreviousAndCreateTaskAsync() {
+  public async Task<CancelableTask> CancelCurrentAndCreateTaskAsync() {
     CancelableTask task = null;
 
     lock (lockObject_) {
       task = taskInstance_;
-      taskInstance_ = null;
     }
 
     if (task != null) {
@@ -63,8 +62,36 @@ public class CancelableTaskInstance : IDisposable {
     }
 
     lock (lockObject_) {
-      taskInstance_ = new CancelableTask(completeOnCancel_);
-      registerAction_?.Invoke(taskInstance_);
+      // Check that nothing else changed the current task
+      // before replacing it.
+      if (taskInstance_ == task) {
+        taskInstance_ = new CancelableTask(completeOnCancel_);
+        registerAction_?.Invoke(taskInstance_);
+      }
+      
+      return taskInstance_;
+    }
+  }
+  
+  public async Task<CancelableTask> WaitAndCreateTaskAsync() {
+    CancelableTask task = null;
+
+    lock (lockObject_) {
+      task = taskInstance_;
+    }
+
+    if (task != null) {
+      await task.WaitToCompleteAsync();
+    }
+
+    lock (lockObject_) {
+      // Check that nothing else changed the current task
+      // before replacing it.
+      if (taskInstance_ == task) {
+        taskInstance_ = new CancelableTask(completeOnCancel_);
+        registerAction_?.Invoke(taskInstance_);
+      }
+
       return taskInstance_;
     }
   }
@@ -121,7 +148,7 @@ public class CancelableTaskInstance : IDisposable {
 
       if (taskInstance_ != null) {
         unregisterAction_?.Invoke(taskInstance_);
-        taskInstance_.Completed();
+        taskInstance_.Complete();
         taskInstance_.Dispose();
         taskInstance_ = null;
       }

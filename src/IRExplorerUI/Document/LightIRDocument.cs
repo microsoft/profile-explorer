@@ -372,7 +372,7 @@ public sealed class LightIRDocument : TextEditor {
       lock (lockObject_) {
         if (updateHighlightingTask_.IsCanceled) {
           // Task got canceled in the meantime.
-          updateHighlightingTask_.Completed();
+          updateHighlightingTask_.Complete();
           return;
         }
 
@@ -405,7 +405,7 @@ public sealed class LightIRDocument : TextEditor {
                                                 options, cancelableTask);
 
     if (cancelableTask.IsCanceled) {
-      cancelableTask.Completed();
+      cancelableTask.Complete();
       return elements;
     }
 
@@ -415,7 +415,7 @@ public sealed class LightIRDocument : TextEditor {
       }
     }
 
-    cancelableTask.Completed();
+    cancelableTask.Complete();
     return elements;
   }
 

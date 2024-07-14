@@ -93,7 +93,7 @@ public class CancelableTask : IDisposable {
     }
   }
 
-  public void Completed() {
+  public void Complete() {
     //Debug.WriteLine($"+ Complete task {ObjectTracker.Track(this)}");
     //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
     if (disposed_) {

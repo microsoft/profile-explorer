@@ -1069,7 +1069,7 @@ public partial class MainWindow : Window, ISession {
 
     // Wait for any other pending opening tasks to complete,
     // otherwise the opened document and panels can get out of sync.
-    using var task = await documentLoadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await documentLoadTask_.CancelCurrentAndCreateTaskAsync();
 
     await NotifyOfSectionUnload(document, true);
     ResetDocumentEvents(document);

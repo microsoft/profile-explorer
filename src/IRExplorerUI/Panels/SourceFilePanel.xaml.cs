@@ -285,7 +285,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public async Task LoadSourceFile(IRTextSection section, ProfileSampleFilter profileFilter = null,
                                    IRDocument associatedDocument = null,
                                    bool restoreState = false) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (section_ != null && section_.Equals(section)) {
       return;
@@ -416,7 +416,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
       return;
     }
 
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     ProfileTextView.SaveSectionState(this);
     await base.OnDocumentSectionUnloaded(section, document);
     await ResetState();
@@ -497,7 +497,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public async Task<bool> LoadInlineeSourceFile(SourceStackFrame inlinee) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
     if (inlinee == currentInlinee_) {
       return true;

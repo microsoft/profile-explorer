@@ -85,7 +85,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> FilterProfileSamples(ProfileFilterState state) {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     SetApplicationProgress(true, double.NaN, "Filtering profiling data");
     StartUIUpdate();
@@ -198,7 +198,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> SelectProfileFunctionInPanel(ProfileCallTreeNode node, ToolPanelKind panelKind) {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
@@ -249,7 +249,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> SelectProfileFunctionInPanel(IRTextFunction func, ToolPanelKind panelKind) {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     switch (panelKind) {
       case ToolPanelKind.CallTree: {
@@ -295,7 +295,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> ProfileSampleRangeSelected(SampleTimeRangeInfo range) {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     //? TODO: If an event fires during the call tree/sample filtering,
     //? either ignore it or better run it after the filtering is done
@@ -317,7 +317,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> ProfileFunctionSelected(ProfileCallTreeNode node, ToolPanelKind sourcePanelKind) {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     //? TODO: If an event fires during the call tree/sample filtering,
     //? either ignore it or better run it after the filtering is done
@@ -383,7 +383,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> ProfileSampleRangeDeselected() {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
     panel?.ClearMarkedFunctions();
@@ -394,7 +394,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> ProfileFunctionDeselected() {
-    using var cancelableTask = await updateProfileTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await updateProfileTask_.CancelCurrentAndCreateTaskAsync();
 
     var panel = FindPanel(ToolPanelKind.Timeline) as TimelinePanel;
     panel?.ClearSelectedFunctionSamples();

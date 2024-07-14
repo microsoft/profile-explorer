@@ -361,7 +361,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       return false;
     }
 
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     var report = new ProfileDataReport {
       RunningProcesses = processList_,
       SymbolSettings = symbolSettings_.Clone()
@@ -557,7 +557,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     await CancelLoadingTask();
 
     if (File.Exists(ProfileFilePath)) {
-      using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+      using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
 
       IsLoadingProcessList = true;
       ShowLoadingProgress = true;
@@ -645,7 +645,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     // Start ETW recording session.
     IsRecordingProfile = true;
     ProfileLoadProgress lastProgressInfo = null;
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     using var recordingSession = new ETWRecordingSession(options_);
 
     // Show elapsed time in UI.

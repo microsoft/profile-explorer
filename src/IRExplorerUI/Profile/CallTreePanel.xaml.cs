@@ -368,7 +368,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public async Task DisplayProfileCallerCalleeTree(IRTextFunction function) {
-    using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     function_ = function;
     CallTree = Session.ProfileData.CallTree;
     ignoreNextSelectionEvent_ = true; // Prevent deselection even to be triggered.
@@ -933,7 +933,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async Task SearchCallTree(string text) {
-    using var cancelableTask = await searchTask_.CancelPreviousAndCreateTaskAsync();
+    using var cancelableTask = await searchTask_.CancelCurrentAndCreateTaskAsync();
 
     if (searchResultNodes_ != null) {
       // Clear previous search results.
@@ -1123,17 +1123,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
     await UpdateCallTree();
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   }
 
-  private void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.ModuleColors.Clear();
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   }
 
-  private void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
+  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
     MarkingSettings.FunctionColors.Clear();
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   }
 
   private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
@@ -1151,7 +1151,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     MarkSelectedNodes(obj, (node, color) =>
                         markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   });
   public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
@@ -1159,7 +1159,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       markingSettings.AddFunctionColor(node.FunctionName, color);
     });
     markingSettings.UseFunctionColors = true;
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   });
 
   private void MarkSelectedNodes(object obj, Action<CallTreeListItem, Color> action) {
@@ -1173,13 +1173,15 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public async Task UpdateMarkedFunctions(bool externalCall = false) {
+    using var task = await loadTask_.WaitAndCreateTaskAsync();
+    
     if (callTreeNodeToNodeExMap_ != null) {
       UpdateMarkedFunctionsImpl();
       OnPropertyChanged(nameof(HasEnabledMarkedModules));
       OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
 
       if (!externalCall) {
-        Session.FunctionMarkingChanged(PanelKind);
+        await Session.FunctionMarkingChanged(PanelKind);
       }
     }
   }
