@@ -1,5 +1,4 @@
 cd capstone
-git submodule update --init --recursive
 rmdir /s /q build_arm64
 mkdir build_arm64
 cd build_arm64
