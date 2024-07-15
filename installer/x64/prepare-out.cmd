@@ -8,11 +8,11 @@ rd %_OUT_PATH% /s /q
 rd %_PUBLISH_PATH% /s /q
 mkdir %_OUT_PATH%
 
+dotnet publish -c "Release" -r win-x64 --self-contained  --output %_PUBLISH_PATH% %_BUILD_TARGET%
+
 pushd %_EXTERNALS_PATH%
 call build-external.cmd
 popd
-
-dotnet publish -c "Release" -r win-x64 --self-contained  --output %_PUBLISH_PATH% %_BUILD_TARGET%
 
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
