@@ -17,6 +17,7 @@ dotnet publish -c "Release" -r win-x64 --self-contained  --output %_PUBLISH_PATH
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_EXTERNALS_PATH%\*.dll %_OUT_PATH% /i /c /y
+xcopy %_EXTERNALS_PATH%\tree-sitter\build\*.dll %_OUT_PATH% /i /c /y
 copy %_EXTERNALS_PATH%\capstone\build\Release\capstone.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\cmd\dot\Release\dot.exe %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\lib\cdt\Release\cdt.dll %_OUT_PATH%

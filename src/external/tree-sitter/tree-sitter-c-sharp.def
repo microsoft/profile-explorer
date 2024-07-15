@@ -1,0 +1,3 @@
+LIBRARY TREE-SITTER-C-SHARP
+EXPORTS
+        tree_sitter_c_sharp

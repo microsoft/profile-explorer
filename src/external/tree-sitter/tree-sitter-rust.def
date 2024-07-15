@@ -1,0 +1,3 @@
+LIBRARY TREE-SITTER-RUST
+EXPORTS
+        tree_sitter_rust
