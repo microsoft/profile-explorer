@@ -13,14 +13,20 @@ namespace IRExplorerUI.Compilers;
 
 [ProtoContract]
 public class SymbolFileCache {
+  private static int CurrentFileVersion = 1;
+  private static int MinSupportedFileVersion = 1;
+  
   [ProtoMember(1)]
-  public SymbolFileDescriptor SymbolFile { get; set; }
+  public int Version { get; set; }
   [ProtoMember(2)]
+  public SymbolFileDescriptor SymbolFile { get; set; }
+  [ProtoMember(3)]
   public List<FunctionDebugInfo> FunctionList { get; set; }
   public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "irexplorer", "symcache");
 
   public static async Task<bool> SerializeAsync(SymbolFileCache symCache, string directoryPath) {
     try {
+      symCache.Version = CurrentFileVersion;
       var outStream = new MemoryStream();
       Serializer.Serialize(outStream, symCache);
       outStream.Position = 0;
@@ -58,6 +64,13 @@ public class SymbolFileCache {
         if (stream != null) {
           var symCache = Serializer.Deserialize<SymbolFileCache>(stream);
 
+          if (symCache.Version < MinSupportedFileVersion) {
+            Trace.WriteLine($"File version mismatch in deserialized symbol file cache");
+            Trace.WriteLine($"  actual: {symCache.Version} vs min supported {MinSupportedFileVersion}");
+            return null;
+          }
+
+          // Ensure it's a cache for the same symbol file.
           if (symCache.SymbolFile.Equals(symbolFile)) {
             return symCache;
           }
