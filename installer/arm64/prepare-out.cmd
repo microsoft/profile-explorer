@@ -1,6 +1,8 @@
 set _PUBLISH_PATH="publish"
 set _BUILD_TARGET="..\..\src\IRExplorerUI\IRExplorerUI.csproj"
-set _EXTERNALS_PATH="..\..\src\external\arm64"
+set _PROFILER_PATH="..\..\src\IRExplorerProfiler"
+set _EXTERNALS_PATH="..\..\src\external"
+set _EXTERNALS_PATH_ARM64="..\..\src\external\arm64"
 set _RESOURCES_PATH="..\..\resources"
 set _OUT_PATH="out"
 
@@ -10,16 +12,22 @@ mkdir %_OUT_PATH%
 
 dotnet publish -c "Release" -r win-arm64 --self-contained true --output %_PUBLISH_PATH% %_BUILD_TARGET%
 
+for /f "delims=" %%i in ('"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -all -prerelease -property installationPath') do set _VS=%%i
+set _VS_ENV=%_VS%\VC\Auxiliary\Build\vcvarsamd64_arm64.bat
+call "%_VS_ENV%"
+
 pushd %_EXTERNALS_PATH%
 call build-external-arm64.cmd
 popd
 
+msbuild %_PROFILER_PATH%\IRExplorerProfiler.vcxproj /t:Rebuild /p:Configuration=Release /p:Platform=arm64
+copy %_PROFILER_PATH%\arm64\Release\IRExplorerProfiler.dll %_OUT_PATH%
+
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
-xcopy %_EXTERNALS_PATH%\*.dll %_OUT_PATH% /i /c /y
+xcopy %_EXTERNALS_PATH_ARM64%\*.dll %_OUT_PATH% /i /c /y
 xcopy %_EXTERNALS_PATH%\tree-sitter\build_arm64\*.dll %_OUT_PATH% /i /c /y
 copy %_EXTERNALS_PATH%\capstone\build_arm64\Release\capstone.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\capstone\build\Release\capstone.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\cmd\dot\Release\dot.exe %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\lib\cdt\Release\cdt.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\build\lib\cgraph\Release\cgraph.dll %_OUT_PATH%
