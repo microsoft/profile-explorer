@@ -98,7 +98,6 @@
             Loaded="TextSearch_Loaded"
             MinimumPrefixLength="1"
             Populating="TextSearch_Populating"
-            TabIndex="4"
             Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
             <toolkit:AutoCompleteBox.InputBindings>
               <KeyBinding
@@ -111,7 +110,6 @@
           <Button
             Command="local:SearchCommand.ClearText"
             CommandTarget="{Binding ElementName=SearchPanelControl}"
-            TabIndex="5"
             ToolTip="Reset searched text">
             <Image
               Width="16"
@@ -123,14 +121,12 @@
 
           <ToggleButton
             IsChecked="{Binding Path=IsCaseInsensitive, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Accept case mismatch (Alt+C)">
             <Image Source="{StaticResource CaseIcon}" />
           </ToggleButton>
 
           <ToggleButton
             IsChecked="{Binding Path=IsWholeWord, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Match whole word (Alt+W)">
             <Image Source="{StaticResource WholeWordIcon}" />
           </ToggleButton>
@@ -138,7 +134,6 @@
           <ToggleButton
             Width="16"
             IsChecked="{Binding Path=IsRegex, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Use Regular Expressions (Alt+R)">
             <TextBlock FontWeight="ExtraBlack" Text=".*" />
           </ToggleButton>
@@ -150,7 +145,6 @@
             x:Name="SearchAllButton"
             IsChecked="{Binding Path=SearchAll, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
             IsEnabled="{Binding Path=SearchAllEnabled, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Search across all sections in the function (Alt+A)"
             Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image Source="{StaticResource SearchListIcon}" />
@@ -160,7 +154,6 @@
             x:Name="PreviousButton"
             Command="local:SearchCommand.PreviousResult"
             CommandTarget="{Binding ElementName=SearchPanelControl}"
-            TabIndex="5"
             ToolTip="Jump to previous search result (Shift+F3)">
             <Image Source="{StaticResource UpArrowIcon}" />
           </Button>
@@ -169,7 +162,6 @@
             x:Name="NextButton"
             Command="local:SearchCommand.NextResult"
             CommandTarget="{Binding ElementName=SearchPanelControl}"
-            TabIndex="5"
             ToolTip="Jump to next search result (F3)">
             <Image Source="{StaticResource DownArrowIcon}" />
           </Button>

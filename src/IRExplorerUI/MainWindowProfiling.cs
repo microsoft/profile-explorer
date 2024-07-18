@@ -419,6 +419,10 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await LoadProfile();
+  }
+
+  private async Task LoadProfile() {
     var window = new ProfileLoadWindow(this, false);
     window.Owner = this;
     bool? result = window.ShowDialog();
@@ -461,6 +465,10 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void RecordProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await RecordProfile();
+  }
+
+  private async Task RecordProfile() {
     var window = new ProfileLoadWindow(this, true);
     window.Owner = this;
     bool? result = window.ShowDialog();

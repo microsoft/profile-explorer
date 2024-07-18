@@ -20,6 +20,8 @@ public partial class StartPagePanel : UserControl {
   public event EventHandler CompareFiles;
   public event EventHandler ClearRecentDocuments;
   public event EventHandler ClearRecentDiffDocuments;
+  public event EventHandler LoadProfile;
+  public event EventHandler RecordProfile;
 
   public void ReloadFileList() {
     RecentFilesListBox.ItemsSource = new ListCollectionView(App.Settings.RecentFiles);
@@ -118,5 +120,13 @@ public partial class StartPagePanel : UserControl {
       App.Settings.RemoveRecentComparedFiles(item);
       ReloadFileList();
     }
+  }
+
+  private void RecordProfileButton_Click(object sender, RoutedEventArgs e) {
+    RecordProfile?.Invoke(this, null);
+  }
+
+  private void LoadProfileButton_Click(object sender, RoutedEventArgs e) {
+    LoadProfile?.Invoke(this, null);
   }
 }

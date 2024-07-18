@@ -68,7 +68,6 @@
             IsChecked="{Binding DiffModeEnabled}"
             IsEnabled="{Binding DiffModeButtonEnabled}"
             Margin="4,0,0,0"
-            TabIndex="5"
             ToolTip="Diff output text with other section"
             Unchecked="DiffToggleButton_Unchecked"
             Visibility="{Binding DiffModeButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -80,7 +79,6 @@
           </ToggleButton>
           <ToggleButton
             IsChecked="{Binding WordWrap, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Word wrap output text">
             <Image
               Height="16"
@@ -91,7 +89,6 @@
 
           <ToggleButton
             IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Search output text (Ctrl+F)">
             <Image
               Height="16"
@@ -102,7 +99,6 @@
           <ToggleButton
             IsChecked="{Binding FilterSearchResults, Mode=TwoWay}"
             IsEnabled="{Binding FilterSearchResultsButtonEnabled}"
-            TabIndex="5"
             ToolTip="Display only lines part of the search result">
             <Image
               Height="16"

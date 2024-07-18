@@ -60,66 +60,86 @@
       <ScrollViewer
         Margin="0,12,0,0"
         Padding="10,10,10,10"
-        Background="#7FFFFFFF"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         HorizontalScrollBarVisibility="Disabled"
         VerticalScrollBarVisibility="Auto">
         <StackPanel VerticalAlignment="Top" Orientation="Vertical">
-          <DockPanel>
-            <TextBlock
-              VerticalAlignment="Center"
-              FontSize="14"
-              FontWeight="Normal"
-              Text="Recent files" />
-
+           <DockPanel Margin="0,0,0,8">
             <StackPanel
-              HorizontalAlignment="Right"
-              DockPanel.Dock="Right"
+              HorizontalAlignment="Left"
               Orientation="Horizontal">
-              <toolkit:AutoCompleteBox
-                Name="TextSearch"
-                Width="150"
-                Margin="4,0,2,0"
-                HorizontalAlignment="Center"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
-                FilterMode="ContainsOrdinal"
-                IsDropDownOpen="True"
-                IsTextCompletionEnabled="False"
-                KeyDown="TextSearch_KeyDown"
-                MinimumPrefixLength="1"
-                Placeholder="Search recent files"
-                Populating="TextSearch_Populating"
-                TabIndex="4"
-                Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                <toolkit:AutoCompleteBox.InputBindings>
-                  <KeyBinding Key="Escape" CommandTarget="{Binding ElementName=SearchPanelControl}" />
-                </toolkit:AutoCompleteBox.InputBindings>
-              </toolkit:AutoCompleteBox>
               <Button
-                Name="ClearButton"
-                Width="24"
                 Height="24"
                 Margin="0,0,2,0"
                 Padding="2,2,2,2"
-                Click="ClearButton_Click"
-                ToolTip="Clear list of recent files">
-                <Image Source="{StaticResource RemoveIcon}" />
+                Click="LoadProfileButton_Click">
+                <StackPanel Orientation="Horizontal">
+                  <Image Source="{StaticResource FolderIcon}" VerticalAlignment="Center" />
+                  <TextBlock Margin="4,0,4,0" Text="Load Profile" VerticalAlignment="Center"></TextBlock>
+                </StackPanel>
               </Button>
+              <Button
+                Height="24"
+                Margin="0,0,2,0"
+                Padding="2,2,2,2"
+                
+                Click="RecordProfileButton_Click">
+                <StackPanel Orientation="Horizontal">
+                  <Image Source="{StaticResource RecordIcon}" VerticalAlignment="Center"/>
+                  <TextBlock Margin="4,0,4,0" Text="Record Profile" VerticalAlignment="Center"></TextBlock>
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </DockPanel>
+          <Separator />
+
+          <DockPanel Margin="0,8,0,4">
+            <StackPanel
+              HorizontalAlignment="Left"
+              DockPanel.Dock="Left"
+              Orientation="Horizontal">
               <Button
                 x:Name="OpenButton"
                 Height="24"
                 Padding="6,1,6,1"
                 HorizontalAlignment="Right"
                 Click="OpenFileButton_Click"
-                Content="Open File"
-                TabIndex="5" />
-
+                Content="Open File"/>
+              <Button
+                Name="ClearButton"
+                Width="24"
+                Height="24"
+                Margin="2,0,2,0"
+                Padding="2,2,2,2"
+                Click="ClearButton_Click"
+                ToolTip="Clear list of recent files">
+                <Image Source="{StaticResource RemoveIcon}" />
+              </Button>
             </StackPanel>
+            
+            <toolkit:AutoCompleteBox
+              Name="TextSearch"
+              HorizontalAlignment="Right"
+              Width="200"
+              Margin="4,0,2,0"
+              Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+              BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+              FilterMode="ContainsOrdinal"
+              IsDropDownOpen="True"
+              IsTextCompletionEnabled="False"
+              KeyDown="TextSearch_KeyDown"
+              MinimumPrefixLength="1"
+              Placeholder="Search recent files"
+              Populating="TextSearch_Populating"
+              Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+              <toolkit:AutoCompleteBox.InputBindings>
+                <KeyBinding Key="Escape" CommandTarget="{Binding ElementName=SearchPanelControl}" />
+              </toolkit:AutoCompleteBox.InputBindings>
+            </toolkit:AutoCompleteBox>
           </DockPanel>
           <ListBox
             Name="RecentFilesListBox"
             Margin="0,8,0,0"
-            Background="#D8F0F0F0"
             FontSize="12"
             KeyDown="RecentFilesListBox_KeyDown"
             MouseDoubleClick="RecentFilesListBox_MouseDoubleClick"
@@ -171,26 +191,11 @@
             </ListBox.ItemContainerStyle>
           </ListBox>
 
-          <DockPanel Margin="0,16,0,0" LastChildFill="False">
-            <TextBlock
-              VerticalAlignment="Center"
-              FontSize="14"
-              FontWeight="Normal"
-              Text="Recent compared base/diff files" />
+          <DockPanel Margin="0,8,0,0" LastChildFill="False">
             <StackPanel
-              HorizontalAlignment="Right"
-              DockPanel.Dock="Right"
+              HorizontalAlignment="Left"
+              DockPanel.Dock="Left"
               Orientation="Horizontal">
-              <Button
-                Name="ClearDiffButton"
-                Width="24"
-                Height="24"
-                Margin="0,0,2,0"
-                Padding="2,2,2,2"
-                Click="ClearDiffButton_Click"
-                ToolTip="Clear list of recent compared files">
-                <Image Source="{StaticResource RemoveIcon}" UseLayoutRounding="True" />
-              </Button>
               <Button
                 x:Name="OpenBaseDiffFilesButton"
                 Height="24"
@@ -198,14 +203,22 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Click="OpenBaseDiffFilesButton_Click"
-                Content="Compare Base/Diff Files"
-                TabIndex="5" />
+                Content="Compare Base/Diff Files"/>
+              <Button
+                Name="ClearDiffButton"
+                Width="24"
+                Height="24"
+                Margin="2,0,2,0"
+                Padding="2,2,2,2"
+                Click="ClearDiffButton_Click"
+                ToolTip="Clear list of recent compared files">
+                <Image Source="{StaticResource RemoveIcon}" UseLayoutRounding="True" />
+              </Button>
             </StackPanel>
           </DockPanel>
           <ListBox
             Name="RecentDiffFilesListBox"
             Margin="0,8,0,0"
-            Background="#D8F0F0F0"
             FontSize="14"
             KeyDown="RecentDiffFilesListBox_KeyDown"
             MouseDoubleClick="RecentDiffFilesListBox_MouseDoubleClick"

@@ -14,18 +14,18 @@
     <StackPanel Margin="4,4,4,4" Orientation="Vertical">
 
       <CheckBox
-        Margin="0,4,0,0"
+        Margin="0,4,0,2"
         Content="Include __NT__SYMBOL__PATH environment variable"
         IsChecked="{Binding Path=UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
         ToolTip="Append the NT__SYMBOL__PATH environment variable to the list of sources" />
       <CheckBox
-        Margin="0,4,0,0"
+        Margin="0,2,0,2"
         Content="Include subdirectories for local paths"
         IsChecked="{Binding Path=IncludeSymbolSubdirectories, Mode=TwoWay}"
         ToolTip="Scan and include all subdirectories with symbols for the local paths in the list" />
       <CheckBox
         x:Name="ModuleSamplesCheckBox"
-        Margin="0,4,0,2"
+        Margin="0,2,0,2"
         Content="Don't load symbols for very low sample modules"
         IsChecked="{Binding Path=SkipLowSampleModules, Mode=TwoWay}"
         ToolTip="Skip downloading and loading of symbols for insignificant modules with very few samples" />

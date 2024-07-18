@@ -34,8 +34,7 @@
           x:Name="AutocompleteBox"
           Height="22"
           HorizontalAlignment="Stretch"
-          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-          TabIndex="1" />
+          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
       </Grid>
       <Grid Margin="16,4,16,0" />
     </StackPanel>
@@ -65,8 +64,7 @@
         HorizontalAlignment="Right"
         Background="#FFFCF4CC"
         Click="AcceptButton_Click"
-        Content="{Binding AcceptButtonLabel}"
-        TabIndex="3" />
+        Content="{Binding AcceptButtonLabel}"/>
       <Button
         x:Name="CancelButton"
         Height="24"
@@ -74,8 +72,7 @@
         Padding="4,0,4,0"
         Click="CancelButton_Click"
         Content="{Binding CancelButtonLabel}"
-        IsCancel="True"
-        TabIndex="4" />
+        IsCancel="True"/>
     </StackPanel>
   </Grid>
 </Window>

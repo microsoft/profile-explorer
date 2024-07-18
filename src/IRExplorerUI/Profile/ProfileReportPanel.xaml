@@ -24,7 +24,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Trace source" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -185,7 +185,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Application path" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -196,7 +196,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Arguments" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -207,7 +207,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Working directory" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -218,7 +218,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Top" Text="Environment vars." />
                   <CheckBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Top"
                     Background="Transparent"
                     BorderBrush="DarkBlue"
@@ -239,7 +239,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Sampling freq." />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -250,7 +250,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Profile children" />
                   <CheckBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="DarkBlue"
@@ -260,7 +260,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Profile .NET" />
                   <CheckBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="DarkBlue"
@@ -270,7 +270,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Top" Text="Perf. counters" />
                   <CheckBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Top"
                     Background="Transparent"
                     BorderBrush="DarkBlue"
@@ -468,7 +468,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Name" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -479,7 +479,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Local path" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -490,7 +490,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Architecture" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -501,7 +501,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Image size" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -512,7 +512,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Code size" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -549,7 +549,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Name" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -560,7 +560,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Local path" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -571,7 +571,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Guid" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"
@@ -582,7 +582,7 @@
                 <Grid>
                   <TextBlock VerticalAlignment="Center" Text="Age" />
                   <TextBox
-                    Margin="100,1,0,1"
+                    Margin="100,0,0,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderBrush="Transparent"

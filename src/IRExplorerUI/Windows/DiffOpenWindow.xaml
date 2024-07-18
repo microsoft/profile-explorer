@@ -43,8 +43,7 @@
           HorizontalAlignment="Stretch"
           BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
           FilterMode="StartsWithOrdinal"
-          MinimumPrefixLength="1"
-          TabIndex="1" />
+          MinimumPrefixLength="1"/>
 
         <Button
           x:Name="BaseBrowseButton"
@@ -52,8 +51,7 @@
           Padding="2,2,2,2"
           HorizontalAlignment="Right"
           Click="BaseBrowseButton_Click"
-          Content="Browse"
-          TabIndex="9" />
+          Content="Browse" />
       </Grid>
 
       <TextBlock Margin="16,8,16,0" Text="Diff file path (right side)" />
@@ -68,8 +66,7 @@
           FilterMode="StartsWithOrdinal"
           IsDropDownOpen="True"
           IsTextCompletionEnabled="False"
-          MinimumPrefixLength="1"
-          TabIndex="2" />
+          MinimumPrefixLength="1"/>
 
         <Button
           x:Name="DiffBrowseButton"
@@ -77,8 +74,7 @@
           Padding="2,2,2,2"
           HorizontalAlignment="Right"
           Click="DiffBrowseButton_Click"
-          Content="Browse"
-          TabIndex="10" />
+          Content="Browse" />
       </Grid>
     </StackPanel>
 
@@ -96,8 +92,7 @@
         Padding="4,0,4,0"
         Click="RecentButton_Click"
         Content="Recent Files"
-        Width="80"
-        TabIndex="5">
+        Width="80">
         <Button.ContextMenu>
           <ContextMenu />
         </Button.ContextMenu>
@@ -118,16 +113,14 @@
         Padding="4,0,4,0"
         Click="CancelButton_Click"
         Content="Cancel"
-        IsCancel="True"
-        TabIndex="4" />
+        IsCancel="True"/>
       <Button
         x:Name="UpdateButton"
         Height="24"
         Padding="4,0,4,0"
         Background="#FFFCF4CC"
         Click="UpdateButton_Click"
-        Content="Open Files"
-        TabIndex="3" />
+        Content="Open Files"/>
     </StackPanel>
   </Grid>
 </Window>

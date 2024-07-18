@@ -188,12 +188,12 @@
             IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}"
             ToolTip="Mark the current line in the document with a border" />
           <CheckBox
-            Margin="0,0,0,2"
+            Margin="0,2,0,2"
             Content="Show block separator lines"
             IsChecked="{Binding Path=ShowBlockSeparatorLine, Mode=TwoWay}"
             ToolTip="Draw a line between blocks in the document" />
           <CheckBox
-            Margin="0,0,0,2"
+            Margin="0,2,0,2"
             Content="Allow block folding"
             IsChecked="{Binding Path=ShowBlockFolding, Mode=TwoWay}"
             ToolTip="Enable the ability to fold blocks in the document" />
@@ -516,7 +516,7 @@
             Margin="0,2,0,2"
             Content="Underline call instruction targets"
             IsChecked="{Binding Path=MarkCallTargets, Mode=TwoWay}"
-            ToolTip="Underline the names of the called functions whose code is available" />
+            ToolTip="Underline the names of the called functions whose code is available.&#x0a;Double-click opens the target function in the current view." />
           <TextBlock
             Margin="0,6,0,0"
             FontSize="11"

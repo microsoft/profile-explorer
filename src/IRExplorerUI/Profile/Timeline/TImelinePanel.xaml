@@ -209,7 +209,6 @@
             Margin="0,0,6,0"
             Background="{x:Null}"
             BorderBrush="{x:Null}"
-            TabIndex="5"
             ToolTip="Click to remove active filtering of entire profile by thread and/or time range"
             Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
@@ -239,7 +238,6 @@
           <Button
             Command="local:CallTreeCommand.RemoveFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
-            TabIndex="5"
             ToolTip="Remove time range filter"
             Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image
@@ -271,7 +269,6 @@
           <Button
             Command="local:CallTreeCommand.RemoveThreadFilters"
             CommandTarget="{Binding ElementName=ActivityView}"
-            TabIndex="5"
             ToolTip="Remove thread filters"
             Visibility="{Binding ProfileFilter.HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image
@@ -308,7 +305,6 @@
               VerticalContentAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-              TabIndex="4"
               TextChanged="FunctionFilter_OnTextChanged"
               ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
               <TextBox.InputBindings>
@@ -330,7 +326,6 @@
           <Button
             Command="local:CallTreeCommand.ClearSearch"
             CommandParameter="{Binding ElementName=FunctionFilter}"
-            TabIndex="5"
             ToolTip="Reset searched function"
             Visibility="Collapsed">
             <Image

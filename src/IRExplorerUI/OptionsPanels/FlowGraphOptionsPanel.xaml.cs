@@ -4,7 +4,7 @@
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class FlowGraphOptionsPanel : OptionsPanelBase {
-  public override double DefaultWidth => 350;
+  public override double DefaultHeight => 450;
 
   public FlowGraphOptionsPanel() {
     InitializeComponent();

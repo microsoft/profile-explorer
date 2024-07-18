@@ -54,7 +54,7 @@
             ToolTip="Show the statement annotations as icons in the document left margin" />
 
           <CheckBox
-            Margin="0,4,0,0"
+            Margin="0,4,0,2"
             Content="Sync selected line with assembly document"
             IsChecked="{Binding Path=SyncLineWithDocument, Mode=TwoWay}"
             ToolTip="Sync the corresponding lines with the selection in the assembly document" />

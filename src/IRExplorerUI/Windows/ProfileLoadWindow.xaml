@@ -693,17 +693,18 @@
             </StackPanel>
           </TabItem>
 
-          <TabItem Header="Symbols" Style="{StaticResource TabControlStyle}">
+          <TabItem Header="Symbols" Style="{StaticResource TabControlStyle}" 
+                   IsEnabled="{Binding InputControlsEnabled}">
             <optionsPanels:SymbolOptionsPanel
               x:Name="SymbolOptionsPanel"
               Width="Auto"
               Height="Auto"
               HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch"
-              IsEnabled="{Binding InputControlsEnabled}"/>
+              VerticalAlignment="Stretch"/>
           </TabItem>
 
-          <TabItem Header="Options" Style="{StaticResource TabControlStyle}">
+          <TabItem Header="Options" Style="{StaticResource TabControlStyle}"
+                   IsEnabled="{Binding InputControlsEnabled}">
             <StackPanel Margin="0,4,0,8" Orientation="Vertical">
               <Expander
                 Margin="8,0,8,0"
@@ -816,6 +817,7 @@
           <TabItem
             Header="CPU counters"
             Style="{StaticResource TabControlStyle}"
+            IsEnabled="{Binding InputControlsEnabled}"
             Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
             <Grid Margin="0,4,0,8" IsEnabled="{Binding InputControlsEnabled}">
               <Grid.RowDefinitions>

@@ -42,7 +42,6 @@
 
               <ToggleButton
                 IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-                TabIndex="5"
                 ToolTip="Show function list">
                 <Image
                   Width="16"
@@ -52,7 +51,6 @@
 
               <ToggleButton
                 IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-                TabIndex="5"
                 ToolTip="Show call graph">
                 <Image
                   Width="16"

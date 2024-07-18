@@ -40,7 +40,6 @@
 
           <Button
             Click="Button_Click"
-            TabIndex="5"
             ToolTip="Show internal function IR">
             <StackPanel Orientation="Horizontal">
               <Image
@@ -53,7 +52,6 @@
           </Button>
           <Button
             Click="Button_Click_1"
-            TabIndex="5"
             ToolTip="Show IR parsing error list">
             <StackPanel Orientation="Horizontal">
               <Image
@@ -68,7 +66,6 @@
 
           <Button
             Click="ButtonBase_OnClick"
-            TabIndex="5"
             ToolTip="Show log file">
             <StackPanel Orientation="Horizontal">
               <Image

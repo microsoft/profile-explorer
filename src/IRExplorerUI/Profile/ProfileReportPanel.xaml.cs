@@ -26,7 +26,7 @@ public partial class ProfileReportPanel : ToolPanelControl {
     window.WindowStyle = WindowStyle.ToolWindow;
     window.ResizeMode = ResizeMode.CanResizeWithGrip;
     window.Width = 800;
-    window.Height = 600;
+    window.Height = 650;
     window.Owner = Application.Current.MainWindow;
     window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
     panel.ShowReport(report, selectedModule);

@@ -14,6 +14,8 @@ using System.Xml;
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class DocumentOptionsPanel : OptionsPanelBase {
+  public override double DefaultHeight => 450;
+  
   private const string DocumentStylesFilePath = @"documentStyles.xml";
   private bool syntaxEditPanelVisible_;
   private List<ColorPickerInfo> syntaxHighlightingColors_;

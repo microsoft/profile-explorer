@@ -1188,7 +1188,6 @@
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
                 Click="RemoveProfileAllFiltersButton_Click"
-                TabIndex="5"
                 ToolTip="Click to remove active filtering of entire profile by thread and/or time range"
                 Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal">
@@ -1219,7 +1218,6 @@
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
                 Click="RemoveProfileTimeRangeButton_Click"
-                TabIndex="5"
                 ToolTip="Remove time range filter"
                 Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Image
@@ -1255,7 +1253,6 @@
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
                 Click="RemoveProfileThreadButton_Click"
-                TabIndex="5"
                 ToolTip="Remove thread filters"
                 Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Image

@@ -666,9 +666,20 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     StartPage.CompareFiles += StartPage_CompareFiles;
     StartPage.ClearRecentDocuments += StartPage_ClearRecentDocuments;
     StartPage.ClearRecentDiffDocuments += StartPage_ClearRecentDiffDocuments;
+    StartPage.LoadProfile += StartPage_LoadProfile;
+    StartPage.RecordProfile += StartPage_RecordProfile;
+    
     UpdateStartPagePanelPosition();
   }
 
+  private async void StartPage_LoadProfile(object sender, EventArgs e) {
+    await LoadProfile();
+  }
+  
+  private async void StartPage_RecordProfile(object sender, EventArgs e) {
+    await RecordProfile();
+  }
+  
   private void StartPage_ClearRecentDiffDocuments(object sender, EventArgs e) {
     using var centerForm = new DialogCenteringHelper(this);
 

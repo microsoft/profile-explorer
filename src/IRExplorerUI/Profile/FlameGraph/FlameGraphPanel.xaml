@@ -373,7 +373,6 @@
             x:Name="RootNodeResetButton"
             Click="RootNodeResetButton_OnClick"
             CommandTarget="{Binding ElementName=ActivityView}"
-            TabIndex="5"
             ToolTip="Reset root function and display whole flame graph"
             Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image
@@ -395,7 +394,6 @@
               VerticalContentAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-              TabIndex="4"
               TextChanged="FunctionFilter_OnTextChanged"
               ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
               <TextBox.InputBindings>
@@ -418,7 +416,6 @@
             Command="local:CallTreeCommand.ClearSearch"
             CommandParameter="{Binding ElementName=FunctionFilter}"
             CommandTarget="{Binding ElementName=GraphHost}"
-            TabIndex="5"
             ToolTip="Reset searched function">
             <Image
               Width="16"

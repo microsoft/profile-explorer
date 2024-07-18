@@ -1248,7 +1248,6 @@
                   VerticalContentAlignment="Center"
                   Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                   BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                  TabIndex="4"
                   TextChanged="SectionFilter_TextChanged"
                   ToolTip="Filter section list based on a case-insensitive string (Ctrl+F)">
                   <TextBox.InputBindings>
@@ -1271,7 +1270,6 @@
                 Command="local:Command.ClearTextbox"
                 CommandParameter="{Binding ElementName=SectionFilter}"
                 CommandTarget="{Binding ElementName=SectionList}"
-                TabIndex="5"
                 ToolTip="Reset section filter">
                 <Image
                   Width="16"
@@ -1282,14 +1280,12 @@
 
               <ToggleButton
                 IsChecked="{Binding FilterTagged}"
-                TabIndex="2"
                 ToolTip="Show only sections with a tag">
                 <Image Source="{StaticResource TagIcon}" />
               </ToggleButton>
 
               <ToggleButton
                 IsChecked="{Binding FilterDiffFromPrevious}"
-                TabIndex="2"
                 ToolTip="Show only sections that are different from the previous one">
                 <Image Source="{StaticResource EyeIcon}" />
               </ToggleButton>
@@ -1299,7 +1295,6 @@
                 x:Name="PreviousButton"
                 Command="local:Command.PreviousSection"
                 CommandTarget="{Binding ElementName=SectionList}"
-                TabIndex="0"
                 ToolTip="Switch to previous section (Ctrl+P)">
                 <Image Source="{StaticResource LeftArrowIcon}" />
               </Button>
@@ -1307,7 +1302,6 @@
                 x:Name="NextButton"
                 Command="local:Command.NextSection"
                 CommandTarget="{Binding ElementName=SectionList}"
-                TabIndex="1"
                 ToolTip="Switch to next section (Ctrl+N)">
                 <Image Source="{StaticResource RightArrowIcon}" />
               </Button>

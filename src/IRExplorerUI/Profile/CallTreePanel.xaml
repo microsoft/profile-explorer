@@ -333,7 +333,6 @@
               VerticalContentAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-              TabIndex="4"
               TextChanged="FunctionFilter_TextChanged"
               ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
               <TextBox.InputBindings>
@@ -356,7 +355,6 @@
             Command="local:CallTreeCommand.ClearSearch"
             CommandParameter="{Binding ElementName=FunctionFilter}"
             CommandTarget="{Binding ElementName=CallTreeList}"
-            TabIndex="5"
             ToolTip="Reset searched function">
             <Image
               Width="16"

@@ -40,7 +40,7 @@
         ToolTip="Use a more compact, smaller font size" />
       <TextBlock VerticalAlignment="Center" Text="Initial function view:" Margin="0,4,0,0" />
       <RadioButton
-        Margin="0,4,0,0"
+        Margin="0,4,0,2"
         VerticalAlignment="Center"
         Content="Assembly"
         IsChecked="{Binding ShowSourcePreviewPopup, Converter={StaticResource InvertedBoolConverter}}" />

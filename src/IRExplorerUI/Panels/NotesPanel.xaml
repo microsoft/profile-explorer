@@ -54,7 +54,6 @@
 
           <ToggleButton
             IsChecked="{Binding WordWrap, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Word wrap output text">
             <Image
               Width="16"
@@ -65,7 +64,6 @@
 
           <ToggleButton
             IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-            TabIndex="5"
             ToolTip="Search output text (Ctrl+F)">
             <Image
               Width="16"

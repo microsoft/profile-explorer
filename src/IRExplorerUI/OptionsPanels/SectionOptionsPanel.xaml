@@ -35,7 +35,7 @@
             IsChecked="{Binding ShowDemangledNames, Mode=TwoWay}"
             ToolTip="Automatically demangle (undecorate) C++ function names" />
           <CheckBox
-            Margin="20,2,0,0"
+            Margin="20,2,0,2"
             Content="Exclude return types"
             IsChecked="{Binding DemangleNoReturnType, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
@@ -47,7 +47,7 @@
             IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"
             ToolTip="Exclude any vendor-specific keywords from the demangled name" />
           <CheckBox
-            Margin="20,2,0,0"
+            Margin="20,2,0,2"
             Content="Use simplified demangled form"
             IsChecked="{Binding DemangleOnlyNames, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=DemanglingCheckbox, Path=IsChecked}"

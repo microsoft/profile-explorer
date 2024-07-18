@@ -114,6 +114,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (isRecordingProfile_ != value) {
         isRecordingProfile_ = value;
         OnPropertyChange(nameof(IsRecordingProfile));
+        OnPropertyChange(nameof(InputControlsEnabled));
         OnPropertyChange(nameof(RecordingControlsEnabled));
         OnPropertyChange(nameof(RecordingStopControlsEnabled));
         OnPropertyChange(nameof(LoadingControlsVisible));
@@ -127,6 +128,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (isLoadingProcessList_ != value) {
         isLoadingProcessList_ = value;
         OnPropertyChange(nameof(IsLoadingProcessList));
+        OnPropertyChange(nameof(ProcessListEnabled));
+        OnPropertyChange(nameof(InputControlsEnabled));
       }
     }
   }
@@ -138,6 +141,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         showProcessList_ = value;
         OnPropertyChange(nameof(ShowProcessList));
         OnPropertyChange(nameof(LoadingControlsVisible));
+        OnPropertyChange(nameof(ProcessListEnabled));
+        OnPropertyChange(nameof(InputControlsEnabled));
       }
     }
   }
