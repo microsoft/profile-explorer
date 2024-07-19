@@ -661,7 +661,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 
   private void Redraw() {
-    if (!initialized_) {
+    if (!initialized_ || visibleArea_.Width <= 0) {
       return;
     }
 
@@ -1045,6 +1045,10 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
                         Brush backColor = null, Pen borderColor = null,
                         HorizontalAlignment horizontalAlign = HorizontalAlignment.Center,
                         VerticalAlignment verticalAlign = VerticalAlignment.Top) {
+    if (visibleArea_.Width <= 0) {
+      return;
+    }
+
     var glyphInfo = glyphs_.GetGlyphs(text);
     var textMargin = new Thickness(2, 4, 4, 0);
 
@@ -1063,11 +1067,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     if (backColor != null) {
       double boxWidth = glyphInfo.TextWidth + textMargin.Right;
       double boxHeight = glyphInfo.TextHeight + textMargin.Bottom;
-
-      //? TODO: Try to repro and understand how this can happen.
-      if (boxWidth < 0 || boxHeight < 0) {
-        return;
-      }
 
       var textRect = new Rect(x - textMargin.Left, y - textMargin.Top,
                               boxWidth, boxHeight);
