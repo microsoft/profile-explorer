@@ -2,7 +2,7 @@
   "profiles": {
     "Client": {
       "commandName": "Project",
-      "commandLineArgs": "--open-trace C:\\work\\bench\\x64\\Release\\bench.etl bench 25712"
+      "commandLineArgs": ""
     }
   }
 }

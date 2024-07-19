@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-#define TRACE_EVENT
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,11 +14,13 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Identity;
 using Dia2Lib;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using Microsoft.Diagnostics.Symbols;
+using Microsoft.Diagnostics.Symbols.Authentication;
 
 namespace IRExplorerUI.Compilers;
 
@@ -94,10 +95,22 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     string result = null;
     using var logWriter = new StringWriter();
 
+    DefaultAzureCredential credential = new DefaultAzureCredential(
+      new DefaultAzureCredentialOptions()
+      {
+        ExcludeInteractiveBrowserCredential = false,
+        ExcludeManagedIdentityCredential = true,
+      });
+
+    SymbolReaderAuthenticationHandler symbolReaderAuthHandler = new SymbolReaderAuthenticationHandler()
+      .AddHandler(new SymwebHandler(logWriter, credential));
+
+    //symbolReaderAuthHandler.AddHandler(new BasicAuthenticationHandler(settings))
+
     // In case there is a timeout downloading the symbols, try again.
     string symbolSearchPath = ConstructSymbolSearchPath(settings);
     using var authHandler = new BasicAuthenticationHandler(settings);
-    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, authHandler);
+    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, symbolReaderAuthHandler);
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
     try {

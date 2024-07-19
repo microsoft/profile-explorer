@@ -9,7 +9,9 @@ using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Azure.Identity;
 using Microsoft.Diagnostics.Symbols;
+using Microsoft.Diagnostics.Symbols.Authentication;
 
 namespace IRExplorerUI.Compilers;
 
@@ -162,10 +164,21 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
       string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(settings);
 
+
+      DefaultAzureCredential credential = new DefaultAzureCredential(
+        new DefaultAzureCredentialOptions()
+        {
+          ExcludeInteractiveBrowserCredential = false,
+          ExcludeManagedIdentityCredential = true,
+        });
+
+      SymbolReaderAuthenticationHandler symbolReaderAuthHandler = new SymbolReaderAuthenticationHandler()
+        .AddHandler(new SymwebHandler(logWriter, credential));
+
       //? TODO: Making a new instance clears the "dead servers",
       //? have a way to share the list between multiple instances.
       using var authHandler = new BasicAuthenticationHandler(settings);
-      using var symbolReader = new SymbolReader(logWriter, userSearchPath, authHandler);
+      using var symbolReader = new SymbolReader(logWriter, userSearchPath, symbolReaderAuthHandler);
       symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
       //? TODO: Workaround for cases where the ETL file doesn't have a timestamp

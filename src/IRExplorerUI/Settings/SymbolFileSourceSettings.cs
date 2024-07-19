@@ -12,7 +12,7 @@ namespace IRExplorerUI.Compilers;
 
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceSettings : SettingsBase {
-  private const string DefaultPrivateSymbolServer = @"https://symweb";
+  private const string DefaultPrivateSymbolServer = @"https://symweb.azurefd.net";
   private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
   private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
