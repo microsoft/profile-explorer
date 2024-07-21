@@ -66,7 +66,7 @@ public sealed class ASMNameProvider : INameProvider {
     }
 
     if (!functionNameMap_.TryGetValue(name, out string demangledName)) {
-      demangledName = PDBDebugInfoProvider.DemangleFunctionName(name, FunctionNameDemanglingOptions.OnlyName);
+      demangledName = PDBDebugInfoProvider.DemangleFunctionName(name, GlobalDemanglingOptions);
       functionNameMap_.TryAdd(name, demangledName);
     }
 

@@ -21,6 +21,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using Microsoft.Diagnostics.Symbols;
 using Microsoft.Diagnostics.Symbols.Authentication;
+using StringWriter = System.IO.StringWriter;
 
 namespace IRExplorerUI.Compilers;
 
@@ -36,7 +37,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
   private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
-  private static object undecorateLock_ = new();
+  private static readonly StringWriter authLogWriter_;
+  private static readonly SymwebHandler authSymwebHandler_;
+  private static object undecorateLock_ = new(); // Global lock for undname.
+  
   private object cacheLock_ = new();
   private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
@@ -81,6 +85,31 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }).ConfigureAwait(false);
   }
 
+  static PDBDebugInfoProvider() {
+    // Create a single instance of the Symweb handler so that 
+    // when concurrent requests are made and login must be done, 
+    // the login page is displayed a single time, with other requests waiting for a token.
+    var authCredential = new DefaultAzureCredential(
+      new DefaultAzureCredentialOptions() {
+        ExcludeInteractiveBrowserCredential = false,
+        ExcludeManagedIdentityCredential = true,
+      });
+
+    authLogWriter_ = new StringWriter();
+    authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
+  }
+
+  public static SymbolReaderAuthenticationHandler CreateAuthHandler(SymbolFileSourceSettings settings) {
+    var authHandler = new SymbolReaderAuthenticationHandler();
+    authHandler.AddHandler(authSymwebHandler_);
+
+    if (settings.AuthorizationTokenEnabled) {
+      authHandler.AddHandler(new BasicAuthenticationHandler(settings, authLogWriter_));
+    }
+    
+    return authHandler;
+  }
+
   public static DebugFileSearchResult
     LocateDebugInfoFile(SymbolFileDescriptor symbolFile,
                         SymbolFileSourceSettings settings) {
@@ -95,22 +124,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     string result = null;
     using var logWriter = new StringWriter();
 
-    DefaultAzureCredential credential = new DefaultAzureCredential(
-      new DefaultAzureCredentialOptions()
-      {
-        ExcludeInteractiveBrowserCredential = false,
-        ExcludeManagedIdentityCredential = true,
-      });
-
-    SymbolReaderAuthenticationHandler symbolReaderAuthHandler = new SymbolReaderAuthenticationHandler()
-      .AddHandler(new SymwebHandler(logWriter, credential));
-
-    //symbolReaderAuthHandler.AddHandler(new BasicAuthenticationHandler(settings))
-
     // In case there is a timeout downloading the symbols, try again.
     string symbolSearchPath = ConstructSymbolSearchPath(settings);
-    using var authHandler = new BasicAuthenticationHandler(settings);
-    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, symbolReaderAuthHandler);
+    using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, CreateAuthHandler(settings));
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
     try {
@@ -249,7 +265,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       symbolCache_ = otherPdb.symbolCache_;
       sortedFuncList_ = otherPdb.sortedFuncList_;
     }
-
 
     return true;
   }
@@ -536,9 +551,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       try {
         lock (this) {
           if (symbolReaderPDB_ == null) {
-            var authHandler = new BasicAuthenticationHandler(settings_);
             symbolReaderLog_ = new StringWriter();
-            symbolReader_ = new SymbolReader(symbolReaderLog_, null, authHandler);
+            symbolReader_ = new SymbolReader(symbolReaderLog_, null, CreateAuthHandler(settings_));
             symbolReader_.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
             symbolReaderPDB_ = symbolReader_.OpenNativeSymbolFile(debugFilePath_);
 
@@ -935,32 +949,32 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 }
 
-sealed class BasicAuthenticationHandler : MessageProcessingHandler {
+sealed class BasicAuthenticationHandler : SymbolReaderAuthHandler {
   private SymbolFileSourceSettings settings_;
 
-  public BasicAuthenticationHandler(SymbolFileSourceSettings settings) {
-    settings_ = settings;
-    InnerHandler = new HttpClientHandler();
+  public BasicAuthenticationHandler(SymbolFileSourceSettings settings, TextWriter log) : 
+    base(log, "HTTP Auth") {
   }
 
-  protected override HttpRequestMessage
-    ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken) {
-    Trace.WriteLine($"HTTP request: {request.RequestUri}, host: {request.RequestUri.Host}");
+  protected override bool TryGetAuthority(Uri requestUri, out Uri authority) {
+    if (!settings_.AuthorizationTokenEnabled) {
+      authority = null;
+      return false;
+    }
 
+    authority = requestUri;
+    return true;
+  }
+
+  protected override Task<AuthToken?> GetAuthTokenAsync(RequestContext context, SymbolReaderHandlerDelegate next,
+                                                        Uri authority, CancellationToken cancellationToken) {
     if (settings_.AuthorizationTokenEnabled) {
       string username = settings_.AuthorizationUser;
       string pat = settings_.AuthorizationToken;
-      Trace.WriteLine($"Using PAT for user {username}, token {new string('*', pat.Length)}");
-
-      string headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{pat}"));
-      request.Headers.Add("Authorization", $"Basic {headerValue}");
+      var token = AuthToken.CreateBasicFromUsernameAndPassword(username, pat);
+      return Task.FromResult<AuthToken?>(token);
     }
 
-    return request;
-  }
-
-  protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response,
-                                                         CancellationToken cancellationToken) {
-    return response;
+    return null;
   }
 }

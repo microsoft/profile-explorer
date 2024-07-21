@@ -653,7 +653,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
-    var pdbTaskSemaphore = new SemaphoreSlim(8);
+    var pdbTaskSemaphore = new SemaphoreSlim(12);
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
