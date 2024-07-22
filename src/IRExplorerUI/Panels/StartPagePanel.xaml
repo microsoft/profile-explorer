@@ -149,7 +149,7 @@
                     <TextBlock
                       Margin="0,0,16,0"
                       HorizontalAlignment="Stretch"
-                      Foreground="MidnightBlue"
+                      Foreground="DarkBlue"
                       Text="{Binding TraceProcess}"
                       TextTrimming="CharacterEllipsis" />
                     <TextBlock
@@ -197,7 +197,7 @@
               </ListBox.ItemContainerStyle>
             </ListBox>
           </Expander>
-          
+
           <Expander Margin="0,8,0,0" IsExpanded="True">
             <Expander.Header>
               <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">

@@ -1298,9 +1298,9 @@
     <panels:StartPagePanel
       x:Name="StartPage"
       Grid.Row="1"
-      Width="500"
-      MinWidth="200"
-      MinHeight="100"
+      Width="520"
+      MinWidth="520"
+      MinHeight="200"
       HorizontalAlignment="Left"
       VerticalAlignment="Top"
       Panel.ZIndex="2"

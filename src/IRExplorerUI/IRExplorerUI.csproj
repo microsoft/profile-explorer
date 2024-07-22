@@ -167,7 +167,6 @@
 		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.0-beta.24314.3"/>
 		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.13" />
 		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23"/>
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication" Version="3.1.13" />
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="17.7.32">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -313,6 +312,12 @@
 		<Page Update="Windows\ProfileLoadWindow.xaml">
 			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication">
+	    <HintPath>..\external\Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 
 
