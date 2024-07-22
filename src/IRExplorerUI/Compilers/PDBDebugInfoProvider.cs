@@ -40,7 +40,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private static readonly StringWriter authLogWriter_;
   private static readonly SymwebHandler authSymwebHandler_;
   private static object undecorateLock_ = new(); // Global lock for undname.
-  
+
   private object cacheLock_ = new();
   private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
@@ -86,8 +86,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   static PDBDebugInfoProvider() {
-    // Create a single instance of the Symweb handler so that 
-    // when concurrent requests are made and login must be done, 
+    // Create a single instance of the Symweb handler so that
+    // when concurrent requests are made and login must be done,
     // the login page is displayed a single time, with other requests waiting for a token.
     var authCredential = new DefaultAzureCredential(
       new DefaultAzureCredentialOptions() {
@@ -106,7 +106,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if (settings.AuthorizationTokenEnabled) {
       authHandler.AddHandler(new BasicAuthenticationHandler(settings, authLogWriter_));
     }
-    
+
     return authHandler;
   }
 
@@ -369,7 +369,13 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   public FunctionDebugInfo FindFunctionByRVA(long rva) {
     try {
       if (sortedFuncList_ != null) {
-        return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
+        // Query the function list first. If not found, then still query the actual PDB
+        // because DIA has special lookup for functions split into multiple chunks by PGO for ex.
+        var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
+
+        if (result != null) {
+          return result;
+        }
       }
 
       // Preload the function list only when there are enough queries
@@ -378,10 +384,15 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         GetSortedFunctions();
 
         if (sortedFuncList_ != null) {
-          return FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
+          var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
+
+          if (result != null) {
+            return result;
+          }
         }
       }
 
+      // Query the PDB file.
       var symbol = FindFunctionSymbolByRVA(rva);
 
       if (symbol != null) {
@@ -439,6 +450,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     if (settings_.CacheSymbolFiles) {
+      // Try to load a previous cached function list file.
       symbolCache_ = await SymbolFileCache.DeserializeAsync(symbolFile_, settings_.SymbolCacheDirectoryPath).
         ConfigureAwait(false);
     }
@@ -952,7 +964,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 sealed class BasicAuthenticationHandler : SymbolReaderAuthHandler {
   private SymbolFileSourceSettings settings_;
 
-  public BasicAuthenticationHandler(SymbolFileSourceSettings settings, TextWriter log) : 
+  public BasicAuthenticationHandler(SymbolFileSourceSettings settings, TextWriter log) :
     base(log, "HTTP Auth") {
   }
 
