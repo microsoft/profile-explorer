@@ -186,6 +186,10 @@ public class ApplicationSettings {
     ProfileOptions.PreviousLoadedSessions.Remove(report);
   }
 
+  public void ClearLoadedProfileSession() {
+    ProfileOptions.PreviousLoadedSessions.Clear();
+  }
+
   public void SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, byte[] data) {
     FunctionTaskOptions[taskInfo.Id] = data;
   }

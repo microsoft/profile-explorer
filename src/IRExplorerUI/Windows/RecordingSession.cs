@@ -44,7 +44,7 @@ public class RecordingSession : BindableObject {
   public static RecordingSession FromCommandLineArgs() {
     string[] args = Environment.GetCommandLineArgs();
 
-    if (args.Length >= 6 && args[1] == "--open-trace") {
+    if (args.Length >= 5 && args[1] == "--open-trace") {
       var report = new ProfileDataReport();
       report.TraceInfo = new ProfileTraceInfo(args[2]);
 
@@ -54,14 +54,19 @@ public class RecordingSession : BindableObject {
         return null;
       }
 
-      report.SymbolSettings = App.Settings.SymbolSettings.WithSymbolPaths(args[3]);
-
+      var processName = args[3];
+      
       if (!int.TryParse(args[4], out int processId)) {
         MessageBox.Show("Process ID is not an integer.");
         return null;
       }
 
-      report.Process = new ProfileProcess(processId, args[5]);
+      report.Process = new ProfileProcess(processId, processName);
+      
+      if (args.Length >= 6) {
+        report.SymbolSettings = App.Settings.SymbolSettings.WithSymbolPaths(args[5]);
+      }
+      
       return new RecordingSession(report, true);
     }
 
@@ -73,7 +78,7 @@ public class RecordingSession : BindableObject {
     report.TraceInfo = new ProfileTraceInfo(filePath);
     return new RecordingSession(report, true);
   }
-
+  
   public ProfileDataReport Report => report_;
 
   public bool IsNewSession {
@@ -107,6 +112,10 @@ public class RecordingSession : BindableObject {
     }
     set => SetAndNotify(ref title_, value);
   }
+
+  public string TraceFile => isLoadedFile_ ? Utils.TryGetFileName(report_.TraceInfo.TraceFilePath) : null;
+  public string TraceProcess => isLoadedFile_ ? report_?.Process.ImageFileName : null;
+  public string TraceTime => report_.TraceInfo.ProfileStartTime.ToShortDateString();
 
   public string ToolTip {
     get {

@@ -64,212 +64,322 @@
         HorizontalScrollBarVisibility="Disabled"
         VerticalScrollBarVisibility="Auto">
         <StackPanel VerticalAlignment="Top" Orientation="Vertical">
-           <DockPanel Margin="0,0,0,8">
-            <StackPanel
-              HorizontalAlignment="Left"
-              Orientation="Horizontal">
-              <Button
-                Height="24"
-                Margin="0,0,2,0"
-                Padding="2,2,2,2"
-                Click="LoadProfileButton_Click">
-                <StackPanel Orientation="Horizontal">
-                  <Image Source="{StaticResource FolderIcon}" VerticalAlignment="Center" />
-                  <TextBlock Margin="4,0,4,0" Text="Load Profile" VerticalAlignment="Center"></TextBlock>
-                </StackPanel>
-              </Button>
-              <Button
-                Height="24"
-                Margin="0,0,2,0"
-                Padding="2,2,2,2"
-                
-                Click="RecordProfileButton_Click">
-                <StackPanel Orientation="Horizontal">
-                  <Image Source="{StaticResource RecordIcon}" VerticalAlignment="Center"/>
-                  <TextBlock Margin="4,0,4,0" Text="Record Profile" VerticalAlignment="Center"></TextBlock>
-                </StackPanel>
-              </Button>
-            </StackPanel>
-          </DockPanel>
-          <Separator />
+           <Expander Margin="0,4,0,0" IsExpanded="True">
+            <Expander.Header>
+              <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
+                <TextBlock Text="Recent Profile Sessions" VerticalAlignment="Center"/>
+                <Button
+                  Width="24"
+                  Height="24"
+                  Margin="16,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="OpenFileButton_Click"
+                  ToolTip="Open profile trace file">
+                  <Image Source="{StaticResource FolderIcon}" />
+                </Button>
+                <Button
+                  Width="24"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="LoadProfileButton_Click"
+                  ToolTip="View previous profile sessions or start a new one">
+                  <Image Source="{StaticResource HistoryBackIcon}" />
+                </Button>
+                <Button
+                  Width="24"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="RecordProfileButton_Click"
+                  ToolTip="Start a profile recording session">
+                  <Image Source="{StaticResource RecordIcon}" />
+                </Button>
+                <toolkit:AutoCompleteBox
+                  VerticalAlignment="Center"
+                  DockPanel.Dock="Right"
+                  HorizontalAlignment="Right"
+                  Width="200"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                  BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                  FilterMode="ContainsOrdinal"
+                  IsDropDownOpen="True"
+                  IsTextCompletionEnabled="False"
+                  KeyDown="ProfileTextSearch_KeyDown"
+                  MinimumPrefixLength="1"
+                  Placeholder="Search recent sessions"
+                  Populating="ProfileTextSearch_Populating"
+                  Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                  <toolkit:AutoCompleteBox.InputBindings>
+                    <KeyBinding Key="Escape" CommandTarget="{Binding ElementName=SearchPanelControl}" />
+                  </toolkit:AutoCompleteBox.InputBindings>
+                </toolkit:AutoCompleteBox>
+                <Button
+                  Width="24"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Padding="2,2,2,2"
+                  DockPanel.Dock="Right"
+                  HorizontalAlignment="Right"
+                  Click="ClearButton_Click"
+                  ToolTip="Clear list of recent profile sessions">
+                  <Image Source="{StaticResource RemoveIcon}" />
+                </Button>
+              </StackPanel>
+            </Expander.Header>
+            <ListBox
+              Name="RecentProfilesListBox"
+              Margin="0,8,0,0"
+              FontSize="12"
+              KeyDown="RecentProfilesListBox_KeyDown"
+              MouseDoubleClick="RecentProfilesListBox_MouseDoubleClick"
+              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+              SelectionMode="Single">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid HorizontalAlignment="Stretch" ToolTip="{Binding Title}">
+                    <StackPanel Orientation="Horizontal">
+                    <TextBlock
+                      HorizontalAlignment="Stretch"
+                      Text="{Binding TraceFile}"
+                      TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text=",  "></TextBlock>
+                    <TextBlock
+                      Margin="0,0,16,0"
+                      HorizontalAlignment="Stretch"
+                      Foreground="MidnightBlue"
+                      Text="{Binding TraceProcess}"
+                      TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                      Margin="0,0,30,0"
+                      HorizontalAlignment="Stretch"
+                      Foreground="DimGray"
+                      Text="{Binding TraceTime}"
+                      TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Margin="4,0,0,0" HorizontalAlignment="Right">
+                      <Button
+                        Name="RemoveButton"
+                        Width="16"
+                        Height="16"
+                        Padding="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="RemoveProfileButton_OnClick"
+                        ToolTip="Remove session entry from history">
+                        <Image
+                          Width="14"
+                          Height="14"
+                          Source="{StaticResource ClearIcon}" />
+                      </Button>
 
-          <DockPanel Margin="0,8,0,4">
-            <StackPanel
-              HorizontalAlignment="Left"
-              DockPanel.Dock="Left"
-              Orientation="Horizontal">
-              <Button
-                x:Name="OpenButton"
-                Height="24"
-                Padding="6,1,6,1"
-                HorizontalAlignment="Right"
-                Click="OpenFileButton_Click"
-                Content="Open File"/>
-              <Button
-                Name="ClearButton"
-                Width="24"
-                Height="24"
-                Margin="2,0,2,0"
-                Padding="2,2,2,2"
-                Click="ClearButton_Click"
-                ToolTip="Clear list of recent files">
-                <Image Source="{StaticResource RemoveIcon}" />
-              </Button>
-            </StackPanel>
-            
-            <toolkit:AutoCompleteBox
-              Name="TextSearch"
-              HorizontalAlignment="Right"
-              Width="200"
-              Margin="4,0,2,0"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-              BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
-              FilterMode="ContainsOrdinal"
-              IsDropDownOpen="True"
-              IsTextCompletionEnabled="False"
-              KeyDown="TextSearch_KeyDown"
-              MinimumPrefixLength="1"
-              Placeholder="Search recent files"
-              Populating="TextSearch_Populating"
-              Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-              <toolkit:AutoCompleteBox.InputBindings>
-                <KeyBinding Key="Escape" CommandTarget="{Binding ElementName=SearchPanelControl}" />
-              </toolkit:AutoCompleteBox.InputBindings>
-            </toolkit:AutoCompleteBox>
-          </DockPanel>
-          <ListBox
-            Name="RecentFilesListBox"
-            Margin="0,8,0,0"
-            FontSize="12"
-            KeyDown="RecentFilesListBox_KeyDown"
-            MouseDoubleClick="RecentFilesListBox_MouseDoubleClick"
-            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-            SelectionMode="Single">
-            <ListBox.ItemTemplate>
-              <DataTemplate>
-                <Grid HorizontalAlignment="Stretch">
-                  <TextBlock
-                    Margin="0,0,30,0"
-                    HorizontalAlignment="Stretch"
-                    Text="{Binding .}"
-                    TextTrimming="CharacterEllipsis" />
-                  <StackPanel Margin="4,0,0,0" HorizontalAlignment="Right">
-                    <Button
-                      Name="RemoveButton"
-                      Width="16"
-                      Height="16"
-                      Padding="1"
-                      Background="Transparent"
-                      BorderThickness="0"
-                      Click="RemoveButton_OnClick"
-                      ToolTip="Remove entry from history">
-                      <Image
-                        Width="14"
-                        Height="14"
-                        Source="{StaticResource ClearIcon}" />
-                    </Button>
+                      <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                          <Style.Triggers>
+                            <DataTrigger
+                              Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                              Value="False">
+                              <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </StackPanel.Style>
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+              <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                  <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+              </ListBox.ItemContainerStyle>
+            </ListBox>
+          </Expander>
+          
+          <Expander Margin="0,8,0,0" IsExpanded="True">
+            <Expander.Header>
+              <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
+                <TextBlock Text="Recent Files" VerticalAlignment="Center"/>
+                <Button
+                  Name="OpenButton"
+                  Width="24"
+                  Height="24"
+                  Margin="130,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="OpenFileButton_Click"
+                  ToolTip="Open file">
+                  <Image Source="{StaticResource FolderIcon}" />
+                </Button>
+                <toolkit:AutoCompleteBox
+                  Name="TextSearch"
+                  VerticalAlignment="Center"
+                  DockPanel.Dock="Right"
+                  HorizontalAlignment="Right"
+                  Width="200"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                  BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                  FilterMode="ContainsOrdinal"
+                  IsDropDownOpen="True"
+                  IsTextCompletionEnabled="False"
+                  KeyDown="TextSearch_KeyDown"
+                  MinimumPrefixLength="1"
+                  Placeholder="Search recent files"
+                  Populating="TextSearch_Populating"
+                  Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                  <toolkit:AutoCompleteBox.InputBindings>
+                    <KeyBinding Key="Escape" CommandTarget="{Binding ElementName=SearchPanelControl}" />
+                  </toolkit:AutoCompleteBox.InputBindings>
+                </toolkit:AutoCompleteBox>
+                <Button
+                  Name="ClearButton"
+                  Width="24"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="ClearButton_Click"
+                  ToolTip="Clear list of recent opened files">
+                  <Image Source="{StaticResource RemoveIcon}" />
+                </Button>
+              </StackPanel>
+            </Expander.Header>
+            <ListBox
+              Name="RecentFilesListBox"
+              Margin="0,8,0,0"
+              FontSize="12"
+              KeyDown="RecentFilesListBox_KeyDown"
+              MouseDoubleClick="RecentFilesListBox_MouseDoubleClick"
+              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+              SelectionMode="Single">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid HorizontalAlignment="Stretch">
+                    <TextBlock
+                      Margin="0,0,30,0"
+                      HorizontalAlignment="Stretch"
+                      Text="{Binding .}"
+                      TextTrimming="CharacterEllipsis" />
+                    <StackPanel Margin="4,0,0,0" HorizontalAlignment="Right">
+                      <Button
+                        Name="RemoveButton"
+                        Width="16"
+                        Height="16"
+                        Padding="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="RemoveButton_OnClick"
+                        ToolTip="Remove file entry from history">
+                        <Image
+                          Width="14"
+                          Height="14"
+                          Source="{StaticResource ClearIcon}" />
+                      </Button>
 
-                    <StackPanel.Style>
-                      <Style TargetType="{x:Type StackPanel}">
-                        <Style.Triggers>
-                          <DataTrigger
-                            Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
-                            Value="False">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </StackPanel.Style>
-                  </StackPanel>
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-            <ListBox.ItemContainerStyle>
-              <Style TargetType="ListBoxItem">
-                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-              </Style>
-            </ListBox.ItemContainerStyle>
-          </ListBox>
+                      <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                          <Style.Triggers>
+                            <DataTrigger
+                              Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                              Value="False">
+                              <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </StackPanel.Style>
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+              <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                  <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+              </ListBox.ItemContainerStyle>
+            </ListBox>
+          </Expander>
 
-          <DockPanel Margin="0,8,0,0" LastChildFill="False">
-            <StackPanel
-              HorizontalAlignment="Left"
-              DockPanel.Dock="Left"
-              Orientation="Horizontal">
-              <Button
-                x:Name="OpenBaseDiffFilesButton"
-                Height="24"
-                Padding="6,1,6,1"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Click="OpenBaseDiffFilesButton_Click"
-                Content="Compare Base/Diff Files"/>
-              <Button
-                Name="ClearDiffButton"
-                Width="24"
-                Height="24"
-                Margin="2,0,2,0"
-                Padding="2,2,2,2"
-                Click="ClearDiffButton_Click"
-                ToolTip="Clear list of recent compared files">
-                <Image Source="{StaticResource RemoveIcon}" UseLayoutRounding="True" />
-              </Button>
-            </StackPanel>
-          </DockPanel>
-          <ListBox
-            Name="RecentDiffFilesListBox"
-            Margin="0,8,0,0"
-            FontSize="14"
-            KeyDown="RecentDiffFilesListBox_KeyDown"
-            MouseDoubleClick="RecentDiffFilesListBox_MouseDoubleClick"
-            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-            SelectionMode="Single">
-            <ListBox.ItemTemplate>
-              <DataTemplate>
-                <Grid HorizontalAlignment="Stretch">
-                  <StackPanel
-                    Margin="0,0,30,0"
-                    HorizontalAlignment="Stretch"
-                    Orientation="Vertical">
-                    <TextBlock FontSize="12" Text="{Binding Item1}" />
-                    <Separator />
-                    <TextBlock FontSize="12" Text="{Binding Item2}" />
-                  </StackPanel>
+          <Expander Margin="0,8,0,0" IsExpanded="False" Visibility="Collapsed">
+             <Expander.Header>
+              <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                <TextBlock Text="Recent Base/Diff Files" VerticalAlignment="Center"/>
+                <Button
+                  Width="24"
+                  Height="24"
+                  Margin="24,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="OpenBaseDiffFilesButton_Click"
+                  ToolTip="Clear list of recent files">
+                  <Image Source="{StaticResource FolderIcon}" />
+                </Button>
+                <Button
+                  Width="24"
+                  Height="24"
+                  Margin="2,0,2,0"
+                  Padding="2,2,2,2"
+                  Click="DiffRemoveButton_OnClick"
+                  ToolTip="Clear list of recent files">
+                  <Image Source="{StaticResource RemoveIcon}" />
+                </Button>
+              </DockPanel>
+            </Expander.Header>
+            <ListBox
+              Name="RecentDiffFilesListBox"
+              Margin="0,8,0,0"
+              FontSize="14"
+              KeyDown="RecentDiffFilesListBox_KeyDown"
+              MouseDoubleClick="RecentDiffFilesListBox_MouseDoubleClick"
+              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+              SelectionMode="Single">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid HorizontalAlignment="Stretch">
+                    <StackPanel
+                      Margin="0,0,30,0"
+                      HorizontalAlignment="Stretch"
+                      Orientation="Vertical">
+                      <TextBlock FontSize="12" Text="{Binding Item1}" />
+                      <Separator />
+                      <TextBlock FontSize="12" Text="{Binding Item2}" />
+                    </StackPanel>
 
-                  <StackPanel
-                    Margin="4,0,0,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center">
-                    <Button
-                      Name="DiffRemoveButton"
-                      Width="16"
-                      Height="16"
-                      Padding="1"
-                      Background="Transparent"
-                      BorderThickness="0"
-                      Click="DiffRemoveButton_OnClick"
-                      ToolTip="Remove entry from history">
-                      <Image
-                        Width="14"
-                        Height="14"
-                        Source="{StaticResource ClearIcon}" />
-                    </Button>
-                    <StackPanel.Style>
-                      <Style TargetType="{x:Type StackPanel}">
-                        <Style.Triggers>
-                          <DataTrigger
-                            Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
-                            Value="False">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </StackPanel.Style>
-                  </StackPanel>
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+                    <StackPanel
+                      Margin="4,0,0,0"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center">
+                      <Button
+                        Name="DiffRemoveButton"
+                        Width="16"
+                        Height="16"
+                        Padding="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="DiffRemoveButton_OnClick"
+                        ToolTip="Remove entry from history">
+                        <Image
+                          Width="14"
+                          Height="14"
+                          Source="{StaticResource ClearIcon}" />
+                      </Button>
+                      <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                          <Style.Triggers>
+                            <DataTrigger
+                              Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
+                              Value="False">
+                              <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </StackPanel.Style>
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Expander>
         </StackPanel>
       </ScrollViewer>
     </DockPanel>

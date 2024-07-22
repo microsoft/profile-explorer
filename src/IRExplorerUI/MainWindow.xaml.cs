@@ -436,13 +436,18 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     string[] args = Environment.GetCommandLineArgs();
 
     if (args.Length > 1 && args[1] == "--open-trace") {
-      var window = new ProfileLoadWindow(this, false);
-      window.Owner = this;
-      bool? result = window.ShowDialog();
+      var session = RecordingSession.FromCommandLineArgs();
+      await LoadProfileSession(session);
+    }
+  }
 
-      if (result.HasValue && result.Value) {
-        await SetupLoadedProfile();
-      }
+  private async Task LoadProfileSession(RecordingSession session) {
+    var window = new ProfileLoadWindow(this, false, session, true);
+    window.Owner = this;
+    bool? result = window.ShowDialog();
+
+    if (result.HasValue && result.Value) {
+      await SetupLoadedProfile();
     }
   }
 
@@ -662,24 +667,41 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private void SetupStartPagePanel() {
     StartPage.OpenRecentDocument += StartPage_OpenRecentDocument;
     StartPage.OpenRecentDiffDocuments += StartPage_OpenRecentDiffDocuments;
+    StartPage.OpenRecentProfileSession += StartPage_OpenRecentProfileSession;
     StartPage.OpenFile += StartPage_OpenFile;
     StartPage.CompareFiles += StartPage_CompareFiles;
     StartPage.ClearRecentDocuments += StartPage_ClearRecentDocuments;
     StartPage.ClearRecentDiffDocuments += StartPage_ClearRecentDiffDocuments;
+    StartPage.ClearRecentProfileSessions += StartPage_ClearRecentProfileSessions;
     StartPage.LoadProfile += StartPage_LoadProfile;
     StartPage.RecordProfile += StartPage_RecordProfile;
-    
     UpdateStartPagePanelPosition();
+  }
+
+  private void StartPage_ClearRecentProfileSessions(object sender, EventArgs e) {
+    using var centerForm = new DialogCenteringHelper(this);
+
+    if (MessageBox.Show("Clear the list of recent profile sessions?", "IR Explorer",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
+        MessageBoxResult.Yes) {
+      App.Settings.ClearLoadedProfileSession();
+      App.SaveApplicationSettings();
+      StartPage.ReloadFileList();
+    }
+  }
+
+  private async void StartPage_OpenRecentProfileSession(object sender, RecordingSession session) {
+    await LoadProfileSession(session);
   }
 
   private async void StartPage_LoadProfile(object sender, EventArgs e) {
     await LoadProfile();
   }
-  
+
   private async void StartPage_RecordProfile(object sender, EventArgs e) {
     await RecordProfile();
   }
-  
+
   private void StartPage_ClearRecentDiffDocuments(object sender, EventArgs e) {
     using var centerForm = new DialogCenteringHelper(this);
 

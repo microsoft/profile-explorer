@@ -47,16 +47,19 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
   private bool showLoadingProgress_;
+  private bool openLoadedSession_;
   private double lastProgressPercentage_ = 0;
 
   public ProfileLoadWindow(ISession session, bool recordMode,
-                           RecordingSession loadedSession = null) {
+                           RecordingSession loadedSession = null,
+                           bool openLoadedSession = false) {
     InitializeComponent();
     DataContext = this;
     Session = session;
     loadTask_ = new CancelableTaskInstance();
     IsRecordMode = recordMode;
     loadedSession_ = loadedSession;
+    openLoadedSession_ = openLoadedSession;
 
     if (IsRecordMode) {
       Title = "Record profile trace";
@@ -210,7 +213,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
   }
 
-  public void UpdatePerfCounterList() {
+  private void UpdatePerfCounterList() {
     var counters = ETWRecordingSession.BuiltinPerformanceCounters;
 
     foreach (var counter in counters) {
@@ -265,35 +268,19 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     SessionList.ItemsSource = new ListCollectionView(sessionList);
   }
 
-  private void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
-    //? TODO: Use CreateSessionFromCommandLineArgs
-    string[] args = Environment.GetCommandLineArgs();
-
-    // -- open-trace file.etl processName processId optionalSymbolPath
-    if (args.Length >= 5 && args[1] == "--open-trace") {
-      string symbolPath = "";
-      string traceFilePath = args[2];
-
-      if (!File.Exists(traceFilePath) || Path.GetExtension(traceFilePath) != ".etl") {
-        MessageBox.Show("Trace file does not exist.");
-        return;
-      }
-
-      string imageFileName = args[3];
-
-      if (!int.TryParse(args[4], out int processId)) {
-        MessageBox.Show("Process ID is not an integer.");
-        return;
-      }
-
-      if (args.Length >= 6) {
-        symbolPath = args[5];
-      }
-
-      LoadProfileFromArgs(traceFilePath, symbolPath, processId, imageFileName);
-    }
-    else if (loadedSession_ != null) {
+  private async void ProfileLoadWindow_ContentRendered(object sender, EventArgs e) {
+    if (loadedSession_ != null) {
       SwitchCurrentSession(loadedSession_);
+
+      if (openLoadedSession_) {
+        var process = new ProfileProcess(loadedSession_.Report.Process.ProcessId, 
+                                         loadedSession_.Report.Process.Name);
+        selectedProcSummary_ = new List<ProcessSummary>() {
+          new(process, TimeSpan.Zero)
+        };
+
+        await LoadProfileTraceFileAndCloseWindow(loadedSession_.Report.SymbolSettings);
+      }
     }
   }
 
@@ -804,18 +791,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       SetupSessionList();
       SaveCurrentOptions();
     }
-  }
-
-  private async void LoadProfileFromArgs(string traceFilePath, string symbolPath, int processId, string imageFileName) {
-    ProfileFilePath = traceFilePath;
-    BinaryFilePath = imageFileName;
-
-    var process = new ProfileProcess(processId, imageFileName);
-    selectedProcSummary_ = new List<ProcessSummary>() {
-      new(process, TimeSpan.Zero)
-    };
-
-    await LoadProfileTraceFileAndCloseWindow(symbolSettings_.WithSymbolPaths(symbolPath));
   }
 
   private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {

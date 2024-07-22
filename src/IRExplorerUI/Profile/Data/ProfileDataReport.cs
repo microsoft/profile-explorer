@@ -124,6 +124,10 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
            TraceInfo.HasSameTraceFilePath(other.TraceInfo);
   }
 
+  public override string ToString() {
+    return $"{TraceInfo.TraceFilePath}, {Process.Name}";
+  }
+
   private ModuleStatus GetOrCreateModuleStatus(BinaryFileDescriptor binaryInfo) {
     if (!moduleStatusMap_.TryGetValue(binaryInfo, out var status)) {
       status = new ModuleStatus();
