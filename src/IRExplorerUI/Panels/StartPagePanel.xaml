@@ -60,7 +60,7 @@
       <ScrollViewer
         Margin="0,12,0,0"
         Padding="10,10,10,10"
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        Background="#F2F9FF"
         HorizontalScrollBarVisibility="Disabled"
         VerticalScrollBarVisibility="Auto">
         <StackPanel VerticalAlignment="Top" Orientation="Vertical">
@@ -198,7 +198,7 @@
             </ListBox>
           </Expander>
 
-          <Expander Margin="0,8,0,0" IsExpanded="True">
+          <Expander Margin="0,16,0,0" IsExpanded="True">
             <Expander.Header>
               <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
                 <TextBlock Text="Recent Files" VerticalAlignment="Center"/>
