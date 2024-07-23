@@ -885,32 +885,28 @@
                       </StackPanel>
                     </MenuItem.Header>
                     <MenuItem
-                      Checked="ViewMenuItem_OnCheckedChanged"
+                      x:Name="ViewMenuItem1"
                       Header="Show Performance Counters"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceCounterColumns}"
                       StaysOpenOnClick="True"
-                      Style="{DynamicResource SubMenuItemHeaderStyle}"
-                      Unchecked="ViewMenuItem_OnCheckedChanged" />
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                     <MenuItem
-                      Checked="ViewMenuItem_OnCheckedChanged"
+                      x:Name="ViewMenuItem2"
                       Header="Show Performance Metrics"
                       IsCheckable="True"
                       IsChecked="{Binding ShowPerformanceMetricColumns}"
                       StaysOpenOnClick="True"
-                      Style="{DynamicResource SubMenuItemHeaderStyle}"
-                      Unchecked="ViewMenuItem_OnCheckedChanged" />
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                     <MenuItem
-                      Checked="ViewMenuItem_OnCheckedChanged"
+                      x:Name="ViewMenuItem3"
                       Header="Hide Empty Columns"
                       IsCheckable="True"
                       IsChecked="{Binding RemoveEmptyColumns}"
                       StaysOpenOnClick="True"
-                      Style="{DynamicResource SubMenuItemHeaderStyle}"
-                      Unchecked="ViewMenuItem_OnCheckedChanged" />
+                      Style="{DynamicResource SubMenuItemHeaderStyle}"/>
                     <Separator />
                     <MenuItem
-                      Checked="ViewMenuItem_OnCheckedChanged"
                       Header="Columns"
                       IsEnabled="False"
                       IsHitTestVisible="False"

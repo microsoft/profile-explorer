@@ -41,7 +41,7 @@ public class SectionSettings : SettingsBase {
   public bool LowerIdenticalToPreviousOpacity { get; set; }
   [ProtoMember(17)][OptionValue(true)]
   public bool ShowDemangledNames { get; set; }
-  [ProtoMember(18)][OptionValue(false)]
+  [ProtoMember(18)][OptionValue(true)]
   public bool DemangleOnlyNames { get; set; }
   [ProtoMember(19)][OptionValue(true)]
   public bool DemangleNoReturnType { get; set; }

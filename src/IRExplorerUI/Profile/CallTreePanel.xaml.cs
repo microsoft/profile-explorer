@@ -353,6 +353,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public async Task DisplayProfileCallTree() {
+    using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
+
     if (callTreeEx_ != null) {
       Reset();
     }
@@ -360,7 +362,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     CallTree = Session.ProfileData.CallTree;
     callTreeEx_ = await Task.Run(() => CreateProfileCallTree());
     CallTreeList.Model = callTreeEx_;
-    await UpdateMarkedFunctions(true);
+    await UpdateMarkedFunctionsNoLock(true);
 
     if (settings_.ExpandHottestPath) {
       ExpandHottestFunctionPath();
@@ -370,12 +372,12 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public async Task DisplayProfileCallerCalleeTree(IRTextFunction function) {
     using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     function_ = function;
-    CallTree = Session.ProfileData.CallTree;
     ignoreNextSelectionEvent_ = true; // Prevent deselection even to be triggered.
 
+    CallTree = Session.ProfileData.CallTree;
     callTreeEx_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
     CallTreeList.Model = callTreeEx_;
-    await UpdateMarkedFunctions(true);
+    await UpdateMarkedFunctionsNoLock(true);
     ExpandCallTreeTop();
     ignoreNextSelectionEvent_ = false;
   }
@@ -1174,7 +1176,10 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   public async Task UpdateMarkedFunctions(bool externalCall = false) {
     using var task = await loadTask_.WaitAndCreateTaskAsync();
-    
+    await UpdateMarkedFunctionsNoLock(externalCall);
+  }
+
+  private async Task UpdateMarkedFunctionsNoLock(bool externalCall) {
     if (callTreeNodeToNodeExMap_ != null) {
       UpdateMarkedFunctionsImpl();
       OnPropertyChanged(nameof(HasEnabledMarkedModules));

@@ -13,17 +13,18 @@ public static class WaitHandleExtensions {
   }
 
   public static Task AsTask(this WaitHandle handle, TimeSpan timeout) {
-    var tcs = new TaskCompletionSource<object>();
+    var taskSource = new TaskCompletionSource<object>();
     var registration = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) => {
-      var localTcs = (TaskCompletionSource<object>)state;
+      var localTaskSource = (TaskCompletionSource<object>)state;
       if (timedOut)
-        localTcs.TrySetCanceled();
+        localTaskSource.TrySetCanceled();
       else
-        localTcs.TrySetResult(null);
-    }, tcs, timeout, true);
-    tcs.Task.ContinueWith((_, state) => ((RegisteredWaitHandle)state).Unregister(null), registration,
+        localTaskSource.TrySetResult(null);
+    }, taskSource, timeout, true);
+
+    taskSource.Task.ContinueWith((_, state) => ((RegisteredWaitHandle)state).Unregister(null), registration,
                           TaskScheduler.Default);
-    return tcs.Task;
+    return taskSource.Task;
   }
 }
 
@@ -76,7 +77,7 @@ public class CancelableTask : IDisposable {
     return taskCompletedEvent_.WaitOne(timeout);
   }
 
-  public async Task<bool> WaitToCompleteAsync(TimeSpan timeout) {
+  private async Task<bool> WaitToCompleteAsync(TimeSpan timeout) {
     //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
     //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
     if (disposed_) {
@@ -122,7 +123,7 @@ public class CancelableTask : IDisposable {
     GC.SuppressFinalize(this);
   }
 
-  protected virtual void Dispose(bool disposing) {
+  private void Dispose(bool disposing) {
     if (!disposed_) {
       taskCompletedEvent_.Set(); // May not be marked as completed yet.
       tokenSource_.Dispose();

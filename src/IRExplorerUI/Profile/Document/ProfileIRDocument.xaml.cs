@@ -272,7 +272,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private ProfileDocumentMarker profileMarker_;
   private bool isPreviewDocument_;
   private bool isSourceFileDocument_;
-  private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
   private CancelableTaskInstance loadTask_;
   private SourceCodeLanguage sourceLanguage_;
@@ -280,6 +279,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   private RangeColorizer assemblyColorizer_;
   private SourceStackFrame inlinee_;
   private bool ignoreNextRowSelectedEvent_;
+  private MenuItem[] viewMenuItems_;
 
   public ProfileIRDocument() {
     InitializeComponent();
@@ -296,6 +296,11 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
                                                 () => {
                                                   FunctionHistoryChanged?.Invoke(this, EventArgs.Empty);
                                                 });
+    viewMenuItems_ = new[] {
+      ViewMenuItem1,
+      ViewMenuItem2,
+      ViewMenuItem3,
+    };
   }
 
   private void SetupEvents() {
@@ -1444,6 +1449,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
         }
       }
 
+      ResetViewMenuItemEvents();
       ProfileColumns.Reset();
       ProfileColumns.Settings = settings_;
       ProfileColumns.ColumnSettings = settings_.ColumnSettings;
@@ -1456,19 +1462,31 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       UpdateHighlighting();
 
       // Add the columns to the View menu.
-      // While doing that, disable handling the MenuItem Checked event,
-      // it gets triggered when the MenuItems are temporarily removed.
-      suspendColumnVisibilityHandler_ = true;
       ProfileColumns.BuildColumnsVisibilityMenu(sourceColumnData, ProfileViewMenu, async () => {
         await UpdateProfilingColumns();
       });
-      suspendColumnVisibilityHandler_ = false;
+
+      SetViewMenuItemEvents();
     }
     else {
       ProfileColumns.Reset();
     }
 
     HasProfileInfo = true;
+  }
+
+  private void SetViewMenuItemEvents() {
+    foreach (var item in viewMenuItems_) {
+      item.Checked += ViewMenuItem_OnCheckedChanged;
+      item.Unchecked += ViewMenuItem_OnCheckedChanged;
+    }
+  }
+
+  private void ResetViewMenuItemEvents() {
+    foreach (var item in viewMenuItems_) {
+      item.Checked -= ViewMenuItem_OnCheckedChanged;
+      item.Unchecked -= ViewMenuItem_OnCheckedChanged;
+    }
   }
 
   private void CreateProfileElementMenu(FunctionProfileData funcProfile,
@@ -1795,9 +1813,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    if (!suspendColumnVisibilityHandler_) {
-      await UpdateProfilingColumns();
-    }
+    await UpdateProfilingColumns();
   }
 
   private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {

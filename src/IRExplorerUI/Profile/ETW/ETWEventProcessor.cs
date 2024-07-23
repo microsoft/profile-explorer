@@ -308,7 +308,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
 
 #if DEBUG
-      Trace.WriteLine($"ImageGroup: imageBase: {(long)data.ImageBase}, file: {data.FileName}, timestamp: {timeStamp}, checksum: {data.ImageChecksum}");
+      //Trace.WriteLine($"ImageGroup: imageBase: {(long)data.ImageBase}, file: {data.FileName}, timestamp: {timeStamp}, checksum: {data.ImageChecksum}");
 #endif
 
       var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,

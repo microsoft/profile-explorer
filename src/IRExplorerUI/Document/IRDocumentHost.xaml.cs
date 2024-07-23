@@ -113,12 +113,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool profileVisible_;
   private double columnsListItemHeight_;
   private ProfileDocumentMarker profileMarker_;
-  private bool suspendColumnVisibilityHandler_;
   private ProfileSampleFilter profileFilter_;
   private FunctionProfileData funcProfile_;
   private bool ignoreNextRowSelectedEvent_;
   private bool ignoreNextSaveFunctionState_;
   private ProfileHistoryManager historyManager_;
+  private MenuItem[] viewMenuItems_;
 
   public IRDocumentHost(ISession session) {
     InitializeComponent();
@@ -157,6 +157,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }, () => {
       UpdateHistoryMenu();
     });
+
+    viewMenuItems_ = new[] {
+      ViewMenuItem1,
+      ViewMenuItem2,
+      ViewMenuItem3,
+    };
   }
 
   private void SetupEvents() {
@@ -1175,6 +1181,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return false;
     }
 
+    ResetViewMenuItemEvents();
     ProfileColumns.Settings = settings_;
     ProfileColumns.ColumnSettings = settings_.ColumnSettings;
 
@@ -1186,14 +1193,26 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
 
     // Add the columns to the View menu.
-    // While doing that, disable handling the MenuItem Checked event,
-    // it gets triggered when the MenuItems are temporarily removed.
-    suspendColumnVisibilityHandler_ = true;
     ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, async () => {
       await UpdateProfilingColumns();
     });
-    suspendColumnVisibilityHandler_ = false;
+
+    SetViewMenuItemEvents();
     return true;
+  }
+
+  private void SetViewMenuItemEvents() {
+    foreach (var item in viewMenuItems_) {
+      item.Checked += ViewMenuItem_OnCheckedChanged;
+      item.Unchecked += ViewMenuItem_OnCheckedChanged;
+    }
+  }
+
+  private void ResetViewMenuItemEvents() {
+    foreach (var item in viewMenuItems_) {
+      item.Checked -= ViewMenuItem_OnCheckedChanged;
+      item.Unchecked -= ViewMenuItem_OnCheckedChanged;
+    }
   }
 
   private async void OnProfileColumnsOnColumnSettingsChanged(object sender, OptionalColumn column) {
@@ -2365,9 +2384,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
-    if (!suspendColumnVisibilityHandler_) {
-      await UpdateProfilingColumns();
-    }
+    await UpdateProfilingColumns();
   }
 
   private async void InstanceMenuItem_OnClick(object sender, RoutedEventArgs e) {

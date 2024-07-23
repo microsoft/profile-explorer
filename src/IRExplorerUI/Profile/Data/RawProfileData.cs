@@ -549,11 +549,6 @@ public class RawProfileData : IDisposable {
 
     foreach (var proc in processes_) {
       Trace.WriteLine($"- {proc}");
-
-      //if (proc.Value.Name.Contains("bench")) {
-      //    PrintPerfCounters(proc.Value.ProcessId);
-      //    Trace.WriteLine("================================================\n");
-      //}
     }
   }
 

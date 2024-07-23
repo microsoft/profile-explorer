@@ -77,37 +77,35 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   public bool RemoveAllElementOverlays(IRElement element, object onlyWithTag = null) {
-    if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
-      if (onlyWithTag != null) {
-        segment.Overlays.RemoveAll(overlay => overlay.Tag == onlyWithTag);
-      }
-      else {
-        segment.Overlays.Clear();
-      }
+    if (!overlaySegmentMap_.TryGetValue(element, out var segment)) return false;
 
+    if (onlyWithTag != null) {
+      segment.Overlays.RemoveAll(overlay => overlay.Tag == onlyWithTag);
+    }
+    else {
+      segment.Overlays.Clear();
+    }
+
+    if (segment.Overlays.Count == 0) {
+      overlaySegmentMap_.Remove(element);
+      overlaySegments_.Remove(segment);
+    }
+
+    Version++;
+    return true;
+  }
+
+  public bool RemoveElementOverlay(IElementOverlay overlay) {
+    if (!overlaySegmentMap_.TryGetValue(overlay.Element, out var segment)) return false;
+
+    if (segment.Overlays.Remove(overlay)) {
       if (segment.Overlays.Count == 0) {
-        overlaySegmentMap_.Remove(element);
+        overlaySegmentMap_.Remove(overlay.Element);
         overlaySegments_.Remove(segment);
       }
 
       Version++;
       return true;
-    }
-
-    return false;
-  }
-
-  public bool RemoveElementOverlay(IElementOverlay overlay) {
-    if (overlaySegmentMap_.TryGetValue(overlay.Element, out var segment)) {
-      if (segment.Overlays.Remove(overlay)) {
-        if (segment.Overlays.Count == 0) {
-          overlaySegmentMap_.Remove(overlay.Element);
-          overlaySegments_.Remove(segment);
-        }
-
-        Version++;
-        return true;
-      }
     }
 
     return false;
@@ -160,11 +158,11 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   }
 
   public bool KeyPressed(KeyEventArgs e) {
-    if (selectedOverlay_ != null) {
-      if (selectedOverlay_.KeyPressed(e)) {
-        textView_.Redraw(); // Force refresh
-        return true;
-      }
+    if (selectedOverlay_ == null) return false;
+
+    if (selectedOverlay_.KeyPressed(e)) {
+      textView_.Redraw(); // Force refresh
+      return true;
     }
 
     return false;
