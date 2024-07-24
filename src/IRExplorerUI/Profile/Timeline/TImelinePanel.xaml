@@ -97,6 +97,7 @@
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           Loaded="ToolBar_Loaded">
           <Button
+            Visibility="Collapsed"
             Margin="4,0,0,0"
             Click="UndoButton_Click"
             CommandTarget="{Binding ElementName=ActivityView}"
@@ -109,7 +110,7 @@
             </StackPanel>
           </Button>
 
-          <Separator />
+          <Separator Visibility="Collapsed"/>
           <Button
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=ActivityView}"

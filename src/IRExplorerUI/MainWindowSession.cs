@@ -166,6 +166,7 @@ public partial class MainWindow : Window, ISession {
                                           List<LoadedDocument> otherDocuments,
                                           ProfileData profileData) {
     await Dispatcher.InvokeAsync(async () => {
+      sessionState_.MainDocument = mainDocument;
       sessionState_.RegisterLoadedDocument(mainDocument);
 
       foreach (var loadedDoc in otherDocuments) {

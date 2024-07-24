@@ -42,7 +42,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
                            int acceptedProcessId = 0, bool handleChildProcesses = false,
                            bool handleDotNetEvents = false,
                            ProfilerNamedPipeServer pipeServer = null) {
-    Trace.WriteLine($"New ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
+    Trace.WriteLine($"ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
     source_ = source;
     providerOptions_ = providerOptions;
     isRealTime_ = isRealTime;
@@ -123,6 +123,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       var profileProcess = profile.GetOrCreateProcess(data.ProcessID);
       profileProcess.ProcessId = data.ProcessID;
       profileProcess.ParentId = data.ParentID;
+
       // Process name is empty, extract it from the image name.
       profileProcess.Name = Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
       profileProcess.ImageFileName = data.ImageFileName;
@@ -369,21 +370,15 @@ public sealed partial class ETWEventProcessor : IDisposable {
                            IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), data.PointerSize);
       bool isKernelStackStart = data.FrameCount > 0 &&
                                 IsKernelAddress(data.InstructionPointer(0), data.PointerSize);
-
+#if DEBUG
       // if (data.FrameCount > 0) {
       //   Trace.WriteLine("-----------------------------------");
       //   Trace.WriteLine($"Stack {data.InstructionPointer(0):X}, timestamp {data.EventTimeStampRelativeMSec}, TS {data.EventTimeStampQPC}, thread {data.ThreadID}");
       //   Trace.WriteLine($"   kernel {isKernelStack}, kernelStart {isKernelStackStart}");
       // }
 
-      //? TODO: Change
-      // - per thread list of unresolved kernel stacks
-      //     - search by matching timestamp
-      //     - clear list once user stack processed
-      // - assoc sample stack only on matching IP
-      //? TODO: Also fix StackWalkStackKeyKernel
-
       //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
+#endif
       var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
       int frameCount = data.FrameCount;
@@ -397,17 +392,19 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         if (exists && lastKernelStack.StackId != 0 &&
             lastKernelStack.Timestamp == data.EventTimeStampQPC) {
+#if DEBUG
           //Trace.WriteLine($"  Found matching KernelStack {lastKernelStack.StackId} at {lastKernelStack.Timestamp} on CPU {data.ProcessorNumber}");
-
+#endif
           // Append at the end of the kernel stack, marking a user -> kernel mode transition.
           kstack = profile.FindStack(lastKernelStack.StackId);
           int kstackFrameCount = kstack.FrameCount;
           long[] frames = new long[kstack.FrameCount + data.FrameCount];
           kstack.FramePointers.CopyTo(frames, 0);
 
+#if DEBUG
           //Trace.WriteLine($"    kernel mode end IP: {frames[kstackFrameCount - 1]:X}");
           //Trace.WriteLine($"    user mode start IP: {data.InstructionPointer(0):X}");
-
+#endif
           for (int i = 0; i < frameCount; i++) {
             frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
           }
@@ -449,7 +446,9 @@ public sealed partial class ETWEventProcessor : IDisposable {
         }
 
         if (isKernelStack) {
+#if DEBUG
           //Trace.WriteLine($"    register KernelStack {stackId} on CPU {data.ProcessorNumber}");
+#endif
           perThreadLastKernelStackMap[data.ThreadID] = (stackId, data.EventTimeStampQPC);
         }
       }
@@ -683,7 +682,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
           source_.StopProcessing();
         }
 
-        if (isRealTime_) {
+        if (!isRealTime_) {
           int current = (int)data.TimeStampRelativeMSec; // Copy since data gets reused.
           int total = (int)source_.SessionDuration.TotalMilliseconds;
           UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, total, current);
@@ -696,80 +695,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
         lastReportedSample = sampleId;
       }
     };
-
-    //    kernel.ThreadCSwitch += data => {
-    //        if (!(IsAcceptedProcess(data.OldProcessID) || IsAcceptedProcess(data.NewProcessID))) {
-    //            return; // Ignore events from other processes.
-    //        }
-
-    //        Trace.WriteLine($"ThreadCSwitch {data}");
-    //        Trace.WriteLine($"   switch from TId/PId: {data.OldThreadID}/{data.OldProcessID} to new TId/PId {data.NewThreadID}/{data.NewProcessID}, old reason {data.OldThreadWaitReason}, oldstate {data.OldThreadState}");
-
-    //        //var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
-    //        //int contextId = profile.AddContext(context);
-    //        //double timestamp = data.TimeStampRelativeMSec;
-
-    //        //bool isScheduledOut = data.OldThreadState == ThreadState.Wait ||
-    //        //                      data.OldThreadState == ThreadState.Standby;
-
-    //        //var counterEvent = new PerformanceCounterEvent(0,
-    //        //    TimeSpan.FromMilliseconds(timestamp),
-    //        //    contextId, (short)(isScheduledOut ? 1 : 0));
-    //        //profile.AddPerformanceCounterEvent(counterEvent);
-    //    };
-
-    ////FileIOCreate: < Event MSec = "7331.6505" PID = "10344" PName = "threads" TID = "10392" EventName = "FileIO/Create" IrpPtr = "0xFFFFD58C43FBDB48" FileObject = "0xFFFFD58C608455D0" CreateOptions = "FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_DEVICE" CreateDisposition = "OPEN_EXISTING" FileAttributes = "Normal" ShareAccess = "ReadWrite" FileName = "C:\test\results.log" />
-    ////FileIORead: < Event MSec = "7332.1418" PID = "10344" PName = "threads" TID = "10392" EventName = "FileIO/Read" FileName = "C:\test\results.log" Offset = "53,248" IrpPtr = "0xFFFFD58C43FBDB48" FileObject = "0xFFFFD58C608455D0" FileKey = "0xFFFF8C891339EB10" IoSize = "4,096" IoFlags = "0" />
-    //                                                                                                                                                                                                                                                                                            kernel.FileIOCreate += data => {
-    //        if (!IsAcceptedProcess(data.ProcessID)) {
-    //            return; // Ignore events from other processes.
-    //        }
-    //        Trace.WriteLine($"FileIOCreate: {data}\n");
-    //    };
-
-    //    kernel.FileIOClose += data => {
-    //        if (!IsAcceptedProcess(data.ProcessID)) {
-    //            return; // Ignore events from other processes.
-    //        }
-    //        Trace.WriteLine($"FileIOClose: {data}\n");
-    //    };
-    //    kernel.FileIORead += data => {
-    //        if (!IsAcceptedProcess(data.ProcessID)) {
-    //            return; // Ignore events from other processes.
-    //        }
-    //        Trace.WriteLine($"FileIORead: {data}\n");
-    //        //double timestamp = data.TimeStampRelativeMSec;
-    //        //var counterEvent = new PerformanceCounterEvent(0,
-    //        //    TimeSpan.FromMilliseconds(timestamp),
-    //        //    1, (short)(1));
-    //        //profile.AddPerformanceCounterEvent(counterEvent);
-    //    };
-    //    kernel.FileIOName+= data => {
-    //        if (!IsAcceptedProcess(data.ProcessID)) {
-    //            return; // Ignore events from other processes.
-    //        }
-    //        Trace.WriteLine($"FileIOName: {data}\n");
-    //    };
-
-    //    kernel.DiskIOReadInit += data => {
-    //        if (!IsAcceptedProcess(data.ProcessID)) {
-    //            return; // Ignore events from other processes.
-    //        }
-    //        Trace.WriteLine($"DiskIOReadInit: {data}\n");
-    //    };
-
-    //    kernel.DiskIORead += data => {
-    //        if (!IsAcceptedProcess(data.ProcessID)) {
-    //            return; // Ignore events from other processes.
-    //        }
-    //        Trace.WriteLine($"DiskIORead: {data}\n");
-    //    };
-
-#if false
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        long memory = GC.GetTotalMemory(true);
-#endif
 
     if (providerOptions_.IncludePerformanceCounters) {
       Trace.WriteLine("Enable PMC event handling");

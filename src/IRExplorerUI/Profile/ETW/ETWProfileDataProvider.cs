@@ -119,6 +119,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     // Save process and thread info.
     profileData_.Process = mainProcess;
+    options_ = options;
 
     foreach (int procId in processIds) {
       var proc = rawProfile.FindProcess(procId);
@@ -133,7 +134,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     profileData_.AddModules(rawProfile.Images);
 
     try {
-      options_ = options;
       string imageName = Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
 
       if (options.HasBinarySearchPaths) {
@@ -151,9 +151,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           return false;
         }
 
+#if DEBUG
         rawProfile.PrintProcess(mainProcessId);
         //profile.PrintSamples(mainProcessId);
+#endif
 
+        // Preload binaries and debug files, downloading them concurrently if needed.
         await LoadBinaryAndDebugFiles(rawProfile, mainProcess, imageName,
                                       symbolSettings, progressCallback, cancelableTask);
 
@@ -196,33 +199,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         await Task.WhenAll(tasks.ToArray());
         Trace.WriteLine($"LoadTraceAsync: Done processing samples in {processingSw.Elapsed}");
 
+        if (cancelableTask is {IsCanceled: true}) {
+          return false;
+        }
+
         // Collect samples from tasks.
-        var samples = new List<(ProfileSample, ResolvedProfileStack)>[tasks.Count];
-
-        for (int k = 0; k < tasks.Count; k++) {
-          samples[k] = tasks[k].Result;
-        }
-
-        // Merge the samples from all chunks and sort them by time.
-        int totalSamples = 0;
-
-        foreach (var chunkSamples in samples) {
-          totalSamples += chunkSamples.Count;
-        }
-
-        profileData_.Samples.EnsureCapacity(totalSamples);
-
-        foreach (var chunkSamples in samples) {
-          profileData_.Samples.AddRange(chunkSamples);
-        }
-
-        if (profileData_.Samples != null) {
-          profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
-        }
-        else {
-          // Make an empty list to keep other parts happy.
-          profileData_.Samples = [];
-        }
+        CollectChunkSamples(tasks);
 
         // Create the per-function profile and call tree.
         UpdateProgress(progressCallback, ProfileLoadStage.ComputeCallTree, 0, rawProfile.Samples.Count);
@@ -230,8 +212,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         profileData_.ComputeThreadSampleRanges();
         profileData_.FilterFunctionProfile(new ProfileSampleFilter());
 
-        Trace.WriteLine($"LoadTraceAsync: Done compute func profile/call tree in {callTreeSw.Elapsed}, {callTreeSw.ElapsedMilliseconds} ms");
-        Trace.WriteLine($"LoadTraceAsync: Done processing trace in {processingSw.Elapsed}, {processingSw.ElapsedMilliseconds} ms");
+        Trace.WriteLine(
+          $"LoadTraceAsync: Done compute func profile/call tree in {callTreeSw.Elapsed}, {callTreeSw.ElapsedMilliseconds} ms");
+        Trace.WriteLine(
+          $"LoadTraceAsync: Done processing trace in {processingSw.Elapsed}, {processingSw.ElapsedMilliseconds} ms");
 
         // Process performance counters.
         if (rawProfile.HasPerformanceCountersEvents) {
@@ -259,7 +243,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
         }
 
-        session_.SessionState.MainDocument = exeDocument;
         await session_.SetupNewSession(exeDocument, otherDocuments, profileData_).ConfigureAwait(false);
       }
 
@@ -274,6 +257,36 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       Trace.WriteLine(ex.StackTrace);
       Trace.Flush();
       return null;
+    }
+  }
+
+  private void CollectChunkSamples(List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>> tasks) {
+    var samples = new List<(ProfileSample, ResolvedProfileStack)>[tasks.Count];
+
+    for (int k = 0; k < tasks.Count; k++) {
+      samples[k] = tasks[k].Result;
+    }
+
+    // Preallocate merged samples list.
+    int totalSamples = 0;
+
+    foreach (var chunkSamples in samples) {
+      totalSamples += chunkSamples.Count;
+    }
+
+    profileData_.Samples.EnsureCapacity(totalSamples);
+
+    // Merge the samples from all chunks and sort them by time.
+    foreach (var chunkSamples in samples) {
+      profileData_.Samples.AddRange(chunkSamples);
+    }
+
+    if (profileData_.Samples != null) {
+      profileData_.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
+    }
+    else {
+      // Make an empty list to keep other parts happy.
+      profileData_.Samples = [];
     }
   }
 
