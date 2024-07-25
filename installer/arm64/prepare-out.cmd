@@ -28,14 +28,14 @@ xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_EXTERNALS_PATH_ARM64%\*.dll %_OUT_PATH% /i /c /y
 xcopy %_EXTERNALS_PATH%\tree-sitter\build_arm64\*.dll %_OUT_PATH% /i /c /y
 copy %_EXTERNALS_PATH%\capstone\build_arm64\Release\capstone.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\cmd\dot\Release\dot.exe %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\lib\cdt\Release\cdt.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\lib\cgraph\Release\cgraph.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\lib\gvc\Release\gvc.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\lib\pathplan\Release\pathplan.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\lib\xdot\Release\xdot.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\plugin\core\Release\gvplugin_core.dll %_OUT_PATH%
-copy %_EXTERNALS_PATH%\graphviz\build\plugin\dot_layout\Release\gvplugin_dot_layout.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\cmd\dot\Release\dot.exe %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\lib\cdt\Release\cdt.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\lib\cgraph\Release\cgraph.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\lib\gvc\Release\gvc.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\lib\pathplan\Release\pathplan.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\lib\xdot\Release\xdot.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\plugin\core\Release\gvplugin_core.dll %_OUT_PATH%
+copy %_EXTERNALS_PATH%\graphviz\build_arm64\plugin\dot_layout\Release\gvplugin_dot_layout.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\zlib1.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\libexpat.dll %_OUT_PATH%
 
