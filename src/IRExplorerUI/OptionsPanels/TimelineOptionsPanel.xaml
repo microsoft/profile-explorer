@@ -22,7 +22,7 @@
         IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
         ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it"
         Margin="0,2,0,2" />
-      <StackPanel Margin="20,0,0,2" Orientation="Horizontal"
+      <StackPanel Margin="20,2,0,2" Orientation="Horizontal"
                   IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}">
         <TextBlock Text="Hover duration (ms)" VerticalAlignment="Center" />
         <xctk:IntegerUpDown
@@ -66,7 +66,7 @@
       <CheckBox
         Content="Use colors based on thread name"
         IsChecked="{Binding UseThreadColors, Mode=TwoWay}"
-        Margin="0,2,0,2"
+        Margin="0,4,0,2"
         ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
       <CheckBox
         Visibility="Collapsed"

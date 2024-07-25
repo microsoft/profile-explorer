@@ -30,7 +30,7 @@
             ToolTip="Include caller/callee count function statistics" />
           <CheckBox
             x:Name="DemanglingCheckbox"
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             Content="Show demangled function names"
             IsChecked="{Binding ShowDemangledNames, Mode=TwoWay}"
             ToolTip="Automatically demangle (undecorate) C++ function names" />
@@ -180,7 +180,7 @@
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
 
           <StackPanel
-            Margin="20,0,0,2"
+            Margin="20,2,0,2"
             IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
             Orientation="Horizontal">
             <TextBlock VerticalAlignment="Center" Text="Hover duration (ms)" />
@@ -314,7 +314,7 @@
             IsEnabled="{Binding ElementName=IdenticalToPreviousCheckbox, Path=IsChecked}"
             ToolTip="Make the section name semi-transparent if it's identical to the previous one" />
           <CheckBox
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             Content="Mark sections with annotations"
             IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}"
             ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />

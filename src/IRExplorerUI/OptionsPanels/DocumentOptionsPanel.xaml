@@ -183,7 +183,7 @@
           </StackPanel>
 
           <CheckBox
-            Margin="0,4,0,2"
+            Margin="0,8,0,2"
             Content="Highlight current text line"
             IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}"
             ToolTip="Mark the current line in the document with a border" />
@@ -215,7 +215,7 @@
             ToolTip="Filter out any definition that can't reach the source value in the flow graph" />
           <CheckBox
             x:Name="HighlightUsesCheckbox"
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             Content="Highlight uses of selected destination value"
             IsChecked="{Binding Path=HighlightDestinationUses, Mode=TwoWay}"
             ToolTip="Mark the use operands of the selected destination operand" />
@@ -226,7 +226,7 @@
             IsEnabled="{Binding ElementName=HighlightUsesCheckbox, Path=IsChecked}"
             ToolTip="Filter out any use that can't be reached by the destination value in the flow graph" />
           <CheckBox
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             Content="Highlight definitions of all sources of selected instruction"
             IsChecked="{Binding Path=HighlightInstructionOperands, Mode=TwoWay}"
             ToolTip="Mark the definition operands of all source operands of the selected instruction" />
@@ -249,7 +249,7 @@
             IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
           <TextBlock
-            Margin="0,8,0,0"
+            Margin="0,12,0,0"
             FontSize="11"
             Text="Combine with Ctrl key to consider expressions when highlighting." />
           <TextBlock
@@ -282,7 +282,7 @@
               </Button.ContextMenu>
             </Button>
           </DockPanel>
-          <StackPanel Margin="0,0,0,0" Orientation="Vertical">
+          <StackPanel Margin="0,2,0,0" Orientation="Vertical">
 
             <Grid>
               <Grid.ColumnDefinitions>
@@ -413,7 +413,7 @@
           <TextBlock FontWeight="Medium" Text="IR Value Colors" />
           <StackPanel Margin="0,4,0,0" Orientation="Vertical">
 
-            <Grid>
+            <Grid Margin="0,2,0,0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="70" />
                 <ColumnDefinition />

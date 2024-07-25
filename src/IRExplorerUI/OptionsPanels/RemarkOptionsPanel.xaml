@@ -49,7 +49,7 @@
           Content="Stop at section boundaries"
           IsChecked="{Binding Path=StopAtSectionBoundaries}"
           IsEnabled="{Binding ElementName=PreviousSectionsCheckbox, Path=IsChecked}"
-          Margin="32,0,0,2" />
+          Margin="32,2,0,2" />
         <CheckBox
           Content="Show previous optimization remarks on margin"
           IsChecked="{Binding Path=ShowPreviousOptimizationRemarks}"

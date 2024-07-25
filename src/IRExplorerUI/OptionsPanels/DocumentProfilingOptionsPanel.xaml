@@ -32,7 +32,7 @@
         IsEnabled="{Binding ElementName=MarkBlocksCheckbox, Path=IsChecked}"
         Visibility="{Binding ShowsDocumentSettings, Converter={StaticResource BoolToVisibilityConverter}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:DocumentProfilingOptionsPanel}}" />
       <CheckBox
-        Margin="0,2,0,2"
+        Margin="0,4,0,2"
         Content="Display called function list for calls"
         IsChecked="{Binding MarkCallTargets, Mode=TwoWay}" />
       <Separator Margin="0,4,0,4" Background="LightGray" />
@@ -83,7 +83,7 @@
         ToolTip="Append the time format suffix (ms) to each value" />
 
 
-      <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
+      <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
         <TextBlock VerticalAlignment="Center" Text="Time format" />
         <ComboBox
           x:Name="ValueUnitComboBox"
@@ -94,7 +94,7 @@
           SelectedValue="{Binding ValueUnit, Mode=TwoWay}"
           SelectedValuePath="Key" />
       </StackPanel>
-      <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
+      <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
         <TextBlock
           VerticalAlignment="Center"
           Text="Weight cutoff (%)"

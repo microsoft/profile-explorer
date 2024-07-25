@@ -399,10 +399,16 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     // Show all instances.
     InstancesList.ShowFunctions(instanceNodes_);
-    ShowInstanceNavigation = instanceNodes_.Count > 1 && groupNode == null;
+    ShowInstanceNavigation = instanceNodes_.Count > 1;
     EnableSingleNodeActions = groupNode == null;
 
-    nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
+    if (groupNode == null) {
+      nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
+    }
+    else {
+      nodeInstanceIndex_ = 0;
+    }
+
     CurrentInstanceIndex = nodeInstanceIndex_ + 1;
 
     // Show average node.

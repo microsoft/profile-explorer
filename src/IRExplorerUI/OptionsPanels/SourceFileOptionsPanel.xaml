@@ -28,7 +28,7 @@
             IsChecked="{Binding Path=ShowInlineAssembly, Mode=TwoWay}"
             ToolTip="Display the associated assembly instructions for each source line" />
           <CheckBox
-            Margin="20,2,0,0"
+            Margin="20,2,0,2"
             Content="Auto-expand all assembly sections"
             IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}"
             IsChecked="{Binding Path=AutoExpandInlineAssembly, Mode=TwoWay}"
@@ -40,14 +40,14 @@
             IsChecked="{Binding Path=ShowSourceStatements, Mode=TwoWay}"
             ToolTip="Parse source file and mark loops and if/else/switch statements in the profiling columns" />
           <CheckBox
-            Margin="20,2,0,0"
+            Margin="20,2,0,2"
             Content="Replace only insignificant column values"
             IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
             IsChecked="{Binding Path=ReplaceInsignificantSourceStatements, Mode=TwoWay}"
             ToolTip="Show annotations in the profiling columns only if replacing insignificant values&#x0a;If not replaced, annotation is displayed in document left margin" />
 
           <CheckBox
-            Margin="20,2,0,0"
+            Margin="20,2,0,2"
             Content="Show statement annotations on left margin"
             IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
             IsChecked="{Binding Path=ShowSourceStatementsOnMargin, Mode=TwoWay}"
@@ -132,7 +132,7 @@
             </Button>
           </DockPanel>
           <StackPanel
-            Margin="0,0,0,0"
+            Margin="0,2,0,0"
             IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"
             Orientation="Vertical">
             <Grid>
@@ -268,7 +268,7 @@
         ToolTip="Options for finding source files">
         <StackPanel Margin="4,4,4,4">
           <TextBlock FontWeight="Medium" Text="Excluded File Paths" />
-          <TextBlock Text="Original source file paths excluded from mapping" />
+          <TextBlock Margin="0,2,0,0" Text="Original source file paths excluded from mapping" />
           <Grid Margin="0,4,0,0">
             <Grid.RowDefinitions>
               <RowDefinition Height="*" />
@@ -385,7 +385,7 @@
 
 
           <TextBlock FontWeight="Medium" Text="File Path Mappings" />
-          <TextBlock Text="Mappings from original source file path to local path" />
+          <TextBlock Margin="0,2,0,0" Text="Mappings from original source file path to local path" />
           <Grid Margin="0,4,0,0">
             <Grid.RowDefinitions>
               <RowDefinition Height="*" />

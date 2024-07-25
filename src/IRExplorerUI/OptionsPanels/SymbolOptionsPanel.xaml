@@ -30,7 +30,7 @@
         IsChecked="{Binding Path=SkipLowSampleModules, Mode=TwoWay}"
         ToolTip="Skip downloading and loading of symbols for insignificant modules with very few samples" />
       <StackPanel
-        Margin="20,0,0,2"
+        Margin="20,2,0,2"
         IsEnabled="{Binding ElementName=ModuleSamplesCheckBox, Path=IsChecked}"
         Orientation="Horizontal">
         <TextBlock VerticalAlignment="Center" Text="Minimum samples (%)" />

@@ -69,7 +69,7 @@
           ToolTip="Alternate column title to use instead of the default one" />
       </StackPanel>
       <CheckBox
-        Margin="0,2,0,2"
+        Margin="0,4,0,2"
         Content="Pick background color based on percentage"
         IsChecked="{Binding PickColorForPercentage, Mode=TwoWay}" />
 

@@ -272,20 +272,7 @@ public sealed class ProfileCallTree {
       // If the node is being called by another
       // instance recursively which has its total time counted,
       // don't count the total time of this instance.
-      bool countWeight = true;
-
-      if (!node.IsGroup) {
-        var callerNode = node.Caller;
-
-        while (callerNode != null) {
-          if (handledNodes.Contains(callerNode)) {
-            countWeight = false;
-            break;
-          }
-
-          callerNode = callerNode.Caller;
-        }
-      }
+      bool countWeight = !NodeParentWasHandled(node, handledNodes);
 
       if (countWeight) {
         weight += node.Weight;
@@ -293,9 +280,14 @@ public sealed class ProfileCallTree {
       }
 
       excWeight += node.ExclusiveWeight;
+      kind = node.Kind;
+
+      if (!combineLists) {
+        continue;
+      }
 
       // Sum up per-thread weights.
-      if (combineLists && node.HasThreadWeights) {
+      if (node.HasThreadWeights) {
         foreach (var pair in node.ThreadWeights) {
           threadsMap.AccumulateValue(pair.Key,
                                      countWeight ? pair.Value.Weight : TimeSpan.Zero,
@@ -303,9 +295,7 @@ public sealed class ProfileCallTree {
         }
       }
 
-      kind = node.Kind;
-
-      if (combineLists && node.HasChildren) {
+      if (node.HasChildren) {
         foreach (var childNode in node.Children) {
           if (!childrenSet.TryGetValue(childNode, out var existingNode)) {
             existingNode = new ProfileCallTreeNode(childNode.FunctionDebugInfo, childNode.Function);
@@ -318,7 +308,7 @@ public sealed class ProfileCallTree {
         }
       }
 
-      if (combineLists && node.HasCallers) {
+      if (node.HasCallers) {
         void HandleCaller(ProfileCallTreeNode caller) {
           if (!callersSet.TryGetValue(caller, out var existingNode)) {
             existingNode = new ProfileCallTreeNode(caller.FunctionDebugInfo, caller.Function);
@@ -340,7 +330,7 @@ public sealed class ProfileCallTree {
         }
       }
 
-      if (combineLists && node.HasCallSites) {
+      if (node.HasCallSites) {
         foreach (var pair in node.CallSites) {
           ref var callsite = ref CollectionsMarshal.GetValueRefOrAddDefault(callSiteMap, pair.Key, out bool exists);
 
@@ -361,6 +351,22 @@ public sealed class ProfileCallTree {
       Weight = weight, ExclusiveWeight = excWeight,
       Kind = kind
     };
+  }
+
+  private static bool NodeParentWasHandled(ProfileCallTreeNode node, HashSet<ProfileCallTreeNode> handledNodes) {
+    if (!node.IsGroup) {
+      var callerNode = node.Caller;
+
+      while (callerNode != null) {
+        if (handledNodes.Contains(callerNode)) {
+          return true;
+        }
+
+        callerNode = callerNode.Caller;
+      }
+    }
+
+    return false;
   }
 
   public TimeSpan GetCombinedCallTreeNodeWeight(IRTextFunction function) {
@@ -413,6 +419,37 @@ public sealed class ProfileCallTree {
       CollectFunctionsAndModules(node, funcMap, moduleMap);
     }
 
+    // In case of recursive functions, the total time
+    // should not be counted again for the recursive calls.
+    var handledNodes = new HashSet<ProfileCallTreeNode>();
+
+    foreach (var collectedNode in funcMap.Values) {
+      var collectedGroupNode = collectedNode as ProfileCallTreeGroupNode;
+
+      if (collectedGroupNode.Nodes.Count == 1) {
+        collectedGroupNode.Weight = collectedGroupNode.Nodes[0].Weight;
+        collectedGroupNode.ExclusiveWeight = collectedGroupNode.Nodes[0].ExclusiveWeight;
+      }
+      else if (collectedGroupNode.Nodes.Count > 1) {
+        collectedGroupNode.Nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+        handledNodes.Clear();
+
+        foreach (var instanceNode in collectedGroupNode.Nodes) {
+          // If the node is being called by another
+          // instance recursively which has its total time counted,
+          // don't count the total time of this instance.
+          bool countWeight = !NodeParentWasHandled(node, handledNodes);
+          collectedGroupNode.ExclusiveWeight += instanceNode.ExclusiveWeight;
+
+          if (countWeight) {
+            collectedGroupNode.Weight += instanceNode.Weight;
+            handledNodes.Add(instanceNode);
+          }
+        }
+      }
+    }
+
+    // Compute time percentage per module.
     var moduleList = new List<ModuleProfileInfo>(moduleMap.Count);
 
     foreach (var module in moduleMap.Values) {
@@ -438,18 +475,19 @@ public sealed class ProfileCallTree {
 
     var groupEntry = (ProfileCallTreeGroupNode)entry;
     groupEntry.Nodes.Add(node);
-    groupEntry.AccumulateWeight(node.Weight);
-    groupEntry.AccumulateExclusiveWeight(node.ExclusiveWeight);
+    //groupEntry.AccumulateWeight(node.Weight);
+    //groupEntry.AccumulateExclusiveWeight(node.ExclusiveWeight);
 
     // Collect time and functions per module.
-    ref var moduleEntry = ref CollectionsMarshal.GetValueRefOrAddDefault(moduleMap, node.ModuleName, out var moduleExists);
+    ref var moduleEntry =
+      ref CollectionsMarshal.GetValueRefOrAddDefault(moduleMap, node.ModuleName, out var moduleExists);
 
     if (!moduleExists) {
       moduleEntry = new ModuleProfileInfo(node.ModuleName);
     }
 
     moduleEntry.Weight += node.ExclusiveWeight;
-    moduleEntry.Functions.Add(node);
+    moduleEntry.Functions.Add(groupEntry);
 
     if (node.HasChildren) {
       foreach (var childNode in node.Children) {
@@ -482,7 +520,8 @@ public sealed class ProfileCallTree {
       }
 
       foreach (var pair in otherTree.funcToNodesMap_) {
-        ref var existingList = ref CollectionsMarshal.GetValueRefOrAddDefault(funcToNodesMap_, pair.Key, out bool exists);
+        ref var existingList =
+          ref CollectionsMarshal.GetValueRefOrAddDefault(funcToNodesMap_, pair.Key, out bool exists);
 
         if (exists) {
           // A function present in both tree, add the nodes that are missing.
@@ -564,10 +603,12 @@ public sealed class ProfileCallTree {
 
     var sb = new StringBuilder();
     sb.AppendLine($"Instances for {funcName}: {list.Count}");
-    sb.AppendLine($" - Total weight: {weight} ({weight.TotalMilliseconds} ms), excl weight: {excWeight} ({excWeight.TotalMilliseconds} ms)");
+    sb.AppendLine(
+      $" - Total weight: {weight} ({weight.TotalMilliseconds} ms), excl weight: {excWeight} ({excWeight.TotalMilliseconds} ms)");
 
     foreach (var node in list) {
-      sb.AppendLine(        $" - Weight: {node.Weight} ({node.Weight.TotalMilliseconds} ms), excl weight: {node.ExclusiveWeight} ({node.ExclusiveWeight.TotalMilliseconds} ms), children: {(node.HasChildren ? node.Children.Count : 0)}");
+      sb.AppendLine(
+        $" - Weight: {node.Weight} ({node.Weight.TotalMilliseconds} ms), excl weight: {node.ExclusiveWeight} ({node.ExclusiveWeight.TotalMilliseconds} ms), children: {(node.HasChildren ? node.Children.Count : 0)}");
       weight += node.Weight;
       excWeight += node.ExclusiveWeight;
 

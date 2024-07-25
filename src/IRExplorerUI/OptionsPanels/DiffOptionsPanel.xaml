@@ -62,7 +62,7 @@
             IsChecked="{Binding FilterSSADefNumbers, Mode=TwoWay}"
             ToolTip="Treat changes of SSA variable identifiers (name/number) as minor" />
           <CheckBox
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             Content="Filter out insignificant, noisy changes"
             IsChecked="{Binding FilterInsignificantDiffs, Mode=TwoWay}"
             ToolTip="Ignore changes in whitespace and punctuation characters" />

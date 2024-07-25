@@ -66,12 +66,13 @@
         <StackPanel VerticalAlignment="Top" Orientation="Vertical">
            <Expander Margin="0,4,0,0" IsExpanded="True">
             <Expander.Header>
+
               <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
                 <TextBlock Text="Recent Profile Sessions" VerticalAlignment="Center"/>
                 <Button
                   Width="24"
                   Height="24"
-                  Margin="16,0,2,0"
+                  Margin="34,0,2,0"
                   Padding="2,2,2,2"
                   Click="OpenFileButton_Click"
                   ToolTip="Open profile trace file">
@@ -145,20 +146,22 @@
                       HorizontalAlignment="Stretch"
                       Text="{Binding TraceFile}"
                       TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text=",  "></TextBlock>
+                    <TextBlock Text=", "></TextBlock>
                     <TextBlock
                       Margin="0,0,16,0"
                       HorizontalAlignment="Stretch"
                       Foreground="DarkBlue"
                       Text="{Binding TraceProcess}"
-                      TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                      Margin="0,0,30,0"
-                      HorizontalAlignment="Stretch"
-                      Foreground="DimGray"
-                      Text="{Binding TraceTime}"
+                      ToolTip="Process loaded during session"
                       TextTrimming="CharacterEllipsis" />
                     </StackPanel>
+                    <TextBlock
+                      Margin="0,0,30,0"
+                      HorizontalAlignment="Right"
+                      Foreground="DimGray"
+                      Text="{Binding TraceTime}"
+                      ToolTip="Trace recording date"
+                      TextTrimming="CharacterEllipsis" />
                     <StackPanel Margin="4,0,0,0" HorizontalAlignment="Right">
                       <Button
                         Name="RemoveButton"
@@ -206,7 +209,7 @@
                   Name="OpenButton"
                   Width="24"
                   Height="24"
-                  Margin="130,0,2,0"
+                  Margin="148,0,2,0"
                   Padding="2,2,2,2"
                   Click="OpenFileButton_Click"
                   ToolTip="Open file">

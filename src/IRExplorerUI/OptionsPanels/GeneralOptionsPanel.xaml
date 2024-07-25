@@ -43,12 +43,12 @@
           Content="Default"
           ToolTip="Reset the application UI scaling to 100%" />
       </StackPanel>
-      
+
       <Separator Margin="0,6,0,4" Background="LightGray" />
 
       <TextBlock FontWeight="Medium" Text="User Interface" />
       <StackPanel
-        Margin="0,4,0,0"
+        Margin="0,4,0,4"
         IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
         Orientation="Horizontal">
         <TextBlock VerticalAlignment="Center" Text="Window UI scaling" />

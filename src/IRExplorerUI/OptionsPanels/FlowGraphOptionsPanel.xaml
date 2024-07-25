@@ -17,7 +17,7 @@
           <TextBlock FontWeight="Medium" Text="Graph Interaction" />
           <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />
           <CheckBox
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             Content="Sync selected/hovered nodes with document"
             ToolTip="Select in associated document the lines corresponding to a node"
             IsChecked="{Binding Path=SyncSelectedNodes, Mode=TwoWay}" />

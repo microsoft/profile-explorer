@@ -55,7 +55,7 @@
             IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
           <StackPanel
-            Margin="20,0,0,2"
+            Margin="20,2,0,2"
             IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
             Orientation="Horizontal">
             <TextBlock VerticalAlignment="Center" Text="Hover duration (ms)" />
@@ -512,7 +512,7 @@
               IsChecked="{Binding FilterByWeight, Mode=TwoWay}"
               ToolTip="Filter out functions with a time less than this value" />
             <StackPanel
-              Margin="20,0,0,2"
+              Margin="20,2,0,2"
               IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
               Orientation="Horizontal">
               <TextBlock VerticalAlignment="Center" Text="Minimum time (ms)" />
@@ -542,7 +542,7 @@
               Content="Total time (inclusive)"
               IsChecked="{Binding SortByExclusiveTime, Converter={StaticResource InvertedBoolConverter}}" />
             <RadioButton
-              Margin="0,2,8,0"
+              Margin="0,2,8,2"
               Content="Self time (exclusive)"
               IsChecked="{Binding SortByExclusiveTime}" />
           </StackPanel>
@@ -556,7 +556,7 @@
             IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
 
-          <StackPanel Margin="20,0,0,0">
+          <StackPanel Margin="20,2,0,0">
             <StackPanel IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}"
                         Orientation="Horizontal">
               <TextBlock VerticalAlignment="Center" Text="Hover duration (ms):" />
