@@ -1060,6 +1060,12 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       y = y + maxSampleHeight_ / 2 - glyphInfo.TextHeight / 2;
     }
 
+    //? TODO: Extra check for this situation that seems to happen
+    //? on some machine but couldn't be reproduced...
+    if (textMargin.Left >= visibleArea_.Width - glyphInfo.TextWidth) {
+      return;
+    }
+
     if (keepInView) {
       x = Math.Clamp(x, textMargin.Left, visibleArea_.Width - glyphInfo.TextWidth);
     }
