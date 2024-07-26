@@ -516,9 +516,9 @@ public class FlameGraphRenderer {
   }
 
   private double ScaleNode(FlameGraphNode node) {
-    if (isTimeline_) {
-      return flameGraph_.ScaleDuration(node);
-    }
+    // if (isTimeline_) {
+    //   return flameGraph_.ScaleDuration(node);
+    // }
 
     return flameGraph_.ScaleWeight(node);
   }
@@ -526,17 +526,18 @@ public class FlameGraphRenderer {
   private bool DrawDummyNodes(DrawingContext graphDC, bool layoutChanged) {
     int shrinkingNodes = 0;
     int growingNodes = 0;
+    double halfMinVisibleRectWidth = minVisibleRectWidth_ * 0.5;
 
     foreach (var node in dummyNodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
       double width = ScaleNode(node);
 
-      if (width < minVisibleRectWidth_ * 0.5) {
+      if (width < halfMinVisibleRectWidth) {
         shrinkingNodes++;
         continue;
       }
 
       // Reconsider replacing the dummy node.
-      if (layoutChanged && ScaleNode(node) > minVisibleRectWidth_ * 0.5) {
+      if (layoutChanged && ScaleNode(node) > halfMinVisibleRectWidth) {
         growingNodes++;
       }
       else {
@@ -580,7 +581,6 @@ public class FlameGraphRenderer {
             }
         }
 #else
-
     return false;
 #endif
   }
@@ -612,9 +612,9 @@ public class FlameGraphRenderer {
   private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
     double width = ScaleNode(node);
 
-    if (isTimeline_) {
-      x = flameGraph_.ScaleStartTime(node);
-    }
+    // if (isTimeline_) {
+    //   x = flameGraph_.ScaleStartTime(node);
+    // }
 
     var prevBounds = node.Bounds;
     node.Bounds = new Rect(x, y, width, nodeHeight_);
@@ -624,7 +624,7 @@ public class FlameGraphRenderer {
     if (redraw) {
       maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
       double minWidth = minVisibleRectWidth_;
-      if (isTimeline_) minWidth *= 0.1; // Add more nodes to be zoomed in.
+      //if (isTimeline_) minWidth *= 0.1; // Add more nodes to be zoomed in.
 
       if (node.Bounds.Width > minWidth) {
         nodesQuadTree_.Insert(node, node.Bounds);
@@ -720,9 +720,9 @@ public class FlameGraphRenderer {
       return null; // Nothing to draw.
     }
 
-    if (isTimeline_) {
-      x = flameGraph_.ScaleStartTime(startTime);
-    }
+    // if (isTimeline_) {
+    //   x = flameGraph_.ScaleStartTime(startTime);
+    // }
 
     //? TODO: Use a pool for FlameGraphGroupNode instead of new (JIT_New dominates)
     var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
@@ -815,7 +815,7 @@ public class FlameGraphRenderer {
   private void DrawText(GlyphRun glyphs, Rect bounds, Brush textColor, double offsetX, double offsetY,
                         Size textSize, DrawingContext dc) {
     double x = offsetX;
-    double y = bounds.Height / 2 + textSize.Height / 4 + offsetY;
+    double y = bounds.Height * 0.5 + textSize.Height * 0.25 + offsetY;
 
     if (cachedTextGuidelines_ == null) {
       var rect = glyphs.ComputeAlignmentBox();
