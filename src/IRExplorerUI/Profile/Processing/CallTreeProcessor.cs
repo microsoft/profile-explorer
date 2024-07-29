@@ -11,14 +11,16 @@ namespace IRExplorerUI.Profile;
 public sealed class CallTreeProcessor : ProfileSampleProcessor {
   public ProfileCallTree CallTree { get; set; } = new();
   private List<ProfileCallTree> chunks_;
+  private int maxChunks_;
 
-  public CallTreeProcessor() {
+  public CallTreeProcessor(int maxChunks) {
     chunks_ = new();
+    maxChunks_ = maxChunks;
   }
 
   public static ProfileCallTree Compute(ProfileData profile, ProfileSampleFilter filter,
                                         int maxChunks = int.MaxValue) {
-    var funcProcessor = new CallTreeProcessor();
+    var funcProcessor = new CallTreeProcessor(maxChunks);
     funcProcessor.ProcessSampleChunk(profile, filter, maxChunks);
     return funcProcessor.CallTree;
   }
@@ -33,7 +35,7 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
     // Partition the node IDs into namespaces based on the chunk
     // of samples they are created from - this ensures that each
     // call tree will usue unique node IDs when compared to other call trees.
-    int startNodeId = k * samplesPerChunk;
+    int startNodeId = k * (int.MaxValue / (maxChunks_ + 1));
     var chunk = new ProfileCallTree(startNodeId);
 
     lock (chunks_) {

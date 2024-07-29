@@ -125,7 +125,7 @@
             Height="20"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncLineWithDocument, Mode=TwoWay}"
-            ToolTip="Sync selected line with associated document">
+            ToolTip="Sync selected line with associated assembly view">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -142,7 +142,7 @@
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncInlineeWithDocument, Mode=TwoWay}"
             Click="InlineeButton_OnClick"
-            ToolTip="Display and sync inlinees for selected instruction in document">
+            ToolTip="Display and sync inlinees for selected instruction in assembly view">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -150,7 +150,7 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource TreeIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Text="Inlinees" ToolTip="Functions inlined into the displayed function" />
+              <TextBlock Text="Inlinees" />
             </StackPanel>
           </ToggleButton>
           <Separator />
@@ -235,7 +235,7 @@
             Padding="0,0,0,0"
             IsEnabled="{Binding SourceFileLoaded}"
             Click="OpenPopupButton_Click"
-            ToolTip="Open the source file document in a new popup window">
+            ToolTip="Open the source file in a new popup window">
             <Image Source="{StaticResource OpenExternalIcon}"
                    Style="{StaticResource DisabledImageStyle}" />
           </Button>

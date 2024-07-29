@@ -203,7 +203,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     set => SetField(ref showNodePanel_, value);
   }
 
-  private double GraphAreaWidth => Math.Max(0, GraphHost.ViewportWidth - 1);
+  private double GraphAreaWidth => Math.Max(0, GraphHost.ActualWidth - SystemParameters.VerticalScrollBarWidth);
   private double GraphAreaHeight => GraphHost.ViewportHeight;
   private Rect GraphArea => new(0, 0, GraphAreaWidth, GraphAreaHeight);
   private Rect GraphVisibleArea => new(GraphHost.HorizontalOffset,

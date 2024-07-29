@@ -33,10 +33,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   private bool hasRootNode;
   private FlameGraphNode rootNode_;
   private OptionsPanelHostPopup optionsPanelPopup_;
+  private CancelableTaskInstance searchTask_;
 
   public FlameGraphPanel() {
     InitializeComponent();
     settings_ = App.Settings.FlameGraphSettings;
+    searchTask_ = new CancelableTaskInstance(false);
     SetupEvents();
     DataContext = this;
     CallTree = null;
@@ -176,7 +178,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     return callTree_.GetBacktrace(node);
   }
 
-  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+    ProfileCallTreeNode node) {
     return callTree_.GetTopFunctionsAndModules(node);
   }
 
@@ -386,12 +389,15 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async Task SearchFlameGraph(string text) {
+    // Wait for a potentially ongoing search to finish.
+    using var task = await searchTask_.CancelCurrentAndCreateTaskAsync();
+
+    // Reset marking of previous results.
     var prevSearchResultNodes = searchResultNodes_;
     searchResultNodes_ = null;
 
     if (prevSearchResultNodes != null) {
-      bool redraw = text.Length <= 1; // Prevent flicker by redrawing once when search is done.
-      GraphHost.GraphViewer.ResetSearchResultNodes(prevSearchResultNodes, redraw);
+      GraphHost.GraphViewer.ResetSearchResultNodes(prevSearchResultNodes);
     }
 
     if (text.Length > 1) {
@@ -401,8 +407,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       UpdateSearchResultText();
 
       searchResultIndex_ = -1;
-      SelectNextSearchResult();
       ShowSearchSection = true;
+      SelectNextSearchResultNoLock();
     }
     else {
       ShowSearchSection = false;
@@ -415,7 +421,9 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       : "Not found";
   }
 
-  private void SelectPreviousSearchResult() {
+  private async Task SelectPreviousSearchResult() {
+    using var task = await searchTask_.CancelCurrentAndCreateTaskAsync();
+
     if (searchResultNodes_ != null && searchResultIndex_ > 0) {
       searchResultIndex_--;
       UpdateSearchResultText();
@@ -423,7 +431,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  private void SelectNextSearchResult() {
+  private async Task SelectNextSearchResult() {
+    using var task = await searchTask_.CancelCurrentAndCreateTaskAsync();
+    SelectNextSearchResultNoLock();
+  }
+
+  private void SelectNextSearchResultNoLock() {
     if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
       searchResultIndex_++;
       UpdateSearchResultText();
@@ -431,12 +444,12 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  private void PreviousSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
-    SelectPreviousSearchResult();
+  private async void PreviousSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await SelectPreviousSearchResult();
   }
 
-  private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
-    SelectNextSearchResult();
+  private async void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await SelectNextSearchResult();
   }
 
   private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {

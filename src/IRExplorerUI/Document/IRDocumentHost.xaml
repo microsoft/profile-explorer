@@ -672,7 +672,7 @@
                     OverridesDefaultStyle="True">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
-                        <Image Source="{StaticResource FlowChartSolidIcon}"
+                        <Image Source="{StaticResource TreeIcon}"
                                Style="{StaticResource DisabledImageStyle}" />
                         <TextBlock
                           Margin="2,0,0,0"

@@ -185,6 +185,9 @@ public sealed class FlameGraph {
     var nodes = new List<FlameGraphNode>();
     var searcher = new TextSearcher(text, caseInsensitive);
     SearchNodesImpl(RootNode, text, searcher, nodes);
+
+    // Sort the nodes by weight, descending.
+    nodes.Sort((a, b) => b.Weight.CompareTo(a.Weight));
     return nodes;
   }
 
