@@ -593,7 +593,7 @@
           Orientation="Horizontal">
           <Border
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderBrush="Transparent"
             BorderThickness="1,0,1,0">
             <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                         Orientation="Horizontal">
@@ -773,7 +773,7 @@
           <Border
             HorizontalAlignment="Left"
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderBrush="Transparent"
             BorderThickness="0,0,1,0">
             <Button
               x:Name="FindButton"
@@ -799,7 +799,7 @@
           <Border
             x:Name="ProfileMarkingHost"
             Background="#F7EFCD"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderBrush="Transparent"
             BorderThickness="0,0,1,0"
             Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
             <ToolBarTray
@@ -811,7 +811,7 @@
               DockPanel.Dock="Left"
               IsLocked="True">
               <ToolBarTray.Clip>
-                <RectangleGeometry Rect="0 0 330 20" />
+                <RectangleGeometry Rect="0 0 350 20" />
               </ToolBarTray.Clip>
               <ToolBar
                 HorizontalAlignment="Stretch"
@@ -897,7 +897,7 @@
                 <Border
                   Width="1"
                   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                  BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                  BorderBrush="Transparent"
                   BorderThickness="1,0,0,0"
                   Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -918,7 +918,7 @@
                         <Image
                           Width="14"
                           Height="14"
-                          Margin="0,1,0,0"
+                          Margin="0,0,0,0"
                           Source="{StaticResource BookmarkIcon}"
                           Style="{StaticResource DisabledImageStyle}" />
                         <TextBlock
@@ -1016,6 +1016,18 @@
                     </MenuItem>
                   </MenuItem>
                 </Menu>
+                <Button
+                  Background="{x:Null}"
+                  BorderBrush="{x:Null}"
+                  Click="MarkingSettingsButton_Click"
+                  ToolTip="Remove time range filter"
+                  Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <Image
+                    Width="17"
+                    Height="17"
+                    Margin="0,-1,0,0"
+                    Source="{StaticResource ToolIcon}" />
+                </Button>
                 <Menu
                   Height="20"
                   VerticalAlignment="Center"
@@ -1026,6 +1038,7 @@
                     Height="20"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
+                    Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                     OverridesDefaultStyle="True"
                     SubmenuOpened="ModuleMenu_OnSubmenuOpened">
                     <MenuItem.Header>
@@ -1100,6 +1113,7 @@
                     Height="20"
                     Margin="0,0,0,0"
                     Padding="0,0,0,0"
+                    Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
                     OverridesDefaultStyle="True"
                     SubmenuOpened="FunctionMenu_OnSubmenuOpened">
                     <MenuItem.Header>
@@ -1109,7 +1123,7 @@
                           VerticalAlignment="Center"
                           Text="Functions" />
                         <Path
-                          Margin="4,2,2,0"
+                          Margin="2,2,2,0"
                           VerticalAlignment="Center"
                           Data="M 0 0 L 3 3 L 6 0 Z"
                           Fill="Black" />
@@ -1172,14 +1186,14 @@
             Width="28"
             Margin="-16,0,0,0"
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderBrush="Transparent"
             BorderThickness="1,0,0,0"
             Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
           <Border
             x:Name="ProfileFilterStateHost"
-            Margin="-28,0,0,0"
+            Margin="-26,0,0,0"
             Background="AntiqueWhite"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderBrush="Transparent"
             BorderThickness="1,0,1,0"
             Visibility="{Binding HasAnyFilter, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
@@ -1227,7 +1241,7 @@
               </Button>
               <Border
                 Margin="0,0,2,0"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                BorderBrush="Transparent"
                 BorderThickness="1,0,0,0"
                 Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -1633,7 +1647,6 @@
         MaxWidth="80"
         VerticalAlignment="Center"
         FontSize="11"
-        FontWeight="Medium"
         Text="2 ($LL4)"
         TextTrimming="CharacterEllipsis" />
       <Separator />
@@ -1652,7 +1665,6 @@
         MaxWidth="50"
         VerticalAlignment="Center"
         FontSize="11"
-        FontWeight="Medium"
         Text="2 / 3" />
       <Separator />
 
@@ -1666,7 +1678,8 @@
         Width="120"
         Height="18"
         Padding="2,2,5,0"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        Background="Transparent"
+        BorderBrush="Transparent"
         DisplayMemberPath="{Binding Name}"
         FontSize="11"
         SelectionChanged="WorkspaceCombobox_SelectionChanged"
@@ -1675,9 +1688,10 @@
         x:Name="WorkspacesButton"
         Width="18"
         Height="18"
-        Margin="-4,0,0,0"
+        Margin="-2,0,0,0"
         VerticalAlignment="Center"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        Background="Transparent"
+        BorderBrush="Transparent"
         Click="WorkspacesButton_OnClick"
         FontSize="11"
         ToolTip="Manage workspaces list">
@@ -1693,9 +1707,10 @@
         x:Name="ThemeCombobox"
         Width="80"
         Height="18"
-        Padding="2,2,5,0"
+        Padding="2,0,0,0"
         VerticalAlignment="Center"
         VerticalContentAlignment="Center"
+        Background="Transparent"
         FontSize="11"
         SelectedIndex="1">
         <ComboBox.Resources>
@@ -1719,11 +1734,55 @@
           </ComboBoxItem.Tag>
         </ComboBoxItem>
       </ComboBox>
+      <Separator />
+
+      <Button
+        Height="18"
+        Padding="2,0,2,0"
+        VerticalAlignment="Center"
+        Background="Transparent"
+        BorderBrush="Transparent"
+        Click="ResetUIZoomMenu_Click"
+        FontSize="11"
+        ToolTip="Restore default UI scaling for the entire application">
+        <TextBlock
+          VerticalAlignment="Center"
+          FontSize="11"
+          Text="{Binding WindowScaling, Converter={StaticResource RoundedPercentageConverter}}" />
+      </Button>
+
+      <Button
+        Width="18"
+        Height="18"
+        VerticalAlignment="Center"
+        Background="Transparent"
+        BorderBrush="Transparent"
+        Click="ZoomOutUIMenu_Click"
+        FontSize="11"
+        ToolTip="Shrink the UI for the entire application">
+        <Image VerticalAlignment="Center" Source="{StaticResource ZoomOutIcon}" />
+      </Button>
+      <Button
+        Width="18"
+        Height="18"
+        Margin="-3,0,0,0"
+        VerticalAlignment="Center"
+        Background="Transparent"
+        BorderBrush="Transparent"
+        Click="ZoomInUIMenu_Click"
+        FontSize="11"
+        ToolTip="Enlarge the UI for the entire application">
+        <Image VerticalAlignment="Center" Source="{StaticResource ZoomInIcon}" />
+      </Button>
+      <Separator/>
 
       <ToggleButton
         x:Name="FullScreenButton"
         VerticalAlignment="Center"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        Background="Transparent"
+        BorderBrush="Transparent"
+        Margin="-2,0,0,0"
+        Padding="2,0,2,0"
         Command="local:AppCommand.FullScreen"
         FontSize="11"
         ToolTip="Enter/exit full screen mode (F11)">
@@ -1738,7 +1797,7 @@
             Source="{StaticResource OpenExternalIcon}" />
           <TextBlock
             Height="12"
-            Margin="2,0,0,0"
+            Margin="2,0,0,2"
             VerticalAlignment="Top"
             FontSize="11"
             Text="Full Screen" />
@@ -1747,16 +1806,17 @@
 
       <ToggleButton
         x:Name="AlwaysOnTopButton"
+        Background="Transparent"
         Width="18"
         Height="18"
+        Margin="-2,0,0,0"
         VerticalAlignment="Center"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        BorderBrush="Transparent"
         Click="AlwaysOnTopButton_Click"
         FontSize="11"
         ToolTip="Toggle always on top of the main window">
         <Image VerticalAlignment="Center" Source="{StaticResource PinIcon}" />
       </ToggleButton>
-
       <Separator />
 
       <StackPanel
@@ -1776,7 +1836,7 @@
         x:Name="UpdateButton"
         VerticalAlignment="Center"
         Background="#FFAFEABF"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        BorderBrush="Transparent"
         Click="UpdateButton_Click"
         FontSize="11"
         FontWeight="Medium"

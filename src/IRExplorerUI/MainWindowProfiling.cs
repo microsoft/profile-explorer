@@ -12,6 +12,7 @@ using System.Windows.Input;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Document;
+using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Windows;
 
@@ -21,7 +22,14 @@ public partial class MainWindow : Window, ISession {
   private CancelableTaskInstance updateProfileTask_ = new();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
+  private OptionsPanelHostPopup markingOptionsPanelPopup_;
+
   public ProfileData ProfileData => sessionState_?.ProfileData;
+
+  public bool HasEnabledMarkedFunctions =>
+    MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+  public bool HasEnabledMarkedModules =>
+    MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
 
   public ProfileFilterState ProfileFilter {
     get => profileFilter_;
@@ -589,6 +597,8 @@ public partial class MainWindow : Window, ISession {
       }
     }
 
+    OnPropertyChanged(nameof(HasEnabledMarkedModules));
+    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
     return true;
   }
 
@@ -828,5 +838,33 @@ public partial class MainWindow : Window, ISession {
 
   private async void ExportMarkedModulesMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
     await ProfilingExporting.ExportModuleMarkingsAsMarkdownFile(this);
+  }
+
+  private void MarkingSettingsButton_Click(object sender, RoutedEventArgs e) {
+    if (markingOptionsPanelPopup_ != null) {
+      markingOptionsPanelPopup_.ClosePopup();
+      markingOptionsPanelPopup_ = null;
+      return;
+    }
+
+    var positionAdjustment = new Point(330, MainMenu.ActualHeight + 1);
+    markingOptionsPanelPopup_ = OptionsPanelHostPopup.Create<FunctionMarkingOptionsPanel, FunctionMarkingSettings>(
+      MarkingSettings.Clone(), MainGrid, this,
+      async (newSettings, commit) => {
+        if (!newSettings.Equals(MarkingSettings)) {
+          App.Settings.MarkingSettings = newSettings;
+          await ReloadMarkingSettings();
+
+          if (commit) {
+            App.SaveApplicationSettings();
+          }
+
+          return newSettings.Clone();
+        }
+
+        return null;
+      },
+      () => markingOptionsPanelPopup_ = null,
+      positionAdjustment, true);
   }
 }

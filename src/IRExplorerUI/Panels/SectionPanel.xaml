@@ -255,160 +255,6 @@
 
             <Separator
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <Menu
-              Height="20"
-              Margin="2,0,0,0"
-              VerticalAlignment="Center"
-              ToolTip="Color functions based on the module name"
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-              <MenuItem
-                x:Name="ModuleMenu"
-                Height="20"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                Background="{Binding Path=HasEnabledMarkedModules, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="ModuleMenu_OnSubmenuOpened">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock
-                      Margin="4,0,0,0"
-                      VerticalAlignment="Bottom"
-                      Text="Modules" />
-                    <Path
-                      Margin="4,2,2,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Click="ToggleButton_Click"
-                  Header="Mark Functions Based on Module Name"
-                  IsCheckable="True"
-                  IsChecked="{Binding MarkingSettings.UseModuleColors}"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  ToolTip="Use a different color for specified modules" />
-                <Separator />
-                <MenuItem
-                  Click="ClearModulesButton_Click"
-                  Header="Clear Marked Modules"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  ToolTip="Remove all saved module markings" />
-                <Separator />
-                <MenuItem
-                  Click="ExportMarkedModulesHtmlMenu_OnClick"
-                  Header="Export Marked Modules as HTML File"
-                  ToolTip="Save the report with marked modules as an HTML file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource SourceIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Click="ExportMarkedModulesMarkdownMenu_OnClick"
-                  Header="Export Marked Modules as Markdown File"
-                  ToolTip="Save the report with marked modules as a Markdown file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource DocumentIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Click="CopyMarkedModulesMenu_OnClick"
-                  Header="Copy Marked Modules"
-                  ToolTip="Copy the report with marked modules as an HTML table">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource ClipboardIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-              </MenuItem>
-            </Menu>
-            <Menu
-              Height="20"
-              Margin="2,0,0,0"
-              VerticalAlignment="Center"
-              ToolTip="Color functions based on the function name"
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-              <MenuItem
-                x:Name="FunctionMenu"
-                Height="20"
-                Margin="0,0,0,0"
-                Padding="0,0,0,0"
-                Background="{Binding Path=HasEnabledMarkedFunctions, Converter={StaticResource BooToParameter}, ConverterParameter=#B4D4F4}"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="FunctionMenu_OnSubmenuOpened">
-                <MenuItem.Header>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock
-                      Margin="4,0,0,0"
-                      VerticalAlignment="Center"
-                      Text="Functions" />
-                    <Path
-                      Margin="4,2,2,0"
-                      VerticalAlignment="Center"
-                      Data="M 0 0 L 3 3 L 6 0 Z"
-                      Fill="Black" />
-                  </StackPanel>
-                </MenuItem.Header>
-                <MenuItem
-                  Click="ToggleButton_Click"
-                  Header="Mark Functions Based on Name"
-                  IsCheckable="True"
-                  IsChecked="{Binding MarkingSettings.UseFunctionColors}"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  ToolTip="Use a different color for specified functions" />
-                <Separator />
-                <MenuItem
-                  Click="ClearFunctionsButton_Click"
-                  Header="Clear Marked Functions"
-                  Style="{DynamicResource SubMenuItemHeaderStyle}"
-                  ToolTip="Remove all saved function markings" />
-                <Separator />
-                <MenuItem
-                  Click="ExportMarkedFunctionsHtmlMenu_OnClick"
-                  Header="Export Marked Functions as HTML File"
-                  ToolTip="Save the report with marked functions as an HTML file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource SourceIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Click="ExportMarkedFunctionsMarkdownMenu_OnClick"
-                  Header="Export Marked Functions as Markdown File"
-                  ToolTip="Save the report with marked functions as a Markdown file">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource DocumentIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem
-                  Click="CopyMarkedFunctionMenu_OnClick"
-                  Header="Copy Marked Functions"
-                  ToolTip="Copy the report with marked functions as an HTML table">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource ClipboardIcon}" />
-                  </MenuItem.Icon>
-                </MenuItem>
-              </MenuItem>
-            </Menu>
-            <Separator
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Menu
               Margin="0,0,0,0"
@@ -489,7 +335,8 @@
             <Separator
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-            <Image Source="{StaticResource SearchIcon}"
+            <Image Margin="2,0,0,0"
+                   Source="{StaticResource SearchIcon}"
                    Style="{StaticResource DisabledImageStyle}"
                    ToolBar.OverflowMode="Never" />
             <Grid
@@ -1274,20 +1121,23 @@
                 <Image
                   Width="16"
                   Height="16"
-                  Source="{StaticResource ClearIcon}" />
+                  Source="{StaticResource ClearIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
               </Button>
               <Separator />
 
               <ToggleButton
                 IsChecked="{Binding FilterTagged}"
                 ToolTip="Show only sections with a tag">
-                <Image Source="{StaticResource TagIcon}" />
+                <Image Source="{StaticResource TagIcon}"
+                       Style="{StaticResource DisabledImageStyle}" />
               </ToggleButton>
 
               <ToggleButton
                 IsChecked="{Binding FilterDiffFromPrevious}"
                 ToolTip="Show only sections that are different from the previous one">
-                <Image Source="{StaticResource EyeIcon}" />
+                <Image Source="{StaticResource EyeIcon}"
+                       Style="{StaticResource DisabledImageStyle}" />
               </ToggleButton>
               <Separator />
 
@@ -1296,14 +1146,16 @@
                 Command="local:Command.PreviousSection"
                 CommandTarget="{Binding ElementName=SectionList}"
                 ToolTip="Switch to previous section (Ctrl+P)">
-                <Image Source="{StaticResource LeftArrowIcon}" />
+                <Image Source="{StaticResource LeftArrowIcon}"
+                       Style="{StaticResource DisabledImageStyle}" />
               </Button>
               <Button
                 x:Name="NextButton"
                 Command="local:Command.NextSection"
                 CommandTarget="{Binding ElementName=SectionList}"
                 ToolTip="Switch to next section (Ctrl+N)">
-                <Image Source="{StaticResource RightArrowIcon}" />
+                <Image Source="{StaticResource RightArrowIcon}"
+                       Style="{StaticResource DisabledImageStyle}" />
               </Button>
 
               <Separator />

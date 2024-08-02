@@ -22,6 +22,7 @@
   <utils:SecondTimeConverter x:Key="SecondTimeConverter" />
   <utils:PercentageConverter x:Key="PercentageConverter" />
   <utils:ExclusivePercentageConverter x:Key="ExclusivePercentageConverter" />
+  <utils:RoundedPercentageConverter x:Key="RoundedPercentageConverter" />
   <utils:ListToStringConverter x:Key="StringListConverter" />
   <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
   <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />

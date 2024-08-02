@@ -7,11 +7,15 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using IRExplorerUI.Windows;
 
 namespace IRExplorerUI.OptionsPanels;
 
 public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
   private FunctionMarkingSettings settings_;
+
+  public override double DefaultHeight => 550;
+  public override double DefaultWidth => 400;
 
   public FunctionMarkingOptionsPanel() {
     InitializeComponent();
@@ -126,12 +130,21 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
     if (settings_.ImportMarkings(this)) {
       ReloadMarkingsList();
       ReloadFunctionList();
-      ReloadMarkingsList();
+      ReloadModuleList();
       NotifySettingsChanged();
     }
   }
 
   private void MarkingExport_Click(object sender, RoutedEventArgs e) {
     settings_.ExportMarkings(this);
+  }
+
+  private void MarkingSave_Click(object sender, RoutedEventArgs e) {
+    TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
+
+    if (input.Show(out string result, true)) {
+      settings_.SaveCurrentMarkingSet(result);
+      ReloadMarkingsList();
+    }
   }
 }

@@ -471,12 +471,6 @@
         </StackPanel>
       </TabItem>
       <TabItem
-        x:Name="MarkingPanel"
-        Header="Marking"
-        Style="{StaticResource TabControlStyle}">
-        <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
-      </TabItem>
-      <TabItem
         x:Name="DetailsPanel"
         Header="Details Panel"
         Style="{StaticResource TabControlStyle}">

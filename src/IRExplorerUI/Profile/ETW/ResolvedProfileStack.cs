@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -97,13 +98,18 @@ public sealed class ResolvedProfileStack {
   public int FrameCount => StackFrames.Count;
 
   public void AddFrame(IRTextFunction function, long frameIP, long frameRVA, int frameIndex,
-                       ResolvedProfileStackFrameKey frameDetails, ProfileStack stack) {
+                       ResolvedProfileStackFrameKey frameDetails, ProfileStack stack, int pointerSize) {
     // Deduplicate the frame.
     var uniqueFrame = uniqueFrames_.GetOrAdd(frameDetails, CreateResolvedProfileStackFrameDetails, function);
     var rvaFrame = ResolvedProfileStackFrame.CreateStackFrame(frameRVA, uniqueFrame);
 
     // A stack frame IP can be called from both user and kernel mode code.
     uniqueFrame.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
+
+    if (ETWEventProcessor.IsKernelAddress((ulong)frameIP, 8) && !uniqueFrame.IsKernelCode) {
+      uniqueFrame.IsKernelCode = true;
+    }
+
     var existingFrame = uniqueFrame.IsKernelCode ?
       kernelFrameInstances_.GetOrAdd(frameIP, rvaFrame) :
       frameInstances_.GetOrAdd(frameIP, rvaFrame);
@@ -175,15 +181,15 @@ public sealed class ResolvedProfileStackFrameDetails : IEquatable<ResolvedProfil
 public struct ResolvedProfileStackFrameKey : IEquatable<ResolvedProfileStackFrameKey> {
   public static readonly ResolvedProfileStackFrameKey Unknown = new();
 
-  public ResolvedProfileStackFrameKey(FunctionDebugInfo debugInfo, 
+  public ResolvedProfileStackFrameKey(FunctionDebugInfo debugInfo,
                                       ProfileImage image, bool isManagedCode) {
     DebugInfo = debugInfo;
     Image = image;
     IsManagedCode = isManagedCode;
   }
-  
+
   public ResolvedProfileStackFrameKey() {}
-  
+
   public FunctionDebugInfo DebugInfo;
   public ProfileImage Image;
   public bool IsManagedCode;

@@ -17,7 +17,6 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
-    FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
   }
 
   private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {

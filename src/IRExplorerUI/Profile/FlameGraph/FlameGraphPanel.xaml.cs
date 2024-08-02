@@ -105,9 +105,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     }
   }
 
-  public bool HasEnabledMarkedFunctions =>
-    MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
-  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
 
   public override async void OnShowPanel() {
@@ -478,12 +475,10 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     //? TODO: Redesign settings change detection, doesn't work well
     //? when a panel shows multiple settings objects.
-    var initialMarkingSettings = MarkingSettings.Clone();
     optionsPanelPopup_ = OptionsPanelHostPopup.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_.Clone(), GraphDetailsPanelHost, Session,
       async (newSettings, commit) => {
-        if (!newSettings.Equals(settings_) ||
-            !initialMarkingSettings.Equals(MarkingSettings)) {
+        if (!newSettings.Equals(settings_)) {
           Settings = newSettings;
           NodeDetailsPanel.Settings = App.Settings.CallTreeNodeSettings;
           App.Settings.FlameGraphSettings = newSettings;
@@ -492,7 +487,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
             App.SaveApplicationSettings();
           }
 
-          initialMarkingSettings = MarkingSettings.Clone();
           return settings_.Clone();
         }
 
@@ -530,44 +524,8 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     Settings = App.Settings.FlameGraphSettings;
   }
 
-  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
-                                                   e.OriginalSource, ReloadSettings);
-  }
-
-  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
-                                                     e.OriginalSource, ReloadSettings);
-  }
-
   public void UpdateMarkedFunctions(bool externalCall) {
     GraphHost.Redraw();
-    OnPropertyChanged(nameof(HasEnabledMarkedModules));
-    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
     NodeDetailsPanel.UpdateMarkedFunctions();
-  }
-
-  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.CopyFunctionMarkingsAsHtml(Session);
-  }
-
-  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(Session);
-  }
-
-  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(Session);
-  }
-
-  private async void CopyMarkedModulesMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.CopyModuleMarkingsAsHtml(Session);
-  }
-
-  private async void ExportMarkedModulesHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportModuleMarkingsAsHtmlFile(Session);
-  }
-
-  private async void ExportMarkedModulesMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportModuleMarkingsAsMarkdownFile(Session);
   }
 }

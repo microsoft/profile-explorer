@@ -52,13 +52,6 @@ public class DraggablePopup : Popup {
     }
   }
 
-  public IntPtr PopupHandle {
-    get {
-      var source = PresentationSource.FromVisual(Child) as HwndSource;
-      return source?.Handle ?? IntPtr.Zero;
-    }
-  }
-
   public bool IsDetached { get; private set; }
 
   public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {
@@ -119,20 +112,11 @@ public class DraggablePopup : Popup {
   }
 
   public void BringToFront() {
-    if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
-      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOP,
-                                 rect.Left, rect.Top, (int)Width, (int)Height,
-                                 NativeMethods.TOPMOST_FLAGS);
-    }
+    Utils.BringToFront(Child, Width, Height);
   }
 
   public void UpdateAlwaysOnTop(bool value) {
-    if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
-      NativeMethods.SetWindowPos(PopupHandle,
-                                 value ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_NOTOPMOST,
-                                 rect.Left, rect.Top, (int)Width, (int)Height,
-                                 NativeMethods.TOPMOST_FLAGS);
-    }
+    Utils.SetAlwaysOnTop(Child, value, Width, Height);
   }
 
   public void SendToBack() {
@@ -140,11 +124,7 @@ public class DraggablePopup : Popup {
       return;
     }
 
-    if (NativeMethods.GetWindowRect(PopupHandle, out var rect)) {
-      NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST,
-                                 rect.Left, rect.Top, (int)Width, (int)Height,
-                                 NativeMethods.TOPMOST_FLAGS);
-    }
+    Utils.SendToBack(Child, Width, Height);
   }
 
   public void Minimize() {

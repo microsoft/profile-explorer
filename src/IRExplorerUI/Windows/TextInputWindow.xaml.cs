@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 
 namespace IRExplorerUI.Windows;
 
@@ -10,6 +12,8 @@ public partial class TextInputWindow : Window {
   public TextInputWindow() {
     InitializeComponent();
     Loaded += (sender, args) => {
+      // Bring on top of popup windows.
+      Utils.SetAlwaysOnTop(this, true, Width, Height);
       AutocompleteBox.Focus();
     };
 
@@ -44,8 +48,10 @@ public partial class TextInputWindow : Window {
 
     if (showNextToMouseCursor) {
       var position = Mouse.GetPosition(Application.Current.MainWindow);
-      Left = position.X + SystemParameters.CursorWidth;
-      Top = position.Y + SystemParameters.CursorHeight;
+      var screenPosition = Application.Current.MainWindow.PointToScreen(position);
+      screenPosition = Utils.CoordinatesToScreen(screenPosition, Application.Current.MainWindow);
+      Left = screenPosition.X + SystemParameters.CursorWidth / 2;
+      Top = screenPosition.Y + SystemParameters.CursorHeight / 2;
     }
     else if (Owner != null) {
       WindowStartupLocation = WindowStartupLocation.CenterOwner;

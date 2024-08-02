@@ -15,15 +15,16 @@
       <TabItem Header="General" Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
+            Visibility="Collapsed"
             Content="Show function details panel"
             IsChecked="{Binding ShowDetailsPanel, Mode=TwoWay}"
             Margin="0,2,0,2"
             IsEnabled="False"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="NYI: Show the function details panel on the right-hand side" />
           <CheckBox
             Content="Sync function in other profiling panels"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            Margin="0,2,0,2"
+            Margin="0,4,0,2"
             ToolTip="Sync function displayed in other profiling panels with selection" />
           <CheckBox
             Content="Sync Source File panel with selection"
@@ -92,13 +93,6 @@
 
         </StackPanel>
       </TabItem>
-      <TabItem
-        x:Name="MarkingPanel"
-        Header="Marking"
-        Style="{StaticResource TabControlStyle}">
-        <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
-      </TabItem>
-      <TabItem IsEnabled="False" Header="Details Panel" Style="{StaticResource TabControlStyle}" />
     </TabControl>
   </Grid>
 </local:OptionsPanelBase>

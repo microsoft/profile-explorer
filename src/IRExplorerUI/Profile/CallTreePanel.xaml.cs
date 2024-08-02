@@ -195,9 +195,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  public bool HasEnabledMarkedFunctions =>
-    MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
-  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
   public event PropertyChangedEventHandler PropertyChanged;
 
@@ -1085,7 +1082,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           }
 
           await UpdateCallTree();
-          UpdateMarkedFunctions();
+          await UpdateMarkedFunctions();
 
           if (commit) {
             App.SaveApplicationSettings();
@@ -1128,26 +1125,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await UpdateMarkedFunctions();
   }
 
-  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.ModuleColors.Clear();
-    await UpdateMarkedFunctions();
-  }
-
-  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.FunctionColors.Clear();
-    await UpdateMarkedFunctions();
-  }
-
-  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
-                                                   e.OriginalSource, () => UpdateMarkedFunctions());
-  }
-
-  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
-                                                     e.OriginalSource, () => UpdateMarkedFunctions());
-  }
-
   public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) =>
@@ -1182,8 +1159,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async Task UpdateMarkedFunctionsNoLock(bool externalCall) {
     if (callTreeNodeToNodeExMap_ != null) {
       UpdateMarkedFunctionsImpl();
-      OnPropertyChanged(nameof(HasEnabledMarkedModules));
-      OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
 
       if (!externalCall) {
         await Session.FunctionMarkingChanged(PanelKind);
@@ -1219,29 +1194,5 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
         item.FunctionBackColor = color.AsBrush();
       }
     }
-  }
-
-  private async void CopyMarkedFunctionMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.CopyFunctionMarkingsAsHtml(Session);
-  }
-
-  private async void ExportMarkedFunctionsHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportFunctionMarkingsAsHtmlFile(Session);
-  }
-
-  private async void ExportMarkedFunctionsMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportFunctionMarkingsAsMarkdownFile(Session);
-  }
-
-  private async void CopyMarkedModulesMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.CopyModuleMarkingsAsHtml(Session);
-  }
-
-  private async void ExportMarkedModulesHtmlMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportModuleMarkingsAsHtmlFile(Session);
-  }
-
-  private async void ExportMarkedModulesMarkdownMenu_OnClick(object sender, RoutedEventArgs e) {
-    await ProfilingExporting.ExportModuleMarkingsAsMarkdownFile(Session);
   }
 }

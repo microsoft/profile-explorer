@@ -469,6 +469,21 @@ class ExclusivePercentageConverter : IValueConverter {
   }
 }
 
+class RoundedPercentageConverter : IValueConverter {
+  public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    if (value is double doubleValue) {
+      return doubleValue.AsPercentageString(0);
+    }
+
+    return value;
+  }
+
+  public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    return null;
+  }
+}
+
+
 class AlternateRowConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     return (bool)value ? 2 : 1;

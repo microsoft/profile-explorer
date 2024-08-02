@@ -409,7 +409,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         if (frameImage == null) {
-          resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack);
+          resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
           continue;
         }
       }
@@ -420,7 +420,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       profileModuleBuilder = GetModuleBuilder(rawProfile, frameImage, context.ProcessId, symbolSettings);
 
       if (profileModuleBuilder == null) {
-        resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack);
+        resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
         continue;
       }
 
@@ -438,7 +438,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // of the func. across all call stacks.
       var resolvedFrame = new ResolvedProfileStackFrameKey(funcPair.DebugInfo, frameImage,
                                                            profileModuleBuilder.IsManaged);
-      resolvedStack.AddFrame(funcPair.Function, frameIp, frameRva, frameIndex, resolvedFrame, stack);
+      resolvedStack.AddFrame(funcPair.Function, frameIp, frameRva, frameIndex,
+                             resolvedFrame, stack, pointerSize);
     }
 
     return resolvedStack;
@@ -449,15 +450,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     otherDocuments = new List<LoadedDocument>();
 
     foreach (var module in imageModuleMap_.Values) {
-      if (module.ModuleDocument == null) {
+      var moduleDoc = module.ModuleDocument;
+
+      if (moduleDoc == null) {
         continue;
       }
 
-      if (Utils.IsExecutableFile(module.ModuleDocument.BinaryFile?.FilePath)) {
+      if (Utils.IsExecutableFile(moduleDoc.BinaryFile?.FilePath)) {
         if (exeDocument == null) {
           exeDocument = module.ModuleDocument;
         }
-        else if (module.ModuleDocument.ModuleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+        else if (moduleDoc.ModuleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
           // Pick the better match EXE.
           otherDocuments.Add(exeDocument);
           exeDocument = module.ModuleDocument;
@@ -465,11 +468,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
       }
 
-      otherDocuments.Add(module.ModuleDocument);
+      otherDocuments.Add(moduleDoc);
 
       if (module.DebugInfo != null) {
         // Used after profiling completes to unload debug info and free memory.
-        profileData_.RegisterModuleDebugInfo(module.ModuleDocument.ModuleName, module.DebugInfo);
+        profileData_.RegisterModuleDebugInfo(moduleDoc.ModuleName, module.DebugInfo);
       }
     }
 

@@ -16,9 +16,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Xml;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
@@ -832,8 +832,63 @@ public static class Utils {
       return point;
     }
 
-    var transform = source.CompositionTarget.TransformFromDevice;
-    return transform.Transform(point);
+    if (source.CompositionTarget != null) {
+      var transform = source.CompositionTarget.TransformFromDevice;
+      return transform.Transform(point);
+    }
+
+    return point;
+  }
+
+  public static IntPtr GetHwnd(UIElement target) {
+    var source = PresentationSource.FromVisual(target) as HwndSource;
+    return source?.Handle ?? IntPtr.Zero;
+  }
+
+  public static void BringToFront(UIElement target, double width, double height) {
+    var handle = GetHwnd(target);
+
+    if (NativeMethods.GetWindowRect(handle, out var rect)) {
+      NativeMethods.SetWindowPos(handle, NativeMethods.HWND_TOP,
+                                 rect.Left, rect.Top, (int)width, (int)height,
+                                 NativeMethods.TOPMOST_FLAGS);
+    }
+  }
+
+  public static void SetAlwaysOnTop(UIElement target, bool value, double width, double height) {
+    var handle = GetHwnd(target);
+
+    if (NativeMethods.GetWindowRect(handle, out var rect)) {
+      NativeMethods.SetWindowPos(handle,
+                                 value ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_NOTOPMOST,
+                                 rect.Left, rect.Top, (int)width, (int)height,
+                                 NativeMethods.TOPMOST_FLAGS);
+    }
+  }
+
+  public static void SendToBack(UIElement target, double width, double height) {
+    var handle = GetHwnd(target);
+
+    if (NativeMethods.GetWindowRect(handle, out var rect)) {
+      NativeMethods.SetWindowPos(handle, NativeMethods.HWND_NOTOPMOST,
+                                 rect.Left, rect.Top, (int)width, (int)height,
+                                 NativeMethods.TOPMOST_FLAGS);
+    }
+  }
+
+  public static Point CoordinatesFromScreen(Point point, UIElement control) {
+    var source = PresentationSource.FromVisual(control);
+
+    if (source == null) {
+      return point;
+    }
+
+    if (source.CompositionTarget != null) {
+      var transform = source.CompositionTarget.TransformToDevice;
+      return transform.Transform(point);
+    }
+
+    return point;
   }
 
   public static void PatchComboBoxStyle(ComboBox control) {
@@ -1367,35 +1422,35 @@ public static class Utils {
   public static string ConvertHtmlToClipboardFormat(string html) {
     var encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     byte[] data = Array.Empty<byte>();
-    byte[] header = encoding.GetBytes(string.Format(HEADER, 0, 1, 2, 3));
+    byte[] header = encoding.GetBytes(string.Format(HTML_COPY_HEADER, 0, 1, 2, 3));
     data = data.Concat(header).ToArray();
 
     int startHtml = data.Length;
-    data = data.Concat(encoding.GetBytes(HTML_START)).ToArray();
+    data = data.Concat(encoding.GetBytes(HTML_COPY_START)).ToArray();
 
     int startFragment = data.Length;
     data = data.Concat(encoding.GetBytes(html)).ToArray();
     int endFragment = data.Length;
-    data = data.Concat(encoding.GetBytes(HTML_END)).ToArray();
+    data = data.Concat(encoding.GetBytes(HTML_COPY_END)).ToArray();
 
     int endHtml = data.Length;
     byte[] newHeader = encoding.GetBytes(
-      string.Format(HEADER, startHtml, endHtml, startFragment, endFragment));
+      string.Format(HTML_COPY_HEADER, startHtml, endHtml, startFragment, endFragment));
     Array.Copy(newHeader, data, startHtml);
     return encoding.GetString(data);
   }
 
-  private static readonly string HEADER =
+  private static readonly string HTML_COPY_HEADER =
     "Version:0.9\r\n" +
     "StartHTML:{0:0000000000}\r\n" +
     "EndHTML:{1:0000000000}\r\n" +
     "StartFragment:{2:0000000000}\r\n" +
     "EndFragment:{3:0000000000}\r\n";
-  private static readonly string HTML_START =
+  private static readonly string HTML_COPY_START =
     "<html>\r\n" +
     "<body>\r\n" +
     "<!--StartFragment-->";
-  private static readonly string HTML_END =
+  private static readonly string HTML_COPY_END =
     "<!--EndFragment-->\r\n" +
     "</body>\r\n" +
     "</html>";

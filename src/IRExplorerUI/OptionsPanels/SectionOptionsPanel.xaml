@@ -141,19 +141,13 @@
         </StackPanel>
       </TabItem>
       <TabItem
-        x:Name="MarkingPanel"
-        Header="Marking"
-        Style="{StaticResource TabControlStyle}">
-        <local:FunctionMarkingOptionsPanel x:Name="FunctionMarkingOptionsPanel" />
-      </TabItem>
-      <TabItem
         Header="Profiling"
         Style="{StaticResource TabControlStyle}"
         ToolTip="Options for profiling UI and annotations">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
             Margin="0,2,0,2"
-            Content="Show Modules list panel"
+            Content="Show Modules list section"
             IsChecked="{Binding ShowModulePanel, Mode=TwoWay}"
             ToolTip="Show the list of modules (binaries) on the left-hand side" />
           <CheckBox
@@ -171,7 +165,7 @@
             Content="Append module name before function"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
             IsEnabled="False"
-            ToolTip="Show the module name in front of the function name" />
+            ToolTip="NYI: Show the module name in front of the function name" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Margin="0,2,0,2"

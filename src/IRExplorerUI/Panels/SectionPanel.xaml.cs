@@ -777,9 +777,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public event EventHandler<bool> SyncDiffedDocumentsChanged;
   public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
   public event PropertyChangedEventHandler PropertyChanged;
-  public bool HasEnabledMarkedFunctions =>
-    MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
-  public bool HasEnabledMarkedModules => MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
 
   //? TODO: Replace all other commands with RelayCommand.
@@ -1274,8 +1271,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public async Task UpdateMarkedFunctions(bool externalCall = false) {
     if (functions_ != null) {
       UpdateMarkedFunctionsImpl();
-      OnPropertyChanged(nameof(HasEnabledMarkedModules));
-      OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
 
       if (!externalCall) {
         Session.FunctionMarkingChanged(PanelKind);
@@ -3490,37 +3485,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ShowSections = false;
   }
 
-  private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
-    // Force an update for toolbar buttons.
-    await UpdateMarkedFunctions();
-  }
-
-  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.ModuleColors.Clear();
-    await UpdateMarkedFunctions();
-  }
-
-  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.FunctionColors.Clear();
-    await UpdateMarkedFunctions();
-  }
-
-  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, Session,
-                                                   e.OriginalSource, () => UpdateMarkedFunctions());
-  }
-
-  private async void FunctionMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    await ProfilingUtils.PopulateMarkedFunctionsMenu(FunctionMenu, MarkingSettings, Session,
-                                                     e.OriginalSource, () => UpdateMarkedFunctions());
-  }
-
   public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) =>
                         markingSettings.AddModuleColor(node.ModuleName, color));
     markingSettings.UseModuleColors = true;
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   });
   public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
@@ -3533,7 +3503,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       }
     });
     markingSettings.UseFunctionColors = true;
-    UpdateMarkedFunctions();
+    await UpdateMarkedFunctions();
   });
 
   private void MarkSelectedNodes(object obj, Action<IRTextFunctionEx, Color> action) {

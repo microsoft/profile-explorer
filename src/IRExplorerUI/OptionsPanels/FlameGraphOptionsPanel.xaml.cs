@@ -26,7 +26,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (FlameGraphSettings)Settings;
-    FunctionMarkingOptionsPanel.Initialize(parent, App.Settings.MarkingSettings, session);
   }
 
   public override void OnSettingsChanged(object newSettings) {
@@ -44,7 +43,6 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     FunctionListOptionsPanel.DataContext = null;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
-    FunctionMarkingOptionsPanel.ReloadSettings();
   }
 
   public override void PanelResetting() {
