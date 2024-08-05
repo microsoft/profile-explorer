@@ -293,6 +293,8 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
+  public bool HasRemarks => remarkList_ is {Count: > 0};
+
   public bool ShowPreviousSections {
     get => ShowRemarks && remarkSettings_.ShowPreviousSections;
     set {
@@ -1105,7 +1107,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task RemoveRemarks() {
-    if (remarkList_ != null) {
+    if (HasRemarks) {
       remarkList_ = null;
       activeRemarkContext_ = null;
       await UpdateDocumentRemarks(remarkList_);
@@ -1437,7 +1439,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       return;
     }
 
-    if (remarkList_ is {Count: > 0}) {
+    if (HasRemarks) {
       await AddRemarks(remarkList_);
     }
     else if (prevRemarkList is {Count: > 0}) {

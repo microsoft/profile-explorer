@@ -30,5 +30,7 @@ public interface INameProvider {
   string FormatFunctionName(IRTextFunction function);
 
   string FormatFunctionName(string name);
+
+  void SettingsChanged();
   //? TODO: GetBlockName
 }

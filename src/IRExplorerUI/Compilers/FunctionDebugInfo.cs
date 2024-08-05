@@ -102,15 +102,14 @@ public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
 [ProtoContract(SkipConstructor = true)]
 public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
   public static readonly FunctionDebugInfo Unknown = new(null, 0, 0);
-  private int cachedHashCode_;
 
-  public FunctionDebugInfo(string name, long rva, long size, short optLevel = 0, int id = -1, short auxId = -1) {
+  public FunctionDebugInfo(string name, long rva, uint size, short optLevel = 0, int id = -1, short auxId = -1) {
     // Note that string interning is not done here on purpose because
     // it is often the slowest part in processing a trace, while the memory
     // saving are quite small (under 15%, a few dozen MBs even for big traces).
     Name = name;
     RVA = rva;
-    Size = (uint)size;
+    Size = size;
     OptimizationLevel = optLevel;
     SourceLines = null;
     Id = id;
@@ -231,11 +230,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   }
 
   public override int GetHashCode() {
-    if (cachedHashCode_ == 0) {
-      cachedHashCode_ = HashCode.Combine(Name, RVA, Id);
-    }
-
-    return cachedHashCode_;
+    return HashCode.Combine(RVA, Size, Id);
   }
 
   public override string ToString() {
@@ -281,7 +276,6 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 
     return RVA == other.RVA &&
            Size == other.Size &&
-           Name.Equals(other.Name, StringComparison.Ordinal) &&
            Id == other.Id &&
            AuxiliaryId == other.AuxiliaryId;
   }

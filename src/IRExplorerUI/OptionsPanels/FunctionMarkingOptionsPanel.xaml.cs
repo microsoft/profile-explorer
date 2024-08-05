@@ -35,7 +35,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
     ReloadModuleList();
     ReloadFunctionList();
     ReloadMarkingsList();
-  }
+  }  
 
   private void ReloadModuleList() {
     var list = new ObservableCollectionRefresh<FunctionMarkingStyle>(settings_.ModuleColors);

@@ -303,7 +303,13 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  public void BringNodeIntoView(FlameGraphNode node, bool fitSize = false) {
+  public void BringNodeIntoView(FlameGraphNode node, bool fitSize = false, bool animate = true) {
+    if (node.IsDummyNode) {
+      // If the node is not visible at all and has no bounds computed,
+      // adjust the zoom first to make the node visible, then scroll to it.
+      EnlargeNodeIntoView(node, false);
+    }
+
     var bounds = GraphViewer.ComputeNodeBounds(node);
     var graphArea = GraphVisibleArea;
     DoubleAnimation animation1 = null;
@@ -311,33 +317,35 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     if (bounds.Left < graphArea.Left || bounds.Right > graphArea.Right) {
       //? TODO: If node is outside on the right, increase offset to show it all
-      animation1 = ScrollToHorizontalOffset(bounds.Left);
+      animation1 = ScrollToHorizontalOffset(bounds.Left, animate);
     }
 
     if (bounds.Top < graphArea.Top || bounds.Bottom > graphArea.Bottom) {
-      animation2 = ScrollToVerticalOffset(bounds.Top);
+      animation2 = ScrollToVerticalOffset(bounds.Top, animate);
     }
 
     if (fitSize) {
       switch ((animation1 != null, animation2 != null)) {
         case (true, true):
         case (true, false): {
-          animation1.Completed += (sender, e) => BringNodeIntoViewZoom(node);
+          animation1.Completed += (sender, e) => EnlargeNodeIntoView(node);
           break;
         }
         case (false, true): {
-          animation2.Completed += (sender, e) => BringNodeIntoViewZoom(node);
+          animation2.Completed += (sender, e) => EnlargeNodeIntoView(node);
           break;
         }
         default: {
-          BringNodeIntoViewZoom(node);
+          EnlargeNodeIntoView(node, animate);
           break;
         }
       }
     }
 
-    animation1?.BeginAnimation(FlameGraphHorizontalOffsetProperty, animation1, HandoffBehavior.SnapshotAndReplace);
-    animation2?.BeginAnimation(FlameGraphVerticalOffsetProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+    if (animate) {
+      animation1?.BeginAnimation(FlameGraphHorizontalOffsetProperty, animation1, HandoffBehavior.SnapshotAndReplace);
+      animation2?.BeginAnimation(FlameGraphVerticalOffsetProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+    }
   }
 
   public void SetHorizontalOffset(double offset) {
@@ -702,8 +710,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  private void BringNodeIntoViewZoom(FlameGraphNode node) {
-    const double MinNodeWidth = 10;
+  private void EnlargeNodeIntoView(FlameGraphNode node, bool animate = true) {
+    // Adjust the zoom level so that the node is at least MinNodeWidth large.
+    const double MinNodeWidth = 20;
     var bounds = GraphViewer.ComputeNodeBounds(node);
     double zoomX = 0;
 
@@ -718,9 +727,9 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
 
     double zoomPointX = bounds.Left;
-    double nodeRation = GraphViewer.FlameGraph.InverseScaleWeight(node.Weight);
-    double zoomAmount = zoomX * nodeRation;
-    AdjustZoom(zoomAmount, zoomPointX, true, ZoomAnimationDuration);
+    double nodeRatio = GraphViewer.FlameGraph.InverseScaleWeight(node.Weight);
+    double zoomAmount = zoomX * nodeRatio;
+    AdjustZoom(zoomAmount, zoomPointX, animate, ZoomAnimationDuration);
   }
 
   private async Task EnlargeNode(FlameGraphNode node, bool saveState = true,

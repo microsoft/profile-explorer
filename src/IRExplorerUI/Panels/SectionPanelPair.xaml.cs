@@ -514,8 +514,8 @@ public partial class SectionPanelPair : ToolPanelControl {
                                                   Session.CompilerInfo, true, cancelableTask);
   }
 
-  public void UpdateMarkedFunctions(bool externalCall) {
-    MainPanel.UpdateMarkedFunctions(externalCall);
-    DiffPanel.UpdateMarkedFunctions(externalCall);
+  public async Task UpdateMarkedFunctions(bool externalCall) {
+    await MainPanel.UpdateMarkedFunctions(externalCall);
+    await DiffPanel.UpdateMarkedFunctions(externalCall);
   }
 }

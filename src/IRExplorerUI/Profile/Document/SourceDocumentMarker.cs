@@ -143,8 +143,9 @@ public class SourceDocumentMarker {
     }
 
     if (settings_.MarkCallTargets) {
+      var callTypeFace = new Typeface(document.FontFamily, document.FontStyle, FontWeights.Bold, document.FontStretch);
       var colorizer = new OperandColorizer(lineToOperandMap, settings_.CallTargetTextColor.AsBrush(),
-                                           settings_.CallTargetBackColor.AsBrush());
+                                           settings_.CallTargetBackColor.AsBrush(), callTypeFace);
       document.RegisterTextTransformer(colorizer);
     }
 

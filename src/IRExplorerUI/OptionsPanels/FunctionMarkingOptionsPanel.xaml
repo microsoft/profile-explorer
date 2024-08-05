@@ -34,16 +34,22 @@
           VerticalAlignment="Center"
           Text="Module color palette" />
       </StackPanel>
-      <Separator Margin="0,4,0,4" Background="LightGray" />
+      <Separator
+        Margin="0,4,0,4"
+        Background="LightGray" />
 
-      <TextBlock FontWeight="Medium" Text="Module marking" />
+      <TextBlock
+        FontWeight="Medium"
+        Text="Module marking" />
       <CheckBox
         x:Name="ModuleCheckBox"
         Margin="0,4,0,2"
         Content="Mark functions based on module name"
         IsChecked="{Binding UseModuleColors, Mode=TwoWay}"
         ToolTip="Use a different color for specified modules" />
-      <Grid Margin="0,0,0,0" IsEnabled="{Binding ElementName=ModuleCheckBox, Path=IsChecked}">
+      <Grid
+        Margin="0,0,0,0"
+        IsEnabled="{Binding ElementName=ModuleCheckBox, Path=IsChecked}">
         <Grid.RowDefinitions>
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -67,7 +73,9 @@
           TextSearch.TextPath="Name">
           <ListView.View>
             <GridView>
-              <GridViewColumn Width="150" Header="Module name">
+              <GridViewColumn
+                Width="150"
+                Header="Module name">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Module name substring or Regex pattern" />
@@ -88,7 +96,9 @@
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="80" Header="Color">
+              <GridViewColumn
+                Width="80"
+                Header="Color">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -108,7 +118,9 @@
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="35" Header="Regex">
+              <GridViewColumn
+                Width="35"
+                Header="Regex">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -126,9 +138,10 @@
             </GridView>
           </ListView.View>
           <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+            <Style
+              BasedOn="{StaticResource FlatListViewItem}"
+              TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
             </Style>
@@ -151,7 +164,9 @@
                 Height="16"
                 Source="{StaticResource PlusIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Add" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Add" />
             </StackPanel>
           </Button>
           <Button
@@ -167,7 +182,9 @@
                 Height="16"
                 Source="{StaticResource MinusIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Remove" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Remove" />
             </StackPanel>
           </Button>
           <Button
@@ -183,14 +200,20 @@
                 Height="16"
                 Source="{StaticResource RemoveIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Clear" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Clear" />
             </StackPanel>
           </Button>
 
         </StackPanel>
       </Grid>
-      <Separator Margin="0,4,0,4" Background="LightGray" />
-      <TextBlock FontWeight="Medium" Text="Function marking" />
+      <Separator
+        Margin="0,4,0,4"
+        Background="LightGray" />
+      <TextBlock
+        FontWeight="Medium"
+        Text="Function marking" />
 
       <CheckBox
         x:Name="FunctionCheckBox"
@@ -198,7 +221,9 @@
         Content="Mark functions based on function name"
         IsChecked="{Binding UseFunctionColors, Mode=TwoWay}"
         ToolTip="Use a different color for specified functions" />
-      <Grid Margin="0,0,0,0" IsEnabled="{Binding ElementName=FunctionCheckBox, Path=IsChecked}">
+      <Grid
+        Margin="0,0,0,0"
+        IsEnabled="{Binding ElementName=FunctionCheckBox, Path=IsChecked}">
         <Grid.RowDefinitions>
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -222,7 +247,9 @@
           TextSearch.TextPath="Name">
           <ListView.View>
             <GridView>
-              <GridViewColumn Width="150" Header="Function name">
+              <GridViewColumn
+                Width="150"
+                Header="Function name">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Function name substring or Regex pattern" />
@@ -243,7 +270,9 @@
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="80" Header="Color">
+              <GridViewColumn
+                Width="80"
+                Header="Color">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -263,7 +292,9 @@
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="35" Header="Regex">
+              <GridViewColumn
+                Width="35"
+                Header="Regex">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -281,9 +312,10 @@
             </GridView>
           </ListView.View>
           <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+            <Style
+              BasedOn="{StaticResource FlatListViewItem}"
+              TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
             </Style>
@@ -306,7 +338,9 @@
                 Height="16"
                 Source="{StaticResource PlusIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Add" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Add" />
             </StackPanel>
           </Button>
           <Button
@@ -322,7 +356,9 @@
                 Height="16"
                 Source="{StaticResource MinusIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Remove" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Remove" />
             </StackPanel>
           </Button>
           <Button
@@ -338,17 +374,22 @@
                 Height="16"
                 Source="{StaticResource RemoveIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Clear" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Clear" />
             </StackPanel>
           </Button>
 
         </StackPanel>
       </Grid>
 
-      <TextBlock FontWeight="Medium" Text="Saved marking sets" />
+      <TextBlock
+        FontWeight="Medium"
+        Text="Saved marking sets" />
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="*" />
+          <RowDefinition Height="25" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -370,7 +411,10 @@
           TextSearch.TextPath="Name">
           <ListView.View>
             <GridView>
-              <GridViewColumn Width="130" Header="Name" DisplayMemberBinding="{Binding Title}">
+              <GridViewColumn
+                Width="130"
+                DisplayMemberBinding="{Binding Title}"
+                Header="Name">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Marking set name" />
@@ -378,8 +422,10 @@
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
-              <GridViewColumn Width="Auto" Header="Functions"
-                              DisplayMemberBinding="{Binding FunctionColors.Count}">
+              <GridViewColumn
+                Width="Auto"
+                DisplayMemberBinding="{Binding FunctionColors.Count}"
+                Header="Functions">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Number of function patterns in the set" />
@@ -387,8 +433,10 @@
                   </Style>
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
-              <GridViewColumn Width="Auto" Header="Modules"
-                              DisplayMemberBinding="{Binding ModuleColors.Count}">
+              <GridViewColumn
+                Width="Auto"
+                DisplayMemberBinding="{Binding ModuleColors.Count}"
+                Header="Modules">
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="ToolTip" Value="Number of module patterns in the set" />
@@ -399,9 +447,10 @@
             </GridView>
           </ListView.View>
           <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+            <Style
+              BasedOn="{StaticResource FlatListViewItem}"
+              TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
             </Style>
@@ -425,7 +474,27 @@
                 Height="16"
                 Source="{StaticResource PlusIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Save" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Save" />
+            </StackPanel>
+          </Button>
+          <Button
+            Height="24"
+            Margin="0,2,0,0"
+            Padding="2"
+            HorizontalContentAlignment="Left"
+            Click="MarkingSave_Click"
+            ToolTip="Export current and saved marking sets as a JSON file">
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource PlusIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Save" />
             </StackPanel>
           </Button>
           <Button
@@ -441,7 +510,9 @@
                 Height="16"
                 Source="{StaticResource MinusIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Remove" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Remove" />
             </StackPanel>
           </Button>
           <Button
@@ -457,12 +528,19 @@
                 Height="16"
                 Source="{StaticResource RemoveIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Clear" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Clear" />
             </StackPanel>
           </Button>
+        </StackPanel>
+        <StackPanel
+          Grid.Row="1"
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Top"
+          Orientation="Horizontal">
           <Button
             Height="24"
-            Margin="0,2,0,0"
             Padding="2"
             HorizontalContentAlignment="Left"
             Click="MarkingImport_Click"
@@ -473,12 +551,14 @@
                 Height="16"
                 Source="{StaticResource FolderIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Import" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Import" />
             </StackPanel>
           </Button>
           <Button
             Height="24"
-            Margin="0,2,0,0"
+            Margin="4,0,0,0"
             Padding="2"
             HorizontalContentAlignment="Left"
             Click="MarkingExport_Click"
@@ -489,7 +569,9 @@
                 Height="16"
                 Source="{StaticResource SaveIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Export" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Export" />
             </StackPanel>
           </Button>
         </StackPanel>

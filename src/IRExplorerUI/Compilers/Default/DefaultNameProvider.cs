@@ -146,4 +146,9 @@ public sealed class DefaultNameProvider : INameProvider {
   public string FormatFunctionName(IRTextFunction function) {
     return FormatFunctionName(function.Name);
   }
+
+  public void SettingsChanged() {
+    demangledNameMap_.Clear();
+    functionNameMap_.Clear();
+  }
 }

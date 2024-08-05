@@ -324,10 +324,12 @@ public class DocumentMargin : AbstractMargin {
     }
 
     // Clear current segments and add back just the bookmarks.
-    bookmarkSegments_.Clear();
+    if (bookmarkList.Count < bookmarkSegments_.Count) {
+      bookmarkSegments_.Clear();
 
-    foreach (var segment in bookmarkList) {
-      bookmarkSegments_.Add(segment);
+      foreach (var segment in bookmarkList) {
+        bookmarkSegments_.Add(segment);
+      }
     }
   }
 

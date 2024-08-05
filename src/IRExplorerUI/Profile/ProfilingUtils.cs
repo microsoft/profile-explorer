@@ -258,7 +258,7 @@ public static class ProfilingUtils {
                                                      Func<Task> changedHandler) {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
-    CreateMarkedModulesMenu(menu,
+    await CreateMarkedModulesMenu(menu,
                             async (o, args) => {
                               if (args.Source is MenuItem menuItem) {
                                 if (menuItem.Tag is FunctionMarkingStyle style) {
@@ -333,7 +333,7 @@ public static class ProfilingUtils {
     return false;
   }
 
-  public static async void
+  public static async Task
     CreateMarkedModulesMenu(MenuItem menu,
                             MouseButtonEventHandler menuClickHandler,
                             MouseButtonEventHandler menuRightClickHandler,

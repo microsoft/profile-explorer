@@ -1273,7 +1273,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       UpdateMarkedFunctionsImpl();
 
       if (!externalCall) {
-        Session.FunctionMarkingChanged(PanelKind);
+        await Session.FunctionMarkingChanged(PanelKind);
       }
     }
   }
@@ -1916,7 +1916,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private bool SetupSectionExtensions(bool force = false) {
     if (sectionExtensionComputed_ && !force) {
-      return false;
+      return true;
     }
 
     if (summary_ == null) {
@@ -2345,6 +2345,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       settings_ = newSettings;
 
       if (updateFunctionList) {
+        CompilerInfo.NameProvider.SettingsChanged();
         await SetupFunctionList();
       }
 

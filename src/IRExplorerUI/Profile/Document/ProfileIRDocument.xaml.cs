@@ -313,8 +313,19 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
     TextView.PreviewMouseDown += TextView_PreviewMouseDown;
     TextView.PreviewMouseUp += TextView_PreviewMouseUp;
-    PreviewKeyDown += TextView_PreviewKeyDown;
     TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
+    PreviewKeyDown += TextView_PreviewKeyDown;
+    Loaded += (sender, args) => {
+      // Due to WPF layout update quirks, when the document is displayed
+      // in a popup that was just created redo some UI actions one it's displayed.
+      if (TextView.IsLoaded) {
+        if (settings_.ProfileMarkerSettings.JumpToHottestElement) {
+          JumpToHottestProfiledElement(true);
+        }
+
+        TextView.ResumeUpdate();
+      }
+    };
   }
 
   private async void TextView_PreviewKeyDown(object sender, KeyEventArgs e) {
@@ -1651,7 +1662,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       }
 
       JumpToProfiledElement(0);
-    }, DispatcherPriority.Render);
+    }, DispatcherPriority.Background);
   }
 
   private void JumpToProfiledElement(int offset) {

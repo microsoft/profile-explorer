@@ -6,9 +6,9 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="clr-namespace:IRExplorerUI"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:optionsPanels="clr-namespace:IRExplorerUI.OptionsPanels"
   xmlns:profile="clr-namespace:IRExplorerUI.Profile"
   xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
-  xmlns:optionsPanels="clr-namespace:IRExplorerUI.OptionsPanels"
   Title="Load profile trace"
   Width="900"
   Height="600"
@@ -24,12 +24,13 @@
   mc:Ignorable="d">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Grid.LayoutTransform>
-      <ScaleTransform ScaleX="{Binding WindowScaling}"
-                      ScaleY="{Binding WindowScaling}" />
+      <ScaleTransform ScaleX="{Binding WindowScaling}" ScaleY="{Binding WindowScaling}" />
     </Grid.LayoutTransform>
 
     <DockPanel>
-      <Grid Width="250" DockPanel.Dock="Left">
+      <Grid
+        Width="250"
+        DockPanel.Dock="Left">
         <ListBox
           x:Name="SessionList"
           HorizontalAlignment="Stretch"
@@ -44,8 +45,12 @@
 
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <DockPanel HorizontalAlignment="Stretch" ToolTip="{Binding ToolTip}">
-                <StackPanel MaxWidth="190" DockPanel.Dock="Left">
+              <DockPanel
+                HorizontalAlignment="Stretch"
+                ToolTip="{Binding ToolTip}">
+                <StackPanel
+                  MaxWidth="190"
+                  DockPanel.Dock="Left">
                   <TextBlock
                     HorizontalAlignment="Stretch"
                     FontWeight="Medium"
@@ -56,8 +61,9 @@
                     Text="{Binding Description}"
                     TextTrimming="CharacterEllipsis"
                     Visibility="{Binding ShowDescription, Converter={StaticResource BoolToVisibilityConverter}}" />
-                  <TextBlock Text="{Binding Time}"
-                             Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                  <TextBlock
+                    Text="{Binding Time}"
+                    Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
                 </StackPanel>
                 <StackPanel
@@ -67,8 +73,7 @@
                   Orientation="Horizontal">
                   <StackPanel.Style>
                     <Style TargetType="{x:Type StackPanel}">
-                      <Setter Property="Visibility"
-                              Value="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                      <Setter Property="Visibility" Value="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                       <Style.Triggers>
                         <DataTrigger
                           Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}"
@@ -88,7 +93,9 @@
                     BorderThickness="0"
                     Click="SessionReportButton_Click"
                     ToolTip="Open session report">
-                    <Image Height="16" Source="{StaticResource WindowIcon}" />
+                    <Image
+                      Height="16"
+                      Source="{StaticResource WindowIcon}" />
                   </Button>
                   <Button
                     Name="SessionRemoveButton"
@@ -99,7 +106,9 @@
                     BorderThickness="0"
                     Click="SessionRemoveButton_Click"
                     ToolTip="Remove session from history">
-                    <Image Height="16" Source="{StaticResource ClearIcon}" />
+                    <Image
+                      Height="16"
+                      Source="{StaticResource ClearIcon}" />
                   </Button>
                 </StackPanel>
               </DockPanel>
@@ -108,10 +117,14 @@
           <ListBox.ItemContainerStyle>
             <Style TargetType="ListBoxItem">
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-              <EventSetter Event="MouseDoubleClick" Handler="SessionList_MouseDoubleClick" />
+              <EventSetter
+                Event="MouseDoubleClick"
+                Handler="SessionList_MouseDoubleClick" />
 
               <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=IsNewSession}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=IsNewSession}"
+                  Value="True">
                   <Setter Property="Foreground" Value="MediumBlue" />
                 </DataTrigger>
               </Style.Triggers>
@@ -119,16 +132,21 @@
           </ListBox.ItemContainerStyle>
         </ListBox>
       </Grid>
-      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <ScrollViewer
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
         <TabControl
           VerticalAlignment="Stretch"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           BorderThickness="0"
           DockPanel.Dock="Right">
-          <TabItem Header="Session" Style="{StaticResource TabControlStyle}">
+          <TabItem
+            Header="Session"
+            Style="{StaticResource TabControlStyle}">
             <StackPanel Orientation="Vertical">
-              <StackPanel x:Name="ProfileCapturePanel"
-                          Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
+              <StackPanel
+                x:Name="ProfileCapturePanel"
+                Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock
                   Margin="8,6,8,0"
                   FontWeight="Medium"
@@ -157,10 +175,13 @@
                   IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                   IsEnabled="{Binding InputControlsEnabled}"
                   ToolTip="Profiles all applications running on the current machine" />
-                <Separator Margin="0,8,0,8" Background="LightGray" />
+                <Separator
+                  Margin="0,8,0,8"
+                  Background="LightGray" />
 
-                <StackPanel x:Name="AttachToProcessPanel"
-                            Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel
+                  x:Name="AttachToProcessPanel"
+                  Visibility="{Binding ElementName=AttachRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Grid
                     Height="24"
                     MinHeight="24"
@@ -186,8 +207,12 @@
                       VerticalAlignment="Top"
                       DockPanel.Dock="Right"
                       Orientation="Horizontal">
-                      <Image Height="16" Source="{StaticResource SearchIcon}" />
-                      <Grid x:Name="ProcessFilterGrid" Height="24">
+                      <Image
+                        Height="16"
+                        Source="{StaticResource SearchIcon}" />
+                      <Grid
+                        x:Name="ProcessFilterGrid"
+                        Height="24">
                         <TextBox
                           Name="ProcessFilter"
                           Width="250"
@@ -232,7 +257,9 @@
                     VirtualizingStackPanel.VirtualizationMode="Recycling">
                     <ListView.View>
                       <GridView>
-                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
+                        <GridViewColumn
+                          Width="150"
+                          DisplayMemberBinding="{Binding Process.Name}">
                           <GridViewColumnHeader Content="Process" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -241,8 +268,9 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="70"
-                                        DisplayMemberBinding="{Binding Process.ProcessId}">
+                        <GridViewColumn
+                          Width="70"
+                          DisplayMemberBinding="{Binding Process.ProcessId}">
                           <GridViewColumnHeader Content="Process ID" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -251,8 +279,9 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100"
-                                        DisplayMemberBinding="{Binding Process.StartTime, StringFormat=hh:mm:ss tt}">
+                        <GridViewColumn
+                          Width="100"
+                          DisplayMemberBinding="{Binding Process.StartTime, StringFormat=hh:mm:ss tt}">
                           <GridViewColumnHeader Content="Start Time" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -261,8 +290,9 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="250"
-                                        DisplayMemberBinding="{Binding Process.ImageFileName}">
+                        <GridViewColumn
+                          Width="250"
+                          DisplayMemberBinding="{Binding Process.ImageFileName}">
                           <GridViewColumnHeader Content="Title" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -274,19 +304,22 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}"
-                             TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background"
-                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                      <Style
+                        BasedOn="{StaticResource FlatListViewItem}"
+                        TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
-                        <EventSetter Event="MouseDoubleClick"
-                                     Handler="RunningProcessList_DoubleClick" />
+                        <EventSetter
+                          Event="MouseDoubleClick"
+                          Handler="RunningProcessList_DoubleClick" />
                       </Style>
                     </ListView.ItemContainerStyle>
 
                     <ListView.ContextMenu>
                       <ContextMenu>
-                        <MenuItem Click="ProcessListMenuItem_OnClick" Header="Copy Process Details" />
+                        <MenuItem
+                          Click="ProcessListMenuItem_OnClick"
+                          Header="Copy Process Details" />
                         <MenuItem
                           Click="ProcessListMenuItem_OnClick"
                           Header="Copy Process List"
@@ -297,9 +330,12 @@
 
                 </StackPanel>
 
-                <StackPanel x:Name="StartProcessPanel"
-                            Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
-                  <TextBlock Margin="8,0,8,0" Text="Application path" />
+                <StackPanel
+                  x:Name="StartProcessPanel"
+                  Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <TextBlock
+                    Margin="8,0,8,0"
+                    Text="Application path" />
                   <Grid Margin="8,4,8,0">
                     <controls:FileSystemTextBox
                       x:Name="ApplicationAutocompleteBox"
@@ -324,7 +360,9 @@
                       IsEnabled="{Binding InputControlsEnabled}" />
                   </Grid>
 
-                  <TextBlock Margin="8,4,8,0" Text="Arguments" />
+                  <TextBlock
+                    Margin="8,4,8,0"
+                    Text="Arguments" />
                   <Grid Margin="8,4,8,0">
                     <TextBox
                       Height="22"
@@ -335,7 +373,9 @@
                       IsEnabled="{Binding InputControlsEnabled}"
                       Text="{Binding Path=RecordingOptions.ApplicationArguments, Mode=TwoWay}" />
                   </Grid>
-                  <TextBlock Margin="8,4,8,0" Text="Working directory" />
+                  <TextBlock
+                    Margin="8,4,8,0"
+                    Text="Working directory" />
                   <Grid Margin="8,4,8,0">
                     <TextBox
                       Height="22"
@@ -372,15 +412,17 @@
                   IsEnabled="{Binding InputControlsEnabled}"
                   IsExpanded="True">
                   <Expander.Header>
-                    <TextBlock FontWeight="Medium" Text="Recording options" />
+                    <TextBlock
+                      FontWeight="Medium"
+                      Text="Recording options" />
                   </Expander.Header>
                   <StackPanel>
                     <CheckBox
                       Margin="0,8,0,0"
                       Content="Profile .NET (managed) applications"
-                      ToolTip="Enable support for profiling .NET applications"
                       IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}"
-                      IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+                      IsEnabled="{Binding ElementName=SystemWideRadioButton, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"
+                      ToolTip="Enable support for profiling .NET applications" />
                     <CheckBox
                       Margin="20,4,0,0"
                       Content="Record JIT output assembly"
@@ -398,8 +440,12 @@
                       IsChecked="{Binding Path=RecordingOptions.RecordPerformanceCounters, Mode=TwoWay}"
                       ToolTip="Collect the performance counters enabled in the CPU counters tab" />
 
-                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
-                      <TextBlock VerticalAlignment="Center" Text="Sampling frequency" />
+                    <StackPanel
+                      Margin="0,4,0,0"
+                      Orientation="Horizontal">
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="Sampling frequency" />
                       <Slider
                         x:Name="SamplingFrequencySlider"
                         Width="120"
@@ -414,9 +460,9 @@
                         SmallChange="1000"
                         TickFrequency="1000"
                         TickPlacement="BottomRight"
+                        ToolTip="Sampling profiling frequency as samples/second"
                         ValueChanged="SamplingFrequencySlider_ValueChanged"
-                        Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}"
-                        ToolTip="Sampling profiling frequency as samples/second" />
+                        Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}" />
                       <TextBlock
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
@@ -441,7 +487,9 @@
                   </StackPanel>
                 </Expander>
 
-                <Separator Margin="0,8,0,8" Background="LightGray" />
+                <Separator
+                  Margin="0,8,0,8"
+                  Background="LightGray" />
                 <StackPanel
                   Margin="8,0,0,0"
                   Orientation="Horizontal"
@@ -462,8 +510,7 @@
                     Text="IR Explorer must run with Administrator permissions" />
                 </StackPanel>
 
-                <Grid
-                  Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+                <Grid Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                   <TextBlock
                     Margin="8,0,4,0"
                     HorizontalAlignment="Left"
@@ -482,7 +529,7 @@
                     ToolTip="Optional session name to be used in recent session list" />
 
                   <StackPanel
-                    Margin="8,4,8,0"
+                    Margin="8,0,8,0"
                     HorizontalAlignment="Right"
                     Orientation="Horizontal">
                     <TextBlock
@@ -515,9 +562,12 @@
               </StackPanel>
 
 
-              <StackPanel x:Name="ProfileLoadPanel"
-                          Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
-                <TextBlock Margin="8,8,8,0" Text="Profile data file" />
+              <StackPanel
+                x:Name="ProfileLoadPanel"
+                Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+                <TextBlock
+                  Margin="8,8,8,0"
+                  Text="Profile data file" />
                 <Grid Margin="8,2,8,0">
                   <controls:FileSystemTextBox
                     x:Name="ProfileAutocompleteBox"
@@ -529,8 +579,8 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     MinimumPrefixLength="1"
                     Text="{Binding Path=ProfileFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    ToolTip="Path of the profile data file to load"
-                    TextChanged="ProfileAutocompleteBox_TextChanged" />
+                    TextChanged="ProfileAutocompleteBox_TextChanged"
+                    ToolTip="Path of the profile data file to load" />
 
                   <Button
                     x:Name="BaseBrowseButton"
@@ -542,7 +592,9 @@
                     IsEnabled="{Binding InputControlsEnabled}" />
                 </Grid>
 
-                <TextBlock Margin="8,4,8,0" Text="Process executable binary" />
+                <TextBlock
+                  Margin="8,4,8,0"
+                  Text="Process executable binary" />
                 <Grid Margin="8,2,8,0">
                   <TextBox
                     x:Name="BinaryAutocompleteBox"
@@ -572,7 +624,9 @@
                 Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
                 <ListView.View>
                   <GridView>
-                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
+                    <GridViewColumn
+                      Width="150"
+                      DisplayMemberBinding="{Binding Process.Name}">
                       <GridViewColumnHeader Content="Process" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -581,8 +635,9 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="80"
-                                    DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
+                    <GridViewColumn
+                      Width="80"
+                      DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
                       <GridViewColumnHeader Content="Weight" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -591,8 +646,9 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="80"
-                                    DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
+                    <GridViewColumn
+                      Width="80"
+                      DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
                       <GridViewColumnHeader Content="Duration" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -601,7 +657,9 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="70" DisplayMemberBinding="{Binding Process.ProcessId}">
+                    <GridViewColumn
+                      Width="70"
+                      DisplayMemberBinding="{Binding Process.ProcessId}">
                       <GridViewColumnHeader Content="Process ID" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -610,8 +668,9 @@
                       </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
 
-                    <GridViewColumn Width="150"
-                                    DisplayMemberBinding="{Binding Process.CommandLine}">
+                    <GridViewColumn
+                      Width="150"
+                      DisplayMemberBinding="{Binding Process.CommandLine}">
                       <GridViewColumnHeader Content="Command line" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -623,19 +682,25 @@
                 </ListView.View>
 
                 <ListView.ItemContainerStyle>
-                  <Style BasedOn="{StaticResource FlatListViewItem}"
-                         TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background"
-                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Style
+                    BasedOn="{StaticResource FlatListViewItem}"
+                    TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
-                    <EventSetter Event="MouseDoubleClick" Handler="LoadButton_Click" />
-                    <EventSetter Event="PreviewKeyDown" Handler="ProcessList_PreviewKeyDown" />
+                    <EventSetter
+                      Event="MouseDoubleClick"
+                      Handler="LoadButton_Click" />
+                    <EventSetter
+                      Event="PreviewKeyDown"
+                      Handler="ProcessList_PreviewKeyDown" />
                   </Style>
                 </ListView.ItemContainerStyle>
 
                 <ListView.ContextMenu>
                   <ContextMenu>
-                    <MenuItem Click="ProcessListMenuItem_OnClick" Header="Copy Process Details" />
+                    <MenuItem
+                      Click="ProcessListMenuItem_OnClick"
+                      Header="Copy Process Details" />
                     <MenuItem
                       Click="ProcessListMenuItem_OnClick"
                       Header="Copy Process List"
@@ -645,7 +710,9 @@
               </ListView>
 
               <Grid Margin="8,8,8,4">
-                <StackPanel Width="250" HorizontalAlignment="Left">
+                <StackPanel
+                  Width="250"
+                  HorizontalAlignment="Left">
                   <ProgressBar
                     x:Name="LoadProgressBar"
                     Height="4"
@@ -653,8 +720,9 @@
                     Maximum="100"
                     Visibility="{Binding ShowLoadingProgress, Converter={StaticResource BoolToVisibilityConverter}}"
                     Value="40" />
-                  <DockPanel Margin="0,2,0,0"
-                             Visibility="{Binding ShowLoadingProgress, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <DockPanel
+                    Margin="0,2,0,0"
+                    Visibility="{Binding ShowLoadingProgress, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock
                       x:Name="LoadProgressLabel"
                       DockPanel.Dock="Left"
@@ -667,7 +735,9 @@
                   </DockPanel>
                 </StackPanel>
 
-                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <StackPanel
+                  HorizontalAlignment="Right"
+                  Orientation="Horizontal">
                   <Button
                     x:Name="CancelButton"
                     Height="24"
@@ -693,37 +763,45 @@
             </StackPanel>
           </TabItem>
 
-          <TabItem Header="Symbols" Style="{StaticResource TabControlStyle}" 
-                   IsEnabled="{Binding InputControlsEnabled}">
+          <TabItem
+            Header="Symbols"
+            IsEnabled="{Binding InputControlsEnabled}"
+            Style="{StaticResource TabControlStyle}">
             <optionsPanels:SymbolOptionsPanel
               x:Name="SymbolOptionsPanel"
               Width="Auto"
               Height="Auto"
               HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch"/>
+              VerticalAlignment="Stretch" />
           </TabItem>
 
-          <TabItem Header="Options" Style="{StaticResource TabControlStyle}"
-                   IsEnabled="{Binding InputControlsEnabled}">
-            <StackPanel Margin="0,4,0,8" Orientation="Vertical">
+          <TabItem
+            Header="Options"
+            IsEnabled="{Binding InputControlsEnabled}"
+            Style="{StaticResource TabControlStyle}">
+            <StackPanel
+              Margin="0,4,0,8"
+              Orientation="Vertical">
               <Expander
                 Margin="8,0,8,0"
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Processing" />
+                  <TextBlock
+                    FontWeight="Medium"
+                    Text="Processing" />
                 </Expander.Header>
                 <StackPanel>
                   <CheckBox
                     Margin="0,8,0,0"
                     Content="Handle Kernel profile samples"
-                    ToolTip="Include kernel events from the trace, connecting user mode and kernel mode stacks"
-                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
+                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}"
+                    ToolTip="Include kernel events from the trace, connecting user mode and kernel mode stacks" />
                   <CheckBox
                     Margin="0,4,0,0"
                     Content="Handle CPU performance counter samples"
-                    ToolTip="Include CPU performance counter (PMC) events from the trace"
-                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
+                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}"
+                    ToolTip="Include CPU performance counter (PMC) events from the trace" />
                   <CheckBox
                     Margin="0,4,0,0"
                     Content="Download source files from Source Server"
@@ -737,7 +815,9 @@
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Authentication" />
+                  <TextBlock
+                    FontWeight="Medium"
+                    Text="Authentication" />
                 </Expander.Header>
 
                 <StackPanel>
@@ -749,7 +829,9 @@
                     IsChecked="{Binding Path=SymbolSettings.AuthorizationTokenEnabled, Mode=TwoWay}"
                     ToolTip="Personal Authentication Token used for symbol and source servers" />
 
-                  <TextBlock Text="User/email address" Margin="20,8,0,0" />
+                  <TextBlock
+                    Margin="20,8,0,0"
+                    Text="User/email address" />
                   <TextBox
                     Height="22"
                     Margin="20,2,8,0"
@@ -760,13 +842,15 @@
                     Text="{Binding Path=SymbolSettings.AuthorizationUser, Mode=TwoWay}"
                     TextWrapping="Wrap" />
 
-                  <TextBlock Text="Authentication token" Margin="20,4,0,0" />
+                  <TextBlock
+                    Margin="20,4,0,0"
+                    Text="Authentication token" />
                   <PasswordBox
-                    local:PasswordHelper.Attach="True"
-                    local:PasswordHelper.Password="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
                     Height="22"
                     Margin="20,2,8,0"
                     HorizontalAlignment="Stretch"
+                    local:PasswordHelper.Attach="True"
+                    local:PasswordHelper.Password="{Binding Path=SymbolSettings.AuthorizationToken, Mode=TwoWay}"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}" />
@@ -774,10 +858,12 @@
               </Expander>
               <Expander
                 Margin="8,8,8,8"
-                IsExpanded="True"
-                IsEnabled="{Binding InputControlsEnabled}">
+                IsEnabled="{Binding InputControlsEnabled}"
+                IsExpanded="True">
                 <Expander.Header>
-                  <TextBlock FontWeight="Medium" Text="Binary files" />
+                  <TextBlock
+                    FontWeight="Medium"
+                    Text="Binary files" />
                 </Expander.Header>
 
                 <StackPanel>
@@ -816,10 +902,12 @@
           </TabItem>
           <TabItem
             Header="CPU counters"
-            Style="{StaticResource TabControlStyle}"
             IsEnabled="{Binding InputControlsEnabled}"
+            Style="{StaticResource TabControlStyle}"
             Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Grid Margin="0,4,0,8" IsEnabled="{Binding InputControlsEnabled}">
+            <Grid
+              Margin="0,4,0,8"
+              IsEnabled="{Binding InputControlsEnabled}">
               <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="2" />
@@ -832,18 +920,24 @@
                 IsExpanded="True">
                 <Expander.Header>
                   <DockPanel>
-                    <TextBlock DockPanel.Dock="Left" Text="CPU performance counters" />
+                    <TextBlock
+                      DockPanel.Dock="Left"
+                      Text="CPU performance counters" />
                     <StackPanel
                       VerticalAlignment="Center"
                       DockPanel.Dock="Right"
                       Orientation="Horizontal">
-                      <TextBlock Margin="4,0,0,0" Text="(" />
+                      <TextBlock
+                        Margin="4,0,0,0"
+                        Text="(" />
                       <TextBlock Text="{Binding EnabledPerfCounters}" />
                       <TextBlock Text=")" />
                     </StackPanel>
                   </DockPanel>
                 </Expander.Header>
-                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="32" />
@@ -879,7 +973,9 @@
                                   Checked="CheckBox_Checked"
                                   IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   Unchecked="CheckBox_Unchecked" />
-                                <TextBlock Margin="4,0,0,0" Text="{Binding Name}" />
+                                <TextBlock
+                                  Margin="4,0,0,0"
+                                  Text="{Binding Name}" />
                               </StackPanel>
                             </DataTemplate>
                           </GridViewColumn.CellTemplate>
@@ -914,7 +1010,9 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="75" DisplayMemberBinding="{Binding MinInterval}">
+                        <GridViewColumn
+                          Width="75"
+                          DisplayMemberBinding="{Binding MinInterval}">
                           <GridViewColumnHeader Content="Min Interval" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -923,7 +1021,9 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="40" DisplayMemberBinding="{Binding Id}">
+                        <GridViewColumn
+                          Width="40"
+                          DisplayMemberBinding="{Binding Id}">
                           <GridViewColumnHeader Content="Id" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -932,7 +1032,9 @@
                           </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="70" DisplayMemberBinding="{Binding IsBuiltin}">
+                        <GridViewColumn
+                          Width="70"
+                          DisplayMemberBinding="{Binding IsBuiltin}">
                           <GridViewColumnHeader Content="Is builtin" />
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -944,14 +1046,16 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}"
-                             TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background"
-                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                      <Style
+                        BasedOn="{StaticResource FlatListViewItem}"
+                        TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Description}" />
 
                         <Style.Triggers>
-                          <DataTrigger Binding="{Binding Path=IsEnabled}" Value="True">
+                          <DataTrigger
+                            Binding="{Binding Path=IsEnabled}"
+                            Value="True">
                             <Setter Property="FontWeight" Value="Bold" />
                           </DataTrigger>
                         </Style.Triggers>
@@ -968,8 +1072,12 @@
                       VerticalAlignment="Top"
                       DockPanel.Dock="Right"
                       Orientation="Horizontal">
-                      <Image Height="16" Source="{StaticResource SearchIcon}" />
-                      <Grid x:Name="FunctionFilterGrid" Height="24">
+                      <Image
+                        Height="16"
+                        Source="{StaticResource SearchIcon}" />
+                      <Grid
+                        x:Name="FunctionFilterGrid"
+                        Height="24">
                         <TextBox
                           Name="CounterFilter"
                           Width="200"
@@ -1012,7 +1120,9 @@
                 Margin="8,8,8,0"
                 Header="Metrics"
                 IsExpanded="True">
-                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="32" />
@@ -1032,7 +1142,9 @@
                     VirtualizingPanel.VirtualizationMode="Recycling">
                     <ListView.View>
                       <GridView>
-                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Name}">
+                        <GridViewColumn
+                          Width="150"
+                          DisplayMemberBinding="{Binding Name}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1041,8 +1153,9 @@
                           <GridViewColumnHeader Content="Name" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100"
-                                        DisplayMemberBinding="{Binding RelativeCounterName}">
+                        <GridViewColumn
+                          Width="100"
+                          DisplayMemberBinding="{Binding RelativeCounterName}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1051,8 +1164,9 @@
                           <GridViewColumnHeader Content="Relative counter" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100"
-                                        DisplayMemberBinding="{Binding BaseCounterName}">
+                        <GridViewColumn
+                          Width="100"
+                          DisplayMemberBinding="{Binding BaseCounterName}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1061,7 +1175,9 @@
                           <GridViewColumnHeader Content="Base counter" />
                         </GridViewColumn>
 
-                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Description}">
+                        <GridViewColumn
+                          Width="150"
+                          DisplayMemberBinding="{Binding Description}">
                           <GridViewColumn.HeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">
                               <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1073,10 +1189,10 @@
                     </ListView.View>
 
                     <ListView.ItemContainerStyle>
-                      <Style BasedOn="{StaticResource FlatListViewItem}"
-                             TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background"
-                                Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                      <Style
+                        BasedOn="{StaticResource FlatListViewItem}"
+                        TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         <Setter Property="ToolTip" Value="{Binding Description}" />
                       </Style>
                     </ListView.ItemContainerStyle>
@@ -1091,7 +1207,9 @@
                       VerticalAlignment="Top"
                       DockPanel.Dock="Right"
                       Orientation="Horizontal">
-                      <Image Height="16" Source="{StaticResource SearchIcon}" />
+                      <Image
+                        Height="16"
+                        Source="{StaticResource SearchIcon}" />
                       <Grid Height="24">
                         <TextBox
                           Name="MetricFilter"

@@ -396,7 +396,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       var symbol = FindFunctionSymbolByRVA(rva);
 
       if (symbol != null) {
-        return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (long)symbol.length);
+        return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (uint)symbol.length);
       }
     }
     catch (Exception ex) {
@@ -408,7 +408,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public FunctionDebugInfo FindFunction(string functionName) {
     var funcSym = FindFunctionSymbol(functionName);
-    return funcSym != null ? new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length)
+    return funcSym != null ? new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (uint)funcSym.length)
       : null;
   }
 
@@ -853,17 +853,24 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     try {
       globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
       globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
-      var funcSymbolsSet = new HashSet<FunctionDebugInfo>(symbolEnum.count + publicSymbolEnum.count);
+      var funcSymbolsSet = new HashSet<FunctionDebugInfo>(symbolEnum.count);
 
       foreach (IDiaSymbol sym in symbolEnum) {
         //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
-        var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+        var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (uint)sym.length);
         funcSymbolsSet.Add(funcInfo);
       }
 
       foreach (IDiaSymbol sym in publicSymbolEnum) {
         //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
-        var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+        var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (uint)sym.length);
+
+        // Public symbols are preferred over function symbols if they have the same RVA and size.
+        // This ensures that the mangled name is saved, set only of public symbols.
+        if (funcSymbolsSet.Contains(funcInfo)) {
+          funcSymbolsSet.Remove(funcInfo);
+        }
+
         funcSymbolsSet.Add(funcInfo);
       }
 
@@ -904,14 +911,17 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     try {
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
-
-      if (funcSym != null) {
-        return funcSym;
-      }
-
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
 
       if (pubSym != null) {
+        // Public symbols are preferred over function symbols if they have the same RVA and size.
+        // This ensures that the mangled name is saved, set only of public symbols.
+        if (funcSym == null ||
+            (funcSym.relativeVirtualAddress == pubSym.relativeVirtualAddress &&
+             funcSym.length == pubSym.length)) {
+          return pubSym;
+        }
+
         return pubSym;
       }
 

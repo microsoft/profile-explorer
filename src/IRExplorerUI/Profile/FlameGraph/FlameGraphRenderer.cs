@@ -644,6 +644,8 @@ public class FlameGraphRenderer {
     int skippedChildren = 0;
     int totalSkippedChildren = 0;
 
+    // Ignore children that have layout already computed.
+    // Note that currently startIndex is always 0.
     for (int i = 0; i < startIndex; i++) {
       var childNode = node.Children[i];
       double childWidth = flameGraph_.ScaleWeight(childNode);
@@ -654,24 +656,21 @@ public class FlameGraphRenderer {
     int range = stopIndex - startIndex;
 
     for (int i = startIndex; i < stopIndex; i++) {
-      //? If multiple children below width, single patterned rect
       var childNode = node.Children[i];
       double childWidth = flameGraph_.ScaleWeight(childNode);
-      FlameGraphNode dummyNode = null;
-
+      
       if (skippedChildren == 0) {
         if (childWidth < minVisibleRectWidth_) {
-          childNode.IsDummyNode = true;
-          dummyNode = CreateSmallWeightDummyNode(node, x, y, i, stopIndex, out skippedChildren);
+          // If multiple children below width, use a single dummy node.
+          CreateSmallWeightDummyNode(node, x, y, i, stopIndex, out skippedChildren);
           totalSkippedChildren += skippedChildren;
-
-          //? TODO: When called from enlarged dummy node,
-          //? if all children part of new (same) dummy node skip going recursively
-          //? since they are also too small and will not be displayed.
+          MarkDummyNodes(childNode);
         }
       }
       else {
-        childNode.IsDummyNode = true;
+        // Once children were combined into a dummy node and skipped,
+        // all others are skipped since they are sorted by weight.
+        MarkDummyNodes(childNode);
       }
 
       // If all child nodes were merged into a dummy node don't recurse.
@@ -683,6 +682,16 @@ public class FlameGraphRenderer {
     }
 
     return totalSkippedChildren < range;
+  }
+
+  private void MarkDummyNodes(FlameGraphNode node) {
+    node.IsDummyNode = true;
+
+    if (node.HasChildren) {
+      foreach (var childNode in node.Children) {
+        MarkDummyNodes(childNode);
+      }
+    }
   }
 
   private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
@@ -734,7 +743,6 @@ public class FlameGraphRenderer {
     dummyNode.EndTime = endTime;
     dummyNodesQuadTree_.Insert(dummyNode, replacement);
 
-    //? Could make color darker than level, or less saturated better
     //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
     return dummyNode;
   }

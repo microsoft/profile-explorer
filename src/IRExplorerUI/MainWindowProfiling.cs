@@ -571,8 +571,9 @@ public partial class MainWindow : Window, ISession {
 
   public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {
     if (sourcePanelKind != ToolPanelKind.Section) {
-      var panel = FindPanel(ToolPanelKind.Section) as SectionPanelPair;
-      panel?.UpdateMarkedFunctions(true);
+      if (FindPanel(ToolPanelKind.Section) is SectionPanelPair panel) {
+        await panel.UpdateMarkedFunctions(true);
+      }
     }
 
     if (sourcePanelKind != ToolPanelKind.FlameGraph) {
@@ -581,13 +582,15 @@ public partial class MainWindow : Window, ISession {
     }
 
     if (sourcePanelKind != ToolPanelKind.CallTree) {
-      var panel = FindPanel(ToolPanelKind.CallTree) as CallTreePanel;
-      panel?.UpdateMarkedFunctions(true);
+      if (FindPanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
+        await panel.UpdateMarkedFunctions(true);
+      }
     }
 
     if (sourcePanelKind != ToolPanelKind.CallerCallee) {
-      var panel = FindPanel(ToolPanelKind.CallerCallee) as CallTreePanel;
-      panel?.UpdateMarkedFunctions(true);
+      if (FindPanel(ToolPanelKind.CallerCallee) is CallTreePanel panel) {
+        await panel.UpdateMarkedFunctions(true);
+      }
     }
 
     // Also update any detached profiling popup.
@@ -669,11 +672,11 @@ public partial class MainWindow : Window, ISession {
         Tag = markingSet
       };
 
-      colorSelector.ColorSelected += (o, args) => {
+      colorSelector.ColorSelected += async (o, args) => {
         var style = markingSet.CloneWithNewColor(args.SelectedColor);
         MarkingSettings.UseFunctionColors = true;
         MarkingSettings.AddFunctionColor(style);
-        ReloadMarkingSettings();
+        await ReloadMarkingSettings();
       };
 
       item.Items.Add(selectorItem);
@@ -754,9 +757,9 @@ public partial class MainWindow : Window, ISession {
                                                      e.OriginalSource, ReloadMarkingSettings);
   }
 
-  private void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
-    ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, this,
-                                             e.OriginalSource, ReloadMarkingSettings);
+  private async void ModuleMenu_OnSubmenuOpened(object sender, RoutedEventArgs e) {
+    await ProfilingUtils.PopulateMarkedModulesMenu(ModuleMenu, MarkingSettings, this,
+                                                   e.OriginalSource, ReloadMarkingSettings);
   }
 
   private async void CopyOverviewMenu_OnClick(object sender, RoutedEventArgs e) {

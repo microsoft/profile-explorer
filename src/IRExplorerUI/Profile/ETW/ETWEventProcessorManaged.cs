@@ -170,7 +170,7 @@ public sealed partial class ETWEventProcessor {
 #endif
 
     string funcName = $"{data.MethodNamespace}.{data.MethodName}";
-    var funcInfo = new FunctionDebugInfo(funcName, (long)data.MethodStartAddress, data.MethodSize,
+    var funcInfo = new FunctionDebugInfo(funcName, (long)data.MethodStartAddress, (uint)data.MethodSize,
                                          (short)data.OptimizationTier, data.MethodToken, (short)data.ReJITID);
     profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, data.ReJITID, funcInfo,
                                     (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);

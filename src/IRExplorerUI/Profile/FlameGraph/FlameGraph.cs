@@ -221,61 +221,6 @@ public sealed class FlameGraph {
     return nodes;
   }
 
-  public void BuildTimeline(ProfileData data, int threadId) {
-    Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
-    data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
-
-    var flameNode = CreateFlameGraphNode(null, RootWeight, 0);
-    flameNode.StartTime = TimeSpan.MaxValue;
-    flameNode.EndTime = TimeSpan.MinValue;
-
-    if (data.Samples.Count > 0) {
-      profileStartTime_ = data.Samples[0].Sample.Time;
-      profileEndTime_ = data.Samples[^1].Sample.Time;
-    }
-
-    foreach (var (sample, stack) in data.Samples) {
-      if (threadId != -1 && stack.Context.ThreadId != threadId) {
-        continue;
-      }
-
-      AddSample(flameNode, sample, stack);
-
-      flameNode.StartTime = TimeSpan.FromTicks(Math.Min(flameNode.StartTime.Ticks, sample.Time.Ticks));
-      flameNode.EndTime =
-        TimeSpan.FromTicks(Math.Max(flameNode.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
-      flameNode.Weight = flameNode.EndTime - flameNode.StartTime + sample.Weight;
-    }
-
-    //flameNode.Duration = flameNode.EndTime - flameNode.StartTime;
-    RootNode = flameNode;
-    RootWeight = flameNode.Weight;
-    //Dump(RootNode);
-  }
-
-  public void Dump(FlameGraphNode node, int level = 0) {
-    Trace.Write(new string(' ', level * 2));
-    Trace.WriteLine($"{node.CallTreeNode?.FunctionName}  | {node.Depth} | {node.Weight.TotalMilliseconds}");
-
-    if (node.Weight.Ticks == 0) {
-      Trace.WriteLine("=> no weight");
-    }
-
-    if (node.HasChildren) {
-      foreach (var child in node.Children) {
-        Dump(child, level + 1);
-      }
-    }
-
-    if (level < 1) {
-      Trace.WriteLine("==============================================");
-    }
-
-    else if (level < 2) {
-      Trace.WriteLine("----------------------");
-    }
-  }
-
   public void Build(ProfileCallTreeNode rootNode) {
     if (rootNode == null) {
       // Make on dummy root node that hosts all real root nodes.
@@ -443,5 +388,60 @@ public sealed class FlameGraph {
     }
 
     return flameNode;
+  }
+
+  public void BuildTimeline(ProfileData data, int threadId) {
+    Trace.WriteLine($"Timeline Samples: {data.Samples.Count}");
+    data.Samples.Sort((a, b) => a.Sample.Time.CompareTo(b.Sample.Time));
+
+    var flameNode = CreateFlameGraphNode(null, RootWeight, 0);
+    flameNode.StartTime = TimeSpan.MaxValue;
+    flameNode.EndTime = TimeSpan.MinValue;
+
+    if (data.Samples.Count > 0) {
+      profileStartTime_ = data.Samples[0].Sample.Time;
+      profileEndTime_ = data.Samples[^1].Sample.Time;
+    }
+
+    foreach (var (sample, stack) in data.Samples) {
+      if (threadId != -1 && stack.Context.ThreadId != threadId) {
+        continue;
+      }
+
+      AddSample(flameNode, sample, stack);
+
+      flameNode.StartTime = TimeSpan.FromTicks(Math.Min(flameNode.StartTime.Ticks, sample.Time.Ticks));
+      flameNode.EndTime =
+        TimeSpan.FromTicks(Math.Max(flameNode.EndTime.Ticks, sample.Time.Ticks + sample.Weight.Ticks));
+      flameNode.Weight = flameNode.EndTime - flameNode.StartTime + sample.Weight;
+    }
+
+    //flameNode.Duration = flameNode.EndTime - flameNode.StartTime;
+    RootNode = flameNode;
+    RootWeight = flameNode.Weight;
+    //Dump(RootNode);
+  }
+
+  public void Dump(FlameGraphNode node, int level = 0) {
+    Trace.Write(new string(' ', level * 2));
+    Trace.WriteLine($"{node.CallTreeNode?.FunctionName}  | {node.Depth} | {node.Weight.TotalMilliseconds}");
+
+    if (node.Weight.Ticks == 0) {
+      Trace.WriteLine("=> no weight");
+    }
+
+    if (node.HasChildren) {
+      foreach (var child in node.Children) {
+        Dump(child, level + 1);
+      }
+    }
+
+    if (level < 1) {
+      Trace.WriteLine("==============================================");
+    }
+
+    else if (level < 2) {
+      Trace.WriteLine("----------------------");
+    }
   }
 }

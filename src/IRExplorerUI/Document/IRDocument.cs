@@ -1244,8 +1244,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public void RemoveRemarks() {
     selectedRemark_ = null;
-    margin_.RemoveRemarkBookmarks();
     remarkHighlighter_.Clear();
+    margin_.RemoveRemarkBookmarks();
     UpdateMargin();
     UpdateHighlighting();
   }
@@ -3308,29 +3308,33 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     markerMargingElements_ = new List<MarkerBarElement>(128);
     int arrowButtonHeight = 16;
     int startY = arrowButtonHeight;
-    double width = markerMargin_.ActualWidth;
-    double height = markerMargin_.ActualHeight;
-    double availableHeight = height - arrowButtonHeight * 2;
-    int lines = Document.LineCount;
-    double dotSize = Math.Max(2, availableHeight / lines);
-    double dotWidth = width / 3;
-    availableHeight -= dotSize;
 
-    PopulateMarkerBarForHighlighter(markedHighlighter_, startY, width, availableHeight, dotSize);
-    PopulateMarkerBarForHighlighter(selectedHighlighter_, startY, width, availableHeight, dotSize);
-    PopulateMarkerBarForHighlighter(hoverHighlighter_, startY, width, availableHeight, dotSize);
-    PopulateMarkerBarForElementOverlays(startY, width, availableHeight, dotSize);
-    PopulateMarkerBarForDiffs(startY, width, availableHeight);
-    PopulateMarkerBarForBlocks(startY, width, availableHeight);
+    // Delay the update to ensure the markerMargin has layout updated.
+    Dispatcher.BeginInvoke(() => {
+      double width = markerMargin_.ActualWidth;
+      double height = markerMargin_.ActualHeight;
+      double availableHeight = height - arrowButtonHeight * 2;
+      int lines = Document.LineCount;
+      double dotSize = Math.Max(2, availableHeight / lines);
+      double dotWidth = width / 3;
+      availableHeight -= dotSize;
 
-    margin_.ForEachBookmark(bookmark => {
-      PopulateMarkerBarForBookmark(bookmark, startY, width, height, dotWidth, dotSize);
-    });
+      PopulateMarkerBarForHighlighter(markedHighlighter_, startY, width, availableHeight, dotSize);
+      PopulateMarkerBarForHighlighter(selectedHighlighter_, startY, width, availableHeight, dotSize);
+      PopulateMarkerBarForHighlighter(hoverHighlighter_, startY, width, availableHeight, dotSize);
+      PopulateMarkerBarForElementOverlays(startY, width, availableHeight, dotSize);
+      PopulateMarkerBarForDiffs(startY, width, availableHeight);
+      PopulateMarkerBarForBlocks(startY, width, availableHeight);
 
-    // Sort so that searching for elements can be speed up.
-    markerMargingElements_.Sort((a, b) => (int)(a.Visual.Top - b.Visual.Top));
-    SaveHighlighterVersion(highlighterVersion_);
-    RenderMarkerBar();
+      margin_.ForEachBookmark(bookmark => {
+        PopulateMarkerBarForBookmark(bookmark, startY, width, height, dotWidth, dotSize);
+      });
+
+      // Sort so that searching for elements can be speed up.
+      markerMargingElements_.Sort((a, b) => (int)(a.Visual.Top - b.Visual.Top));
+      SaveHighlighterVersion(highlighterVersion_);
+      RenderMarkerBar();
+    }, DispatcherPriority.Background);
   }
 
   private void PopulateMarkerBarForBookmark(Bookmark bookmark, int startY, double width, double height,

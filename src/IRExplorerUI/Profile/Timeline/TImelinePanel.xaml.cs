@@ -73,7 +73,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     get => base.Session;
     set {
       base.Session = value;
-      NodeDetailsPanel.Initialize(value, this);
     }
   }
 
@@ -119,11 +118,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
         OnPropertyChanged();
       }
     }
-  }
-
-  public bool ShowNodePanel {
-    get => showNodePanel_;
-    set => SetField(ref showNodePanel_, value);
   }
 
   private double ActivityViewZoomRatio => ActivityView.MaxViewWidth / ActivityViewAreaWidth;
@@ -386,16 +380,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void SetupEvents() {
-    // Setup events for the node details view.
-    NodeDetailsPanel.NodeInstanceChanged += NodeDetailsPanel_NodeInstanceChanged;
-    NodeDetailsPanel.BacktraceNodeClick += NodeDetailsPanel_NodeClick;
-    NodeDetailsPanel.BacktraceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
-    NodeDetailsPanel.InstanceNodeClick += NodeDetailsPanel_NodeClick;
-    NodeDetailsPanel.InstanceNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
-    NodeDetailsPanel.FunctionNodeClick += NodeDetailsPanel_NodeClick;
-    NodeDetailsPanel.FunctionNodeDoubleClick += NodeDetailsPanel_NodeDoubleClick;
-    NodeDetailsPanel.NodesSelected += NodeDetailsPanel_NodesSelected;
-
     TimelineHost.SizeChanged += (sender, args) => {
       if (IsInitialized) {
         // Resize activity view to fit the new region.
@@ -1058,7 +1042,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
       return;
     }
 
-    FrameworkElement relativeControl = ShowNodePanel ? NodeDetailsPanel : TimelineHost;
+    FrameworkElement relativeControl = TimelineHost;
     optionsPanelPopup_ = OptionsPanelHostPopup.Create<TimelineOptionsPanel, TimelineSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {

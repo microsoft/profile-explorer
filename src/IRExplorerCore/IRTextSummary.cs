@@ -69,7 +69,7 @@ public class IRTextSummary : IEquatable<IRTextSummary> {
     return unmangledFunctionNameMap_.GetValueOrNull(name);
   }
 
-  public void ComputeUnmangledFunctionNameMap(Func<string, string> matchCheck) {
+  public void ComputeUnmangledFunctionNameMap(Func<string, string> funcNameFormatter) {
     lock (this) {
       if (unmangledFunctionNameMap_ != null) {
         return;
@@ -78,7 +78,7 @@ public class IRTextSummary : IEquatable<IRTextSummary> {
       unmangledFunctionNameMap_ = new Dictionary<string, IRTextFunction>();
 
       foreach (var function in Functions) {
-        string unmangledName = matchCheck(function.Name);
+        string unmangledName = funcNameFormatter(function.Name);
         unmangledFunctionNameMap_[unmangledName] = function;
       }
     }

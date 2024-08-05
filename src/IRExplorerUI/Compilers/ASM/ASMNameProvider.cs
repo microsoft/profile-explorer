@@ -60,7 +60,7 @@ public sealed class ASMNameProvider : INameProvider {
       return name;
     }
 
-    // Mangled MSVC C++ names always start with a ? char. 
+    // Mangled MSVC C++ names always start with a ? char.
     if (!name.StartsWith('?')) {
       return name;
     }
@@ -71,6 +71,11 @@ public sealed class ASMNameProvider : INameProvider {
     }
 
     return demangledName;
+  }
+
+  public void SettingsChanged() {
+    demangledNameMap_.Clear();
+    functionNameMap_.Clear();
   }
 
   public string FormatFunctionName(IRTextFunction function) {
