@@ -16,9 +16,9 @@ public class GeneralSettings : SettingsBase {
   private static readonly double ZoomStep = 0.05;
   public static readonly double DefaultCpuCoreLimit = 0.75;
 
-  // With software rendering (or remote desktop), disable animations
+  // Under a Remote Desktop session, disable animations
   // even if enabled otherwise by the user.
-  private static readonly bool GlobalDisableAnimations = (RenderCapability.Tier >> 16) != 2;
+  private static readonly bool GlobalDisableAnimations = NativeMethods.IsRemoteDesktopSession();
 
   public GeneralSettings() {
     Reset();

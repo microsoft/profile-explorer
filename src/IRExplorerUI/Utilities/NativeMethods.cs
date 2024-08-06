@@ -107,4 +107,10 @@ static class NativeMethods {
       return (short)(val32 >> 16 & 0xFFFF);
     }
   }
+
+  [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+  private static extern int GetSystemMetrics(int nIndex);
+  public static bool IsRemoteDesktopSession() {
+    return (GetSystemMetrics(0x1000) & 1) != 0;
+  }
 }
