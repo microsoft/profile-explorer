@@ -27,9 +27,9 @@ public partial class MainWindow : Window, ISession {
   public ProfileData ProfileData => sessionState_?.ProfileData;
 
   public bool HasEnabledMarkedFunctions =>
-    MarkingSettings.UseFunctionColors && MarkingSettings.FunctionColors.Count > 0;
+    MarkingSettings.HasEnabledFunctionMarkings;
   public bool HasEnabledMarkedModules =>
-    MarkingSettings.UseModuleColors && MarkingSettings.ModuleColors.Count > 0;
+    MarkingSettings.HasEnabledModuleMarkings;
 
   public ProfileFilterState ProfileFilter {
     get => profileFilter_;

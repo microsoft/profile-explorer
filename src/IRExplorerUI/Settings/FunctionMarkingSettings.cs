@@ -31,6 +31,11 @@ public class FunctionMarkingSettings : SettingsBase {
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
 
+  public bool HasEnabledFunctionMarkings => UseFunctionColors &&
+                                            FunctionColors.Find(item => item.IsEnabled) != null;
+  public bool HasEnabledModuleMarkings => UseModuleColors &&
+                                          ModuleColors.Find(item => item.IsEnabled) != null;
+
   public FunctionMarkingSet BuiltinMarkingCategories {
     get {
       if (builtinMarking_ != null) {

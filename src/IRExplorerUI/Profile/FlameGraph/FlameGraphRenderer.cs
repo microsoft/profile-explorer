@@ -658,19 +658,19 @@ public class FlameGraphRenderer {
     for (int i = startIndex; i < stopIndex; i++) {
       var childNode = node.Children[i];
       double childWidth = flameGraph_.ScaleWeight(childNode);
-      
+
       if (skippedChildren == 0) {
         if (childWidth < minVisibleRectWidth_) {
           // If multiple children below width, use a single dummy node.
           CreateSmallWeightDummyNode(node, x, y, i, stopIndex, out skippedChildren);
           totalSkippedChildren += skippedChildren;
-          MarkDummyNodes(childNode);
+          childNode.IsDummyNode = true;
         }
       }
       else {
         // Once children were combined into a dummy node and skipped,
         // all others are skipped since they are sorted by weight.
-        MarkDummyNodes(childNode);
+        childNode.IsDummyNode = true;
       }
 
       // If all child nodes were merged into a dummy node don't recurse.
@@ -682,16 +682,6 @@ public class FlameGraphRenderer {
     }
 
     return totalSkippedChildren < range;
-  }
-
-  private void MarkDummyNodes(FlameGraphNode node) {
-    node.IsDummyNode = true;
-
-    if (node.HasChildren) {
-      foreach (var childNode in node.Children) {
-        MarkDummyNodes(childNode);
-      }
-    }
   }
 
   private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,

@@ -1,38 +1,43 @@
 ﻿<local:OptionsPanelBase
-  d:DesignHeight="450"
-  d:DesignWidth="350"
-  mc:Ignorable="d"
   x:Class="IRExplorerUI.OptionsPanels.GeneralOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
+  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+  d:DesignHeight="450"
+  d:DesignWidth="350"
+  mc:Ignorable="d">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <StackPanel Margin="4,4,4,4">
       <CheckBox
+        Margin="0,4,0,2"
         Content="Check for updates on application startup"
         IsChecked="{Binding CheckForUpdates, Mode=TwoWay}"
-        Margin="0,4,0,2"
-        ToolTip="Automatically check for new versions of the application on startup." />
+        ToolTip="Automatically check for new versions of the application on startup" />
       <StackPanel
         Margin="0,2,0,0"
         IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
         Orientation="Horizontal">
-        <TextBlock VerticalAlignment="Center" Text="Max CPU cores used" />
+        <TextBlock
+          VerticalAlignment="Center"
+          Text="Max CPU cores used" />
         <xctk:DoubleUpDown
           Width="70"
           Margin="8,0,0,0"
+          VerticalAlignment="Center"
+          FormatString="F0"
+          Increment="5"
           Maximum="200"
           Minimum="50"
-          Increment="5"
-          FormatString="F0"
           ShowButtonSpinner="True"
-          VerticalAlignment="Center"
           ToolTip="Maximum number of logical cores used when loading profile traces and other UI tasks"
           Value="{Binding Path=CpuCoreLimit, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
-        <TextBlock Margin="4,0,0,0" Text="%" VerticalAlignment="Center" />
+        <TextBlock
+          Margin="4,0,0,0"
+          VerticalAlignment="Center"
+          Text="%" />
         <Button
           Height="20"
           Margin="8,0,0,0"
@@ -44,26 +49,35 @@
           ToolTip="Reset the application UI scaling to 100%" />
       </StackPanel>
 
-      <Separator Margin="0,6,0,4" Background="LightGray" />
+      <Separator
+        Margin="0,6,0,4"
+        Background="LightGray" />
 
-      <TextBlock FontWeight="Medium" Text="User Interface" />
+      <TextBlock
+        FontWeight="Medium"
+        Text="User Interface" />
       <StackPanel
         Margin="0,4,0,4"
         IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
         Orientation="Horizontal">
-        <TextBlock VerticalAlignment="Center" Text="Window UI scaling" />
+        <TextBlock
+          VerticalAlignment="Center"
+          Text="Window UI scaling" />
         <xctk:DoubleUpDown
           Width="70"
           Margin="18,0,0,0"
+          VerticalAlignment="Center"
+          FormatString="F0"
+          Increment="5"
           Maximum="200"
           Minimum="50"
-          Increment="5"
-          FormatString="F0"
           ShowButtonSpinner="True"
-          VerticalAlignment="Center"
           ToolTip="Scaling factor for the entire application UI"
           Value="{Binding Path=WindowScaling, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
-        <TextBlock Margin="4,0,0,0" Text="%" VerticalAlignment="Center" />
+        <TextBlock
+          Margin="4,0,0,0"
+          VerticalAlignment="Center"
+          Text="%" />
         <Button
           Height="20"
           Margin="8,0,0,0"
@@ -75,10 +89,15 @@
           ToolTip="Reset the application UI scaling to 100%" />
       </StackPanel>
       <CheckBox
+        Margin="0,4,0,2"
+        Content="Disable animations"
+        IsChecked="{Binding DisableAnimations, Mode=TwoWay}"
+        ToolTip="Disable all animations in the application UI" />
+      <CheckBox
+        Margin="0,2,0,2"
         Content="Disable hardware-accelerated rendering"
         IsChecked="{Binding DisableHardwareRendering, Mode=TwoWay}"
-        Margin="0,4,0,2"
-        ToolTip="Switch from hardware-accelerated to software rendering of the application UI." />
+        ToolTip="Switch from hardware-accelerated to software rendering of the application UI" />
     </StackPanel>
   </Grid>
 </local:OptionsPanelBase>

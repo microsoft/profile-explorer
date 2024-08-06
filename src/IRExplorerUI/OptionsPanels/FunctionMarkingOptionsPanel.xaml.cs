@@ -35,7 +35,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
     ReloadModuleList();
     ReloadFunctionList();
     ReloadMarkingsList();
-  }  
+  }
 
   private void ReloadModuleList() {
     var list = new ObservableCollectionRefresh<FunctionMarkingStyle>(settings_.ModuleColors);
@@ -146,5 +146,16 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
       settings_.SaveCurrentMarkingSet(result);
       ReloadMarkingsList();
     }
+  }
+
+  private void MarkingLoad_Click(object sender, RoutedEventArgs e) {
+    if (MarkingsList.SelectedItem is FunctionMarkingSet set) {
+      settings_.AppendMarkingSet(set);
+      NotifySettingsChanged();
+    }
+  }
+
+  private void MarkingCheckBox_Changed(object sender, RoutedEventArgs e) {
+    NotifySettingsChanged();
   }
 }

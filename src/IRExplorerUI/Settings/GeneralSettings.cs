@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI;
@@ -14,6 +15,10 @@ public class GeneralSettings : SettingsBase {
   private static readonly double MaxZoomAmount = 2;
   private static readonly double ZoomStep = 0.05;
   public static readonly double DefaultCpuCoreLimit = 0.75;
+
+  // With software rendering (or remote desktop), disable animations
+  // even if enabled otherwise by the user.
+  private static readonly bool GlobalDisableAnimations = (RenderCapability.Tier >> 16) != 2;
 
   public GeneralSettings() {
     Reset();
@@ -29,9 +34,12 @@ public class GeneralSettings : SettingsBase {
   public int ThemeIndex { get; set; }
   [ProtoMember(5)][OptionValue(0.75)]
   public double CpuCoreLimit { get; set; }
+  [ProtoMember(6)][OptionValue(false)]
+  public bool DisableAnimations { get; set; }
 
   public int CurrentCpuCoreLimit => (int)Math.Clamp(Math.Floor(CpuCoreLimit * Environment.ProcessorCount),
                                                     MinCpuCoreLimit, MaxCpuCoreLimit);
+  public bool UseAnimations => !DisableAnimations && !GlobalDisableAnimations;
 
   public override void Reset() {
     ResetAllOptions(this);

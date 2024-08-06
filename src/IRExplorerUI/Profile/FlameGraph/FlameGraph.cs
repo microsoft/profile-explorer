@@ -53,6 +53,26 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   public override string ModuleName =>
     CallTreeNode is {HasFunction: true} ? CallTreeNode.ModuleName : null;
 
+  public bool IsDummyNodeOrChild {
+    get {
+      if (IsDummyNode) {
+        return true;
+      }
+
+      var node = Parent;
+
+      while (node != null) {
+        if (node.IsDummyNode) {
+          return true;
+        }
+
+        node = node.Parent;
+      }
+
+      return false;
+    }
+  }
+
   public static bool operator ==(FlameGraphNode left, FlameGraphNode right) {
     return Equals(left, right);
   }
