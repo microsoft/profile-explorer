@@ -9,10 +9,18 @@
   d:DesignWidth="1200"
   mc:Ignorable="d">
   <local:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextbox" />
-    <CommandBinding Command="local:Command.OpenInNewTab" Executed="OpenInNewTabExecuted" />
-    <CommandBinding Command="local:Command.OpenLeft" Executed="OpenLeftExecuted" />
-    <CommandBinding Command="local:Command.OpenRight" Executed="OpenRightExecuted" />
+    <CommandBinding
+      Command="local:Command.ClearTextbox"
+      Executed="ExecuteClearTextbox" />
+    <CommandBinding
+      Command="local:Command.OpenInNewTab"
+      Executed="OpenInNewTabExecuted" />
+    <CommandBinding
+      Command="local:Command.OpenLeft"
+      Executed="OpenLeftExecuted" />
+    <CommandBinding
+      Command="local:Command.OpenRight"
+      Executed="OpenRightExecuted" />
     <CommandBinding
       CanExecute="OpenSideBySideCanExecute"
       Command="local:Command.OpenSideBySide"
@@ -29,66 +37,112 @@
       CanExecute="DiffWithOtherDocumentCanExecute"
       Command="local:Command.SyncDiffedDocuments"
       Executed="SyncDiffedDocumentsExecuted" />
-    <CommandBinding Command="local:Command.Open" Executed="OpenExecuted" />
-    <CommandBinding Command="local:Command.ToggleTag" Executed="ToggleTagExecuted" />
-    <CommandBinding Command="local:Command.PreviousSection" Executed="PreviousSectionExecuted" />
-    <CommandBinding Command="local:Command.NextSection" Executed="NextSectionExecuted" />
-    <CommandBinding Command="local:Command.FocusSearch" Executed="FocusSearchExecuted" />
-    <CommandBinding Command="local:Command.CopySectionText" Executed="CopySectionTextExecuted" />
-    <CommandBinding Command="local:Command.SaveSectionText" Executed="SaveSectionTextExecuted" />
-    <CommandBinding Command="local:Command.SaveFunctionText" Executed="SaveFunctionTextExecuted" />
-    <CommandBinding Command="local:Command.CopyFunctionText" Executed="CopyFunctionTextExecuted" />
-    <CommandBinding Command="local:Command.OpenDocumentInEditor"
-                    Executed="OpenDocumentInEditorExecuted" />
-    <CommandBinding Command="local:Command.OpenDocumentInNewInstance"
-                    Executed="OpenDocumentInNewInstanceExecuted" />
-    <CommandBinding Command="local:Command.DisplayCallGraph" Executed="DisplayCallGraphExecuted" />
-    <CommandBinding Command="local:Command.DisplayPartialCallGraph"
-                    Executed="DisplayPartialCallGraphExecuted" />
-    <CommandBinding Command="local:Command.CopyFunctionName" Executed="CopyFunctionNameExecuted" />
-    <CommandBinding Command="local:Command.CopyDemangledFunctionName"
-                    Executed="CopyDemangledFunctionNameExecuted" />
-    <CommandBinding Command="local:Command.ExportFunctionList"
-                    Executed="ExportFunctionListExecuted" />
-    <CommandBinding Command="local:Command.CopyFunctionDetails"
-                    Executed="CopyFunctionDetailsExecuted" />
-    <CommandBinding Command="local:Command.ExportFunctionListHtml"
-                    Executed="ExportFunctionListHtmlExecuted" />
-    <CommandBinding Command="local:Command.ExportFunctionListMarkdown"
-                    Executed="ExportFunctionListMarkdownExecuted" />
+    <CommandBinding
+      Command="local:Command.Open"
+      Executed="OpenExecuted" />
+    <CommandBinding
+      Command="local:Command.ToggleTag"
+      Executed="ToggleTagExecuted" />
+    <CommandBinding
+      Command="local:Command.PreviousSection"
+      Executed="PreviousSectionExecuted" />
+    <CommandBinding
+      Command="local:Command.NextSection"
+      Executed="NextSectionExecuted" />
+    <CommandBinding
+      Command="local:Command.FocusSearch"
+      Executed="FocusSearchExecuted" />
+    <CommandBinding
+      Command="local:Command.CopySectionText"
+      Executed="CopySectionTextExecuted" />
+    <CommandBinding
+      Command="local:Command.SaveSectionText"
+      Executed="SaveSectionTextExecuted" />
+    <CommandBinding
+      Command="local:Command.SaveFunctionText"
+      Executed="SaveFunctionTextExecuted" />
+    <CommandBinding
+      Command="local:Command.CopyFunctionText"
+      Executed="CopyFunctionTextExecuted" />
+    <CommandBinding
+      Command="local:Command.OpenDocumentInEditor"
+      Executed="OpenDocumentInEditorExecuted" />
+    <CommandBinding
+      Command="local:Command.OpenDocumentInNewInstance"
+      Executed="OpenDocumentInNewInstanceExecuted" />
+    <CommandBinding
+      Command="local:Command.DisplayCallGraph"
+      Executed="DisplayCallGraphExecuted" />
+    <CommandBinding
+      Command="local:Command.DisplayPartialCallGraph"
+      Executed="DisplayPartialCallGraphExecuted" />
+    <CommandBinding
+      Command="local:Command.CopyFunctionName"
+      Executed="CopyFunctionNameExecuted" />
+    <CommandBinding
+      Command="local:Command.CopyDemangledFunctionName"
+      Executed="CopyDemangledFunctionNameExecuted" />
+    <CommandBinding
+      Command="local:Command.ExportFunctionList"
+      Executed="ExportFunctionListExecuted" />
+    <CommandBinding
+      Command="local:Command.CopyFunctionDetails"
+      Executed="CopyFunctionDetailsExecuted" />
+    <CommandBinding
+      Command="local:Command.ExportFunctionListHtml"
+      Executed="ExportFunctionListHtmlExecuted" />
+    <CommandBinding
+      Command="local:Command.ExportFunctionListMarkdown"
+      Executed="ExportFunctionListMarkdownExecuted" />
   </local:ToolPanelControl.CommandBindings>
 
   <local:ToolPanelControl.Resources>
-    <Style x:Key="IconTagged" TargetType="Image">
+    <Style
+      x:Key="IconTagged"
+      TargetType="Image">
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Path=IsTagged}" Value="False">
+        <DataTrigger
+          Binding="{Binding Path=IsTagged}"
+          Value="False">
           <Setter Property="Visibility" Value="Collapsed" />
         </DataTrigger>
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="IconDifferentFromPrevious" TargetType="Image">
+    <Style
+      x:Key="IconDifferentFromPrevious"
+      TargetType="Image">
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Path=IsDiffFromPrevious}" Value="False">
+        <DataTrigger
+          Binding="{Binding Path=IsDiffFromPrevious}"
+          Value="False">
           <Setter Property="Visibility" Value="Collapsed" />
         </DataTrigger>
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="IconSelected" TargetType="Image">
+    <Style
+      x:Key="IconSelected"
+      TargetType="Image">
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Path=IsSelected}" Value="False">
+        <DataTrigger
+          Binding="{Binding Path=IsSelected}"
+          Value="False">
           <Setter Property="Visibility" Value="Hidden" />
         </DataTrigger>
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="ColumnsGridSplitterStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="2" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding IsSectionListVisible}" Value="False">
+        <DataTrigger
+          Binding="{Binding IsSectionListVisible}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
@@ -97,12 +151,16 @@
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="ModulesColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="ModulesColumnsGridSplitterStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="2" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding ModuleControlsVisible}" Value="False">
+        <DataTrigger
+          Binding="{Binding ModuleControlsVisible}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
@@ -111,12 +169,16 @@
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="ModulesColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="ModulesColumnsStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="210" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding ShowModules}" Value="False">
+        <DataTrigger
+          Binding="{Binding ShowModules}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
@@ -125,12 +187,16 @@
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="FunctionsColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="FunctionsColumnsStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="*" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding IsFunctionListVisible}" Value="False">
+        <DataTrigger
+          Binding="{Binding IsFunctionListVisible}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
@@ -139,18 +205,24 @@
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="SectionsColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="SectionsColumnsStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="2*" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding IsSectionListVisible}" Value="False">
+        <DataTrigger
+          Binding="{Binding IsSectionListVisible}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
           </DataTrigger.Setters>
         </DataTrigger>
-        <DataTrigger Binding="{Binding ProfileControlsVisible}" Value="True">
+        <DataTrigger
+          Binding="{Binding ProfileControlsVisible}"
+          Value="True">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="*" />
           </DataTrigger.Setters>
@@ -233,7 +305,9 @@
                   Margin="0,1,0,0"
                   Source="{StaticResource SwitchIcon}"
                   Style="{StaticResource DisabledImageStyle}" />
-                <TextBlock Margin="2,0,0,0" Text="Sync" />
+                <TextBlock
+                  Margin="2,0,0,0"
+                  Text="Sync" />
               </StackPanel>
             </ToggleButton>
 
@@ -245,16 +319,20 @@
               IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
               ToolTip="Sync Source File panel with selection"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-              <Image
-                Width="16"
-                Height="16"
-                Margin="0,1,0,0"
-                Source="{StaticResource SourceIcon}"
-                Style="{StaticResource DisabledImageStyle}" />
+              <StackPanel Orientation="Horizontal">
+                <Image
+                  Width="16"
+                  Height="16"
+                  Margin="0,1,0,0"
+                  Source="{StaticResource SourceIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
+                <TextBlock
+                  Margin="2,0,0,0"
+                  Text="Source" />
+              </StackPanel>
             </ToggleButton>
 
-            <Separator
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Menu
               Margin="0,0,0,0"
@@ -332,13 +410,13 @@
               </MenuItem>
             </Menu>
 
-            <Separator
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-            <Image Margin="2,0,0,0"
-                   Source="{StaticResource SearchIcon}"
-                   Style="{StaticResource DisabledImageStyle}"
-                   ToolBar.OverflowMode="Never" />
+            <Image
+              Margin="2,0,0,0"
+              Source="{StaticResource SearchIcon}"
+              Style="{StaticResource DisabledImageStyle}"
+              ToolBar.OverflowMode="Never" />
             <Grid
               x:Name="FunctionFilterGrid"
               Height="24"
@@ -360,8 +438,8 @@
                   <KeyBinding
                     Key="Escape"
                     Command="local:Command.ClearTextbox"
-                    CommandTarget="{Binding ElementName=FunctionList}"
-                    CommandParameter="{Binding ElementName=FunctionFilter}" />
+                    CommandParameter="{Binding ElementName=FunctionFilter}"
+                    CommandTarget="{Binding ElementName=FunctionList}" />
                 </TextBox.InputBindings>
 
               </TextBox>
@@ -382,11 +460,10 @@
               <Image
                 Width="16"
                 Height="16"
-                Style="{StaticResource DisabledImageStyle}"
-                Source="{StaticResource ClearIcon}" />
+                Source="{StaticResource ClearIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
             </Button>
-            <Separator
-              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Button
               Click="ScrollUpButton_OnClick"
@@ -395,8 +472,8 @@
               <Image
                 Width="16"
                 Height="16"
-                Style="{StaticResource DisabledImageStyle}"
-                Source="{StaticResource UpArrowIcon}" />
+                Source="{StaticResource UpArrowIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
             </Button>
           </ToolBar>
         </ToolBarTray>
@@ -438,7 +515,9 @@
           <ListView.View>
             <GridView>
               <GridViewColumn Width="180">
-                <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Binary" />
+                <GridViewColumnHeader
+                  x:Name="ModuleColumnHeader"
+                  Content="Binary" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -448,8 +527,12 @@
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
                     <DockPanel Margin="2">
-                      <Grid Margin="0,0,0,2" DockPanel.Dock="Top">
-                        <TextBlock FontWeight="Medium" Text="{Binding Name}" />
+                      <Grid
+                        Margin="0,0,0,2"
+                        DockPanel.Dock="Top">
+                        <TextBlock
+                          FontWeight="Medium"
+                          Text="{Binding Name}" />
                         <Image
                           Width="16"
                           Height="16"
@@ -484,21 +567,24 @@
             </GridView>
           </ListView.View>
           <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-              <EventSetter Event="MouseDoubleClick" Handler="ModuleDoubleClick" />
-              <EventSetter Event="PreviewKeyDown" Handler="ModulePreviewKeyDown" />
+            <Style
+              BasedOn="{StaticResource FlatListViewItem}"
+              TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <EventSetter
+                Event="MouseDoubleClick"
+                Handler="ModuleDoubleClick" />
+              <EventSetter
+                Event="PreviewKeyDown"
+                Handler="ModulePreviewKeyDown" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
               <Style.Triggers>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                  <Setter Property="Background"
-                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                  <Setter Property="Background"
-                          Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
                 </Trigger>
               </Style.Triggers>
             </Style>
@@ -555,7 +641,9 @@
           <ListView.View>
             <GridView>
               <GridViewColumn Width="200">
-                <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="Function" />
+                <GridViewColumnHeader
+                  x:Name="FunctionColumnHeader"
+                  Content="Function" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -564,7 +652,9 @@
 
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
-                    <Grid HorizontalAlignment="Stretch" Background="{Binding FunctionBackColor}">
+                    <Grid
+                      HorizontalAlignment="Stretch"
+                      Background="{Binding FunctionBackColor}">
                       <TextBlock
                         FontWeight="Medium"
                         Text="{Binding Name}"
@@ -577,7 +667,9 @@
                 Width="50"
                 local:GridViewColumnVisibility.IsVisible="{Binding SectionCountColumnVisible}"
                 DisplayMemberBinding="{Binding SectionCount}">
-                <GridViewColumnHeader x:Name="SectionsColumnHeader" Content="Sections" />
+                <GridViewColumnHeader
+                  x:Name="SectionsColumnHeader"
+                  Content="Sections" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -585,9 +677,12 @@
                 </GridViewColumn.HeaderContainerStyle>
               </GridViewColumn>
 
-              <GridViewColumn Width="100"
-                              local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
-                <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
+              <GridViewColumn
+                Width="100"
+                local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}">
+                <GridViewColumnHeader
+                  x:Name="FunctionModuleColumnHeader"
+                  Content="Module" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -596,7 +691,9 @@
 
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
-                    <Grid HorizontalAlignment="Stretch" Background="{Binding ModuleBackColor}">
+                    <Grid
+                      HorizontalAlignment="Stretch"
+                      Background="{Binding ModuleBackColor}">
                       <TextBlock
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
@@ -611,8 +708,9 @@
                 x:Name="OptionalDataColumn"
                 Width="{Binding SelfTimeColumnWidth}"
                 local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
-                <GridViewColumnHeader x:Name="OptionalColumnHeader"
-                                      Content="{Binding OptionalDataColumnName}" />
+                <GridViewColumnHeader
+                  x:Name="OptionalColumnHeader"
+                  Content="{Binding OptionalDataColumnName}" />
 
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -622,7 +720,9 @@
 
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
-                    <Grid HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                    <Grid
+                      HorizontalAlignment="Stretch"
+                      Background="{Binding BackColor}">
                       <TextBlock
                         Width="45"
                         HorizontalAlignment="Left"
@@ -644,8 +744,9 @@
                 x:Name="OptionalDataColumn2"
                 Width="{Binding TotalTimeColumnWidth}"
                 local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
-                <GridViewColumnHeader x:Name="OptionalColumnHeader2"
-                                      Content="{Binding OptionalDataColumnName2}" />
+                <GridViewColumnHeader
+                  x:Name="OptionalColumnHeader2"
+                  Content="{Binding OptionalDataColumnName2}" />
 
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -655,7 +756,9 @@
 
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
-                    <Grid HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
+                    <Grid
+                      HorizontalAlignment="Stretch"
+                      Background="{Binding BackColor2}">
                       <TextBlock
                         Width="45"
                         HorizontalAlignment="Left"
@@ -673,9 +776,12 @@
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
 
-              <GridViewColumn Width="200"
-                              local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
-                <GridViewColumnHeader x:Name="AlternateNameColumnHeader" Content="Mangled Name" />
+              <GridViewColumn
+                Width="200"
+                local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
+                <GridViewColumnHeader
+                  x:Name="AlternateNameColumnHeader"
+                  Content="Mangled Name" />
 
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -694,55 +800,67 @@
             </GridView>
           </ListView.View>
           <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <Setter Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-              <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
-              <EventSetter Event="MouseLeftButtonUp" Handler="FunctionClick" />
-              <EventSetter Event="PreviewKeyDown" Handler="FunctionPreviewKeyDown" />
+            <Style
+              BasedOn="{StaticResource FlatListViewItem}"
+              TargetType="{x:Type ListViewItem}">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <EventSetter
+                Event="MouseDoubleClick"
+                Handler="FunctionDoubleClick" />
+              <EventSetter
+                Event="MouseLeftButtonUp"
+                Handler="FunctionClick" />
+              <EventSetter
+                Event="PreviewKeyDown"
+                Handler="FunctionPreviewKeyDown" />
 
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
               <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                  <Setter Property="Background"
-                          Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                <DataTrigger
+                  Binding="{Binding Path=IsDeletionDiff}"
+                  Value="True">
+                  <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                  <Setter Property="Background"
-                          Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                <DataTrigger
+                  Binding="{Binding Path=IsInsertionDiff}"
+                  Value="True">
+                  <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=HasDiffs}"
+                  Value="True">
                   <Setter Property="FontWeight" Value="Medium" />
-                  <Setter Property="Background"
-                          Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsPlaceholderDiff}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=IsPlaceholderDiff}"
+                  Value="True">
                   <Setter Property="BorderBrush" Value="Transparent" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
                 <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                  <Setter Property="Background"
-                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                  <Setter Property="Background"
-                          Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
                 </Trigger>
 
-                <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=IsMarked}"
+                  Value="True">
                   <Setter Property="Background" Value="#D0E3F1" />
                 </DataTrigger>
               </Style.Triggers>
@@ -769,8 +887,8 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open"
-                ToolTip="Open the assembly view, replacing the active tab"
-                InputGestureText="Return">
+                InputGestureText="Return"
+                ToolTip="Open the assembly view, replacing the active tab">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -783,8 +901,8 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in New Tab"
-                ToolTip="Open the assembly view in a new tab"
-                InputGestureText="Shift+Return">
+                InputGestureText="Shift+Return"
+                ToolTip="Open the assembly view in a new tab">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -797,8 +915,8 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Left Tab"
-                ToolTip="Open the assembly view in a new tab docked left"
-                InputGestureText="Ctrl+Shift+Left">
+                InputGestureText="Ctrl+Shift+Left"
+                ToolTip="Open the assembly view in a new tab docked left">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -811,8 +929,8 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Open in Right Tab"
-                ToolTip="Open the assembly view in a new tab docked right"
-                InputGestureText="Ctrl+Shift+Right">
+                InputGestureText="Ctrl+Shift+Right"
+                ToolTip="Open the assembly view in a new tab docked right">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -852,8 +970,9 @@
                 ToolTip="Copy the mangled function name to the clipboard (C++)" />
 
               <Separator />
-              <MenuItem Header="Mark Module"
-                        ToolTip="Mark all functions belonging to this module (saved)">
+              <MenuItem
+                Header="Mark Module"
+                ToolTip="Mark all functions belonging to this module (saved)">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -867,8 +986,9 @@
 
                 </MenuItem>
               </MenuItem>
-              <MenuItem Header="Mark Function"
-                        ToolTip="Mark all functions with the same name (saved)">
+              <MenuItem
+                Header="Mark Function"
+                ToolTip="Mark all functions with the same name (saved)">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -966,8 +1086,7 @@
                 ToolTip="Opens the IR document in the default external editor"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
-              <Separator
-                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+              <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
               <MenuItem
                 Command="{Binding SelectFunctionCallTreeCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1011,8 +1130,7 @@
                 </MenuItem.Icon>
               </MenuItem>
 
-              <Separator
-                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+              <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
               <MenuItem
                 Command="local:Command.SaveFunctionText"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1057,17 +1175,21 @@
       VerticalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
 
-    <Grid Grid.Column="2"
-          Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+    <Grid
+      Grid.Column="2"
+      Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
 
-      <Grid x:Name="SectionGrid"
-            Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibilityConverter}}">
+      <Grid
+        x:Name="SectionGrid"
+        Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibilityConverter}}">
         <Grid.RowDefinitions>
           <RowDefinition Height="28" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid x:Name="SectionToolbarGrid" Grid.Row="0">
+        <Grid
+          x:Name="SectionToolbarGrid"
+          Grid.Row="0">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="43" />
@@ -1101,8 +1223,8 @@
                     <KeyBinding
                       Key="Escape"
                       Command="local:Command.ClearTextbox"
-                      CommandTarget="{Binding ElementName=SectionList}"
-                      CommandParameter="{Binding ElementName=SectionFilter}" />
+                      CommandParameter="{Binding ElementName=SectionFilter}"
+                      CommandTarget="{Binding ElementName=SectionList}" />
                   </TextBox.InputBindings>
                 </TextBox>
                 <TextBlock
@@ -1129,15 +1251,17 @@
               <ToggleButton
                 IsChecked="{Binding FilterTagged}"
                 ToolTip="Show only sections with a tag">
-                <Image Source="{StaticResource TagIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
+                <Image
+                  Source="{StaticResource TagIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
               </ToggleButton>
 
               <ToggleButton
                 IsChecked="{Binding FilterDiffFromPrevious}"
                 ToolTip="Show only sections that are different from the previous one">
-                <Image Source="{StaticResource EyeIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
+                <Image
+                  Source="{StaticResource EyeIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
               </ToggleButton>
               <Separator />
 
@@ -1146,16 +1270,18 @@
                 Command="local:Command.PreviousSection"
                 CommandTarget="{Binding ElementName=SectionList}"
                 ToolTip="Switch to previous section (Ctrl+P)">
-                <Image Source="{StaticResource LeftArrowIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
+                <Image
+                  Source="{StaticResource LeftArrowIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
               </Button>
               <Button
                 x:Name="NextButton"
                 Command="local:Command.NextSection"
                 CommandTarget="{Binding ElementName=SectionList}"
                 ToolTip="Switch to next section (Ctrl+N)">
-                <Image Source="{StaticResource RightArrowIcon}"
-                       Style="{StaticResource DisabledImageStyle}" />
+                <Image
+                  Source="{StaticResource RightArrowIcon}"
+                  Style="{StaticResource DisabledImageStyle}" />
               </Button>
 
               <Separator />
@@ -1193,7 +1319,9 @@
           <ListView.View>
             <GridView>
               <GridViewColumn Width="50">
-                <GridViewColumnHeader x:Name="NumberColumnHeader" Content="#" />
+                <GridViewColumnHeader
+                  x:Name="NumberColumnHeader"
+                  Content="#" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1205,7 +1333,9 @@
                       Margin="-6,-2,-6,-2"
                       BorderBrush="{Binding BorderBrush}"
                       BorderThickness="{Binding BorderThickness}">
-                      <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                      <StackPanel
+                        Margin="6,2,6,2"
+                        Orientation="Horizontal">
                         <Image
                           Width="16"
                           Height="16"
@@ -1220,7 +1350,9 @@
               </GridViewColumn>
 
               <GridViewColumn Width="280">
-                <GridViewColumnHeader x:Name="NameColumnHeader" Content="Section" />
+                <GridViewColumnHeader
+                  x:Name="NameColumnHeader"
+                  Content="Section" />
                 <GridViewColumn.HeaderContainerStyle>
                   <Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1233,7 +1365,9 @@
                       Margin="-6,-2,-6,-2"
                       BorderBrush="{Binding BorderBrush}"
                       BorderThickness="{Binding BorderThickness}">
-                      <TextBlock Margin="6,2,6,2" Text="{Binding Name}" />
+                      <TextBlock
+                        Margin="6,2,6,2"
+                        Text="{Binding Name}" />
                     </Border>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
@@ -1254,7 +1388,9 @@
                       Margin="-6,-2,-6,-2"
                       BorderBrush="{Binding BorderBrush}"
                       BorderThickness="{Binding BorderThickness}">
-                      <TextBlock Margin="6,2,6,2" Text="{Binding BlockCountString}" />
+                      <TextBlock
+                        Margin="6,2,6,2"
+                        Text="{Binding BlockCountString}" />
                     </Border>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
@@ -1273,7 +1409,9 @@
                       Margin="-6,-2,-6,-2"
                       BorderBrush="{Binding BorderBrush}"
                       BorderThickness="{Binding BorderThickness}">
-                      <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                      <StackPanel
+                        Margin="6,2,6,2"
+                        Orientation="Horizontal">
                         <Image
                           Width="16"
                           Height="16"
@@ -1294,60 +1432,73 @@
           </ListView.View>
 
           <ListView.ItemContainerStyle>
-            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-              <EventSetter Event="MouseDoubleClick" Handler="SectionDoubleClick" />
-              <EventSetter Event="PreviewKeyDown" Handler="SectionPreviewKeyDown" />
+            <Style
+              BasedOn="{StaticResource FlatListViewItem}"
+              TargetType="{x:Type ListViewItem}">
+              <EventSetter
+                Event="MouseDoubleClick"
+                Handler="SectionDoubleClick" />
+              <EventSetter
+                Event="PreviewKeyDown"
+                Handler="SectionPreviewKeyDown" />
 
 
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Stretch" />
-              <Setter Property="Background"
-                      Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
 
               <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=IsSelected}"
+                  Value="True">
                   <Setter Property="FontWeight" Value="Bold" />
                 </DataTrigger>
 
                 <MultiDataTrigger>
                   <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding Path=IsDiffFromPrevious}" Value="False" />
-                    <Condition Binding="{Binding Path=LowerIdenticalToPreviousOpacity}"
-                               Value="True" />
+                    <Condition Binding="{Binding Path=LowerIdenticalToPreviousOpacity}" Value="True" />
                     <Condition Binding="{Binding Path=IsSelected}" Value="False" />
                   </MultiDataTrigger.Conditions>
                   <Setter Property="Opacity" Value="0.6" />
                 </MultiDataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=IsMarked}"
+                  Value="True">
                   <Setter Property="Foreground" Value="{Binding Path=TextColor}" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                  <Setter Property="Background"
-                          Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                <DataTrigger
+                  Binding="{Binding Path=IsDeletionDiff}"
+                  Value="True">
+                  <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                  <Setter Property="Background"
-                          Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                <DataTrigger
+                  Binding="{Binding Path=IsInsertionDiff}"
+                  Value="True">
+                  <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=HasDiffs}"
+                  Value="True">
                   <Setter Property="FontWeight" Value="Medium" />
-                  <Setter Property="Background"
-                          Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsPlaceholderDiff}" Value="True">
+                <DataTrigger
+                  Binding="{Binding Path=IsPlaceholderDiff}"
+                  Value="True">
                   <Setter Property="BorderBrush" Value="Transparent" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>

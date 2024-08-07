@@ -144,7 +144,9 @@
       Command="local:AppCommand.ShowDocumentSearch"
       Modifiers="Ctrl" />
 
-    <KeyBinding Key="F11" Command="local:AppCommand.FullScreen" />
+    <KeyBinding
+      Key="F11"
+      Command="local:AppCommand.FullScreen" />
     <KeyBinding
       Key="P"
       Command="local:Command.PreviousSection"
@@ -170,12 +172,16 @@
       Command="local:AppCommand.SaveAsDocument"
       Modifiers="Ctrl+Shift" />
 
-    <KeyBinding Key="F5" Command="local:AppCommand.ReloadDocument" />
+    <KeyBinding
+      Key="F5"
+      Command="local:AppCommand.ReloadDocument" />
     <KeyBinding
       Key="F5"
       Command="local:AppCommand.AutoReloadDocument"
       Modifiers="Ctrl" />
-    <KeyBinding Key="F12" Command="local:AppCommand.OpenBaseDiffDocuments" />
+    <KeyBinding
+      Key="F12"
+      Command="local:AppCommand.OpenBaseDiffDocuments" />
     <KeyBinding
       Key="F12"
       Command="local:AppCommand.OpenDiffDocument"
@@ -184,14 +190,17 @@
       Key="O"
       Command="local:AppCommand.OpenExecutable"
       Modifiers="Ctrl+Shift" />
-    <KeyBinding Key="F9" Command="local:AppCommand.ToggleDiffMode" />
-    <KeyBinding Key="F10" Command="local:AppCommand.SwapDiffDocuments" />
+    <KeyBinding
+      Key="F9"
+      Command="local:AppCommand.ToggleDiffMode" />
+    <KeyBinding
+      Key="F10"
+      Command="local:AppCommand.SwapDiffDocuments" />
   </Window.InputBindings>
 
   <Grid x:Name="MainGrid">
     <Grid.LayoutTransform>
-      <ScaleTransform ScaleX="{Binding WindowScaling}"
-                      ScaleY="{Binding WindowScaling}" />
+      <ScaleTransform ScaleX="{Binding WindowScaling}" ScaleY="{Binding WindowScaling}" />
     </Grid.LayoutTransform>
 
     <Grid.RowDefinitions>
@@ -228,9 +237,13 @@
                   Source="{StaticResource FolderIcon}" />
               </MenuItem.Icon>
             </MenuItem>
-            <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
+            <MenuItem
+              x:Name="RecentFilesMenu"
+              Header="_Recent Files">
               <Separator />
-              <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />
+              <MenuItem
+                Click="RecentFilesMenu_Click"
+                Header="Clear" />
             </MenuItem>
             <Separator />
 
@@ -249,11 +262,17 @@
               Command="local:AppCommand.OpenDiffDocument"
               Header="Open _Diff File"
               InputGestureText="Ctrl+F12" />
-            <MenuItem Command="local:AppCommand.CloseDiffDocument" Header="Close Diff File" />
+            <MenuItem
+              Command="local:AppCommand.CloseDiffDocument"
+              Header="Close Diff File" />
             <Separator />
 
-            <MenuItem Command="local:AppCommand.OpenDebug" Header="_Open Debug File" />
-            <MenuItem Command="local:AppCommand.OpenDiffDebug" Header="_Open Diff Debug File" />
+            <MenuItem
+              Command="local:AppCommand.OpenDebug"
+              Header="_Open Debug File" />
+            <MenuItem
+              Command="local:AppCommand.OpenDiffDebug"
+              Header="_Open Diff Debug File" />
 
             <Separator />
 
@@ -284,10 +303,10 @@
             <Separator />
 
             <MenuItem
-              IsEnabled="False"
               Command="local:AppCommand.SaveDocument"
               Header="_Save Session"
-              InputGestureText="Ctrl+S">
+              InputGestureText="Ctrl+S"
+              IsEnabled="False">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -296,17 +315,21 @@
               </MenuItem.Icon>
             </MenuItem>
             <MenuItem
-              IsEnabled="False"
               Command="local:AppCommand.SaveAsDocument"
               Header="Save Session _As..."
-              InputGestureText="Ctrl+Shift+S" />
+              InputGestureText="Ctrl+Shift+S"
+              IsEnabled="False" />
             <MenuItem
               Command="local:AppCommand.CloseDocument"
               Header="Close Session"
               InputGestureText="Ctrl+F4" />
             <Separator />
-            <MenuItem Command="local:AppCommand.OpenNewDocument" Header="Launch New _Instance" />
-            <MenuItem Click="ExitMenuItem_Click" Header="E_xit" />
+            <MenuItem
+              Command="local:AppCommand.OpenNewDocument"
+              Header="Launch New _Instance" />
+            <MenuItem
+              Click="ExitMenuItem_Click"
+              Header="E_xit" />
           </MenuItem>
 
           <MenuItem Header="View">
@@ -314,7 +337,9 @@
               Click="ResetWorkspaceMenu_Click"
               Header="Reset Workspace"
               ToolTip="Restore default layout of workplace" />
-            <MenuItem Click="ShowWorkspacesMenu_Click" Header="Manage Workspaces" />
+            <MenuItem
+              Click="ShowWorkspacesMenu_Click"
+              Header="Manage Workspaces" />
             <MenuItem
               x:Name="AlwaysOnTopCheckbox"
               Click="AlwaysOnTopMenu_Click"
@@ -340,8 +365,8 @@
               ToolTip="Shrink the UI for the entire application" />
             <MenuItem
               Click="ResetUIZoomMenu_Click"
-              ToolTip="Restore default UI scaling for the entire application"
-              Header="Reset Zoom (100%)" />
+              Header="Reset Zoom (100%)"
+              ToolTip="Restore default UI scaling for the entire application" />
             <Separator />
 
             <MenuItem
@@ -398,8 +423,12 @@
               Click="ShowPanelMenu_Click"
               Header="Post-Dominator Tree Panel"
               Tag="PostDominatorTree" />
-            <MenuItem Header="Control Dependence Graph Panel" IsEnabled="False" />
-            <MenuItem Header="Loop Graph Panel" IsEnabled="False" />
+            <MenuItem
+              Header="Control Dependence Graph Panel"
+              IsEnabled="False" />
+            <MenuItem
+              Header="Loop Graph Panel"
+              IsEnabled="False" />
             <MenuItem
               Header="Expression Graph Panel"
               IsEnabled="True"
@@ -425,7 +454,9 @@
           </MenuItem>
 
           <MenuItem Header="Profiling">
-            <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile">
+            <MenuItem
+              Command="local:AppCommand.LoadProfile"
+              Header="Load Profile">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -433,7 +464,9 @@
                   Source="{StaticResource FolderIcon}" />
               </MenuItem.Icon>
             </MenuItem>
-            <MenuItem Command="local:AppCommand.RecordProfile" Header="Record Profile">
+            <MenuItem
+              Command="local:AppCommand.RecordProfile"
+              Header="Record Profile">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -443,7 +476,9 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem Command="local:AppCommand.ViewProfileReport" Header="Profiling report">
+            <MenuItem
+              Command="local:AppCommand.ViewProfileReport"
+              Header="Profiling report">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -523,7 +558,9 @@
               </MenuItem.Icon>
             </MenuItem>
 
-            <MenuItem Click="FunctionReportMenu_Click" Header="Function report">
+            <MenuItem
+              Click="FunctionReportMenu_Click"
+              Header="Function report">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -533,7 +570,9 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem Click="SettingsMenu_Click" Header="Settings">
+            <MenuItem
+              Click="SettingsMenu_Click"
+              Header="Settings">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -544,7 +583,9 @@
           </MenuItem>
 
           <MenuItem Header="Help">
-            <MenuItem Click="OpenDocsMenu_Click" Header="Documentation">
+            <MenuItem
+              Click="OpenDocsMenu_Click"
+              Header="Documentation">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -568,9 +609,15 @@
                 x:Name="DevMenuStartupTime"
                 Header="Diff time: 0"
                 IsEnabled="False" />
-              <MenuItem Click="OpenLogMenu_Click" Header="Open log file" />
-              <MenuItem Click="CreateDumpMenu_Click" Header="Create debug files" />
-              <MenuItem Click="ForceGCMenu_Click" Header="Force GC" />
+              <MenuItem
+                Click="OpenLogMenu_Click"
+                Header="Open log file" />
+              <MenuItem
+                Click="CreateDumpMenu_Click"
+                Header="Create debug files" />
+              <MenuItem
+                Click="ForceGCMenu_Click"
+                Header="Force GC" />
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -581,8 +628,12 @@
 
             <Separator />
 
-            <MenuItem Click="CheckUpdatesMenu_Click" Header="Check for Updates" />
-            <MenuItem Click="AboutMenu_Click" Header="About IR Explorer" />
+            <MenuItem
+              Click="CheckUpdatesMenu_Click"
+              Header="Check for Updates" />
+            <MenuItem
+              Click="AboutMenu_Click"
+              Header="About IR Explorer" />
           </MenuItem>
         </Menu>
 
@@ -595,8 +646,9 @@
             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
             BorderBrush="Transparent"
             BorderThickness="1,0,1,0">
-            <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        Orientation="Horizontal">
+            <StackPanel
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Orientation="Horizontal">
               <ToggleButton
                 x:Name="DiffModeButton"
                 Padding="2,1,2,1"
@@ -835,11 +887,11 @@
                         <Image
                           Width="14"
                           Height="14"
-                          Margin="0,1,0,0"
+                          Margin="0,0,0,0"
                           Source="{StaticResource TasklistIcon}"
                           Style="{StaticResource DisabledImageStyle}" />
                         <TextBlock
-                          Margin="3,0,0,0"
+                          Margin="3,-2,0,0"
                           VerticalAlignment="Center"
                           FontWeight="SemiBold"
                           Text="Overview" />
@@ -918,11 +970,11 @@
                         <Image
                           Width="14"
                           Height="14"
-                          Margin="0,0,0,0"
+                          Margin="0,-1,0,0"
                           Source="{StaticResource BookmarkIcon}"
                           Style="{StaticResource DisabledImageStyle}" />
                         <TextBlock
-                          Margin="3,0,0,0"
+                          Margin="3,-2,0,0"
                           VerticalAlignment="Center"
                           FontWeight="SemiBold"
                           Text="Profile Marking" />
@@ -1044,7 +1096,7 @@
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
                         <TextBlock
-                          Margin="4,0,0,0"
+                          Margin="4,-2,0,0"
                           VerticalAlignment="Center"
                           Text="Modules" />
                         <Path
@@ -1119,7 +1171,7 @@
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
                         <TextBlock
-                          Margin="4,0,0,0"
+                          Margin="4,-2,0,0"
                           VerticalAlignment="Center"
                           Text="Functions" />
                         <Path
@@ -1385,7 +1437,9 @@
               FloatingWidth="400" />
 
             <!--  Document viewer  -->
-            <avalonDock:LayoutDocumentPaneGroup x:Name="DocumentPanelGroup" IsMaximized="True">
+            <avalonDock:LayoutDocumentPaneGroup
+              x:Name="DocumentPanelGroup"
+              IsMaximized="True">
               <avalonDock:LayoutDocumentPane />
             </avalonDock:LayoutDocumentPaneGroup>
 
@@ -1695,7 +1749,9 @@
         Click="WorkspacesButton_OnClick"
         FontSize="11"
         ToolTip="Manage workspaces list">
-        <Image VerticalAlignment="Top" Source="{StaticResource EditIcon}" />
+        <Image
+          VerticalAlignment="Top"
+          Source="{StaticResource EditIcon}" />
       </Button>
       <Separator />
 
@@ -1760,7 +1816,9 @@
         Click="ZoomOutUIMenu_Click"
         FontSize="11"
         ToolTip="Shrink the UI for the entire application">
-        <Image VerticalAlignment="Center" Source="{StaticResource ZoomOutIcon}" />
+        <Image
+          VerticalAlignment="Center"
+          Source="{StaticResource ZoomOutIcon}" />
       </Button>
       <Button
         Width="18"
@@ -1772,17 +1830,19 @@
         Click="ZoomInUIMenu_Click"
         FontSize="11"
         ToolTip="Enlarge the UI for the entire application">
-        <Image VerticalAlignment="Center" Source="{StaticResource ZoomInIcon}" />
+        <Image
+          VerticalAlignment="Center"
+          Source="{StaticResource ZoomInIcon}" />
       </Button>
-      <Separator/>
+      <Separator />
 
       <ToggleButton
         x:Name="FullScreenButton"
+        Margin="-2,0,0,0"
+        Padding="2,0,2,0"
         VerticalAlignment="Center"
         Background="Transparent"
         BorderBrush="Transparent"
-        Margin="-2,0,0,0"
-        Padding="2,0,2,0"
         Command="local:AppCommand.FullScreen"
         FontSize="11"
         ToolTip="Enter/exit full screen mode (F11)">
@@ -1806,16 +1866,18 @@
 
       <ToggleButton
         x:Name="AlwaysOnTopButton"
-        Background="Transparent"
         Width="18"
         Height="18"
         Margin="-2,0,0,0"
         VerticalAlignment="Center"
+        Background="Transparent"
         BorderBrush="Transparent"
         Click="AlwaysOnTopButton_Click"
         FontSize="11"
         ToolTip="Toggle always on top of the main window">
-        <Image VerticalAlignment="Center" Source="{StaticResource PinIcon}" />
+        <Image
+          VerticalAlignment="Center"
+          Source="{StaticResource PinIcon}" />
       </ToggleButton>
       <Separator />
 
@@ -1823,7 +1885,9 @@
         Name="DocumentLoadProgressPanel"
         Orientation="Horizontal"
         Visibility="Collapsed">
-        <ProgressBar x:Name="DocumentLoadProgressBar" Width="100" />
+        <ProgressBar
+          x:Name="DocumentLoadProgressBar"
+          Width="100" />
         <TextBlock
           x:Name="DocumentLoadLabel"
           Margin="4,0,0,0"
@@ -1843,7 +1907,9 @@
         ToolTip="Update application to newest version"
         Visibility="Hidden">
         <StackPanel Orientation="Horizontal">
-          <Image VerticalAlignment="Center" Source="{StaticResource ReloadIcon}" />
+          <Image
+            VerticalAlignment="Center"
+            Source="{StaticResource ReloadIcon}" />
           <TextBlock
             Margin="4,0,0,0"
             VerticalAlignment="Center"

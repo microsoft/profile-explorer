@@ -10,16 +10,27 @@
   d:DesignWidth="800"
   mc:Ignorable="d">
   <irExplorerUi:ToolPanelControl.CommandBindings>
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth"
-                    Executed="ExecuteGraphResetWidth" />
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
-    <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
-    <CommandBinding Command="local:CallTreeCommand.PreviousSearchResult"
-                    Executed="PreviousSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.NextSearchResult"
-                    Executed="NextSearchResultExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.ClearSearch" Executed="ClearSearchExecuted" />
-    <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
+    <CommandBinding
+      Command="irExplorerUi:GraphCommand.GraphResetWidth"
+      Executed="ExecuteGraphResetWidth" />
+    <CommandBinding
+      Command="irExplorerUi:GraphCommand.GraphZoomIn"
+      Executed="ExecuteGraphZoomIn" />
+    <CommandBinding
+      Command="irExplorerUi:GraphCommand.GraphZoomOut"
+      Executed="ExecuteGraphZoomOut" />
+    <CommandBinding
+      Command="local:CallTreeCommand.PreviousSearchResult"
+      Executed="PreviousSearchResultExecuted" />
+    <CommandBinding
+      Command="local:CallTreeCommand.NextSearchResult"
+      Executed="NextSearchResultExecuted" />
+    <CommandBinding
+      Command="local:CallTreeCommand.ClearSearch"
+      Executed="ClearSearchExecuted" />
+    <CommandBinding
+      Command="local:CallTreeCommand.FocusSearch"
+      Executed="FocusSearchExecuted" />
   </irExplorerUi:ToolPanelControl.CommandBindings>
 
   <irExplorerUi:ToolPanelControl.InputBindings>
@@ -32,7 +43,9 @@
       Key="F3"
       Command="local:CallTreeCommand.PreviousSearchResult"
       Modifiers="Shift" />
-    <KeyBinding Key="F3" Command="local:CallTreeCommand.NextSearchResult" />
+    <KeyBinding
+      Key="F3"
+      Command="local:CallTreeCommand.NextSearchResult" />
     <KeyBinding
       Key="F"
       Command="local:CallTreeCommand.FocusSearch"
@@ -40,12 +53,16 @@
   </irExplorerUi:ToolPanelControl.InputBindings>
 
   <irExplorerUi:ToolPanelControl.Resources>
-    <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="ColumnsGridSplitterStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="2" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Settings.ShowDetailsPanel}" Value="False">
+        <DataTrigger
+          Binding="{Binding Settings.ShowDetailsPanel}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
@@ -54,13 +71,17 @@
       </Style.Triggers>
     </Style>
 
-    <Style x:Key="NodePanelColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+    <Style
+      x:Key="NodePanelColumnsStyle"
+      TargetType="{x:Type ColumnDefinition}">
       <Style.Setters>
         <Setter Property="Width" Value="325" />
         <Setter Property="MinWidth" Value="325" />
       </Style.Setters>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Settings.ShowDetailsPanel}" Value="False">
+        <DataTrigger
+          Binding="{Binding Settings.ShowDetailsPanel}"
+          Value="False">
           <DataTrigger.Setters>
             <Setter Property="Width" Value="0" />
             <Setter Property="MaxWidth" Value="0" />
@@ -105,9 +126,12 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Go back to previous state (Backspace/Mouse Back)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource DockLeftIcon}"
-                     Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Back" />
+              <Image
+                Source="{StaticResource DockLeftIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Back" />
             </StackPanel>
           </Button>
           <Separator />
@@ -117,9 +141,12 @@
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Zoom the graph view to 100% (Ctrl+0)">
             <StackPanel Orientation="Horizontal">
-              <Image Source="{StaticResource ResetWidthIcon}"
-                     Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="4,0,0,0" Text="Reset" />
+              <Image
+                Source="{StaticResource ResetWidthIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock
+                Margin="4,0,0,0"
+                Text="Reset" />
             </StackPanel>
           </Button>
           <Button
@@ -158,7 +185,9 @@
                 Margin="0,1,0,0"
                 Source="{StaticResource SwitchIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
-              <TextBlock Margin="2,0,0,0" Text="Sync" />
+              <TextBlock
+                Margin="2,0,0,0"
+                Text="Sync" />
             </StackPanel>
           </ToggleButton>
 
@@ -168,12 +197,17 @@
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncSourceFile, Mode=TwoWay}"
             ToolTip="Sync Source File panel with selection">
-            <Image
-              Width="16"
-              Height="16"
-              Margin="0,1,0,0"
-              Source="{StaticResource SourceIcon}"
-              Style="{StaticResource DisabledImageStyle}" />
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource SourceIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock
+                Margin="2,0,0,0"
+                Text="Source" />
+            </StackPanel>
           </ToggleButton>
           <Separator />
 
@@ -231,12 +265,12 @@
               Source="{StaticResource ClearIcon}"
               Style="{StaticResource DisabledImageStyle}" />
           </Button>
-          <Separator
-            Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <Separator Visibility="{Binding HasRootNode, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-          <Image Margin="2,0,0,0"
-                 Source="{StaticResource SearchIcon}"
-                 Style="{StaticResource DisabledImageStyle}" />
+          <Image
+            Margin="2,0,0,0"
+            Source="{StaticResource SearchIcon}"
+            Style="{StaticResource DisabledImageStyle}" />
           <Grid Height="24">
             <TextBox
               x:Name="FunctionFilter"
@@ -252,8 +286,8 @@
                 <KeyBinding
                   Key="Escape"
                   Command="local:CallTreeCommand.ClearSearch"
-                  CommandTarget="{Binding ElementName=GraphHost}"
-                  CommandParameter="{Binding ElementName=FunctionFilter}" />
+                  CommandParameter="{Binding ElementName=FunctionFilter}"
+                  CommandTarget="{Binding ElementName=GraphHost}" />
               </TextBox.InputBindings>
             </TextBox>
             <TextBlock
@@ -293,17 +327,19 @@
             Command="local:CallTreeCommand.PreviousSearchResult"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Previous search result">
-            <Image Source="{StaticResource UpArrowIcon}"
-                   Style="{StaticResource DisabledImageStyle}"
-                   Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Image
+              Source="{StaticResource UpArrowIcon}"
+              Style="{StaticResource DisabledImageStyle}"
+              Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
           <Button
             Command="local:CallTreeCommand.NextSearchResult"
             CommandTarget="{Binding ElementName=GraphHost}"
             ToolTip="Next search result">
-            <Image Source="{StaticResource DownArrowIcon}"
-                   Style="{StaticResource DisabledImageStyle}"
-                   Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Image
+              Source="{StaticResource DownArrowIcon}"
+              Style="{StaticResource DisabledImageStyle}"
+              Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
           </Button>
         </ToolBar>
       </ToolBarTray>
@@ -318,7 +354,9 @@
         SettingsClicked="PanelToolbarTray_SettingsClicked" />
     </Grid>
 
-    <Grid Grid.Row="1" x:Name="GraphDetailsPanelHost">
+    <Grid
+      x:Name="GraphDetailsPanelHost"
+      Grid.Row="1">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
