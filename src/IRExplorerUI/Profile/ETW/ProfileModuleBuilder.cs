@@ -178,6 +178,7 @@ public sealed class ProfileModuleBuilder {
 #if DEBUG
       Interlocked.Increment(ref FuncFoundByFuncAddress);
 #endif
+      functionMap_.TryAdd(funcAddress, pair);
       return pair;
     }
 

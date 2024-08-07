@@ -380,7 +380,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
       // Preload the function list only when there are enough queries
       // to justify the time spent in reading the entire PDB.
-      if (Interlocked.Increment(ref funcCacheMisses_) >= FunctionCacheMissThreshold) {
+      if (sortedFuncList_ == null &&
+          Interlocked.Increment(ref funcCacheMisses_) >= FunctionCacheMissThreshold) {
         GetSortedFunctions();
 
         if (sortedFuncList_ != null) {
