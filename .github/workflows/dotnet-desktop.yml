@@ -85,6 +85,6 @@ jobs:
 
     # Build the solution
     - name: Build
-      run: msbuild $env:Solution_Name /t:ProfileExplorerUI:Rebuild /p:Configuration=$env:Configuration
+      run: msbuild $env:Solution_Name /t:ProfileExplorerUI /p:Configuration=$env:Configuration
       env:
         Configuration: ${{ matrix.configuration }}
