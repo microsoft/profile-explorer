@@ -3,6 +3,7 @@ set _BUILD_TARGET="..\..\src\ProfileExplorerUI\ProfileExplorerUI.csproj"
 set _PROFILER_PATH="..\..\src\ManagedProfiler"
 set _EXTERNALS_PATH="..\..\src\external"
 set _RESOURCES_PATH="..\..\resources"
+set _REPO_PATH="..\.."
 set _OUT_PATH="out"
 
 rd %_OUT_PATH% /s /q
@@ -38,3 +39,4 @@ copy %_EXTERNALS_PATH%\graphviz\build\plugin\core\Release\gvplugin_core.dll %_OU
 copy %_EXTERNALS_PATH%\graphviz\build\plugin\dot_layout\Release\gvplugin_dot_layout.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\zlib1.dll %_OUT_PATH%
 copy %_EXTERNALS_PATH%\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\libexpat.dll %_OUT_PATH%
+copy %_REPO_PATH%\NOTICE.md %_OUT_PATH%

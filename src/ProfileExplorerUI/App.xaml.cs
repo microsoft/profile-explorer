@@ -54,7 +54,7 @@ public partial class App : Application {
 
   private const string HelpLocation = @"PLACEHOLDER";
   private const string HelpIndexFile = @"index.json";
-  private const string LicenseFile = "license.txt";
+  private const string LicenseFile = "NOTICE.md";
   private const string WorkspacesDirectory = "workspaces";
   private const string ScriptsDirectory = "scripts";
   private const string ThemesDirectory = "themes";
