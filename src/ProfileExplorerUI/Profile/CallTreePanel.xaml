@@ -143,12 +143,17 @@
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncSourceFile, Mode=TwoWay}"
             ToolTip="Sync Source File panel with selection">
-            <Image
-              Width="16"
-              Height="16"
-              Margin="0,1,0,0"
-              Source="{StaticResource SourceIcon}"
-              Style="{StaticResource DisabledImageStyle}" />
+            <StackPanel Orientation="Horizontal">
+              <Image
+                Width="16"
+                Height="16"
+                Margin="0,1,0,0"
+                Source="{StaticResource SourceIcon}"
+                Style="{StaticResource DisabledImageStyle}" />
+              <TextBlock
+                Margin="2,0,0,0"
+                Text="Source" />
+            </StackPanel>
           </ToggleButton>
           <Separator />
 
