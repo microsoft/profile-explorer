@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System.Runtime.CompilerServices;
 
-namespace IRExplorerCore;
+namespace ProfileExplorer.Core;
 
 public struct TextLocation {
   public int Offset {

@@ -6,7 +6,7 @@ using System.ComponentModel.Design;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
 
-namespace IRExplorerExtension.Windows;
+namespace ProfileExplorerExtension.Windows;
 
 /// <summary>
 ///   Command handler

@@ -1,0 +1,720 @@
+﻿<local:OptionsPanelBase
+  x:Class="ProfileExplorer.UI.OptionsPanels.FlameGraphOptionsPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:controls="clr-namespace:ProfileExplorer.UI.Controls"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:ProfileExplorer.UI.OptionsPanels"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+  d:DesignHeight="750"
+  d:DesignWidth="400"
+  mc:Ignorable="d">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <TabControl
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+      BorderThickness="0">
+      <TabItem
+        Header="General"
+        Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Show function details panel"
+            IsChecked="{Binding ShowDetailsPanel, Mode=TwoWay}"
+            ToolTip="Show the function details panel on the right-hand side" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Sync function in other profiling panels"
+            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            ToolTip="Sync function displayed in other profiling panels with selection" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Sync Source File panel with selection"
+            IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
+            ToolTip="Sync file displayed in the Source File panel with selection" />
+
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+          <TextBlock
+            FontWeight="Medium"
+            Text="Function nodes" />
+          <CheckBox
+            Margin="0,4,0,2"
+            Content="Include module name"
+            IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
+            ToolTip="Show the module name in front of the function name" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Include function percentage"
+            IsChecked="{Binding AppendPercentageToFunction, Mode=TwoWay}"
+            ToolTip="Show the function instance time percentage after the name" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Include function time"
+            IsChecked="{Binding AppendDurationToFunction, Mode=TwoWay}"
+            ToolTip="Show the function instance duration after the name" />
+          <CheckBox
+            x:Name="ShowCallStackPopupCheckbox"
+            Margin="0,2,0,2"
+            Content="Show function details on hover"
+            IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
+            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
+          <StackPanel
+            Margin="20,2,0,2"
+            IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
+            Orientation="Horizontal">
+            <TextBlock
+              VerticalAlignment="Center"
+              Text="Hover duration (ms)" />
+            <xctk:IntegerUpDown
+              Width="70"
+              Margin="8,0,0,0"
+              Increment="100"
+              Maximum="5000"
+              Minimum="50"
+              ParsingNumberStyle="Number"
+              ShowButtonSpinner="True"
+              Value="{Binding Path=NodePopupDuration, Mode=TwoWay}" />
+            <Button
+              Height="20"
+              Margin="4,0,0,0"
+              Padding="2,0,2,0"
+              VerticalAlignment="Center"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="ResetNodePopupDurationButton_Click"
+              Content="Default"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Height="20"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              VerticalAlignment="Center"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="ShortNodePopupDurationButton_Click"
+              Content="Short"
+              ToolTip="Reset value to default duration" />
+            <Button
+              Height="20"
+              Margin="2,0,0,0"
+              Padding="2,0,2,0"
+              VerticalAlignment="Center"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="LongNodePopupDurationButton_Click"
+              Content="Long"
+              ToolTip="Reset value to default duration" />
+          </StackPanel>
+
+        </StackPanel>
+      </TabItem>
+      <TabItem
+        x:Name="StylePanel"
+        Header="Appearance"
+        Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Use compact mode"
+            IsChecked="{Binding UseCompactMode, Mode=TwoWay}" />
+          <CheckBox
+            x:Name="KernelCheckBox"
+            Margin="0,4,0,2"
+            Content="Use different color palette for kernel code"
+            IsChecked="{Binding UseKernelColorPalette, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+          <CheckBox
+            x:Name="ManagedCheckBox"
+            Margin="0,2,0,2"
+            Content="Use different color palette for managed (.NET) code"
+            IsChecked="{Binding UseManagedColorPalette, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
+          <StackPanel
+            Margin="0,4,0,0"
+            IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"
+            Orientation="Horizontal">
+            <controls:ColorPaletteSelector
+              x:Name="DefaultPaletteSelector"
+              Width="120"
+              Height="20"
+              HorizontalAlignment="Left"
+              PreviewWidth="200"
+              SelectedPalette="{Binding DefaultColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+            <TextBlock
+              Margin="8,0,0,0"
+              VerticalAlignment="Center"
+              Text="Default color palette" />
+          </StackPanel>
+          <StackPanel
+            Margin="0,2,0,0"
+            IsEnabled="{Binding ElementName=KernelCheckBox, Path=IsChecked}"
+            Orientation="Horizontal">
+            <controls:ColorPaletteSelector
+              x:Name="KernelPaletteSelector"
+              Width="120"
+              Height="20"
+              HorizontalAlignment="Left"
+              PreviewWidth="200"
+              SelectedPalette="{Binding KernelColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+            <TextBlock
+              Margin="8,0,0,0"
+              VerticalAlignment="Center"
+              Text="Kernel code color palette" />
+          </StackPanel>
+          <StackPanel
+            Margin="0,2,0,0"
+            IsEnabled="{Binding ElementName=ManagedCheckBox, Path=IsChecked}"
+            Orientation="Horizontal">
+            <controls:ColorPaletteSelector
+              x:Name="ManagedPaletteSelector"
+              Width="120"
+              Height="20"
+              HorizontalAlignment="Left"
+              PreviewWidth="200"
+              SelectedPalette="{Binding ManagedColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+            <TextBlock
+              Margin="8,0,0,0"
+              VerticalAlignment="Center"
+              Text="Managed (.NET) code color palette" />
+          </StackPanel>
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+
+          <TextBlock
+            Margin="0,4,0,4"
+            FontWeight="Medium"
+            Text="Colors" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=NodeTextColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Function text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=KernelNodeTextColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Kernel function text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=ManagedNodeTextColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Managed function text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=NodeModuleColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Module text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=NodePercentageColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Percentage text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=NodeWeightColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Time text color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Function border color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=KernelNodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Kernel function border color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=ManagedNodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Managed function border color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Selected function color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=SelectedNodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Selected function border color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=SearchResultMarkingColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Search result marking color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=SearchedNodeColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Search result function color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=SearchedNodeBorderColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Search result border color" />
+          </Grid>
+        </StackPanel>
+      </TabItem>
+      <TabItem
+        x:Name="DetailsPanel"
+        Header="Details Panel"
+        Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Auto-expand Instance Statistics section"
+            IsChecked="{Binding ExpandInstances, Mode=TwoWay}"
+            ToolTip="Instances section expanded by default" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Auto-expand Histogram section"
+            IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
+            ToolTip="Histogram section expanded by default" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Auto-expand Threads section"
+            IsChecked="{Binding ExpandThreads, Mode=TwoWay}"
+            ToolTip="Threads list section expanded by default" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Alternate list view background color"
+            IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
+            ToolTip="Alternate the background color of the function/module list view items" />
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+
+          <TextBlock
+            FontWeight="Medium"
+            Text="Function Lists" />
+          <StackPanel x:Name="FunctionListOptionsPanel">
+            <CheckBox
+              x:Name="FilterWeightCheckBox"
+              Margin="0,4,0,2"
+              Content="Filter out insignificant functions"
+              IsChecked="{Binding FilterByWeight, Mode=TwoWay}"
+              ToolTip="Filter out functions with a time less than this value" />
+            <StackPanel
+              Margin="20,2,0,2"
+              IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
+              Orientation="Horizontal">
+              <TextBlock
+                VerticalAlignment="Center"
+                Text="Minimum time (ms)" />
+              <xctk:DoubleUpDown
+                Width="70"
+                Margin="8,0,0,0"
+                Increment="100"
+                Maximum="1000"
+                Minimum="0"
+                ShowButtonSpinner="True"
+                ToolTip="Filter out functions with a time less than this value"
+                Value="{Binding Path=MinWeight, Mode=TwoWay}" />
+              <Button
+                Height="20"
+                Margin="4,0,0,0"
+                Padding="2,0,2,0"
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Click="ResetFilterWeightButton_Click"
+                Content="Default"
+                ToolTip="Reset value to default duration" />
+            </StackPanel>
+
+            <TextBlock
+              Margin="0,2,0,0"
+              Text="Sort functions by:" />
+            <RadioButton
+              Margin="0,4,8,0"
+              Content="Total time (inclusive)"
+              IsChecked="{Binding SortByExclusiveTime, Converter={StaticResource InvertedBoolConverter}}" />
+            <RadioButton
+              Margin="0,2,8,2"
+              Content="Self time (exclusive)"
+              IsChecked="{Binding SortByExclusiveTime}" />
+          </StackPanel>
+
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+          <TextBlock
+            FontWeight="Medium"
+            Text="Preview Popup" />
+          <CheckBox
+            x:Name="ShowDetailsPopupCheckbox"
+            Margin="0,4,0,2"
+            Content="Show function preview on hover"
+            IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
+            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
+
+          <StackPanel Margin="20,2,0,0">
+            <StackPanel
+              IsEnabled="{Binding ElementName=ShowDetailsPopupCheckbox, Path=IsChecked}"
+              Orientation="Horizontal">
+              <TextBlock
+                VerticalAlignment="Center"
+                Text="Hover duration (ms):" />
+              <xctk:IntegerUpDown
+                Width="70"
+                Margin="8,0,0,0"
+                Maximum="5000"
+                Minimum="50"
+                ParsingNumberStyle="Number"
+                ShowButtonSpinner="True"
+                Value="{Binding Path=PreviewPopupDuration, Mode=TwoWay}" />
+              <Button
+                Height="20"
+                Margin="4,0,0,0"
+                Padding="2,0,2,0"
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Click="ResetDetailsPopupDurationButton_Click"
+                Content="Default"
+                ToolTip="Reset value to default duration" />
+              <Button
+                Height="20"
+                Margin="2,0,0,0"
+                Padding="2,0,2,0"
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Click="ShortDetailsPopupDurationButton_Click"
+                Content="Short"
+                ToolTip="Reset value to default duration" />
+              <Button
+                Height="20"
+                Margin="2,0,0,0"
+                Padding="2,0,2,0"
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Click="LongDetailsPopupDurationButton_Click"
+                Content="Long"
+                ToolTip="Reset value to default duration" />
+            </StackPanel>
+          </StackPanel>
+          <TextBlock
+            Margin="0,6,0,0"
+            FontSize="11"
+            Text="More settings available from Preview popup and Options window." />
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+
+          <TextBlock
+            FontWeight="Medium"
+            Text="Histogram Colors" />
+          <Grid Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramBarColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Function group color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramAverageColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Average line color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramMedianColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Median line color" />
+          </Grid>
+          <Grid Margin="0,2,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="70" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <xctk:ColorPicker
+              Grid.Column="0"
+              Width="64"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              AvailableColorsSortingMode="HueSaturationBrightness"
+              BorderBrush="#707070"
+              IsManipulationEnabled="True"
+              SelectedColor="{Binding Path=HistogramCurrentColor, Mode=TwoWay}"
+              ShowDropDownButton="True" />
+            <TextBlock
+              Grid.Column="1"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Text="Current instance color" />
+          </Grid>
+        </StackPanel>
+
+      </TabItem>
+    </TabControl>
+  </Grid>
+</local:OptionsPanelBase>

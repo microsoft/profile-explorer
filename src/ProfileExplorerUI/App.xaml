@@ -1,0 +1,16 @@
+﻿<Application
+  x:Class="ProfileExplorer.UI.App"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Converters.xaml" />
+        <ResourceDictionary Source="Icons.xaml" />
+        <ResourceDictionary Source="Styles.xaml" />
+        <ResourceDictionary Source="ProfileStyles.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

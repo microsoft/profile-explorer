@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System.Runtime.CompilerServices;
 
-namespace IRExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 public static class CharTable {
   private static readonly byte[] CHAR_TYPE = {

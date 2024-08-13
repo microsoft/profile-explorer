@@ -1,0 +1,129 @@
+﻿<Window
+  x:Class="ProfileExplorer.UI.DiffOpenWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:controls="clr-namespace:ProfileExplorer.UI.Controls"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  Title="Select side-by-side diff files"
+  Width="500"
+  Height="180"
+  MinWidth="400"
+  Loaded="Window_Loaded"
+  ResizeMode="CanResizeWithGrip"
+  ShowInTaskbar="False"
+  WindowStartupLocation="CenterOwner"
+  WindowStyle="ToolWindow"
+  mc:Ignorable="d">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <Grid.LayoutTransform>
+      <ScaleTransform ScaleX="{Binding WindowScaling}" ScaleY="{Binding WindowScaling}" />
+    </Grid.LayoutTransform>
+
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="38" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="115" />
+      <ColumnDefinition />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel
+      Grid.Row="0"
+      Grid.Column="0"
+      Grid.ColumnSpan="2">
+      <TextBlock
+        Margin="16,8,16,0"
+        Text="Base file path (left side)" />
+      <Grid Margin="16,4,16,0">
+        <controls:FileSystemTextBox
+          x:Name="BaseAutocompleteBox"
+          Height="22"
+          Margin="0,0,48,0"
+          HorizontalAlignment="Stretch"
+          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+          FilterMode="StartsWithOrdinal"
+          MinimumPrefixLength="1" />
+
+        <Button
+          x:Name="BaseBrowseButton"
+          Height="22"
+          Padding="2,2,2,2"
+          HorizontalAlignment="Right"
+          Click="BaseBrowseButton_Click"
+          Content="Browse" />
+      </Grid>
+
+      <TextBlock
+        Margin="16,8,16,0"
+        Text="Diff file path (right side)" />
+      <Grid Margin="16,4,16,0">
+        <controls:FileSystemTextBox
+          x:Name="DiffAutocompleteBox"
+          Height="22"
+          Margin="0,0,48,0"
+          HorizontalAlignment="Stretch"
+          Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+          FilterMode="StartsWithOrdinal"
+          IsDropDownOpen="True"
+          IsTextCompletionEnabled="False"
+          MinimumPrefixLength="1" />
+
+        <Button
+          x:Name="DiffBrowseButton"
+          Height="22"
+          Padding="2,2,2,2"
+          HorizontalAlignment="Right"
+          Click="DiffBrowseButton_Click"
+          Content="Browse" />
+      </Grid>
+    </StackPanel>
+
+
+    <StackPanel
+      Grid.Row="1"
+      Grid.Column="0"
+      Width="80"
+      Margin="16,4,0,8"
+      HorizontalAlignment="Left"
+      Orientation="Horizontal">
+      <Button
+        x:Name="RecentButton"
+        Width="80"
+        Height="24"
+        Padding="4,0,4,0"
+        Click="RecentButton_Click"
+        Content="Recent Files">
+        <Button.ContextMenu>
+          <ContextMenu />
+        </Button.ContextMenu>
+      </Button>
+    </StackPanel>
+
+    <StackPanel
+      Grid.Row="1"
+      Grid.Column="1"
+      Width="115"
+      Margin="0,4,16,8"
+      HorizontalAlignment="Right"
+      Orientation="Horizontal">
+      <Button
+        x:Name="CancelButton"
+        Height="24"
+        Margin="0,0,4,0"
+        Padding="4,0,4,0"
+        Click="CancelButton_Click"
+        Content="Cancel"
+        IsCancel="True" />
+      <Button
+        x:Name="UpdateButton"
+        Height="24"
+        Padding="4,0,4,0"
+        Background="#FFFCF4CC"
+        Click="UpdateButton_Click"
+        Content="Open Files" />
+    </StackPanel>
+  </Grid>
+</Window>

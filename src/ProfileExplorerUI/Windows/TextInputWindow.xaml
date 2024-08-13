@@ -1,0 +1,79 @@
+﻿<Window
+  x:Class="ProfileExplorer.UI.Windows.TextInputWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  Title="{Binding InputTitle}"
+  Width="400"
+  Height="130"
+  ResizeMode="CanResizeWithGrip"
+  WindowStyle="ToolWindow"
+  mc:Ignorable="d">
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <Grid.LayoutTransform>
+      <ScaleTransform ScaleX="{Binding WindowScaling}" ScaleY="{Binding WindowScaling}" />
+    </Grid.LayoutTransform>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="38" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="115" />
+      <ColumnDefinition />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel
+      Grid.Row="0"
+      Grid.Column="0"
+      Grid.ColumnSpan="2">
+      <TextBlock
+        Margin="16,8,16,0"
+        Text="{Binding InputPrompt}" />
+      <Grid Margin="16,4,16,0">
+        <TextBox
+          x:Name="AutocompleteBox"
+          Height="22"
+          HorizontalAlignment="Stretch"
+          BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+      </Grid>
+      <Grid Margin="16,4,16,0" />
+    </StackPanel>
+
+
+    <StackPanel
+      Grid.Row="1"
+      Grid.Column="0"
+      Width="80"
+      Margin="16,4,0,8"
+      HorizontalAlignment="Left"
+      Orientation="Horizontal" />
+
+    <StackPanel
+      Grid.Row="1"
+      Grid.Column="1"
+      Width="115"
+      Margin="0,4,16,8"
+      HorizontalAlignment="Right"
+      FlowDirection="RightToLeft"
+      Orientation="Horizontal">
+
+      <Button
+        x:Name="UpdateButton"
+        Height="24"
+        Padding="4,0,4,0"
+        HorizontalAlignment="Right"
+        Background="#FFFCF4CC"
+        Click="AcceptButton_Click"
+        Content="{Binding AcceptButtonLabel}" />
+      <Button
+        x:Name="CancelButton"
+        Height="24"
+        Margin="4,0,4,0"
+        Padding="4,0,4,0"
+        Click="CancelButton_Click"
+        Content="{Binding CancelButtonLabel}"
+        IsCancel="True" />
+    </StackPanel>
+  </Grid>
+</Window>

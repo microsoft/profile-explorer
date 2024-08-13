@@ -3,28 +3,27 @@
 
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING .ISS SCRIPT FILES!
                                               
-#include "..\environment.iss"
+#include "../environment.iss"
 
-#define MyAppName "IR Explorer"
-#define MyAppExeName "irexplorer.exe"
+#define MyAppName "Profile Explorer"
+#define MyAppExeName "ProfileExplorer.exe"
 
 [Setup]
-AppName=IR Explorer
+AppName=Profile Explorer
 AppVersion={#APP_VERSION}
 WizardStyle=modern
 DisableDirPage=no
-DefaultDirName={autopf}\IR Explorer
-DefaultGroupName=IR Explorer
-UninstallDisplayIcon={app}\irexplorer.exe
+DefaultDirName={autopf}\Profile Explorer
+DefaultGroupName=Profile Explorer
+UninstallDisplayIcon={app}\ProfileExplorer.exe
 Compression=lzma2
 SolidCompression=yes
-OutputDir=userdocs:IRExplorer
+OutputDir=userdocs:ProfileExplorer
 ChangesAssociations = yes
 ChangesEnvironment = yes
-OutputBaseFilename=irexplorer_installer_{#APP_VERSION}
+OutputBaseFilename=profile_explorer_installer_{#APP_VERSION}
 
 [Registry]
-Root: HKCR; Subkey: ".irx";                             ValueData: "{#MyAppName}";          Flags: uninsdeletevalue; ValueType: string;  ValueName: ""
 Root: HKCR; Subkey: "{#MyAppName}";                     ValueData: "Program {#MyAppName}";  Flags: uninsdeletekey;   ValueType: string;  ValueName: ""
 Root: HKCR; Subkey: "{#MyAppName}\DefaultIcon";             ValueData: "{app}\{#MyAppExeName},0";               ValueType: string;  ValueName: ""
 Root: HKCR; Subkey: "{#MyAppName}\shell\open\command";  ValueData: """{app}\{#MyAppExeName}"" ""%1""";  ValueType: string;  ValueName: ""
@@ -33,10 +32,10 @@ Root: HKCR; Subkey: "{#MyAppName}\shell\open\command";  ValueData: """{app}\{#My
 Source: ".\out\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{group}\IR Explorer"; Filename: "{app}\irexplorer.exe"
+Name: "{group}\Profile Explorer"; Filename: "{app}\ProfileExplorer.exe"
 
 [Tasks]
-Name: envPath; Description: "Add to PATH env. variable as irexplorer.exe" 
+Name: envPath; Description: "Add to PATH env. variable as ProfileExplorer.exe" 
 
 [Run]
 Filename: "{sys}\Regsvr32.exe"; Parameters: "/s msdia140.dll"; WorkingDir: "{app}"; Flags: shellexec runhidden; 

@@ -10,7 +10,7 @@ using EnvDTE90;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 /// <summary>
 ///   Command handler
@@ -116,7 +116,7 @@ sealed class AttachCommand : CommandBase {
 
       if (DebuggerInstance.InBreakMode) {
         // Debugger already started, try to connect.
-        Logger.Log("Debugger already attached, setting up IR Explorer session...");
+        Logger.Log("Debugger already attached, setting up Profile Explorer session...");
 
         if (DebuggerInstance.IsDebuggingCompiler &&
             await ClientInstance.SetupDebugSession()) {
@@ -180,7 +180,7 @@ sealed class AttachCommand : CommandBase {
         VsShellUtilities.ShowMessageBox(
           Package,
           "There is more than one instance of CL/LINK running, use the \"Debug > Attach to Process\" dialog instead",
-          "IR Explorer extension", OLEMSGICON.OLEMSGICON_WARNING,
+          "Profile Explorer extension", OLEMSGICON.OLEMSGICON_WARNING,
           OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
       }
     }

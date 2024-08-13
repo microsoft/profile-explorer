@@ -1,6 +1,6 @@
 set _PUBLISH_PATH="publish"
-set _BUILD_TARGET="..\..\src\IRExplorerUI\IRExplorerUI.csproj"
-set _PROFILER_PATH="..\..\src\IRExplorerProfiler"
+set _BUILD_TARGET="..\..\src\ProfileExplorerUI\ProfileExplorerUI.csproj"
+set _PROFILER_PATH="..\..\src\ManagedProfiler"
 set _EXTERNALS_PATH="..\..\src\external"
 set _RESOURCES_PATH="..\..\resources"
 set _OUT_PATH="out"
@@ -19,8 +19,8 @@ pushd %_EXTERNALS_PATH%
 call build-external.cmd
 popd
 
-msbuild %_PROFILER_PATH%\IRExplorerProfiler.vcxproj /t:Rebuild /p:Configuration=Release /p:Platform=x64
-copy %_PROFILER_PATH%\x64\Release\IRExplorerProfiler.dll %_OUT_PATH%
+msbuild %_PROFILER_PATH%\ManagedProfiler.vcxproj /t:Rebuild /p:Configuration=Release /p:Platform=x64
+copy %_PROFILER_PATH%\x64\Release\ManagedProfiler.dll %_OUT_PATH%
 
 xcopy %_PUBLISH_PATH% %_OUT_PATH% /i /c /e /y
 xcopy %_RESOURCES_PATH% %_OUT_PATH% /i /c /e /y

@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 
-namespace IRExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 public sealed class Lexer {
   private char current_; // The current character.

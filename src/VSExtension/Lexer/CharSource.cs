@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace IRExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 public sealed class CharSource {
   public static readonly char EOF = '\0';

@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using IRExplorerCore.Lexer;
+using ProfileExplorer.Core.Lexer;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 class DebuggerExpression {
   public static string Create(TextLineInfo lineInfo) {

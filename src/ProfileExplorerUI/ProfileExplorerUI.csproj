@@ -1,0 +1,326 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<ApplicationIcon>main.ico</ApplicationIcon>
+		<AssemblyVersion>1.0.1</AssemblyVersion>
+		<FileVersion>1.0.1</FileVersion>
+		<Version>1.0.0.3</Version>
+		<Authors></Authors>
+		<Company>Microsoft Corporation</Company>
+		<Product>Profile Explorer</Product>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<AssemblyName>ProfileExplorer</AssemblyName>
+		<Platforms>AnyCPU;ARM64</Platforms>
+		<LangVersion>default</LangVersion>
+		<RootNamespace>ProfileExplorer.UI</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+		<GCHeapCount>16</GCHeapCount>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<OutputPath></OutputPath>
+		<PlatformTarget>x64</PlatformTarget>
+		<DebugType>full</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+		<OutputPath />
+		<PlatformTarget>ARM64</PlatformTarget>
+		<DebugType>full</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<OutputPath></OutputPath>
+		<PlatformTarget>x64</PlatformTarget>
+		<DefineConstants>TRACE</DefineConstants>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+		<OutputPath />
+		<PlatformTarget>ARM64</PlatformTarget>
+		<DefineConstants>TRACE</DefineConstants>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Copyright>Microsoft Corporation</Copyright>
+		<StartupObject>ProfileExplorer.UI.App</StartupObject>
+		<RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+		<SignAssembly>false</SignAssembly>
+		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+		<AnalysisLevel>none</AnalysisLevel>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Themes\**" />
+		<EmbeddedResource Remove="Themes\**" />
+		<None Remove="Themes\**" />
+		<Page Remove="Themes\**" />
+		<Page Update="Profile\CallTreeNodePanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Controls\WebViewPopup.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\FlameGraphOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\TimelineOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\CallTreeOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\SourceFileOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\AdvancedOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\GeneralOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\ColumnOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\ProfilingOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\PreviewPopupOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\FunctionMarkingOptionsPanel.xaml">
+			<Generator>MSBuild:Compile</Generator>
+			<XamlRuntime>Wpf</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\SymbolOptionsPanel.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="refresh.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
+		<PackageReference Include="AvalonEdit" Version="6.3.0.90" />
+		<PackageReference Include="ClosedXML" Version="0.104.0-preview2" />
+		<PackageReference Include="CS-Script.Core" Version="2.0.0" />
+		<PackageReference Include="DiffPlex" Version="1.7.2" />
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.72.1" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.72.1" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.72.1" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.72.1" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
+		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.115" />
+		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
+		<PackageReference Include="Google.Protobuf" Version="3.27.3" />
+		<PackageReference Include="Grpc" Version="2.46.6" />
+		<PackageReference Include="Grpc.Core" Version="2.46.6" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.65.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.65.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.10.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.10.0" />
+		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.0-beta.24314.3" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.13" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
+		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="17.7.41">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.10.48">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.122" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
+		<PackageReference Include="protobuf-net" Version="3.2.30" />
+		<PackageReference Include="System.IO" Version="4.3.0" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.62" />
+		<PackageReference Include="System.Text.Json" Version="8.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\GrpcLib\GrpcLib.csproj" />
+		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj" />
+		<ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="OptionsPanels\FlowGraphOptionsPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\ModuleReportPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Profile\CallTreePanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\ScriptingPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\PassOutputPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\NotesPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+		<Compile Update="Panels\IRInfoPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\ReferencesPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\SourceFilePanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\SectionPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Panels\BookmarksPanel.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Properties\Settings.Designer.cs">
+			<DesignTimeSharedInput>True</DesignTimeSharedInput>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Settings.settings</DependentUpon>
+		</Compile>
+		<Compile Update="Query\InputQueryViewElement.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Properties\Settings.settings">
+			<Generator>SettingsSingleFileGenerator</Generator>
+			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Controls\IconSelector.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="Controls\IRDocumentPopup.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="OptionsPanels\LightDocumentOptionsPanel.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="OptionsPanels\FlowGraphOptionsPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\ModuleReportPanel.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Profile\CallTreePanel.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\ScriptingPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\PassOutputPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\NotesPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\IRInfoPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\ReferencesPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\SourceFilePanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\SectionPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Panels\BookmarksPanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Query\InputQueryViewElement.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Converters.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="Windows\ProfileLoadWindow.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication">
+	    <HintPath>..\external\Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+
+</Project>

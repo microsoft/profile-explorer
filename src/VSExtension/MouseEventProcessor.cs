@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 public class TextLineInfo {
   public int DocumentOffset;
@@ -51,7 +51,7 @@ class MouseProcessorProvider : IMouseProcessorProvider {
 
   public IMouseProcessor GetAssociatedProcessor(IWpfTextView wpfTextView) {
     var instance = new MouseEventProcessor(wpfTextView, editorAdapters_);
-    IRExplorerExtensionPackage.RegisterMouseProcessor(instance);
+    ProfileExplorerExtensionPackage.RegisterMouseProcessor(instance);
     return instance;
   }
 }

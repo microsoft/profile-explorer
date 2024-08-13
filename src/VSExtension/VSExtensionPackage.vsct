@@ -1,0 +1,273 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--  This is the file that defines the actual layout and type of the commands.
+        It is divided in different sections (e.g. command definition, command
+        placement, ...), with each defining a specific set of properties.
+        See the comment before each section for more details about how to
+        use it. -->
+
+  <!--  The VSCT compiler (the tool that translates this file into the binary
+        format that VisualStudio will consume) has the ability to run a preprocessor
+        on the vsct file; this preprocessor is (usually) the C++ preprocessor, so
+        it is possible to define includes and macros with the same syntax used
+        in C++ files. Using this ability of the compiler here, we include some files
+        defining some of the constants that we will use inside the file. -->
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h" />
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h" />
+
+  <!--The Commands section is where commands, menus, and menu groups are defined.
+      This section uses a Guid to identify the package that provides the command defined inside it. -->
+  <Commands package="guidVSExtensionPackage">
+    <!-- Inside this section we have different sub-sections: one for the menus, another
+    for the menu groups, one for the buttons (the actual commands), one for the combos
+    and the last one for the bitmaps used. Each element is identified by a command id that
+    is a unique pair of guid and numeric identifier; the guid part of the identifier is usually
+    called "command set" and is used to group different command inside a logically related
+    group; your package should define its own command set in order to avoid collisions
+    with command ids defined by other packages. -->
+
+    <!-- In this section you can define new menu groups. A menu group is a container for
+         other menus or buttons (commands); from a visual point of view you can see the
+         group as the part of a menu contained between two lines. The parent of a group
+         must be a menu. -->
+
+    <Menus>
+      <Menu guid="guidVSExtensionPackageCmdSet" id="SubMenu1" priority="0x0600" type="Menu">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="MyMenuGroup" />
+
+        <Strings>
+          <ButtonText>Profile Explorer</ButtonText>
+          <CommandName>Profile Explorer</CommandName>
+        </Strings>
+      </Menu>
+
+      <Menu guid="guidVSExtensionPackageCmdSet" id="Toolbar" type="Toolbar">
+        <CommandFlag>DefaultDocked</CommandFlag>
+        <Strings>
+          <ButtonText>Profile Explorer</ButtonText>
+          <CommandName>Profile Explorer</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Groups>
+      <Group guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup" priority="0x0600">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="SubMenu1" />
+      </Group>
+
+      <Group guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup2" priority="0x0600">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="SubMenu1" />
+      </Group>
+
+      <Group guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup3" priority="0x0600">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="SubMenu1" />
+      </Group>
+
+      <Group guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup4" priority="0x0600">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="SubMenu1" />
+      </Group>
+
+      <Group guid="guidVSExtensionPackageCmdSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+
+      <Group guid="guidVSExtensionPackageCmdSet" id="ToolbarGroup" priority="0x0000">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="Toolbar" />
+      </Group>
+    </Groups>
+
+
+    <!--Buttons section. -->
+    <!--This section defines the elements the user can interact with, like a menu command or a button
+        or combo box in a toolbar. -->
+    <Buttons>
+      <!--To define a menu group you have to specify its ID, the parent menu and its display priority.
+          The command is visible and enabled by default. If you need to change the visibility, status, etc, you can use
+          the CommandFlag node.
+          You can add more than one CommandFlag node e.g.:
+              <CommandFlag>DefaultInvisible</CommandFlag>
+              <CommandFlag>DynamicVisibility</CommandFlag>
+          If you do not want an image next to your command, remove the Icon node /> -->
+      <Button guid="guidVSExtensionPackageCmdSet" id="MarkElementId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup" />
+        <!--<Icon guid="guidImages" id="bmpPicArrows" />-->
+        <Strings>
+          <ButtonText>Mark Element</ButtonText>
+        </Strings>
+      </Button>
+
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="MarkExpressionId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup" />
+        <Strings>
+          <ButtonText>Mark Expression</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="ShowExpressionId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup" />
+        <Strings>
+          <ButtonText>Show Expression Graph</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="MarkUsesId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup2" />
+        <CommandFlag>IconAndText</CommandFlag>
+        <Icon guid="menuImage" id="menuPic1" />
+        <Strings>
+          <ButtonText>Mark Uses</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="ShowUsesId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup2" />
+        <Strings>
+          <ButtonText>Show Uses</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="MarkReferencesId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup3" />
+        <Strings>
+          <ButtonText>Mark All References</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="ShowReferencesId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup3" />
+        <Strings>
+          <ButtonText>Show All References</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="UpdateIRId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup3" />
+        <Strings>
+          <ButtonText>Update function IR</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="AttachId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ToolbarGroup" />
+        <Icon guid="mainImage" id="irxPic" />
+        <CommandFlag>IconAndText</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+
+        <Strings>
+          <ButtonText>Attach</ButtonText>
+          <ToolTipText>Attach debugger to compiler instance and start Profile Explorer</ToolTipText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="EnableId" priority="0x0100" type="Button">
+        <Parent guid="guidVSExtensionPackageCmdSet" id="ButtonsGroup4" />
+        <CommandFlag>TextOnly</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+
+        <Strings>
+          <ButtonText>Disable extension</ButtonText>
+          <ToolTipText>Enable/disable the Profile Explorer debugger integration</ToolTipText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVSExtensionPackageCmdSet" id="cmdidExpressionToolWindowCommand" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="mainImage" id="irxPic" />
+        <Strings>
+          <ButtonText>Profile Explorer Expressions</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <!--  The bitmap id is defined in a way that is a little bit different from the others:
+            the declaration starts with a guid for the bitmap strip, then there is the resource id of the
+            bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
+            inside a button definition. An important aspect of this declaration is that the element id
+            must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
+      <Bitmap guid="guidImages" href="Resources\Command1.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="mainImage" href="Resources\irxIcon.png" usedList="irxPic" />
+      <Bitmap guid="menuImage" href="Resources\list-ordered.png" usedList="menuPic1" />
+      <Bitmap guid="guidImages1" href="Windows\Resources\ExpressionToolWindowCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+    </Bitmaps>
+  </Commands>
+
+
+  <CommandPlacements>
+
+    <!-- Placement for group. The parent of a group is a menu, context menu or toolbar.
+           The priority sets the position of the group compared to the priority of other existing groups in the menu.
+      -->
+    <CommandPlacement guid="guidVSExtensionPackageCmdSet" id="MyMenuGroup" priority="1">
+      <!-- The parent of the group will be the code window context menu -->
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+    </CommandPlacement>
+
+  </CommandPlacements>
+
+  <VisibilityConstraints>
+    <VisibilityItem guid="guidVSExtensionPackageCmdSet" id="Toolbar" context="GUID_TextEditorFactory" />
+  </VisibilityConstraints>
+
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="guidVSExtensionPackage" value="{c29cc20e-a6f8-412f-a266-3adc6f822594}" />
+
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="guidVSExtensionPackageCmdSet" value="{9885ad8d-69e0-4ec4-8324-b9fd109ebdcd}">
+      <IDSymbol name="SubMenu1" value="0x1022" />
+      <IDSymbol name="ButtonsGroup" value="0x1021" />
+      <IDSymbol name="ButtonsGroup2" value="0x1031" />
+      <IDSymbol name="ButtonsGroup3" value="0x1041" />
+      <IDSymbol name="ButtonsGroup4" value="0x1042" />
+
+      <IDSymbol name="MyMenuGroup" value="0x1020" />
+      <IDSymbol name="MarkElementId" value="0x0100" />
+      <IDSymbol name="MarkUsesId" value="0x0101" />
+      <IDSymbol name="MarkReferencesId" value="0x0102" />
+      <IDSymbol name="MarkExpressionId" value="0x0103" />
+      <IDSymbol name="ShowReferencesId" value="0x0104" />
+      <IDSymbol name="ShowUsesId" value="0x0105" />
+      <IDSymbol name="AttachId" value="0x0106" />
+      <IDSymbol name="ShowExpressionId" value="0x0107" />
+      <IDSymbol name="EnableId" value="0x0108" />
+      <IDSymbol name="UpdateIRId" value="0x0109" />
+
+      <IDSymbol name="Toolbar" value="0x1000" />
+      <IDSymbol name="ToolbarGroup" value="0x1050" />
+      <IDSymbol value="4177" name="cmdidExpressionToolWindowCommand" />
+    </GuidSymbol>
+
+    <GuidSymbol name="mainImage" value="{8a2b4264-3397-430f-8664-c8e1428d9122}">
+      <IDSymbol name="irxPic" value="1" />
+    </GuidSymbol>
+    <GuidSymbol name="menuImage" value="{8a2b4264-3397-430f-8664-c8e1428d9123}">
+      <IDSymbol name="menuPic1" value="1" />
+    </GuidSymbol>
+    <GuidSymbol name="guidImages" value="{8a2b4264-3397-430f-8664-c8e1428d9121}">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+
+    <GuidSymbol value="{06028dba-911d-4b76-8696-dc51e9b9cd93}" name="guidImages1">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

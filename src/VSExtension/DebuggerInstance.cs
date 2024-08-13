@@ -12,7 +12,7 @@ using EnvDTE90;
 using EnvDTE90a;
 using Debugger = EnvDTE.Debugger;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 public class DebuggerInstance {
   public static Debugger5 debugger_;

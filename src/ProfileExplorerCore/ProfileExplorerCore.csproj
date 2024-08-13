@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ApplicationIcon/>
+		<OutputType>Library</OutputType>
+		<StartupObject/>
+		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+		<AnalysisLevel>none</AnalysisLevel>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<LangVersion>default</LangVersion>
+		<RootNamespace>ProfilerExplorerCore</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<OutputPath></OutputPath>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<OutputPath></OutputPath>
+		<DebugType>portable</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove=".editorconfig"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<AdditionalFiles Include=".editorconfig"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CSharpTest.Net.Collections" Version="14.906.1403.1082"/>
+		<PackageReference Include="System.Memory" Version="4.5.5"/>
+		<PackageReference Include="System.Runtime" Version="4.3.1"/>
+	</ItemGroup>
+
+</Project>

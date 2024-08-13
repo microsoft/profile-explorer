@@ -8,7 +8,7 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 class CommandBase {
   //? TODO: Use timeout everywhere

@@ -1,0 +1,754 @@
+﻿<client:ToolPanelControl
+  x:Class="ProfileExplorer.UI.Profile.CallTreeNodePanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:client="clr-namespace:ProfileExplorer.UI"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:profile="clr-namespace:ProfileExplorer.UI.Profile"
+  x:Name="Root"
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  SnapsToDevicePixels="True"
+  UseLayoutRounding="True"
+  mc:Ignorable="d">
+  <DockPanel
+    HorizontalAlignment="Stretch"
+    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+    LastChildFill="True">
+    <Grid
+      HorizontalAlignment="Stretch"
+      DockPanel.Dock="Top">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <StackPanel
+        Grid.Column="0"
+        Margin="4,2,4,2"
+        HorizontalAlignment="Stretch">
+        <StackPanel
+          HorizontalAlignment="Stretch"
+          Orientation="Horizontal">
+          <TextBlock
+            Width="72"
+            VerticalAlignment="Center"
+            Text="Total Time"
+            ToolTip="Inclusive (total) time for this function instance" />
+
+          <ContentControl
+            Width="180"
+            MinWidth="180"
+            MaxWidth="180"
+            HorizontalAlignment="Stretch"
+            Content="{Binding CallTreeNode}"
+            ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+            ToolTip="Inclusive (total) time for this function instance" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+          <TextBlock
+            Width="72"
+            Text="Self Time"
+            ToolTip="Exclusive (self) time for this function instance" />
+          <ContentControl
+            Width="180"
+            MinWidth="180"
+            MaxWidth="180"
+            HorizontalAlignment="Stretch"
+            Content="{Binding CallTreeNode}"
+            ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+            ToolTip="Exclusive (self) time for this function instance" />
+        </StackPanel>
+      </StackPanel>
+      <Grid
+        Grid.Column="1"
+        Margin="0,0,4,0"
+        Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
+        <StackPanel
+          HorizontalAlignment="Left"
+          Orientation="Horizontal">
+          <TextBlock
+            Margin="4,0,0,0"
+            Text="{Binding CurrentInstanceIndex}"
+            ToolTip="Currently selected function instance" />
+          <TextBlock Text=" / " />
+          <TextBlock
+            Text="{Binding FunctionInstancesCount}"
+            ToolTip="Number  function instances" />
+        </StackPanel>
+        <Button
+          x:Name="PreviousInstanceButton"
+          Margin="0,18,14,0"
+          HorizontalAlignment="Right"
+          VerticalAlignment="Top"
+          Background="{x:Null}"
+          BorderBrush="{x:Null}"
+          Click="PreviousInstanceButton_Click"
+          IsEnabled="{Binding ShowInstanceNavigation}"
+          ToolTip="Jump to previous function instance">
+          <Image
+            Width="14"
+            Height="14"
+            Source="{StaticResource DockLeftIcon}"
+            Style="{StaticResource DisabledImageStyle}" />
+        </Button>
+        <Button
+          x:Name="NextInstanceButton"
+          Margin="0,18,-2,0"
+          HorizontalAlignment="Right"
+          VerticalAlignment="Top"
+          Background="{x:Null}"
+          BorderBrush="{x:Null}"
+          Click="NextInstanceButton_Click"
+          IsEnabled="{Binding ShowInstanceNavigation}"
+          ToolTip="Jump to next function instance">
+          <Image
+            Width="14"
+            Height="14"
+            Source="{StaticResource DockRightIcon}"
+            Style="{StaticResource DisabledImageStyle}" />
+        </Button>
+      </Grid>
+    </Grid>
+
+    <TabControl
+      Margin="0,2,0,0"
+      Padding="2"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+      BorderThickness="0"
+      DockPanel.Dock="Bottom"
+      Visibility="{Binding ShowDetails, Converter={StaticResource BoolToVisibilityConverter}}">
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        HorizontalContentAlignment="Stretch"
+        Header="Info"
+        Style="{StaticResource TabControlStyle}">
+        <ScrollViewer
+          HorizontalAlignment="Stretch"
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <StackPanel
+            MaxWidth="{Binding ActualWidth, ElementName=ContentHost}"
+            Margin="0,4,0,0">
+            <Expander
+              x:Name="InstancesExpander"
+              Margin="0,4,0,4"
+              HorizontalAlignment="Stretch"
+              Header="{Binding FunctionInstancesCount, Converter={StaticResource StringFormatConverter}, ConverterParameter='Instances ({0})'}"
+              IsExpanded="{Binding IsInstancesExpanded}"
+              ToolTip="Function instances statistics">
+              <StackPanel Orientation="Vertical">
+                <StackPanel
+                  Margin="4,8,0,0"
+                  Orientation="Horizontal">
+                  <TextBlock
+                    Width="72"
+                    Text="Total Time" />
+                  <ContentControl
+                    Width="200"
+                    Margin="8,0,0,0"
+                    HorizontalAlignment="Left"
+                    Content="{Binding InstancesNode}"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                    ToolTip="Total time across all function instances" />
+                </StackPanel>
+
+                <StackPanel
+                  Margin="4,2,0,0"
+                  Orientation="Horizontal"
+                  Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <TextBlock
+                    Width="72"
+                    Text="Average Time" />
+                  <ContentControl
+                    Width="200"
+                    Margin="8,0,0,0"
+                    HorizontalAlignment="Left"
+                    Content="{Binding AverageNode}"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                    ToolTip="Average time across all function instances" />
+                </StackPanel>
+
+                <StackPanel
+                  Margin="4,2,0,0"
+                  Orientation="Horizontal"
+                  Visibility="{Binding ShowInstanceNavigation, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <TextBlock
+                    Width="72"
+                    Text="Median Time" />
+                  <ContentControl
+                    Width="200"
+                    Margin="8,0,0,0"
+                    HorizontalAlignment="Left"
+                    Content="{Binding MedianNode}"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                    ToolTip="Median time across all function instances" />
+                </StackPanel>
+              </StackPanel>
+            </Expander>
+
+            <Expander
+              x:Name="HistogramExpander"
+              Margin="0,0,0,4"
+              HorizontalAlignment="Stretch"
+              Expanded="HistogramHost_Expanded"
+              Header="Histogram"
+              IsExpanded="{Binding IsHistogramExpanded}"
+              ToolTip="Histogram representing time distribution across all function instances">
+              <Border
+                Height="150"
+                Margin="0,4,0,0"
+                BorderBrush="DarkGray"
+                BorderThickness="0.5">
+                <StackPanel>
+                  <Canvas
+                    x:Name="InstanceHistogramHost"
+                    Height="130"
+                    Margin="0,-4,0,0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch" />
+                  <Grid>
+                    <StackPanel
+                      Margin="4,2,4,2"
+                      HorizontalAlignment="Left"
+                      Orientation="Horizontal">
+                      <RadioButton
+                        VerticalAlignment="Center"
+                        Content="Total"
+                        IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay, Converter={StaticResource InvertedBoolConverter}}" />
+                      <RadioButton
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Content="Self"
+                        IsChecked="{Binding UseSelfTimeHistogram, Mode=TwoWay}" />
+                    </StackPanel>
+                    <StackPanel
+                      Margin="4"
+                      HorizontalAlignment="Right"
+                      Orientation="Horizontal">
+                      <Grid>
+                        <Border
+                          Width="12"
+                          Height="12"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Background="{Binding HistogramInstanceBrush}" />
+                        <TextBlock
+                          Margin="16,0,0,0"
+                          VerticalAlignment="Center"
+                          FontSize="11"
+                          Text="Instance" />
+                      </Grid>
+                      <Grid Margin="6,0,0,0">
+                        <Border
+                          Width="12"
+                          Height="12"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Background="{Binding HistogramMedianBrush}" />
+                        <TextBlock
+                          Margin="16,0,0,0"
+                          VerticalAlignment="Center"
+                          FontSize="11"
+                          Text="Median" />
+                      </Grid>
+                      <Grid Margin="6,0,0,0">
+                        <Border
+                          Width="12"
+                          Height="12"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Background="{Binding HistogramAverageBrush}" />
+                        <TextBlock
+                          Margin="16,0,0,0"
+                          VerticalAlignment="Center"
+                          FontSize="11"
+                          Text="Average" />
+                      </Grid>
+
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+            </Expander>
+
+            <Expander
+              x:Name="ThreadsExpander"
+              MaxHeight="155"
+              Margin="0,0,0,8"
+              HorizontalAlignment="Stretch"
+              Header="{Binding Path=Items.Count, ElementName=ThreadList, Converter={StaticResource StringFormatConverter}, ConverterParameter='Threads ({0})'}"
+              IsExpanded="{Binding IsThreadsListExpanded}"
+              ToolTip="Threads on which the selected instance executed">
+              <ItemsControl
+                x:Name="ThreadList"
+                Margin="4,8,4,4">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel
+                      x:Name="ThreadItemHost"
+                      Height="20"
+                      MouseDown="ThreadListItem_MouseDown"
+                      Orientation="Horizontal"
+                      Tag="{Binding ElementName=Root}"
+                      ToolTip="{Binding ToolTip}">
+                      <Border
+                        x:Name="ThreadTitleBorder"
+                        Width="72"
+                        Margin="0,0,8,0"
+                        Background="{Binding Background}"
+                        BorderBrush="DarkGray"
+                        BorderThickness="0.5">
+                        <Grid>
+                          <TextBlock
+                            Padding="4,0,0,0"
+                            VerticalAlignment="Center"
+                            FontWeight="Medium"
+                            Text="{Binding Title}" />
+                          <Grid
+                            Width="18"
+                            Height="18"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            PreviewMouseLeftButtonDown="ThreadContextMenuButton_Click"
+                            ToolTip="Show Thread Actions">
+                            <Image
+                              Width="16"
+                              Height="16"
+                              Source="{StaticResource BlockIcon}"
+                              Style="{StaticResource DisabledImageStyle}" />
+                          </Grid>
+                        </Grid>
+                      </Border>
+                      <ContentControl
+                        Width="200"
+                        VerticalAlignment="Center"
+                        Content="{Binding}"
+                        ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                        ToolTip="{Binding WeightToolTip}" />
+                      <StackPanel.ContextMenu>
+                        <ContextMenu
+                          DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}"
+                          Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                          <MenuItem
+                            Command="{Binding PreviewFunctionCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Preview Thread Instance"
+                            ToolTip="Show a preview popup of the function assembly or source code">
+                            <MenuItem.Icon>
+                              <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource PeekDefinitionIcon}" />
+                            </MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem
+                            Command="{Binding OpenFunctionCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Open Thread Instance"
+                            ToolTip="Open the function assembly view">
+                            <MenuItem.Icon>
+                              <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource LayoutOpenIcon}" />
+                            </MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem
+                            Command="{Binding OpenFunctionInNewTabCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Open Thread Instance in New Tab"
+                            ToolTip="Open the function assembly view in a new tab">
+                            <MenuItem.Icon>
+                              <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource LayoutOpenNewIcon}" />
+                            </MenuItem.Icon>
+                          </MenuItem>
+                          <Separator Background="LightGray" />
+                          <MenuItem
+                            Command="{Binding DataContext.FilterToThreadCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Filter to Thread"
+                            ToolTip="Display activity from only this thread">
+                            <MenuItem.Icon>
+                              <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource FilterIcon}" />
+                            </MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem
+                            Command="{Binding DataContext.ExcludeThreadCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Exclude Thread" />
+                          <Separator Background="LightGray" />
+
+                          <MenuItem
+                            Command="{Binding DataContext.FilterToSameNameThreadCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Filter to Same Name Threads"
+                            ToolTip="Display activity from only threads with the same name" />
+                          <MenuItem
+                            Command="{Binding DataContext.ExcludeSameNameThreadCommand}"
+                            CommandParameter="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}"
+                            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                            Header="Exclude Same Name Threads" />
+                        </ContextMenu>
+                      </StackPanel.ContextMenu>
+                    </StackPanel>
+
+                    <DataTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="ThreadTitleBorder" Property="BorderBrush" Value="Black" />
+                        <Setter TargetName="ThreadItemHost" Property="Background" Value="#D0E3F1" />
+                      </Trigger>
+                    </DataTemplate.Triggers>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.Template>
+                  <ControlTemplate>
+                    <ScrollViewer
+                      x:Name="ScrollViewer"
+                      Padding="{TemplateBinding Padding}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+                      <ItemsPresenter />
+                    </ScrollViewer>
+                  </ControlTemplate>
+                </ItemsControl.Template>
+              </ItemsControl>
+            </Expander>
+
+            <Separator Background="LightGray" />
+            <Grid>
+              <TextBlock
+                Margin="4,4,0,2"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Module" />
+              <StackPanel
+                Margin="0,0,4,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <Button
+                  x:Name="MarkModuleButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="MarkModuleButton_OnClick"
+                  ToolTip="Mark all functions belonging to this module (saved)">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Margin="0,1,0,0"
+                    Source="{StaticResource AddBookmarkIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                  <Button.ContextMenu>
+                    <ContextMenu
+                      DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}"
+                      Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                      <MenuItem>
+                        <MenuItem.Header>
+                          <client:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+                        </MenuItem.Header>
+                      </MenuItem>
+                    </ContextMenu>
+                  </Button.ContextMenu>
+                </Button>
+                <Button
+                  x:Name="CopyModuleButton"
+                  Width="20"
+                  Height="20"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="CopyModuleButton_OnClick"
+                  ToolTip="Copy module name to clipboard">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                </Button>
+              </StackPanel>
+            </Grid>
+            <Canvas
+              x:Name="ModuleCanvas"
+              Height="{Binding ElementName=ModuleTextBlock, Path=ActualHeight}"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
+              <TextBox
+                x:Name="ModuleTextBlock"
+                Width="{Binding ElementName=ModuleCanvas, Path=ActualWidth}"
+                Margin="2,0,2,0"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                FontWeight="Medium"
+                IsReadOnly="True"
+                MaxLines="2"
+                ScrollViewer.CanContentScroll="True"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                Text="{Binding Path=CallTreeNode.ModuleName}"
+                TextWrapping="Wrap" />
+            </Canvas>
+
+            <Grid>
+              <TextBlock
+                Margin="4,4,8,2"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Function" />
+              <ContentPresenter
+                Margin="60,4,6,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Content="{Binding CallTreeNode}"
+                ContentTemplate="{StaticResource ExecutionContextTemplate}"
+                ToolTip="Function execution context" />
+              <StackPanel
+                Margin="0,0,4,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <Button
+                  x:Name="PreviewButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="PreviewButton_OnClick"
+                  ToolTip="Show a preview popup of the function assembly or source code"
+                  Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <Image
+                    Width="16"
+                    Height="17"
+                    Source="{StaticResource PeekDefinitionIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                </Button>
+
+                <Button
+                  x:Name="OpenButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="OpenButton_OnClick"
+                  ToolTip="Open the function assembly view in a new tab"
+                  Visibility="{Binding EnableSingleNodeActions, Converter={StaticResource BoolToVisibilityConverter}}">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource LayoutOpenNewIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                </Button>
+
+                <Button
+                  x:Name="MarkFunctionButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="MarkModuleButton_OnClick"
+                  ToolTip="Mark all functions with the same name (saved)">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Margin="0,1,0,0"
+                    Source="{StaticResource BookmarkIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                  <Button.ContextMenu>
+                    <ContextMenu
+                      DataContext="{Binding Path=PlacementTarget.Tag, RelativeSource={RelativeSource Mode=Self}}"
+                      Tag="{Binding PlacementTarget.Content, RelativeSource={RelativeSource Mode=Self}}">
+                      <MenuItem>
+                        <MenuItem.Header>
+                          <client:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+                        </MenuItem.Header>
+                      </MenuItem>
+                    </ContextMenu>
+                  </Button.ContextMenu>
+                </Button>
+                <Button
+                  x:Name="CopyFUnctionButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  BorderThickness="0"
+                  Click="CopyFUnctionButton_OnClick"
+                  ToolTip="Copy function name to clipboard">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                </Button>
+              </StackPanel>
+            </Grid>
+            <Canvas
+              x:Name="FunctionCanvas"
+              Height="{Binding ElementName=FunctionTextBlock, Path=ActualHeight}"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
+              <TextBox
+                x:Name="FunctionTextBlock"
+                Width="{Binding ElementName=FunctionCanvas, Path=ActualWidth}"
+                Margin="2,0,2,0"
+                HorizontalAlignment="Stretch"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                FontWeight="Medium"
+                IsReadOnly="True"
+                ScrollViewer.CanContentScroll="True"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                Text="{Binding Path=CallTreeNode.FullFunctionName}"
+                TextWrapping="Wrap" />
+            </Canvas>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Header="Stack"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Reversed call stack for current function instance">
+        <profile:ProfileListView
+          x:Name="BacktraceList"
+          NameColumnTitle="Function"
+          ShowCombinedTimeNameRow="True"
+          ShowContextColumn="True"
+          ShowModuleColumn="True" />
+      </TabItem>
+
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Header="Functions"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Exclusive (self) time for functions executing under this instance">
+        <profile:ProfileListView
+          x:Name="FunctionList"
+          NameColumnTitle="Function"
+          ShowCombinedTimeNameRow="True"
+          ShowContextColumn="True"
+          ShowModuleColumn="True" />
+      </TabItem>
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Header="Modules"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Time for modules executing under this function instance">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="3" />
+            <RowDefinition Height="1*" />
+          </Grid.RowDefinitions>
+          <profile:ProfileListView
+            x:Name="ModuleList"
+            Grid.Row="0"
+            MinHeight="100"
+            ExclusiveTimeColumnTitle="Time"
+            NameColumnTitle="Module"
+            ShowTimeNameRow="True" />
+          <GridSplitter
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            ResizeBehavior="PreviousAndNext" />
+          <profile:ProfileListView
+            x:Name="ModuleFunctionList"
+            Grid.Row="2"
+            MinHeight="100"
+            NameColumnTitle="Module Function"
+            ShowCombinedTimeNameRow="True"
+            ShowContextColumn="True" />
+        </Grid>
+      </TabItem>
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Header="Categories"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Categorized time for functions executing under this instance">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="3" />
+            <RowDefinition Height="1*" />
+          </Grid.RowDefinitions>
+          <profile:ProfileListView
+            x:Name="CategoryList"
+            Grid.Row="0"
+            MinHeight="100"
+            ExclusiveTimeColumnTitle="Time"
+            NameColumnTitle="Category"
+            ShowTimeNameRow="True" />
+          <GridSplitter
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            ResizeBehavior="PreviousAndNext" />
+          <profile:ProfileListView
+            x:Name="CategoryFunctionList"
+            Grid.Row="2"
+            MinHeight="100"
+            NameColumnTitle="Category Function"
+            ShowCombinedTimeNameRow="True"
+            ShowContextColumn="True"
+            ShowModuleColumn="True" />
+        </Grid>
+      </TabItem>
+      <TabItem
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Header="Instances"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="All instances of this function">
+        <profile:ProfileListView
+          x:Name="InstancesList"
+          NameColumnTitle="Function"
+          ShowCombinedTimeNameRow="True"
+          ShowContextColumn="True" />
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</client:ToolPanelControl>

@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace IRExplorerExtension.Windows;
+namespace ProfileExplorerExtension.Windows;
 
 /// <summary>
 ///   Interaction logic for ExpressionToolWindowControl.

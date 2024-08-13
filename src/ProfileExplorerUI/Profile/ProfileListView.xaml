@@ -1,0 +1,495 @@
+﻿<UserControl
+  x:Class="ProfileExplorer.UI.Profile.ProfileListView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:ProfileExplorerUi="clr-namespace:ProfileExplorer.UI"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:document="clr-namespace:ProfileExplorer.UI.Document"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
+
+  <DockPanel LastChildFill="True">
+    <document:SearchPanel
+      x:Name="SearchPanel"
+      Height="28"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Top"
+      DockPanel.Dock="Top"
+      Opacity="1"
+      Visibility="Collapsed" />
+    <ListView
+      x:Name="ItemList"
+      Panel.ZIndex="1"
+      ProfileExplorerUi:GridViewColumnVisibility.Enabled="True"
+      AlternationCount="{Binding Settings.AlternateListRows, Converter={StaticResource AlternateRowConverter}}"
+      Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+      BorderBrush="{x:Null}"
+      BorderThickness="0,0,0,0"
+      DockPanel.Dock="Bottom"
+      IsTextSearchEnabled="True"
+      SelectionChanged="ItemList_SelectionChanged"
+      SelectionMode="Extended"
+      TextSearch.TextPath="Name"
+      VirtualizingStackPanel.IsVirtualizing="True"
+      VirtualizingStackPanel.VirtualizationMode="Recycling">
+      <ListView.View>
+        <GridView>
+          <GridViewColumn
+            Width="24"
+            ProfileExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowContextColumn}"
+            CellTemplate="{StaticResource ExecutionContextTemplate}">
+            <GridViewColumnHeader
+              x:Name="ContextColumnHeader"
+              Content="C"
+              ToolTip="Execution context" />
+          </GridViewColumn>
+
+          <GridViewColumn Width="{Binding FunctionColumnWidth}">
+            <GridViewColumnHeader
+              x:Name="FunctionColumnHeader"
+              Content="{Binding NameColumnTitle}" />
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <StackPanel>
+                  <Grid Background="{Binding FunctionBackColor}">
+                    <ContentPresenter
+                      Content="{Binding Name}"
+                      ToolTip="{Binding FunctionName}" />
+                  </Grid>
+                  <ContentControl
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding}"
+                    ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}"
+                    Visibility="{Binding Path=DataContext.ShowCombinedTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                  <ContentControl
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding}"
+                    ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                    Visibility="{Binding Path=DataContext.ShowTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                  <ContentControl
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding}"
+                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                    Visibility="{Binding Path=DataContext.ShowExclusiveTimeNameRow, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+
+          <GridViewColumn
+            Width="80"
+            ProfileExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowModuleColumn}">
+            <GridViewColumnHeader
+              x:Name="ModuleColumnHeader"
+              Content="Module" />
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <Grid
+                  HorizontalAlignment="Stretch"
+                  Background="{Binding ModuleBackColor}">
+                  <TextBlock
+                    Margin="1,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    FontWeight="Medium"
+                    Text="{Binding Path=ModuleName}">
+                    <TextBlock.Style>
+                      <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                          <DataTrigger
+                            Binding="{Binding Path=IsMarked}"
+                            Value="True">
+                            <Setter Property="FontWeight" Value="Bold" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </Grid>
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+
+          <GridViewColumn
+            Width="150"
+            ProfileExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowExclusiveTimeColumn}">
+            <GridViewColumnHeader
+              x:Name="ChildExclusiveTimeColumnHeader"
+              Content="{Binding ExclusiveTimeColumnTitle}" />
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <ContentControl
+                  HorizontalAlignment="Stretch"
+                  Content="{Binding}"
+                  ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+
+          <GridViewColumn
+            Width="150"
+            ProfileExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowTimeColumn}">
+            <GridViewColumnHeader
+              x:Name="ChildTimeColumnHeader"
+              Content="{Binding TimeColumnTitle}" />
+
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <ContentControl
+                  HorizontalAlignment="Stretch"
+                  Content="{Binding}"
+                  ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+
+          <GridViewColumn
+            Width="180"
+            ProfileExplorerUi:GridViewColumnVisibility.IsVisible="{Binding ShowCombinedTimeColumn}">
+            <GridViewColumnHeader
+              x:Name="ChildCombinedTimeColumnHeader"
+              Content="{Binding TimeColumnTitle}" />
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+
+            <GridViewColumn.CellTemplate>
+              <DataTemplate>
+                <ContentControl
+                  HorizontalAlignment="Stretch"
+                  Content="{Binding}"
+                  ContentTemplate="{StaticResource ProfileCombinedPercentageTemplate}" />
+              </DataTemplate>
+            </GridViewColumn.CellTemplate>
+          </GridViewColumn>
+        </GridView>
+      </ListView.View>
+
+      <ListView.ItemContainerStyle>
+        <Style
+          BasedOn="{StaticResource FlatListViewItem}"
+          TargetType="{x:Type ListViewItem}">
+          <EventSetter
+            Event="MouseDoubleClick"
+            Handler="ItemList_MouseDoubleClick" />
+          <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+          <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+
+          <Style.Triggers>
+            <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+            </Trigger>
+            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+              <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
+            </Trigger>
+          </Style.Triggers>
+        </Style>
+      </ListView.ItemContainerStyle>
+
+      <ListView.ContextMenu>
+        <ContextMenu>
+          <MenuItem
+            Command="{Binding PreviewFunctionCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Preview Function"
+            InputGestureText="Alt+Return"
+            ToolTip="Show a preview popup of the function assembly or source code"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource PeekDefinitionIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding OpenFunctionCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Open Function"
+            InputGestureText="Ctrl+Return"
+            ToolTip="Open the function assembly view"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource LayoutOpenIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding OpenFunctionInNewTabCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Open Function in New Tab"
+            InputGestureText="Ctrl+Shift+Return"
+            ToolTip="Open the function assembly view in a new tab"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource LayoutOpenNewIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Header="Instance"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem
+              Command="{Binding PreviewFunctionInstanceCommand}"
+              CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+              Header="Preview Function Instance"
+              InputGestureText="Alt+Shift+Return"
+              ToolTip="Show a preview popup of the function assembly or source code">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource PeekDefinitionIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Command="{Binding OpenInstanceCommand}"
+              CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+              Header="Open Function Instance"
+              ToolTip="Open the function assembly view for only this instance of the function">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource LayoutOpenIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Command="{Binding OpenInstanceInNewTabCommand}"
+              CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+              Header="Open Function Instance in New Tab"
+              ToolTip="Open the function assembly view in a new tab">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource LayoutOpenNewIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+          </MenuItem>
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <MenuItem
+            Command="{Binding CopyFunctionDetailsCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Copy Function Details"
+            InputGestureText="Ctrl+C"
+            ToolTip="Copy the function name and additional information as an HTML table"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource ClipboardIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding CopyDemangledFunctionNameCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Copy Function Name"
+            InputGestureText="Ctrl+Shift+C"
+            ToolTip="Copy the function name to the clipboard"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <MenuItem
+            Command="{Binding CopyFunctionNameCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Copy Mangled Function Name"
+            InputGestureText="Ctrl+Alt+C"
+            ToolTip="Copy the mangled function name to the clipboard (C++)"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+
+          <MenuItem
+            Header="Mark Module"
+            ToolTip="Mark all functions belonging to this module (saved)"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource AddBookmarkIcon}" />
+            </MenuItem.Icon>
+            <MenuItem>
+              <MenuItem.Header>
+                <ProfileExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkModuleCommand}" />
+              </MenuItem.Header>
+
+            </MenuItem>
+          </MenuItem>
+          <MenuItem
+            Header="Mark Function"
+            ToolTip="Mark all functions with the same name (saved)"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource BookmarkIcon}" />
+            </MenuItem.Icon>
+            <MenuItem>
+              <MenuItem.Header>
+                <ProfileExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkFunctionCommand}" />
+              </MenuItem.Header>
+
+            </MenuItem>
+          </MenuItem>
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+
+          <MenuItem
+            Command="{Binding SelectFunctionSummaryCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Select in Summary"
+            ToolTip="Select the function in the Summary panel"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource SummaryIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding SelectFunctionCallTreeCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Select in Call Tree"
+            ToolTip="Select the function instance in the Call Tree panel"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource TreeIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding SelectFunctionFlameGraphCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Select in Flame Graph"
+            ToolTip="Select the function instance in the Flame Graph panel"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource FlameGraphIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding SelectFunctionTimelineCommand}"
+            CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+            Header="Select in Timeline"
+            ToolTip="Select the function instance in the Timeline panel"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource TimelineIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+
+          <MenuItem
+            Command="{Binding ExportCategoriesHtmlCommand}"
+            Header="Export Categories as HTML File"
+            ToolTip="Save the report with function categories as an HTML file"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource SourceIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem
+            Command="{Binding ExportCategoriesMarkdownCommand}"
+            Header="Export Categories as Markdown File"
+            ToolTip="Save the report with function categories as a Markdown file"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource DocumentIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <MenuItem
+            Command="{Binding CopyCategoriesCommand}"
+            Header="Copy Categories as HTML/Markdown"
+            ToolTip="Copy the report with function categories as an HTML table"
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource BoolToVisibilityConverter}}">
+            <MenuItem.Icon>
+              <Image
+                Width="16"
+                Height="16"
+                Source="{StaticResource ClipboardIcon}" />
+            </MenuItem.Icon>
+          </MenuItem>
+        </ContextMenu>
+      </ListView.ContextMenu>
+    </ListView>
+  </DockPanel>
+  <UserControl.InputBindings>
+    <KeyBinding
+      Key="Return"
+      Command="{Binding OpenFunctionCommand}"
+      Modifiers="Control" />
+    <KeyBinding
+      Key="Return"
+      Command="{Binding OpenFunctionInNewTabCommand}"
+      Modifiers="Control+Shift" />
+    <KeyBinding
+      Key="Return"
+      Command="{Binding PreviewFunctionCommand}"
+      Modifiers="Alt" />
+    <KeyBinding
+      Key="Return"
+      Command="{Binding PreviewFunctionInstanceCommand}"
+      Modifiers="Alt+Shift" />
+    <KeyBinding
+      Key="C"
+      Command="{Binding CopyFunctionNameCommand}"
+      Modifiers="Control+Alt" />
+    <KeyBinding
+      Key="C"
+      Command="{Binding CopyDemangledFunctionNameCommand}"
+      Modifiers="Control+Shift" />
+    <KeyBinding
+      Key="C"
+      Command="{Binding CopyFunctionDetailsCommand}"
+      Modifiers="Control" />
+    <KeyBinding
+      Key="F"
+      Command="{Binding ToggleSearchCommand}"
+      Modifiers="Ctrl" />
+  </UserControl.InputBindings>
+</UserControl>

@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 static class NativeMethods {
   [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, SetLastError = false)]

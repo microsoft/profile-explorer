@@ -1,0 +1,143 @@
+﻿<ProfileExplorerUi:ToolPanelControl
+  x:Class="ProfileExplorer.UI.Panels.HelpPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:ProfileExplorerUi="clr-namespace:ProfileExplorer.UI"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:ProfileExplorer.UI.Panels"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+  d:DesignHeight="450"
+  d:DesignWidth="800"
+  mc:Ignorable="d">
+  <Grid x:Name="BrowserHost">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="28" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <DockPanel
+      Grid.Row="0"
+      HorizontalAlignment="Stretch"
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+      <ToolBarTray
+        x:Name="Toolbar"
+        Height="28"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Top"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        IsLocked="True">
+        <ToolBar
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Top"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          Loaded="ToolBar_Loaded">
+          <TextBlock
+            Margin="2,0,4,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Text="Topic" />
+
+          <Grid>
+            <TextBox
+              x:Name="TopicTextBox"
+              Width="200"
+              Margin="2,0,0,0"
+              VerticalAlignment="Center"
+              Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+              Cursor="Arrow"
+              Focusable="False"
+              IsReadOnly="True"
+              PreviewMouseDown="TopicsTextbox_PreviewMouseDown" />
+            <Image
+              Width="16"
+              Height="16"
+              Margin="0,1,5,0"
+              HorizontalAlignment="Right"
+              IsHitTestVisible="False"
+              Source="{StaticResource DownArrowIcon}" />
+          </Grid>
+          <Button
+            Width="20"
+            Margin="2,0,0,0"
+            VerticalAlignment="Center"
+            Click="BackButton_Click"
+            IsEnabled="{Binding CanGoBack, ElementName=Browser}"
+            ToolTip="Home">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource LeftArrowIcon}" />
+          </Button>
+          <Button
+            Margin="2,0,0,0"
+            Click="HomeButton_Click"
+            ToolTip="Home">
+            <Image
+              Width="15"
+              Height="15"
+              Source="{StaticResource DetailsIcon}" />
+          </Button>
+          <Separator />
+          <Button
+            Margin="2,0,0,0"
+            Click="ZoomOutButton_Click"
+            ToolTip="Zoom Out (Ctrl+_">
+            <Image
+              Width="15"
+              Height="15"
+              Source="{StaticResource ZoomOutIcon}" />
+          </Button>
+          <Button
+            Click="ZoomInButton_Click"
+            ToolTip="Zoom In (Ctrl+=)">
+            <Image
+              Width="15"
+              Height="15"
+              Source="{StaticResource ZoomInIcon}" />
+          </Button>
+          <Separator />
+          <Button
+            Click="ExternaButton_Click"
+            ToolTip="Open help in external browser">
+            <Image
+              Width="15"
+              Height="15"
+              Source="{StaticResource OpenExternalIcon}" />
+          </Button>
+        </ToolBar>
+      </ToolBarTray>
+    </DockPanel>
+    <Popup
+      x:Name="TopicsTreePopup"
+      AllowsTransparency="True"
+      IsOpen="False">
+      <TreeView
+        x:Name="TopicsTree"
+        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+        MouseLeftButtonUp="TopicsTextbox_MouseLeftButtonUp"
+        SelectedItemChanged="TopicsTree_SelectedItemChanged">
+        <TreeView.ItemContainerStyle>
+          <Style TargetType="{x:Type TreeViewItem}">
+            <Setter Property="IsExpanded" Value="True" />
+          </Style>
+        </TreeView.ItemContainerStyle>
+        <TreeView.Resources>
+          <HierarchicalDataTemplate
+            DataType="{x:Type local:HelpTopic}"
+            ItemsSource="{Binding SubTopics}">
+            <TextBlock Text="{Binding Path=Title}" />
+          </HierarchicalDataTemplate>
+        </TreeView.Resources>
+      </TreeView>
+    </Popup>
+    <wpf:WebView2
+      x:Name="Browser"
+      Grid.Row="1"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch"
+      CoreWebView2InitializationCompleted="Browser_CoreWebView2InitializationCompleted"
+      DockPanel.Dock="Bottom" />
+  </Grid>
+</ProfileExplorerUi:ToolPanelControl>

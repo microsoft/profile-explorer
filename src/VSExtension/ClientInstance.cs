@@ -9,7 +9,7 @@ using Grpc.Core;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace IRExplorerExtension;
+namespace ProfileExplorerExtension;
 
 static class ClientInstance {
   public static Channel serverChannel_;
@@ -19,8 +19,8 @@ static class ClientInstance {
   public static AsyncPackage Package;
   public static bool isEnabled_;
   public static bool hadForcedShutdown_;
-  private static readonly string DefaultIRExplorerPath =
-    @"C:\Program Files (x86)\IR Explorer\irexplorer.exe";
+  private static readonly string DefaultProfileExplorerPath =
+    @"C:\Program Files (x86)\Profile Explorer\ProfileExplorer.exe";
 
   static ClientInstance() {
     isEnabled_ = true;
@@ -32,7 +32,7 @@ static class ClientInstance {
 
   public static bool ToggleEnabled() {
     isEnabled_ = !isEnabled_;
-    Logger.Log($"IR Explorer extension enabled: {isEnabled_}");
+    Logger.Log($"Profile Explorer extension enabled: {isEnabled_}");
     return isEnabled_;
   }
 
@@ -87,7 +87,7 @@ static class ClientInstance {
       }
 
       if (debugClient_ == null) {
-        Logger.Log("Connecting to IR Explorer...");
+        Logger.Log("Connecting to Profile Explorer...");
         debugClient_ = new DebugService.DebugServiceClient(serverChannel_);
 
         var result = debugClient_.StartSession(new StartSessionRequest {
@@ -96,13 +96,13 @@ static class ClientInstance {
         });
 
         debugSessionId_ = result.SessionId;
-        Logger.Log("Connected to IR Explorer instance");
+        Logger.Log("Connected to Profile Explorer instance");
       }
 
       return debugClient_;
     }
     catch (Exception ex) {
-      Logger.LogException(ex, "Failed to connect to IR Explorer");
+      Logger.LogException(ex, "Failed to connect to Profile Explorer");
       return null;
     }
   }
@@ -205,7 +205,7 @@ static class ClientInstance {
       //var function = stackFrame.FunctionName;
       //var lineNumber = stackFrame.LineNumber;
       //var file = stackFrame.FileName;
-      if (!await StartIRExplorerAsync()) {
+      if (!await StartProfileExplorerAsync()) {
         return false;
       }
 
@@ -246,39 +246,39 @@ static class ClientInstance {
     }
   }
 
-  private static string GetIRExplorerPath() {
+  private static string GetProfileExplorerPath() {
 #if false
-            return @"C:\personal\projects\compiler_studio\Client\bin\Debug\net5.0\irexplorer.exe";
+            return @"C:\personal\projects\compiler_studio\Client\bin\Debug\net5.0\ProfileExplorer.exe";
 #endif
-    string path = NativeMethods.GetFullPathFromWindows("irexplorer.exe");
+    string path = NativeMethods.GetFullPathFromWindows("ProfileExplorer.exe");
 
     if (File.Exists(path)) {
       return path;
     }
 
-    return File.Exists(DefaultIRExplorerPath) ? DefaultIRExplorerPath : null;
+    return File.Exists(DefaultProfileExplorerPath) ? DefaultProfileExplorerPath : null;
   }
 
-  private static async Task<bool> StartIRExplorerAsync() {
+  private static async Task<bool> StartProfileExplorerAsync() {
     if (IsServerStarted()) {
       return true;
     }
 
     try {
       string irxArgs = "-grpc-server";
-      string irxPath = GetIRExplorerPath();
-      IRExplorerExtensionPackage.SetStatusBar("Starting IR Explorer...", true);
-      Logger.Log($"Starting IR Explorer: {irxPath}");
+      string irxPath = GetProfileExplorerPath();
+      ProfileExplorerExtensionPackage.SetStatusBar("Starting Profile Explorer...", true);
+      Logger.Log($"Starting Profile Explorer: {irxPath}");
 
       if (irxPath == null) {
         VsShellUtilities.ShowMessageBox(
           Package,
-          "Could not find IR Explorer, make sure it is properly installed and found on PATH",
-          "IR Explorer extension", OLEMSGICON.OLEMSGICON_WARNING,
+          "Could not find Profile Explorer, make sure it is properly installed and found on PATH",
+          "Profile Explorer extension", OLEMSGICON.OLEMSGICON_WARNING,
           OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
 
-        Logger.LogError("irexplorer.exe not found");
-        IRExplorerExtensionPackage.SetStatusBar("Could not find IR Explorer");
+        Logger.LogError("ProfileExplorer.exe not found");
+        ProfileExplorerExtensionPackage.SetStatusBar("Could not find Profile Explorer");
         return false;
       }
 
@@ -288,23 +288,23 @@ static class ClientInstance {
                     await Task.Run(() => process.WaitForInputIdle(30000));
 
       if (result) {
-        Logger.Log("Started IR Explorer instance");
-        IRExplorerExtensionPackage.SetStatusBar("IR Explorer started");
+        Logger.Log("Started Profile Explorer instance");
+        ProfileExplorerExtensionPackage.SetStatusBar("Profile Explorer started");
       }
       else {
-        Logger.LogError("Failed to start IR Explorer instance");
-        IRExplorerExtensionPackage.SetStatusBar("Failed to start IR Explorer");
+        Logger.LogError("Failed to start Profile Explorer instance");
+        ProfileExplorerExtensionPackage.SetStatusBar("Failed to start Profile Explorer");
       }
 
       return result;
     }
     catch (Exception ex) {
       VsShellUtilities.ShowMessageBox(
-        Package, $"Failed to start IR Explorer, exception {ex.Message}",
-        "IR Explorer extension", OLEMSGICON.OLEMSGICON_WARNING,
+        Package, $"Failed to start Profile Explorer, exception {ex.Message}",
+        "Profile Explorer extension", OLEMSGICON.OLEMSGICON_WARNING,
         OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
 
-      Logger.LogException(ex, "Failed to start IR Explorer");
+      Logger.LogException(ex, "Failed to start Profile Explorer");
       return false;
     }
   }

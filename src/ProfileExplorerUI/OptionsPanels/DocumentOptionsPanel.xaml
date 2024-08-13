@@ -1,0 +1,701 @@
+﻿<local:OptionsPanelBase
+  x:Class="ProfileExplorer.UI.OptionsPanels.DocumentOptionsPanel"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:ProfileExplorer.UI.OptionsPanels"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:utilities="clr-namespace:ProfileExplorer.UI.Utilities"
+  xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
+  d:DesignHeight="600"
+  d:DesignWidth="400"
+  mc:Ignorable="d">
+
+  <local:OptionsPanelBase.Resources>
+    <CollectionViewSource
+      x:Key="FontCollection"
+      Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
+    <utilities:FontFamilyConverter x:Key="FontFamilyConverter" />
+
+    <DataTemplate x:Key="ColorPickerItemList">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="70" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <xctk:ColorPicker
+          Grid.Column="0"
+          Width="64"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center"
+          AvailableColorsSortingMode="HueSaturationBrightness"
+          BorderBrush="#707070"
+          SelectedColor="{Binding Path=Value, Mode=TwoWay}"
+          ShowDropDownButton="True" />
+        <TextBlock
+          Grid.Column="1"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center"
+          Text="{Binding Path=Name}" />
+      </Grid>
+    </DataTemplate>
+  </local:OptionsPanelBase.Resources>
+
+  <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <TabControl
+      Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+      BorderThickness="0">
+      <TabItem
+        Header="General"
+        Style="{StaticResource TabControlStyle}">
+        <StackPanel
+          Grid.Row="0"
+          Margin="4,4,4,4">
+          <TextBlock
+            FontWeight="Medium"
+            Text="Document Style" />
+          <StackPanel
+            Margin="0,4,0,2"
+            Orientation="Horizontal">
+            <TextBlock
+              Width="50"
+              VerticalAlignment="Center"
+              Text="IR syntax" />
+            <ComboBox
+              Name="IRSyntaxCombobox"
+              Width="180"
+              Margin="4,0,0,0"
+              VerticalAlignment="Center"
+              DisplayMemberPath="Name"
+              SelectedIndex="0" />
+
+            <ToggleButton
+              x:Name="SyntaxEditButton"
+              Width="20"
+              Height="20"
+              Margin="4,0,0,0"
+              HorizontalAlignment="Right"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="SyntaxEditButton_Click"
+              DockPanel.Dock="Right"
+              IsEnabled="{Binding HasItems, ElementName=IRSyntaxCombobox}"
+              ToolTip="Edit colors used by selected IR syntax highlighting">
+              <Image Source="{StaticResource ThemeIcon}" />
+            </ToggleButton>
+
+            <Button
+              x:Name="OpenSyntaxStyleButton"
+              Width="20"
+              Height="20"
+              Margin="2,0,0,0"
+              HorizontalAlignment="Right"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="OpenSyntaxStyleButton_Click"
+              DockPanel.Dock="Right"
+              ToolTip="Open the directory with the IR sytax highlighting files">
+              <Image Source="{StaticResource FolderIcon}" />
+            </Button>
+
+            <Button
+              x:Name="ReloadSyntaxStyleButton"
+              Width="20"
+              Height="20"
+              Margin="2,0,0,0"
+              HorizontalAlignment="Right"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="ReloadSyntaxStyleButton_Click"
+              DockPanel.Dock="Right"
+              ToolTip="Reload all IR sytax highlighting files">
+              <Image Source="{StaticResource ReloadIcon}" />
+            </Button>
+
+          </StackPanel>
+
+          <Border
+            x:Name="SyntaxHighlightingPanel"
+            Height="Auto"
+            Margin="0,4,0,4"
+            Padding="4,4,4,4"
+            BorderBrush="#707070"
+            BorderThickness="1,1,1,1"
+            Visibility="Collapsed">
+            <StackPanel Orientation="Vertical">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock
+                  Margin="0,0,0,4"
+                  FontWeight="Medium"
+                  Text="Syntax Highlighting Colors" />
+                <Button
+                  x:Name="ResetSyntaxStyleButton"
+                  Width="20"
+                  Height="20"
+                  Margin="8,0,0,0"
+                  Padding="0,2,0,-1"
+                  HorizontalAlignment="Right"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  Click="ResetSyntaxStyleButton_Click"
+                  DockPanel.Dock="Right"
+                  ToolTip="Reset the syntax highlighting file to initial state">
+                  <Image Source="{StaticResource UndoIcon}" />
+                </Button>
+
+                <Button
+                  x:Name="EditSyntaxFileButton"
+                  Width="20"
+                  Height="20"
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Right"
+                  Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                  Click="EditSyntaxFileButton_Click"
+                  DockPanel.Dock="Right"
+                  ToolTip="Edit the syntax highlighting file in external text editor">
+                  <Image Source="{StaticResource EditIcon}" />
+                </Button>
+
+              </StackPanel>
+              <ItemsControl
+                x:Name="SyntaxHighlightingColorPickers"
+                ItemTemplate="{StaticResource ColorPickerItemList}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <StackPanel
+            Margin="0,0,0,2"
+            Orientation="Horizontal">
+            <TextBlock
+              Width="50"
+              VerticalAlignment="Center"
+              Text="Font" />
+            <ComboBox
+              Width="180"
+              Margin="4,0,0,0"
+              VerticalAlignment="Center"
+              IsSynchronizedWithCurrentItem="True"
+              ItemsSource="{Binding Source={StaticResource FontCollection}}"
+              SelectedValue="{Binding Path=FontName, Mode=TwoWay, Converter={StaticResource FontFamilyConverter}}" />
+          </StackPanel>
+          <StackPanel
+            Margin="0,0,0,2"
+            Orientation="Horizontal">
+            <TextBlock
+              Width="50"
+              VerticalAlignment="Center"
+              Text="Font size" />
+            <xctk:DoubleUpDown
+              Margin="4,0,0,0"
+              Increment="1"
+              Maximum="36.0"
+              Minimum="5.0"
+              ParsingNumberStyle="Number"
+              ShowButtonSpinner="True"
+              Value="{Binding Path=FontSize, Mode=TwoWay}" />
+          </StackPanel>
+
+          <CheckBox
+            Margin="0,8,0,2"
+            Content="Highlight current text line"
+            IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}"
+            ToolTip="Mark the current line in the document with a border" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Show block separator lines"
+            IsChecked="{Binding Path=ShowBlockSeparatorLine, Mode=TwoWay}"
+            ToolTip="Draw a line between blocks in the document" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Allow block folding"
+            IsChecked="{Binding Path=ShowBlockFolding, Mode=TwoWay}"
+            ToolTip="Enable the ability to fold blocks in the document" />
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+
+          <TextBlock
+            FontWeight="Medium"
+            Text="IR Value Interaction" />
+
+          <CheckBox
+            x:Name="HighlightDefinitionCheckbox"
+            Margin="0,4,0,2"
+            Content="Highlight definition(s) of selected source value"
+            IsChecked="{Binding Path=HighlightSourceDefinition, Mode=TwoWay}"
+            ToolTip="Mark the definition operands of the selected source operand" />
+          <CheckBox
+            Margin="20,2,0,2"
+            Content="Consider only reaching definitions"
+            IsChecked="{Binding Path=FilterSourceDefinitions, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=HighlightDefinitionCheckbox, Path=IsChecked}"
+            ToolTip="Filter out any definition that can't reach the source value in the flow graph" />
+          <CheckBox
+            x:Name="HighlightUsesCheckbox"
+            Margin="0,4,0,2"
+            Content="Highlight uses of selected destination value"
+            IsChecked="{Binding Path=HighlightDestinationUses, Mode=TwoWay}"
+            ToolTip="Mark the use operands of the selected destination operand" />
+          <CheckBox
+            Margin="20,2,0,2"
+            Content="Consider only reachable uses"
+            IsChecked="{Binding Path=FilterDestinationUses, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=HighlightUsesCheckbox, Path=IsChecked}"
+            ToolTip="Filter out any use that can't be reached by the destination value in the flow graph" />
+          <CheckBox
+            Margin="0,4,0,2"
+            Content="Highlight definitions of all sources of selected instruction"
+            IsChecked="{Binding Path=HighlightInstructionOperands, Mode=TwoWay}"
+            ToolTip="Mark the definition operands of all source operands of the selected instruction" />
+
+          <CheckBox
+            x:Name="HoverCheckbox"
+            Margin="0,2,0,2"
+            Content="Show additional value info on hover"
+            IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
+
+          <CheckBox
+            x:Name="ShowPreviewCheckbox"
+            Margin="20,2,0,2"
+            Content="Show definition preview popup on hover"
+            IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
+          <CheckBox
+            Margin="20,2,0,2"
+            Content="Only when a modifier key is pressed (Shift/Ctrl/Alt)"
+            IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
+            IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
+          <TextBlock
+            Margin="0,12,0,0"
+            FontSize="11"
+            Text="Combine with Ctrl key to consider expressions when highlighting." />
+          <TextBlock
+            Margin="0,2,0,0"
+            FontSize="11"
+            Text="Combine with Shift key to all references when highlighting." />
+
+        </StackPanel>
+      </TabItem>
+
+      <TabItem
+        Header="Appearance"
+        Style="{StaticResource TabControlStyle}">
+        <StackPanel Margin="4,4,4,4">
+
+          <DockPanel>
+            <TextBlock
+              FontWeight="Medium"
+              Text="Document Colors" />
+            <Button
+              x:Name="StyleButton"
+              Width="20"
+              Height="20"
+              HorizontalAlignment="Right"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              Click="StyleButton_Click"
+              DockPanel.Dock="Right"
+              ToolTip="Use custom document colors style">
+              <Image Source="{StaticResource StyleIcon}" />
+              <Button.ContextMenu>
+                <ContextMenu x:Name="StyleContextMenu">
+                  <MenuItem Header="Default" />
+                </ContextMenu>
+              </Button.ContextMenu>
+            </Button>
+          </DockPanel>
+          <StackPanel
+            Margin="0,2,0,0"
+            Orientation="Vertical">
+
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                IsManipulationEnabled="True"
+                SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Background color" />
+            </Grid>
+
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=AlternateBackgroundColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Background color (alternate)" />
+            </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Default text color" />
+            </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Current line border color" />
+            </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=BlockSeparatorColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Block separator color" />
+            </Grid>
+
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=MarginBackgroundColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Left margin background color" />
+            </Grid>
+          </StackPanel>
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+
+          <TextBlock
+            FontWeight="Medium"
+            Text="IR Value Colors" />
+          <StackPanel
+            Margin="0,4,0,0"
+            Orientation="Vertical">
+
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=SelectedValueColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Selected value color" />
+            </Grid>
+
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=DefinitionValueColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Source definition value color" />
+            </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=UseValueColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Destination use values color" />
+            </Grid>
+            <Grid Margin="0,2,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=BorderColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Border color" />
+            </Grid>
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem
+        Header="Source File"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Options for code annotations based on source code debug info">
+        <StackPanel
+          x:Name="SourceOptionsPanel"
+          Margin="4,4,4,4">
+          <CheckBox
+            Margin="0,4,0,2"
+            Content="Annotate instrs. with source line numbers"
+            IsChecked="{Binding Path=AnnotateSourceLines, Mode=TwoWay}"
+            ToolTip="Append the associated source code line based on the debug info file" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Annotate instrs. with inlined functions trace (inlinees)"
+            IsChecked="{Binding Path=AnnotateInlinees, Mode=TwoWay}"
+            ToolTip="Append the associated list of inlined functions (inlinees) based on the debug info file" />
+          <CheckBox
+            Margin="0,2,0,2"
+            Content="Underline call instruction targets"
+            IsChecked="{Binding Path=MarkCallTargets, Mode=TwoWay}"
+            ToolTip="Underline the names of the called functions whose code is available.&#x0a;Double-click opens the target function in the current view." />
+          <TextBlock
+            Margin="0,6,0,0"
+            FontSize="11"
+            Text="Double-click on call target navigates to function." />
+          <Separator
+            Margin="0,4,0,4"
+            Background="LightGray" />
+
+          <TextBlock
+            FontWeight="Medium"
+            Text="Annotation Colors" />
+          <StackPanel
+            Margin="0,4,0,0"
+            Orientation="Vertical">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=SourceLineTextColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Line number text color" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=SourceLineBackColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Line number background color" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=InlineeOverlayTextColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Inlined functions text color" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=InlineeOverlayBackColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Inlined functions background color" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=CallTargetTextColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Call target function text color" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <xctk:ColorPicker
+                Grid.Column="0"
+                Width="64"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                AvailableColorsSortingMode="HueSaturationBrightness"
+                BorderBrush="#707070"
+                SelectedColor="{Binding Path=CallTargetBackColor, Mode=TwoWay}"
+                ShowDropDownButton="True" />
+              <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="Call target function background color" />
+            </Grid>
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem
+        Header="Profiling"
+        Style="{StaticResource TabControlStyle}"
+        ToolTip="Options for profiling UI and code annotations">
+        <local:DocumentProfilingOptionsPanel
+          x:Name="ProfilingOptionsPanel"
+          ShowsDocumentSettings="True" />
+      </TabItem>
+
+    </TabControl>
+  </Grid>
+</local:OptionsPanelBase>

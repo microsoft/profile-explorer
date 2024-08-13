@@ -1,0 +1,237 @@
+﻿<UserControl
+  x:Class="ProfileExplorer.UI.Query.InputQueryViewElement"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:ProfileExplorer.UI.Query"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+  Height="24"
+  d:DesignHeight="50"
+  d:DesignWidth="200"
+  mc:Ignorable="d">
+  <UserControl.Resources>
+    <local:ElementObjectConverter x:Key="ElementObjectConverter" />
+
+    <Style
+      x:Key="BackgroundStyle"
+      TargetType="{x:Type DockPanel}">
+      <Style.Triggers>
+        <DataTrigger
+          Binding="{Binding Path=IsWarning}"
+          Value="True">
+          <Setter Property="Background" Value="#FAD5D2" />
+        </DataTrigger>
+
+        <DataTrigger
+          Binding="{Binding Path=IsWarning}"
+          Value="False">
+          <Setter Property="Background" Value="#FFFCE7" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style
+      x:Key="InOutTextStyle"
+      TargetType="{x:Type Image}">
+      <Style.Triggers>
+        <DataTrigger
+          Binding="{Binding Path=IsInput}"
+          Value="True">
+          <Setter Property="Source" Value="{StaticResource CrosshairIcon}" />
+        </DataTrigger>
+
+        <DataTrigger
+          Binding="{Binding Path=IsInput}"
+          Value="False">
+          <Setter Property="Source" Value="{StaticResource RightArrowIcon}" />
+        </DataTrigger>
+      </Style.Triggers>
+
+      <EventSetter
+        Event="MouseMove"
+        Handler="Image_MouseMove" />
+    </Style>
+
+    <Style
+      x:Key="ElementQueryValueStyle"
+      TargetType="{x:Type ContentControl}">
+      <Setter Property="ContentTemplate">
+        <Setter.Value>
+          <DataTemplate />
+        </Setter.Value>
+      </Setter>
+
+      <Style.Triggers>
+        <DataTrigger
+          Binding="{Binding Path=IsElement}"
+          Value="True">
+          <Setter Property="ContentTemplate">
+            <Setter.Value>
+              <DataTemplate>
+                <TextBlock
+                  Margin="2,0,0,0"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Center"
+                  DockPanel.Dock="Right"
+                  FontWeight="Medium"
+                  Foreground="DarkBlue"
+                  Text="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}"
+                  TextAlignment="Right"
+                  TextTrimming="CharacterEllipsis"
+                  ToolTip="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}" />
+              </DataTemplate>
+            </Setter.Value>
+          </Setter>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style
+      x:Key="InputQueryValueStyle"
+      TargetType="{x:Type ContentControl}">
+      <Setter Property="ContentTemplate">
+        <Setter.Value>
+          <DataTemplate />
+        </Setter.Value>
+      </Setter>
+
+      <Style.Triggers>
+        <DataTrigger
+          Binding="{Binding Path=IsBool}"
+          Value="True">
+          <Setter Property="ContentTemplate">
+            <Setter.Value>
+              <DataTemplate>
+                <CheckBox
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                  IsChecked="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+              </DataTemplate>
+            </Setter.Value>
+          </Setter>
+        </DataTrigger>
+
+        <DataTrigger
+          Binding="{Binding Path=IsElement}"
+          Value="True">
+          <Setter Property="ContentTemplate">
+            <Setter.Value>
+              <DataTemplate>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Margin="4,0,0,0"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Center"
+                  Style="{StaticResource InOutTextStyle}" />
+              </DataTemplate>
+            </Setter.Value>
+          </Setter>
+        </DataTrigger>
+
+        <DataTrigger
+          Binding="{Binding Path=IsNumber}"
+          Value="True">
+          <Setter Property="ContentTemplate">
+            <Setter.Value>
+              <DataTemplate>
+                <TextBox
+                  Width="100"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                  IsEnabled="{Binding Path=IsInput}"
+                  Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                  TextAlignment="Right"
+                  ToolTip="Number value expected" />
+              </DataTemplate>
+            </Setter.Value>
+          </Setter>
+        </DataTrigger>
+
+        <DataTrigger
+          Binding="{Binding Path=IsString}"
+          Value="True">
+          <Setter Property="ContentTemplate">
+            <Setter.Value>
+              <DataTemplate>
+                <TextBox
+                  Width="75"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                  IsEnabled="{Binding Path=IsInput}"
+                  Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                  ToolTip="String value expected" />
+              </DataTemplate>
+            </Setter.Value>
+          </Setter>
+        </DataTrigger>
+
+        <DataTrigger
+          Binding="{Binding Path=IsColor}"
+          Value="True">
+          <Setter Property="ContentTemplate">
+            <Setter.Value>
+              <DataTemplate>
+                <xctk:ColorPicker
+                  Width="75"
+                  Height="22"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  AvailableColorsSortingMode="HueSaturationBrightness"
+                  BorderBrush="#707070"
+                  SelectedColor="{Binding Path=Value, Mode=TwoWay}"
+                  ShowDropDownButton="True" />
+              </DataTemplate>
+            </Setter.Value>
+          </Setter>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+  </UserControl.Resources>
+
+  <Border
+    BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+    BorderThickness="0,1,0,0">
+    <DockPanel
+      LastChildFill="True"
+      Style="{StaticResource BackgroundStyle}">
+      <TextBlock
+        Margin="4,0,4,0"
+        VerticalAlignment="Center"
+        Text="{Binding Name}"
+        ToolTip="{Binding Description}" />
+
+      <Image
+        Width="16"
+        Height="16"
+        Margin="4,0,4,0"
+        HorizontalAlignment="Right"
+        VerticalAlignment="Center"
+        DockPanel.Dock="Right"
+        Source="{StaticResource WarningIcon}"
+        ToolTip="{Binding WarningMessage}"
+        Visibility="{Binding IsWarning, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+      <ContentControl
+        Margin="4,0,4,0"
+        HorizontalAlignment="Right"
+        VerticalAlignment="Center"
+        Content="{Binding .}"
+        DockPanel.Dock="Right"
+        Style="{StaticResource ElementQueryValueStyle}" />
+
+      <ContentControl
+        Margin="0,0,-4,0"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Center"
+        Panel.ZIndex="100"
+        Content="{Binding .}"
+        Style="{StaticResource InputQueryValueStyle}" />
+
+    </DockPanel>
+  </Border>
+</UserControl>

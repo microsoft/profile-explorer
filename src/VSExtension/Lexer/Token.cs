@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace IRExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 // Definitions for token types.
 // Some tokens (identifier, string, number, etc.) have additional associated data.
@@ -26,7 +26,7 @@ public enum TokenKind {
   Less, // <
   Greater, // >
   Hash, // #  (used by the preprocessor)
-  Div, // / 
+  Div, // /
   Colon, // :
   SemiColon, // ;
   Comma, // ,
