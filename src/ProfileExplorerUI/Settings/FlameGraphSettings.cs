@@ -1,6 +1,5 @@
-﻿// Copyright (c) Microsoft Corporation
-// The Microsoft Corporation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Windows.Media;
 using ProfileExplorer.UI.Profile;
