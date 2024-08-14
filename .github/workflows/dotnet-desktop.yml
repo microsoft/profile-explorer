@@ -47,7 +47,6 @@ on:
 jobs:
 
   build:
-
     strategy:
       matrix:
         configuration: [Debug, Release]
@@ -77,14 +76,12 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
 
-    # Restore the application to populate the obj folder with RuntimeIdentifiers
-    - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+    # Build the solution
+    - name: Build debug
+      run: dotnet publish -c "Debug"  src\ProfileExplorerUI\ProfileExplorerUI.csproj
       env:
         Configuration: ${{ matrix.configuration }}
-
-    # Build the solution
-    - name: Build
-      run: msbuild $env:Solution_Name /t:ProfileExplorerUI /p:Configuration=$env:Configuration
+    - name: Build release
+      run: dotnet publish -c "Release"  src\ProfileExplorerUI\ProfileExplorerUI.csproj
       env:
         Configuration: ${{ matrix.configuration }}
