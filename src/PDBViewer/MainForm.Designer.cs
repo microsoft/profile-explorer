@@ -57,6 +57,7 @@
       columnHeader3 = new ColumnHeader();
       columnHeader5 = new ColumnHeader();
       columnHeader4 = new ColumnHeader();
+      columnHeader6 = new ColumnHeader();
       OpenFileDialog = new OpenFileDialog();
       toolStrip1.SuspendLayout();
       statusStrip1.SuspendLayout();
@@ -71,7 +72,7 @@
       toolStrip1.Items.AddRange(new ToolStripItem[] { OpenButton, toolStripSeparator1, toolStripDropDownButton1, DemangleCheckbox, toolStripSeparator3, toolStripLabel1, RVATextbox, SubtractRVAButton, AddRVAButton, HexCheckbox, toolStripSeparator2, toolStripLabel2, SearchTextbox });
       toolStrip1.Location = new Point(0, 0);
       toolStrip1.Name = "toolStrip1";
-      toolStrip1.Size = new Size(1070, 27);
+      toolStrip1.Size = new Size(1253, 27);
       toolStrip1.TabIndex = 0;
       toolStrip1.Text = "toolStrip1";
       // 
@@ -80,6 +81,7 @@
       OpenButton.Image = (Image)resources.GetObject("OpenButton.Image");
       OpenButton.ImageScaling = ToolStripItemImageScaling.None;
       OpenButton.ImageTransparentColor = Color.Magenta;
+      OpenButton.Margin = new Padding(2, 1, 0, 2);
       OpenButton.Name = "OpenButton";
       OpenButton.Size = new Size(65, 24);
       OpenButton.Text = "Open";
@@ -206,10 +208,10 @@
       // 
       statusStrip1.ImageScalingSize = new Size(28, 28);
       statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, SymbolCountLabel, toolStripStatusLabel2, TotalSymbolCountLabel, StatusLabel, ProgressBar });
-      statusStrip1.Location = new Point(0, 623);
+      statusStrip1.Location = new Point(0, 775);
       statusStrip1.Name = "statusStrip1";
       statusStrip1.Padding = new Padding(1, 0, 9, 0);
-      statusStrip1.Size = new Size(1070, 26);
+      statusStrip1.Size = new Size(1253, 26);
       statusStrip1.TabIndex = 1;
       statusStrip1.Text = "statusStrip1";
       // 
@@ -252,7 +254,7 @@
       // 
       // FunctionListView
       // 
-      FunctionListView.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader5, columnHeader4 });
+      FunctionListView.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader5, columnHeader4, columnHeader6 });
       FunctionListView.Dock = DockStyle.Fill;
       FunctionListView.FullRowSelect = true;
       FunctionListView.GridLines = true;
@@ -260,7 +262,7 @@
       FunctionListView.Margin = new Padding(2);
       FunctionListView.MultiSelect = false;
       FunctionListView.Name = "FunctionListView";
-      FunctionListView.Size = new Size(1070, 596);
+      FunctionListView.Size = new Size(1253, 748);
       FunctionListView.TabIndex = 2;
       FunctionListView.UseCompatibleStateImageBehavior = false;
       FunctionListView.View = View.Details;
@@ -290,6 +292,11 @@
       columnHeader4.Text = "Kind";
       columnHeader4.Width = 120;
       // 
+      // columnHeader6
+      // 
+      columnHeader6.Text = "Mangled name";
+      columnHeader6.Width = 120;
+      // 
       // OpenFileDialog
       // 
       OpenFileDialog.FileName = "openFileDialog1";
@@ -299,7 +306,7 @@
       // 
       AutoScaleDimensions = new SizeF(8F, 20F);
       AutoScaleMode = AutoScaleMode.Font;
-      ClientSize = new Size(1070, 649);
+      ClientSize = new Size(1253, 801);
       Controls.Add(FunctionListView);
       Controls.Add(statusStrip1);
       Controls.Add(toolStrip1);
@@ -347,5 +354,6 @@
     private ToolStripButton DemangleCheckbox;
     private ToolStripButton AddRVAButton;
     private ToolStripButton SubtractRVAButton;
+    private ColumnHeader columnHeader6;
   }
 }

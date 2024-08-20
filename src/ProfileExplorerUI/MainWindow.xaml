@@ -373,10 +373,10 @@
               Click="ShowPanelMenu_Click"
               Header="Summary Panel"
               Tag="Section" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Pass Output Panel"
-              Tag="PassOutput" />
+            <!-- <MenuItem -->
+            <!--   Click="ShowPanelMenu_Click" -->
+            <!--   Header="Pass Output Panel" -->
+            <!--   Tag="PassOutput" /> -->
             <MenuItem
               Click="ShowPanelMenu_Click"
               Header="Definition Panel"
@@ -1364,7 +1364,7 @@
     <panels:StartPagePanel
       x:Name="StartPage"
       Grid.Row="1"
-      Width="520"
+      Width="550"
       MinWidth="520"
       MinHeight="200"
       Margin="0,100,0,0"
@@ -1542,14 +1542,14 @@
                   <local:SectionPanelPair x:Name="SectionPanel" />
                 </avalonDock:LayoutAnchorable>
 
-                <avalonDock:LayoutAnchorable
-                  x:Name="PassOutputHost"
-                  Title="Pass Output"
-                  ContentId="PassOutput"
-                  IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                  <local:PassOutputPanel x:Name="PassOutputPanel" />
-                </avalonDock:LayoutAnchorable>
+                <!-- <avalonDock:LayoutAnchorable -->
+                <!--   x:Name="PassOutputHost" -->
+                <!--   Title="Pass Output" -->
+                <!--   ContentId="PassOutput" -->
+                <!--   IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                <!--   IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                <!--   <local:PassOutputPanel x:Name="PassOutputPanel" /> -->
+                <!-- </avalonDock:LayoutAnchorable> -->
 
                 <avalonDock:LayoutAnchorable
                   x:Name="DefinitionPanelHost"

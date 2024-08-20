@@ -27,11 +27,12 @@ namespace PDBViewer {
           FunctionListView.SelectedIndices.Count == 1) {
         var item = filteredFuncList_[FunctionListView.SelectedIndices[0]];
         var sb = new StringBuilder();
-        sb.AppendLine($"Name: {item.Name}");
+        sb.AppendLine($"Name: {GetFunctionName(item, DemangleCheckbox.Checked)}");
         sb.AppendLine($"Start RVA: {item.RVA:X} ({item.RVA})");
         sb.AppendLine($"End RVA: {item.EndRVA:X} ({item.EndRVA})");
         sb.AppendLine($"Length: {item.Size}");
         sb.AppendLine($"Kind: {(item.IsPublic ? "Public" : "Function")}");
+        sb.AppendLine($"Mangled name: {item.Name}");
         Clipboard.SetText(sb.ToString());
         e.Handled = true;
       }
@@ -46,6 +47,7 @@ namespace PDBViewer {
         lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Size.ToString()));
         lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.EndRVA.ToString("X")));
         lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.IsPublic ? "Public" : "Function"));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Name));
 
         if (item.IsSelected) {
           lvi.BackColor = Color.LightBlue;
@@ -61,6 +63,7 @@ namespace PDBViewer {
         StatusLabel.Text = "Opening PDB";
         FunctionListView.Enabled = false;
         ProgressBar.Visible = true;
+        Application.UseWaitCursor = true;
 
         if (!(await OpenPDB(OpenFileDialog.FileName))) {
           MessageBox.Show("Failed to open PDB", "PDB Viewer", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -77,10 +80,11 @@ namespace PDBViewer {
           return;
         }
 
-        StatusLabel.Text = $"Done in {sw.Elapsed.Seconds} sec";
+        StatusLabel.Text = $"PDB loaded";
         UpdateFunctionListView();
         ProgressBar.Visible = false;
         FunctionListView.Enabled = true;
+        Application.UseWaitCursor = false;
       }
     }
 
@@ -107,7 +111,8 @@ namespace PDBViewer {
         }
 
         if (filterName) {
-          if (!item.Name.Contains(searchedText, StringComparison.OrdinalIgnoreCase)) {
+          var funcName = GetFunctionName(item, demangle);
+          if (!funcName.Contains(searchedText, StringComparison.OrdinalIgnoreCase)) {
             continue;
           }
         }
@@ -116,6 +121,7 @@ namespace PDBViewer {
       }
 
       FunctionListView.VirtualListSize = filteredFuncList_.Count;
+      FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
       SymbolCountLabel.Text = filteredFuncList_.Count.ToString();
       TotalSymbolCountLabel.Text = sortedFuncList_.Count.ToString();
     }

@@ -24,6 +24,7 @@ public partial class MainWindow : Window, ISession {
   private OptionsPanelHostPopup markingOptionsPanelPopup_;
 
   public ProfileData ProfileData => sessionState_?.ProfileData;
+  public bool IsProfileSession => ProfileData != null;
 
   public bool HasEnabledMarkedFunctions =>
     MarkingSettings.HasEnabledFunctionMarkings;
