@@ -151,7 +151,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(BookmarksPanel, BookmarksPanelHost);
     RegisterPanel(ReferencesPanel, ReferencesPanelHost);
     RegisterPanel(NotesPanel, NotesPanelHost);
-    RegisterPanel(PassOutputPanel, PassOutputHost);
+    // RegisterPanel(PassOutputPanel, PassOutputHost);
     RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
     RegisterPanel(ScriptingPanel, ScriptingPanelHost);
     RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
@@ -1158,12 +1158,12 @@ public partial class MainWindow : Window, ISession {
               RegisterPanel(SourceFilePanel, SourceFilePanelHost);
               break;
             }
-            case ToolPanelKind.PassOutput: {
-              PassOutputPanel = (PassOutputPanel)panel;
-              PassOutputHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(PassOutputPanel, PassOutputHost);
-              break;
-            }
+            //case ToolPanelKind.PassOutput: {
+            //  PassOutputPanel = (PassOutputPanel)panel;
+            //  PassOutputHost = (LayoutAnchorable)args.Model;
+            //  RegisterPanel(PassOutputPanel, PassOutputHost);
+            //  break;
+            //}
             case ToolPanelKind.SearchResults: {
               SearchResultsPanel = (SearchResultsPanel)panel;
               SearchResultsPanelHost = (LayoutAnchorable)args.Model;
@@ -1377,9 +1377,9 @@ public partial class MainWindow : Window, ISession {
       case ToolPanelKind.Source: {
         return SourceFilePanelHost;
       }
-      case ToolPanelKind.PassOutput: {
-        return PassOutputHost;
-      }
+      // case ToolPanelKind.PassOutput: {
+      //   return PassOutputHost;
+      // }
       case ToolPanelKind.SearchResults: {
         return SearchResultsPanelHost;
       }

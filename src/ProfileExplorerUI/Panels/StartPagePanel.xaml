@@ -6,7 +6,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:toolkit="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
   d:DesignHeight="450"
-  d:DesignWidth="590"
+  d:DesignWidth="550"
   SnapsToDevicePixels="True"
   UseLayoutRounding="True"
   mc:Ignorable="d">
@@ -83,12 +83,35 @@
                   DockPanel.Dock="Right"
                   Orientation="Horizontal">
                   <Button
-                    Width="24"
                     Height="24"
                     Padding="2,2,2,2"
                     Click="OpenFileButton_Click"
                     ToolTip="Open profile trace file">
-                    <Image Source="{StaticResource FolderIcon}" />
+                    <StackPanel Orientation="Horizontal">
+                      <Image
+                        VerticalAlignment="Center"
+                        Source="{StaticResource FolderIcon}" />
+                      <TextBlock
+                        Margin="2,0,2,0"
+                        VerticalAlignment="Center"
+                        Text="Open" />
+                    </StackPanel>
+                  </Button>
+                  <Button
+                    Height="24"
+                    Margin="4,0,0,0"
+                    Padding="2,2,2,2"
+                    Click="RecordProfileButton_Click"
+                    ToolTip="Start a profile recording session">
+                    <StackPanel Orientation="Horizontal">
+                      <Image
+                        VerticalAlignment="Center"
+                        Source="{StaticResource RecordIcon}" />
+                      <TextBlock
+                        Margin="2,0,2,0"
+                        VerticalAlignment="Center"
+                        Text="Record" />
+                    </StackPanel>
                   </Button>
                   <Button
                     Width="24"
@@ -99,17 +122,8 @@
                     ToolTip="View previous profile sessions or start a new one">
                     <Image Source="{StaticResource HistoryBackIcon}" />
                   </Button>
-                  <Button
-                    Width="24"
-                    Height="24"
-                    Margin="4,0,0,0"
-                    Padding="2,2,2,2"
-                    Click="RecordProfileButton_Click"
-                    ToolTip="Start a profile recording session">
-                    <Image Source="{StaticResource RecordIcon}" />
-                  </Button>
                   <toolkit:AutoCompleteBox
-                    Width="180"
+                    Width="150"
                     Height="24"
                     Margin="8,0,2,0"
                     HorizontalAlignment="Right"
@@ -158,27 +172,27 @@
                   <Grid
                     HorizontalAlignment="Stretch"
                     ToolTip="{Binding Title}">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock
-                        HorizontalAlignment="Stretch"
-                        Text="{Binding TraceFile}"
-                        TextTrimming="CharacterEllipsis" />
-                      <TextBlock Text=", " />
+                    <TextBlock
+                      HorizontalAlignment="Stretch"
+                      Text="{Binding TraceFile}"
+                      TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text=", " />
+                    <StackPanel
+                      HorizontalAlignment="Right"
+                      Orientation="Horizontal">
                       <TextBlock
                         Margin="0,0,16,0"
-                        HorizontalAlignment="Stretch"
                         Foreground="DarkBlue"
                         Text="{Binding TraceProcess}"
                         TextTrimming="CharacterEllipsis"
                         ToolTip="Process loaded during session" />
+                      <TextBlock
+                        Margin="0,0,30,0"
+                        Foreground="DimGray"
+                        Text="{Binding TraceTime}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTip="Trace recording date" />
                     </StackPanel>
-                    <TextBlock
-                      Margin="0,0,30,0"
-                      HorizontalAlignment="Right"
-                      Foreground="DimGray"
-                      Text="{Binding TraceTime}"
-                      TextTrimming="CharacterEllipsis"
-                      ToolTip="Trace recording date" />
                     <StackPanel
                       Margin="4,0,0,0"
                       HorizontalAlignment="Right">
@@ -234,16 +248,23 @@
                   Orientation="Horizontal">
                   <Button
                     Name="OpenButton"
-                    Width="24"
                     Height="24"
                     Padding="2,2,2,2"
                     Click="OpenFileButton_Click"
                     ToolTip="Open file">
-                    <Image Source="{StaticResource FolderIcon}" />
+                    <StackPanel Orientation="Horizontal">
+                      <Image
+                        VerticalAlignment="Center"
+                        Source="{StaticResource FolderIcon}" />
+                      <TextBlock
+                        Margin="2,0,2,0"
+                        VerticalAlignment="Center"
+                        Text="Open" />
+                    </StackPanel>
                   </Button>
                   <toolkit:AutoCompleteBox
                     Name="TextSearch"
-                    Width="180"
+                    Width="150"
                     Height="24"
                     Margin="8,0,2,0"
                     HorizontalAlignment="Right"

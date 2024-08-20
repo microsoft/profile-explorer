@@ -12,63 +12,13 @@
   <Grid>
     <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="2" />
-        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="330" />
         <ColumnDefinition Width="2" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
       <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="28" />
-          <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <DockPanel
-          Grid.Row="0"
-          HorizontalAlignment="Stretch"
-          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-          <ToolBarTray
-            Height="28"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Top"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            IsLocked="True">
-            <ToolBar
-              HorizontalAlignment="Stretch"
-              VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Loaded="ToolBar_Loaded">
-
-              <ToggleButton
-                IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-                ToolTip="Show function list">
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource ListIcon}" />
-              </ToggleButton>
-
-              <ToggleButton
-                IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-                ToolTip="Show call graph">
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource GraphIcon}" />
-              </ToggleButton>
-
-            </ToolBar>
-          </ToolBarTray>
-
-          <local:PanelToolbarTray
-            DockPanel.Dock="Right"
-            HasDuplicateButton="False"
-            HasPinButton="False" />
-        </DockPanel>
-
         <ScrollViewer
-          Grid.Row="1"
           Grid.Column="0"
           HorizontalScrollBarVisibility="Disabled"
           VerticalScrollBarVisibility="Auto">
@@ -348,74 +298,9 @@
           <RowDefinition Height="28" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <DockPanel
-          Grid.Row="0"
-          HorizontalAlignment="Stretch"
-          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-          <ToolBarTray
-            Height="28"
-            Margin="0,0,24,0"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Top"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-            IsLocked="True">
-            <ToolBar
-              Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
-              HorizontalAlignment="Stretch"
-              VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-              <Image
-                Source="{StaticResource SearchIcon}"
-                ToolBar.OverflowMode="Never" />
-              <Grid
-                x:Name="FunctionFilterGrid"
-                Height="24"
-                HorizontalAlignment="Stretch"
-                ToolBar.OverflowMode="Never">
-                <TextBox
-                  Name="FunctionFilter"
-                  Height="24"
-                  Margin="4,0,0,0"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Center"
-                  VerticalContentAlignment="Center"
-                  Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                  BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                  TextChanged="FunctionFilter_TextChanged"
-                  ToolTip="Filter function list based on a case-insensitive substring">
-                  <TextBox.InputBindings>
-                    <KeyBinding
-                      Key="Escape"
-                      Command="local:Command.ClearTextbox"
-                      CommandParameter="{Binding ElementName=FunctionFilter}" />
-                  </TextBox.InputBindings>
-
-                </TextBox>
-                <TextBlock
-                  Margin="8,4"
-                  Foreground="DimGray"
-                  IsHitTestVisible="False"
-                  Text="Search functions"
-                  Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
-              </Grid>
-
-              <Button
-                Command="local:Command.ClearTextbox"
-                CommandParameter="{Binding ElementName=FunctionFilter}"
-                ToolBar.OverflowMode="Never"
-                ToolTip="Reset function filter">
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource ClearIcon}" />
-              </Button>
-            </ToolBar>
-          </ToolBarTray>
-        </DockPanel>
 
         <ListView
           x:Name="FunctionList"
-          Grid.Row="1"
           Grid.Column="2"
           Panel.ZIndex="2"
           local:GridViewColumnVisibility.Enabled="True"

@@ -12,11 +12,49 @@ namespace PDBViewer {
     private IDiaSession session_;
     private IDiaSymbol globalSymbol_;
     private List<FunctionDebugInfo> sortedFuncList_;
-    private List<(FunctionDebugInfo, ListViewItem)> visibleFuncList_;
+    private List<FunctionDebugInfo> filteredFuncList_;
     private string debugFilePath_;
 
     public MainForm() {
       InitializeComponent();
+      FunctionListView.VirtualMode = true;
+      FunctionListView.RetrieveVirtualItem += FunctionListViewOnRetrieveVirtualItem;
+      FunctionListView.KeyDown += FunctionListViewOnKeyDown;
+    }
+
+    private void FunctionListViewOnKeyDown(object? sender, KeyEventArgs e) {
+      if (e.Control && e.KeyCode == Keys.C &&
+          FunctionListView.SelectedIndices.Count == 1) {
+        var item = filteredFuncList_[FunctionListView.SelectedIndices[0]];
+        var sb = new StringBuilder();
+        sb.AppendLine($"Name: {GetFunctionName(item, DemangleCheckbox.Checked)}");
+        sb.AppendLine($"Start RVA: {item.RVA:X} ({item.RVA})");
+        sb.AppendLine($"End RVA: {item.EndRVA:X} ({item.EndRVA})");
+        sb.AppendLine($"Length: {item.Size}");
+        sb.AppendLine($"Kind: {(item.IsPublic ? "Public" : "Function")}");
+        sb.AppendLine($"Mangled name: {item.Name}");
+        Clipboard.SetText(sb.ToString());
+        e.Handled = true;
+      }
+    }
+
+    private void FunctionListViewOnRetrieveVirtualItem(object? sender, RetrieveVirtualItemEventArgs e) {
+      if (filteredFuncList_ != null && e.ItemIndex < filteredFuncList_.Count) {
+        var item = filteredFuncList_[e.ItemIndex];
+        var lvi = new ListViewItem();
+        lvi.Text = item.RVA.ToString("X");
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, GetFunctionName(item, DemangleCheckbox.Checked)));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Size.ToString()));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.EndRVA.ToString("X")));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.IsPublic ? "Public" : "Function"));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Name));
+
+        if (item.IsSelected) {
+          lvi.BackColor = Color.LightBlue;
+        }
+
+        e.Item = lvi;
+      }
     }
 
     private async void OpenButton_Click(object sender, EventArgs e) {
@@ -25,6 +63,7 @@ namespace PDBViewer {
         StatusLabel.Text = "Opening PDB";
         FunctionListView.Enabled = false;
         ProgressBar.Visible = true;
+        Application.UseWaitCursor = true;
 
         if (!(await OpenPDB(OpenFileDialog.FileName))) {
           MessageBox.Show("Failed to open PDB", "PDB Viewer", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -41,10 +80,11 @@ namespace PDBViewer {
           return;
         }
 
-        StatusLabel.Text = $"Done in {sw.Elapsed.Seconds} sec";
+        StatusLabel.Text = $"PDB loaded";
         UpdateFunctionListView();
         ProgressBar.Visible = false;
         FunctionListView.Enabled = true;
+        Application.UseWaitCursor = false;
       }
     }
 
@@ -53,35 +93,67 @@ namespace PDBViewer {
         return;
       }
 
-      FunctionListView.BeginUpdate();
-      FunctionListView.Items.Clear();
-      visibleFuncList_ = new List<(FunctionDebugInfo, ListViewItem)>();
+      filteredFuncList_ = new List<FunctionDebugInfo>();
+
+      bool showFuncts = ShowFunctionsCheckbox.Checked;
+      bool showPublics = ShowPublicsCheckbox.Checked;
+      bool filterName = SearchTextbox.Text.Length > 0;
+      string searchedText = SearchTextbox.Text.Trim();
+      bool demangle = DemangleCheckbox.Checked;
 
       foreach (var item in sortedFuncList_) {
-        if (!AcceptItem(item)) {
+        if (!showFuncts && !item.IsPublic) {
           continue;
         }
 
-        var lvi = new ListViewItem();
-        lvi.Text = item.RVA.ToString("X");
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, GetFunctionName(item)));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Size.ToString()));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.EndRVA.ToString("X")));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.IsPublic ? "Public" : "Function"));
-        FunctionListView.Items.Add(lvi);
-        visibleFuncList_.Add((item, lvi));
+        if (!showPublics && item.IsPublic) {
+          continue;
+        }
+
+        if (filterName) {
+          var funcName = GetFunctionName(item, demangle);
+          if (!funcName.Contains(searchedText, StringComparison.OrdinalIgnoreCase)) {
+            continue;
+          }
+        }
+
+        filteredFuncList_.Add(item);
       }
 
-      FunctionListView.EndUpdate();
-      SymbolCountLabel.Text = FunctionListView.Items.Count.ToString();
+      FunctionListView.VirtualListSize = filteredFuncList_.Count;
+      FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
+      SymbolCountLabel.Text = filteredFuncList_.Count.ToString();
       TotalSymbolCountLabel.Text = sortedFuncList_.Count.ToString();
     }
 
     private void UpdateSelectedRVAItem() {
-      if (visibleFuncList_ == null) {
+      if (filteredFuncList_ == null) {
         return;
       }
 
+      var (hasRVA, searchedRVA) = GetRVAValue();
+      int selectedIndex = -1;
+      int index = 0;
+
+      foreach (var item in filteredFuncList_) {
+        if (hasRVA && FunctionDebugInfo.BinarySearch(sortedFuncList_, searchedRVA) == item) {
+          item.IsSelected = true;
+          selectedIndex = index;
+        }
+        else {
+          item.IsSelected = false;
+        }
+
+        index++;
+      }
+
+      if (selectedIndex != -1) {
+        FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
+        FunctionListView.EnsureVisible(selectedIndex);
+      }
+    }
+
+    private (bool, long) GetRVAValue() {
       bool hasRVA = false;
       long searchedRVA = 0;
 
@@ -94,33 +166,16 @@ namespace PDBViewer {
         }
       }
 
-      foreach (var item in visibleFuncList_) {
-        if (hasRVA && FunctionDebugInfo.BinarySearch(sortedFuncList_, searchedRVA) == item.Item1) {
-          item.Item2.BackColor = Color.LightBlue;
-          FunctionListView.EnsureVisible(item.Item2.Index);
-        }
-        else {
-          item.Item2.BackColor = Color.Transparent;
-        }
-      }
+      return (hasRVA, searchedRVA);
     }
 
-    private bool AcceptItem(FunctionDebugInfo item) {
-      if (!ShowFunctionsCheckbox.Checked && !item.IsPublic) {
-        return false;
+    private void SetRVAValue(long value) {
+      if (HexCheckbox.Checked) {
+        RVATextbox.Text = value.ToString("X");
       }
-
-      if (!ShowPublicsCheckbox.Checked && item.IsPublic) {
-        return false;
+      else {
+        RVATextbox.Text = value.ToString();
       }
-
-      if (SearchTextbox.Text.Length > 0) {
-        if (!item.Name.Contains(SearchTextbox.Text.Trim(), StringComparison.OrdinalIgnoreCase)) {
-          return false;
-        }
-      }
-
-      return true;
     }
 
     private async Task<bool> OpenPDB(string debugFilePath) {
@@ -206,8 +261,8 @@ namespace PDBViewer {
       return null;
     }
 
-    public string GetFunctionName(FunctionDebugInfo item) {
-      if (!DemangleCheckbox.Checked) {
+    public string GetFunctionName(FunctionDebugInfo item, bool demangle) {
+      if (!demangle) {
         return item.Name;
       }
 
@@ -248,6 +303,22 @@ namespace PDBViewer {
     private async void DemangleCheckbox_CheckedChanged(object sender, EventArgs e) {
       UpdateFunctionListView();
     }
+
+    private void AddRVAButton_Click(object sender, EventArgs e) {
+      var (hasRVA, value) = GetRVAValue();
+
+      if (hasRVA) {
+        SetRVAValue(value + 4);
+      }
+    }
+
+    private void SubtractRVAButton_Click(object sender, EventArgs e) {
+      var (hasRVA, value) = GetRVAValue();
+
+      if (hasRVA) {
+        SetRVAValue(Math.Max(0, value - 4));
+      }
+    }
   }
 
   public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
@@ -284,6 +355,7 @@ namespace PDBViewer {
     public long EndRVA => RVA + Size - 1;
     public bool IsUnknown => RVA == 0 && Size == 0;
     public bool IsPublic { get; set; }
+    public bool IsSelected { get; set; }
 
     public static FunctionDebugInfo BinarySearch(List<FunctionDebugInfo> ranges, long value,
                                                  bool hasOverlappingFuncts = false) {
@@ -380,7 +452,7 @@ namespace PDBViewer {
     }
 
     public int CompareTo(FunctionDebugInfo other) {
-      // Userd by sorting.
+      // Used by sorting.
       if (other == null)
         return 0;
 

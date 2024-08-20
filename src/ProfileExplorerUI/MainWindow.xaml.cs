@@ -384,15 +384,28 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
     if (sessionState_.Info.IsFileSession) {
       using var centerForm = new DialogCenteringHelper(this);
-      var result = MessageBox.Show("Save session changes before closing?", "Profile Explorer",
-                                   MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
 
-      if (result == MessageBoxResult.Yes) {
-        SaveDocumentExecuted(this, null);
+      if (IsProfileSession) {
+        // TODO: Profile session saving not yet implemented.
+        var result = MessageBox.Show("Do you want to close the application?", "Profile Explorer",
+                                     MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+
+        if (result == MessageBoxResult.No) {
+          e.Cancel = true;
+          return;
+        }
       }
-      else if (result == MessageBoxResult.Cancel) {
-        e.Cancel = true;
-        return;
+      else {
+        var result = MessageBox.Show("Save session changes before closing?", "Profile Explorer",
+                                     MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+
+        if (result == MessageBoxResult.Yes) {
+          SaveDocumentExecuted(this, null);
+        }
+        else if (result == MessageBoxResult.Cancel) {
+          e.Cancel = true;
+          return;
+        }
       }
     }
     else {
