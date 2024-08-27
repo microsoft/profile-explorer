@@ -63,42 +63,7 @@ public partial class ModuleReportPanel : ToolPanelControl {
       });
     }
 
-    var listView = new ListCollectionView(listEx);
-    listView.Filter = FilterFunctionList;
-    return listView;
-  }
-
-  private bool FilterFunctionList(object value) {
-    var functionEx = (FunctionEx)value;
-    var function = functionEx.Function;
-
-    // Don't filter with less than 2 letters.
-    //? TODO: FunctionFilter change should rather set a property with the trimmed text
-    string text = FunctionFilter.Text.Trim();
-
-    if (text.Length < 2) {
-      return true;
-    }
-
-    // Search the function name.
-    if (App.Settings.SectionSettings.FunctionSearchCaseSensitive
-      ? function.Name.Contains(text, StringComparison.Ordinal)
-      : function.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
-      return true;
-    }
-
-    // Search the demangled name.
-    if (!string.IsNullOrEmpty(functionEx.AlternateName)) {
-      return App.Settings.SectionSettings.FunctionSearchCaseSensitive
-        ? functionEx.AlternateName.Contains(text, StringComparison.Ordinal)
-        : functionEx.AlternateName.Contains(text, StringComparison.OrdinalIgnoreCase);
-    }
-
-    return false;
-  }
-
-  private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
-    Utils.PatchToolbarStyle(sender as ToolBar);
+    return new ListCollectionView(listEx);
   }
 
   private void SingleCallListButton_Click(object sender, RoutedEventArgs e) {
