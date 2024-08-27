@@ -175,14 +175,6 @@
           <ToolTipText>Enable/disable the Profile Explorer debugger integration</ToolTipText>
         </Strings>
       </Button>
-
-      <Button guid="guidVSExtensionPackageCmdSet" id="cmdidExpressionToolWindowCommand" priority="0x0100" type="Button">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
-        <Icon guid="mainImage" id="irxPic" />
-        <Strings>
-          <ButtonText>Profile Explorer Expressions</ButtonText>
-        </Strings>
-      </Button>
     </Buttons>
 
 
@@ -194,10 +186,9 @@
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
       <Bitmap guid="guidImages" href="Resources\Command1.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-      <Bitmap guid="mainImage" href="Resources\irxIcon.png" usedList="irxPic" />
+      <Bitmap guid="mainImage" href="Resources\icon.png" usedList="irxPic" />
       <Bitmap guid="menuImage" href="Resources\list-ordered.png" usedList="menuPic1" />
-      <Bitmap guid="guidImages1" href="Windows\Resources\ExpressionToolWindowCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-    </Bitmaps>
+      </Bitmaps>
   </Commands>
 
 
@@ -243,7 +234,6 @@
 
       <IDSymbol name="Toolbar" value="0x1000" />
       <IDSymbol name="ToolbarGroup" value="0x1050" />
-      <IDSymbol value="4177" name="cmdidExpressionToolWindowCommand" />
     </GuidSymbol>
 
     <GuidSymbol name="mainImage" value="{8a2b4264-3397-430f-8664-c8e1428d9122}">

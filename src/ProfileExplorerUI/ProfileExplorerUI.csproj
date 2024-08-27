@@ -158,30 +158,30 @@
 		<PackageReference Include="Grpc" Version="2.46.6" />
 		<PackageReference Include="Grpc.Core" Version="2.46.6" />
 		<PackageReference Include="Grpc.Core.Api" Version="2.65.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.65.0">
+		<PackageReference Include="Grpc.Tools" Version="2.66.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.10.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.10.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.11.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.11.0" />
 		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.0-beta.24314.3" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.13" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.15" />
 		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="17.7.41">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.10.48">
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.11.20">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2651.64" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.122" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
 		<PackageReference Include="protobuf-net" Version="3.2.30" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.62" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.64" />
 		<PackageReference Include="System.Text.Json" Version="8.0.4" />
 	</ItemGroup>
 

@@ -19,7 +19,7 @@ namespace ProfileExplorerExtension;
 
 /// <summary>
 ///   This is the class that implements the package exposed by this assembly.
-/// </summary>
+/// </summary>express
 /// <remarks>
 ///   <para>
 ///     The minimum requirement for a class to be considered a valid package for Visual Studio
@@ -39,7 +39,6 @@ namespace ProfileExplorerExtension;
 [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
 [Guid(PackageGuidString)]
 [ProvideMenuResource("Menus.ctmenu", 1)]
-[ProvideToolWindow(typeof(ExpressionToolWindow))]
 
 //[ProvideAutoLoad(UIContextGuids80.SolutionExists)]
 public sealed class ProfileExplorerExtensionPackage : AsyncPackage {
@@ -90,8 +89,6 @@ public sealed class ProfileExplorerExtensionPackage : AsyncPackage {
     await ShowExpressionGraphCommand.InitializeAsync(this);
     await EnableCommand.InitializeAsync(this);
     await UpdateIRCommand.InitializeAsync(this);
-
-    await ExpressionToolWindowCommand.InitializeAsync(this);
 
     // https://stackoverflow.com/questions/22570121/debuggerevents-onenterbreakmode-is-not-triggered-in-the-visual-studio-extension
     dte_ = await GetServiceAsync(typeof(DTE)) as DTE2;
