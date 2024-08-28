@@ -75,12 +75,14 @@ jobs:
     # Build the project and installer
     - name: Build x64
       shell: cmd
-      run: call installer\x64\prepare-out.cmd
+      working-directory: installer\x64
+      run: call prepare-out.cmd
       env:
         Configuration: ${{ matrix.configuration }}
 
     - name: Build ARM64
       shell: cmd
-      run: call installer\arm64\prepare-out.cmd
+      working-directory: installer\arm64
+      run: call prepare-out.cmd
       env:
         Configuration: ${{ matrix.configuration }}
