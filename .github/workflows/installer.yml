@@ -72,11 +72,9 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
 
-    - name: Install winget
-      uses: Cyberboss/install-winget@v1
-
     - name: Install Inno Setup
-      run: winget install -e --id JRSoftware.InnoSetup --disable-interactivity --accept-source-agreements
+      shell: cmd
+      run: choco install innosetup
 
     # Build the project and installer
     - name: Build x64
