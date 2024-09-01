@@ -1,5 +1,5 @@
 set _PUBLISH_PATH="publish"
-set _BUILD_TARGET="..\..\src\ProfileExplorer\ProfileExplorer.csproj"
+set _BUILD_TARGET="..\..\src\ProfileExplorerUI\ProfileExplorerUI.csproj"
 set _PROFILER_PATH="..\..\src\ManagedProfiler"
 set _EXTERNALS_PATH="..\..\src\external"
 set _EXTERNALS_PATH_ARM64="..\..\src\external\arm64"

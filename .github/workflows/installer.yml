@@ -84,7 +84,7 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-    - name: Build x64
+    - name: Create x64 installer
       shell: cmd
       working-directory: installer\x64
       run: call prepare-installer.cmd
@@ -98,7 +98,7 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-    - name: Build ARM64
+    - name: Create ARM64 installer
       shell: cmd
       working-directory: installer\arm64
       run: call prepare-installer.cmd
