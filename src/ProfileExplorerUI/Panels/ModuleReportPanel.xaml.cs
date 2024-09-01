@@ -29,11 +29,6 @@ public partial class ModuleReportPanel : ToolPanelControl {
 
         #endregion
 
-  //? TODO:
-  //? - use buttons instead of slider
-  //? - show function list on the right side
-  //? - selecting distrib range shows functs
-
   public void ShowReport(ModuleReport report, IRTextSummary summary) {
     report_ = report;
     summary_ = summary;
