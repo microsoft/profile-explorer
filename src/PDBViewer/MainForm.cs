@@ -5,7 +5,10 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using Dia2Lib;
+using ProfileExplorer.Core;
 
 namespace PDBViewer {
   public partial class MainForm : Form {
@@ -15,12 +18,16 @@ namespace PDBViewer {
     private List<FunctionDebugInfo> sortedFuncList_;
     private List<FunctionDebugInfo> filteredFuncList_;
     private string debugFilePath_;
+    private SourceFileMapper sourceMapper_;
+    bool ignoredNextSourceCaretEvent_;
+    bool ignoreSourceLineSelectedEvent_;
 
     public MainForm() {
       InitializeComponent();
       FunctionListView.VirtualMode = true;
       FunctionListView.RetrieveVirtualItem += FunctionListViewOnRetrieveVirtualItem;
       FunctionListView.KeyDown += FunctionListViewOnKeyDown;
+      sourceMapper_ = new SourceFileMapper();
     }
 
     private void FunctionListViewOnKeyDown(object? sender, KeyEventArgs e) {
@@ -43,6 +50,7 @@ namespace PDBViewer {
       if (includeName) {
         sb.AppendLine();
         sb.AppendLine($"Name: {GetFunctionName(item, true)}");
+        sb.AppendLine();
         sb.AppendLine($"Mangled name: {item.Name}");
       }
     }
@@ -74,34 +82,39 @@ namespace PDBViewer {
 
     private async void OpenButton_Click(object sender, EventArgs e) {
       if (OpenFileDialog.ShowDialog(this) == DialogResult.OK) {
-        var sw = Stopwatch.StartNew();
-        StatusLabel.Text = "Opening PDB";
-        FunctionListView.Enabled = false;
-        ProgressBar.Visible = true;
-        Application.UseWaitCursor = true;
-
-        if (!(await OpenPDB(OpenFileDialog.FileName))) {
-          MessageBox.Show("Failed to open PDB", "PDB Viewer", MessageBoxButtons.OK, MessageBoxIcon.Error);
-          ProgressBar.Visible = true;
-          return;
-        }
-
-        StatusLabel.Text = "Enumerating functions";
-
-        if (!(await LoadFunctionList())) {
-          MessageBox.Show("Failed to load function list from PDB", "PDB Viewer", MessageBoxButtons.OK,
-                          MessageBoxIcon.Error);
-          ProgressBar.Visible = false;
-          return;
-        }
-
-        Text = $"PDB Viewer - {OpenFileDialog.FileName}";
-        StatusLabel.Text = $"PDB loaded";
-        UpdateFunctionListView();
-        ProgressBar.Visible = false;
-        FunctionListView.Enabled = true;
-        Application.UseWaitCursor = false;
+        var filePath = OpenFileDialog.FileName;
+        await LoadDebugFile(filePath);
       }
+    }
+
+    private async Task LoadDebugFile(string filePath) {
+      var sw = Stopwatch.StartNew();
+      StatusLabel.Text = "Opening PDB";
+      FunctionListView.Enabled = false;
+      ProgressBar.Visible = true;
+      Application.UseWaitCursor = true;
+
+      if (!(await OpenPDB(filePath))) {
+        MessageBox.Show("Failed to open PDB", "PDB Viewer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        ProgressBar.Visible = true;
+        return;
+      }
+
+      StatusLabel.Text = "Enumerating functions";
+
+      if (!(await LoadFunctionList())) {
+        MessageBox.Show("Failed to load function list from PDB", "PDB Viewer", MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+        ProgressBar.Visible = false;
+        return;
+      }
+
+      Text = $"PDB Viewer - {filePath}";
+      StatusLabel.Text = $"PDB loaded";
+      UpdateFunctionListView();
+      ProgressBar.Visible = false;
+      FunctionListView.Enabled = true;
+      Application.UseWaitCursor = false;
     }
 
     private void UpdateFunctionListView() {
@@ -117,6 +130,19 @@ namespace PDBViewer {
       string searchedText = SearchTextbox.Text.Trim();
       bool demangle = DemangleCheckbox.Checked;
 
+      Regex nameRegex = null;
+
+      if (filterName && RegexCheckbox.Checked) {
+        try {
+          nameRegex = new Regex(searchedText, RegexOptions.Compiled);
+          StatusLabel.Text = "";
+        }
+        catch (Exception ex) {
+          StatusLabel.Text = $"Invalid regex: {ex.Message}";
+          return;
+        }
+      }
+
       foreach (var item in sortedFuncList_) {
         if (!showFuncts && !item.IsPublic) {
           continue;
@@ -128,7 +154,13 @@ namespace PDBViewer {
 
         if (filterName) {
           var funcName = GetFunctionName(item, demangle);
-          if (!funcName.Contains(searchedText, StringComparison.OrdinalIgnoreCase)) {
+
+          if (nameRegex != null) {
+            if (!nameRegex.IsMatch(funcName)) {
+              continue;
+            }
+          }
+          else if (!funcName.Contains(searchedText, StringComparison.OrdinalIgnoreCase)) {
             continue;
           }
         }
@@ -158,7 +190,11 @@ namespace PDBViewer {
       }
 
       FunctionListView.VirtualListSize = filteredFuncList_.Count;
-      FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
+
+      if (filteredFuncList_.Count > 0) {
+        FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
+      }
+
       SymbolCountLabel.Text = filteredFuncList_.Count.ToString();
       TotalSymbolCountLabel.Text = sortedFuncList_.Count.ToString();
     }
@@ -184,7 +220,7 @@ namespace PDBViewer {
         index++;
       }
 
-      if (selectedIndex != -1) {
+      if (selectedIndex != -1 && filteredFuncList_.Count > 0) {
         FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
         FunctionListView.EnsureVisible(selectedIndex);
       }
@@ -270,13 +306,6 @@ namespace PDBViewer {
           //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
           var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (uint)sym.length);
           funcInfo.IsPublic = true;
-
-          // Public symbols are preferred over function symbols if they have the same RVA and size.
-          // This ensures that the mangled name is saved, set only of public symbols.
-          if (funcSymbolsSet.Contains(funcInfo)) {
-            funcSymbolsSet.Remove(funcInfo);
-          }
-
           funcSymbolsSet.Add(funcInfo);
         }
 
@@ -343,21 +372,17 @@ namespace PDBViewer {
               break;
             }
 
+            uint lineRVA = lineNumber.relativeVirtualAddress;
             var sourceFile = lineNumber.sourceFile;
-            var sourceLine = new SourceLineDebugInfo((int)lineNumber.relativeVirtualAddress,
+            var sourceLine = new SourceLineDebugInfo((int)lineRVA,
                                                      (int)lineNumber.lineNumber,
                                                      (int)lineNumber.columnNumber,
                                                      sourceFile.fileName);
-            func.AddSourceLine(sourceLine);
-
             if (funcSymbol != null) {
               try {
                 var name = funcSymbol.name;
                 // Enumerate the functions that got inlined at this call site.
-                session_.findInlineeLinesByRVA(funcSymbol, funcSymbol.relativeVirtualAddress, 1, out var en);
-
-
-                foreach (var inlinee in EnumerateInlinees(funcSymbol, funcSymbol.relativeVirtualAddress)) {
+                foreach (var inlinee in EnumerateInlinees(funcSymbol, lineRVA)) {
                   if (string.IsNullOrEmpty(inlinee.FilePath)) {
                     // If the file name is not set, it means it's the same file
                     // as the function into which the inlining happened.
@@ -367,8 +392,12 @@ namespace PDBViewer {
                   sourceLine.AddInlinee(inlinee);
                 }
               }
-              catch { }
+              catch (Exception ex) {
+                Trace.TraceError($"Failed to get inlinees for RVA {func.StartRVA}: {ex.Message}");
+              }
             }
+
+            func.AddSourceLine(sourceLine);
           }
         }
         catch (Exception ex) {
@@ -434,7 +463,7 @@ namespace PDBViewer {
       return null;
     }
 
-  public string GetFunctionName(FunctionDebugInfo item, bool demangle) {
+    public string GetFunctionName(FunctionDebugInfo item, bool demangle) {
       if (!demangle) {
         return item.Name;
       }
@@ -494,13 +523,22 @@ namespace PDBViewer {
     }
 
     private async void FunctionListView_SelectedIndexChanged(object sender, EventArgs e) {
-      if (FunctionListView.SelectedIndices.Count == 0 || filteredFuncList_ == null) {
+      var currentFunc = GetSelectedFunction();
+
+      if (currentFunc == null) {
         return;
       }
 
-      var currentItem = filteredFuncList_[FunctionListView.SelectedIndices[0]];
-      UpdateOverlappingFunctions(currentItem);
-      await UpdateSelectedFunction(currentItem);
+      UpdateOverlappingFunctions(currentFunc);
+      await UpdateSelectedFunction(currentFunc);
+    }
+
+    private FunctionDebugInfo GetSelectedFunction() {
+      if (FunctionListView.SelectedIndices.Count == 0 || filteredFuncList_ == null) {
+        return null;
+      }
+
+      return filteredFuncList_[FunctionListView.SelectedIndices[0]];
     }
 
     private void UpdateOverlappingFunctions(FunctionDebugInfo currentItem) {
@@ -524,7 +562,9 @@ namespace PDBViewer {
         StatusLabel.Text = "";
       }
 
-      FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
+      if (filteredFuncList_.Count > 0) {
+        FunctionListView.RedrawItems(0, filteredFuncList_.Count - 1, false);
+      }
     }
 
     private async Task UpdateSelectedFunction(FunctionDebugInfo func) {
@@ -541,8 +581,8 @@ namespace PDBViewer {
       await AnnotateSourceLines(func);
 
       if (func.HasSourceLines) {
-        SourceLineListView.Items.Clear();
         SourceLineListView.BeginUpdate();
+        SourceLineListView.Items.Clear();
 
         foreach (var line in func.SourceLines) {
           var lvi = new ListViewItem();
@@ -551,10 +591,43 @@ namespace PDBViewer {
           lvi.SubItems.Add($"{line.Column}");
           lvi.SubItems.Add($"{line.InlineeCount}");
           lvi.SubItems.Add($"{line.FilePath}");
+          lvi.Tag = line;
           SourceLineListView.Items.Add(lvi);
         }
 
         SourceLineListView.EndUpdate();
+        await LoadSourceFile(func);
+      }
+    }
+
+    private async Task LoadSourceFile(FunctionDebugInfo func, string sourceFile = null) {
+      if (sourceFile == null) {
+        sourceFile = sourceMapper_.Map(func.SourceFileName);
+      }
+
+      if (!File.Exists(sourceFile)) {
+        SourceTextBox.Text = "Source file not found";
+        SourceFileLabel.Text = "";
+        return;
+      }
+
+      try {
+        if (!string.IsNullOrEmpty(func.SourceFileName) && func.SourceFileName != sourceFile) {
+          sourceMapper_.UpdateMap(func.SourceFileName, sourceFile);
+        }
+
+        SourceTextBox.Text = await File.ReadAllTextAsync(sourceFile);
+        SourceFileLabel.Text = sourceFile;
+
+        if (func.HasSourceLines) {
+          foreach (var line in func.SourceLines) {
+            HighlightSourceLine(SourceTextBox, line.Line - 1, Color.Bisque);
+          }
+        }
+      }
+      catch (Exception ex) {
+        SourceTextBox.Text = $"Failed to load source file: {ex.Message}";
+        SourceFileLabel.Text = "";
       }
     }
 
@@ -571,253 +644,149 @@ namespace PDBViewer {
 
     private void SearchResetButton_Click(object sender, EventArgs e) {
       SearchTextbox.Text = "";
-    }
-  }
-
-  public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
-    public static readonly FunctionDebugInfo Unknown = new(null, 0, 0);
-
-    public FunctionDebugInfo(string name, long rva, uint size, short optLevel = 0, int id = -1, short auxId = -1) {
-      // Note that string interning is not done here on purpose because
-      // it is often the slowest part in processing a trace, while the memory
-      // saving are quite small (under 15%, a few dozen MBs even for big traces).
-      Name = name;
-      RVA = rva;
-      Size = size;
-      OptimizationLevel = optLevel;
-      SourceLines = null;
-      Id = id;
-      AuxiliaryId = auxId;
+      StatusLabel.Text = "";
     }
 
-    public long Id { get; set; } // Used for MethodToken in managed code.
-    public string Name { get; private set; }
-    public List<SourceLineDebugInfo> SourceLines { get; set; }
-    public long AuxiliaryId { get; set; } // Used for RejitID in managed code.
-    public long RVA { get; set; }
-    public uint Size { get; set; }
-    public short OptimizationLevel { get; set; } // Used for OptimizationTier in managed code.
-    public bool HasSourceLines => SourceLines is { Count: > 0 };
-    public SourceLineDebugInfo FirstSourceLine => HasSourceLines ? SourceLines[0] : SourceLineDebugInfo.Unknown;
-    public SourceLineDebugInfo LastSourceLine => HasSourceLines ? SourceLines[^1] : SourceLineDebugInfo.Unknown;
+    private void SourceLineListView_SelectedIndexChanged(object sender, EventArgs e) {
+      if (ignoreSourceLineSelectedEvent_ ||
+          SourceLineListView.SelectedItems.Count == 0) {
+        return;
+      }
 
-    public string SourceFileName { get; set; }
-    public string OriginalSourceFileName { get; set; }
-    public long StartRVA => RVA;
-    public long EndRVA => RVA + Size - 1;
-    public bool IsUnknown => RVA == 0 && Size == 0;
-    public bool IsPublic { get; set; }
-    public bool IsSelected { get; set; }
-    public bool HasOverlap { get; set; }
-    public bool HasSelectionOverlap { get; set; }
+      var item = SourceLineListView.SelectedItems[0];
+      var line = item.Tag as SourceLineDebugInfo;
 
-    public static FunctionDebugInfo BinarySearch(List<FunctionDebugInfo> ranges, long value,
-                                                 bool hasOverlappingFuncts = false) {
-      int low = 0;
-      int high = ranges.Count - 1;
+      if (line == null) {
+        return;
+      }
 
-      while (low <= high) {
-        int mid = low + (high - low) / 2;
-        var range = ranges[mid];
-        int result = range.CompareTo(value);
+      InlineeListView.BeginUpdate();
+      InlineeListView.Items.Clear();
 
-        if (result == 0) {
-          return range;
-        }
-
-        if (result < 0) {
-          low = mid + 1;
-        }
-        else {
-          high = mid - 1;
+      if (line.InlineeCount > 0) {
+        foreach (var inlinee in line.Inlinees) {
+          var lvi = new ListViewItem();
+          lvi.Text = $"{inlinee.Function}";
+          lvi.SubItems.Add($"{inlinee.Line}");
+          lvi.SubItems.Add($"{inlinee.Column}");
+          lvi.SubItems.Add(inlinee.FilePath);
+          lvi.Tag = inlinee;
+          InlineeListView.Items.Add(lvi);
         }
       }
 
-      return null;
+      InlineeListView.EndUpdate();
+      SelectSourceLine(SourceTextBox, line.Line - 1);
     }
 
-    public void AddSourceLine(SourceLineDebugInfo sourceLine) {
-      SourceLines ??= new List<SourceLineDebugInfo>(1);
-      SourceLines.Add(sourceLine);
-    }
-
-    public override bool Equals(object obj) {
-      return obj is FunctionDebugInfo info && Equals(info);
-    }
-
-    public override int GetHashCode() {
-      return HashCode.Combine(RVA, Size, Id);
-    }
-
-    public override string ToString() {
-      return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}, AuxId: {AuxiliaryId}";
-    }
-
-    public int CompareTo(FunctionDebugInfo other) {
-      // Used by sorting.
-      if (other == null)
-        return 0;
-
-      if (other.StartRVA < StartRVA) {
-        return 1;
+    private void HighlightSourceLine(RichTextBox richTextBox, int lineNumber, Color color) {
+      if (lineNumber < 0 || lineNumber >= richTextBox.Lines.Length) {
+        return;
       }
 
-      if (other.StartRVA > StartRVA) {
-        return -1;
+      ignoredNextSourceCaretEvent_ = true;
+      int start = richTextBox.GetFirstCharIndexFromLine(lineNumber);
+      int length = richTextBox.Lines[lineNumber].Length;
+      richTextBox.Select(start, length);
+      richTextBox.SelectionBackColor = color;
+      richTextBox.SelectionLength = 0;
+    }
+
+    private void SelectSourceLine(RichTextBox richTextBox, int lineNumber) {
+      if (lineNumber < 0 || lineNumber >= richTextBox.Lines.Length) {
+        return;
       }
 
-      return 0;
+      ignoredNextSourceCaretEvent_ = true;
+      int start = richTextBox.GetFirstCharIndexFromLine(lineNumber);
+      int length = richTextBox.Lines[lineNumber].Length;
+      richTextBox.Select(start, length);
+      richTextBox.ScrollToCaret();
     }
 
-    public int CompareTo(long value) {
-      // Used by binary search.
-      if (value < StartRVA) {
-        return 1;
+    private async void SourceOpenButton_Click(object sender, EventArgs e) {
+      var currentFunc = GetSelectedFunction();
+
+      if (currentFunc != null &&
+          SourceOpenFileDialog.ShowDialog(this) == DialogResult.OK) {
+        await LoadSourceFile(currentFunc, SourceOpenFileDialog.FileName);
+      }
+    }
+
+    private void SourceTextBox_SelectionChanged(object sender, EventArgs e) {
+      if (ignoredNextSourceCaretEvent_) {
+        ignoredNextSourceCaretEvent_ = false;
+        return;
       }
 
-      if (value > EndRVA) {
-        return -1;
+      var currentFunc = GetSelectedFunction();
+
+      if (currentFunc == null || !currentFunc.HasSourceLines) {
+        return;
       }
 
-      return 0;
-    }
+      ignoreSourceLineSelectedEvent_ = true;
+      SourceLineListView.SelectedIndices.Clear();
+      int lineIndex = SourceTextBox.GetLineFromCharIndex(SourceTextBox.SelectionStart);
+      int firstIndex = -1;
 
-    public bool Equals(FunctionDebugInfo other) {
-      if (ReferenceEquals(null, other)) {
-        return false;
+      for (int i = 0; i < currentFunc.SourceLines.Count; i++) {
+        if (currentFunc.SourceLines[i].Line == lineIndex + 1) {
+          SourceLineListView.SelectedIndices.Add(i);
+          firstIndex = i;
+        }
       }
 
-      if (ReferenceEquals(this, other)) {
-        return true;
+      ignoreSourceLineSelectedEvent_ = false;
+      SourceLineListView.Focus();
+
+      if (firstIndex != -1) {
+        SourceLineListView.EnsureVisible(firstIndex);
+      }
+    }
+
+    private async void MainForm_Load(object sender, EventArgs e) {
+      var args = Environment.GetCommandLineArgs();
+
+      if (args.Length < 2) {
+        return;
       }
 
-      return RVA == other.RVA &&
-             Size == other.Size &&
-             Id == other.Id &&
-             AuxiliaryId == other.AuxiliaryId;
-    }
-  }
+      var file = args[1];
 
-  public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
-    public int RVA { get; set; }
-    public int Line { get; set; }
-    public int Column { get; set; }
-    public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
-    public List<SourceStackFrame> Inlinees { get; set; }
-    public int InlineeCount => Inlinees != null ? Inlinees.Count : 0;
-    public static readonly SourceLineDebugInfo Unknown = new(-1, -1);
-    public bool IsUnknown => Line == -1;
-
-    public SourceLineDebugInfo(int rva, int line, int column = 0, string filePath = null) {
-      RVA = rva;
-      Line = line;
-      Column = column;
-      FilePath = filePath != null ? string.Intern(filePath) : null;
+      if (File.Exists(file)) {
+        await LoadDebugFile(file);
+      }
     }
 
-    public void AddInlinee(SourceStackFrame inlinee) {
-      Inlinees ??= new List<SourceStackFrame>();
-      Inlinees.Add(inlinee);
+    private void RegexCheckbox_CheckedChanged(object sender, EventArgs e) {
+      UpdateFunctionListView();
     }
 
-    public bool HasInlinee(SourceStackFrame inlinee) {
-      return Inlinees != null && Inlinees.Contains(inlinee);
+    private void SourceTextBox_VScroll(object sender, EventArgs e) {
+      LineNumbersTextBox.Text = "";
+      int firstVisibleLine = SourceTextBox.GetLineFromCharIndex(SourceTextBox.GetCharIndexFromPosition(new Point(0, 0)));
+      int lastVisibleLine = SourceTextBox.GetLineFromCharIndex(SourceTextBox.GetCharIndexFromPosition(new Point(0, SourceTextBox.Height))) + 1;
+
+      for (int i = firstVisibleLine; i <= lastVisibleLine; i++) {
+        LineNumbersTextBox.AppendText($"{i + 1}: \n");
+      }
+
+      LineNumbersTextBox.SelectAll();
+      LineNumbersTextBox.SelectionAlignment = HorizontalAlignment.Right;
+      LineNumbersTextBox.DeselectAll();
+
+      // Synchronize scroll position.
+      LineNumbersTextBox.Select(SourceTextBox.GetCharIndexFromPosition(new Point(0, 0)), 0);
+      LineNumbersTextBox.ScrollToCaret();
     }
 
-    public SourceStackFrame FindSameFunctionInlinee(SourceStackFrame inlinee) {
-      return Inlinees?.Find(item => item.HasSameFunction(inlinee));
+    private void SourceTextBox_TextChanged(object sender, EventArgs e) {
+      SourceTextBox_VScroll(sender, e);
     }
 
-    public bool Equals(SourceLineDebugInfo other) {
-      return RVA == other.RVA && Line == other.Line &&
-             Column == other.Column &&
-             FilePath.Equals(other.FilePath, StringComparison.Ordinal);
-    }
-
-    public override bool Equals(object obj) {
-      return obj is SourceLineDebugInfo other && Equals(other);
-    }
-
-    public override int GetHashCode() {
-      return HashCode.Combine(FilePath, Line, Column);
-    }
-  }
-
-  public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
-    public SourceStackFrame(string function, string filePath, int line, int column) {
-      Function = function;
-      FilePath = filePath;
-      Line = line;
-      Column = column;
-    }
-
-    public string Function { get; set; }
-    public string FilePath { get; set; }
-    public int Line { get; set; }
-    public int Column { get; set; }
-
-    public static bool operator ==(SourceStackFrame left, SourceStackFrame right) {
-      return Equals(left, right);
-    }
-
-    public static bool operator !=(SourceStackFrame left, SourceStackFrame right) {
-      return !Equals(left, right);
-    }
-
-    public override bool Equals(object obj) {
-      return ReferenceEquals(this, obj) || obj is SourceStackFrame other && Equals(other);
-    }
-
-    public override int GetHashCode() {
-      return HashCode.Combine(Function, FilePath, Line, Column);
-    }
-
-    public bool Equals(SourceStackFrame other) {
-      if (ReferenceEquals(null, other))
-        return false;
-      if (ReferenceEquals(this, other))
-        return true;
-      return Line == other.Line && Column == other.Column &&
-             Function.Equals(other.Function, StringComparison.OrdinalIgnoreCase) &&
-             FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public bool HasSameFunction(SourceStackFrame inlinee) {
-      return Function.Equals(inlinee.Function, StringComparison.OrdinalIgnoreCase) &&
-             FilePath.Equals(inlinee.FilePath, StringComparison.OrdinalIgnoreCase);
-    }
-  }
-
-  static class NativeMethods {
-    [DllImport("dbghelp.dll", SetLastError = true, PreserveSig = true)]
-    public static extern int UnDecorateSymbolName(
-      [In][MarshalAs(UnmanagedType.LPStr)] string DecoratedName,
-      [Out] StringBuilder UnDecoratedName,
-      [In][MarshalAs(UnmanagedType.U4)] int UndecoratedLength,
-      [In][MarshalAs(UnmanagedType.U4)] UnDecorateFlags Flags);
-
-    // C++ function name demangling
-    [Flags]
-    public enum UnDecorateFlags {
-      UNDNAME_COMPLETE = 0x0000, // Enable full undecoration
-      UNDNAME_NO_LEADING_UNDERSCORES = 0x0001, // Remove leading underscores from MS extended keywords
-      UNDNAME_NO_MS_KEYWORDS = 0x0002, // Disable expansion of MS extended keywords
-      UNDNAME_NO_FUNCTION_RETURNS = 0x0004, // Disable expansion of return type for primary declaration
-      UNDNAME_NO_ALLOCATION_MODEL = 0x0008, // Disable expansion of the declaration model
-      UNDNAME_NO_ALLOCATION_LANGUAGE = 0x0010, // Disable expansion of the declaration language specifier
-      UNDNAME_NO_MS_THISTYPE = 0x0020, // NYI Disable expansion of MS keywords on the 'this' type for primary declaration
-      UNDNAME_NO_CV_THISTYPE = 0x0040, // NYI Disable expansion of CV modifiers on the 'this' type for primary declaration
-      UNDNAME_NO_THISTYPE = 0x0060, // Disable all modifiers on the 'this' type
-      UNDNAME_NO_ACCESS_SPECIFIERS = 0x0080, // Disable expansion of access specifiers for members
-      UNDNAME_NO_THROW_SIGNATURES =
-        0x0100, // Disable expansion of 'throw-signatures' for functions and pointers to functions
-      UNDNAME_NO_MEMBER_TYPE = 0x0200, // Disable expansion of 'static' or 'virtual'ness of members
-      UNDNAME_NO_RETURN_UDT_MODEL = 0x0400, // Disable expansion of MS model for UDT returns
-      UNDNAME_32_BIT_DECODE = 0x0800, // Undecorate 32-bit decorated names
-      UNDNAME_NAME_ONLY = 0x1000, // Crack only the name for primary declaration;
-      // return just [scope::]name.  Does expand template params
-      UNDNAME_NO_ARGUMENTS = 0x2000, // Don't undecorate arguments to function
-      UNDNAME_NO_SPECIAL_SYMS = 0x4000 // Don't undecorate special names (v-table, vcall, vector xxx, metatype, etc)
+    private void LineNumbersTextBox_MouseDown(object sender, MouseEventArgs e) {
+      SourceTextBox.Focus();
     }
   }
 }

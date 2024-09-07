@@ -74,21 +74,20 @@
       columnHeader10 = new ColumnHeader();
       columnHeader14 = new ColumnHeader();
       tabControl2 = new TabControl();
+      tabPage4 = new TabPage();
+      SourceTextBox = new RichTextBox();
+      LineNumbersTextBox = new RichTextBox();
+      toolStrip2 = new ToolStrip();
+      SourceOpenButton = new ToolStripButton();
+      toolStripSeparator5 = new ToolStripSeparator();
+      SourceFileLabel = new ToolStripLabel();
       tabPage3 = new TabPage();
-      listView2 = new ListView();
+      InlineeListView = new ListView();
       columnHeader13 = new ColumnHeader();
       columnHeader11 = new ColumnHeader();
       columnHeader12 = new ColumnHeader();
       columnHeader15 = new ColumnHeader();
-      tabPage4 = new TabPage();
-      toolStrip2 = new ToolStrip();
-      toolStripButton1 = new ToolStripButton();
-      toolStripSeparator5 = new ToolStripSeparator();
-      toolStripButton2 = new ToolStripButton();
-      toolStripButton3 = new ToolStripButton();
-      toolStripSeparator6 = new ToolStripSeparator();
-      toolStripLabel3 = new ToolStripLabel();
-      richTextBox1 = new RichTextBox();
+      SourceOpenFileDialog = new OpenFileDialog();
       toolStrip1.SuspendLayout();
       statusStrip1.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -103,9 +102,9 @@
       splitContainer2.Panel2.SuspendLayout();
       splitContainer2.SuspendLayout();
       tabControl2.SuspendLayout();
-      tabPage3.SuspendLayout();
       tabPage4.SuspendLayout();
       toolStrip2.SuspendLayout();
+      tabPage3.SuspendLayout();
       SuspendLayout();
       // 
       // toolStrip1
@@ -118,9 +117,8 @@
       toolStrip1.Items.AddRange(new ToolStripItem[] { OpenButton, toolStripSeparator1, toolStripDropDownButton1, DemangleCheckbox, toolStripSeparator3, toolStripLabel1, RVATextbox, SubtractRVAButton, AddRVAButton, HexCheckbox, toolStripSeparator2, toolStripLabel2, SearchTextbox, SearchResetButton, RegexCheckbox });
       toolStrip1.Location = new Point(0, 0);
       toolStrip1.Name = "toolStrip1";
-      toolStrip1.Padding = new Padding(0, 0, 2, 0);
       toolStrip1.RenderMode = ToolStripRenderMode.System;
-      toolStrip1.Size = new Size(1253, 32);
+      toolStrip1.Size = new Size(1566, 40);
       toolStrip1.TabIndex = 0;
       toolStrip1.Text = "toolStrip1";
       // 
@@ -131,7 +129,7 @@
       OpenButton.ImageTransparentColor = Color.Magenta;
       OpenButton.Margin = new Padding(2, 1, 0, 2);
       OpenButton.Name = "OpenButton";
-      OpenButton.Size = new Size(65, 29);
+      OpenButton.Size = new Size(76, 37);
       OpenButton.Text = "Open";
       OpenButton.ToolTipText = "Open PDB file";
       OpenButton.Click += OpenButton_Click;
@@ -139,7 +137,7 @@
       // toolStripSeparator1
       // 
       toolStripSeparator1.Name = "toolStripSeparator1";
-      toolStripSeparator1.Size = new Size(6, 32);
+      toolStripSeparator1.Size = new Size(6, 40);
       // 
       // toolStripDropDownButton1
       // 
@@ -148,8 +146,9 @@
       toolStripDropDownButton1.Image = (Image)resources.GetObject("toolStripDropDownButton1.Image");
       toolStripDropDownButton1.ImageTransparentColor = Color.Magenta;
       toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-      toolStripDropDownButton1.Size = new Size(59, 29);
+      toolStripDropDownButton1.Size = new Size(74, 35);
       toolStripDropDownButton1.Text = "Show";
+      toolStripDropDownButton1.ToolTipText = "Select symbol kind to show";
       // 
       // ShowFunctionsCheckbox
       // 
@@ -157,7 +156,7 @@
       ShowFunctionsCheckbox.CheckOnClick = true;
       ShowFunctionsCheckbox.CheckState = CheckState.Checked;
       ShowFunctionsCheckbox.Name = "ShowFunctionsCheckbox";
-      ShowFunctionsCheckbox.Size = new Size(192, 26);
+      ShowFunctionsCheckbox.Size = new Size(236, 34);
       ShowFunctionsCheckbox.Text = "Show functions";
       ShowFunctionsCheckbox.CheckStateChanged += ShowFunctionsCheckbox_CheckStateChanged;
       // 
@@ -167,7 +166,7 @@
       ShowPublicsCheckbox.CheckOnClick = true;
       ShowPublicsCheckbox.CheckState = CheckState.Checked;
       ShowPublicsCheckbox.Name = "ShowPublicsCheckbox";
-      ShowPublicsCheckbox.Size = new Size(192, 26);
+      ShowPublicsCheckbox.Size = new Size(236, 34);
       ShowPublicsCheckbox.Text = "Show publics";
       ShowPublicsCheckbox.CheckedChanged += ShowPublicsCheckbox_CheckedChanged;
       // 
@@ -180,7 +179,7 @@
       DemangleCheckbox.Image = (Image)resources.GetObject("DemangleCheckbox.Image");
       DemangleCheckbox.ImageTransparentColor = Color.Magenta;
       DemangleCheckbox.Name = "DemangleCheckbox";
-      DemangleCheckbox.Size = new Size(82, 29);
+      DemangleCheckbox.Size = new Size(97, 35);
       DemangleCheckbox.Text = "Demangle";
       DemangleCheckbox.ToolTipText = "Demangle C++ function names";
       DemangleCheckbox.CheckedChanged += DemangleCheckbox_CheckedChanged;
@@ -188,7 +187,7 @@
       // toolStripSeparator3
       // 
       toolStripSeparator3.Name = "toolStripSeparator3";
-      toolStripSeparator3.Size = new Size(6, 32);
+      toolStripSeparator3.Size = new Size(6, 40);
       // 
       // toolStripLabel1
       // 
@@ -196,14 +195,14 @@
       toolStripLabel1.ImageScaling = ToolStripItemImageScaling.None;
       toolStripLabel1.Margin = new Padding(2, 2, 0, 4);
       toolStripLabel1.Name = "toolStripLabel1";
-      toolStripLabel1.Size = new Size(52, 26);
+      toolStripLabel1.Size = new Size(61, 34);
       toolStripLabel1.Text = "RVA";
       // 
       // RVATextbox
       // 
       RVATextbox.Name = "RVATextbox";
-      RVATextbox.Size = new Size(101, 32);
-      RVATextbox.ToolTipText = "Search for functions with an RVA in range";
+      RVATextbox.Size = new Size(125, 40);
+      RVATextbox.ToolTipText = "Search for functions with an RVA range overlapping the value";
       RVATextbox.TextChanged += RVATextbox_TextChanged;
       // 
       // SubtractRVAButton
@@ -214,7 +213,7 @@
       SubtractRVAButton.ImageScaling = ToolStripItemImageScaling.None;
       SubtractRVAButton.ImageTransparentColor = Color.Magenta;
       SubtractRVAButton.Name = "SubtractRVAButton";
-      SubtractRVAButton.Size = new Size(29, 29);
+      SubtractRVAButton.Size = new Size(34, 35);
       SubtractRVAButton.Text = "toolStripButton1";
       SubtractRVAButton.ToolTipText = "Decrement searched RVA";
       SubtractRVAButton.Click += SubtractRVAButton_Click;
@@ -226,7 +225,7 @@
       AddRVAButton.ImageScaling = ToolStripItemImageScaling.None;
       AddRVAButton.ImageTransparentColor = Color.Magenta;
       AddRVAButton.Name = "AddRVAButton";
-      AddRVAButton.Size = new Size(29, 29);
+      AddRVAButton.Size = new Size(34, 35);
       AddRVAButton.Text = "toolStripButton1";
       AddRVAButton.ToolTipText = "Increment searched RVA";
       AddRVAButton.Click += AddRVAButton_Click;
@@ -240,15 +239,15 @@
       HexCheckbox.Image = (Image)resources.GetObject("HexCheckbox.Image");
       HexCheckbox.ImageTransparentColor = Color.Magenta;
       HexCheckbox.Name = "HexCheckbox";
-      HexCheckbox.Size = new Size(41, 29);
+      HexCheckbox.Size = new Size(49, 35);
       HexCheckbox.Text = "HEX";
-      HexCheckbox.ToolTipText = "Handle RVA value as hexadecimal";
+      HexCheckbox.ToolTipText = "Consider RVA value as being hexadecimal";
       HexCheckbox.CheckedChanged += HexCheckbox_CheckedChanged;
       // 
       // toolStripSeparator2
       // 
       toolStripSeparator2.Name = "toolStripSeparator2";
-      toolStripSeparator2.Size = new Size(6, 32);
+      toolStripSeparator2.Size = new Size(6, 40);
       // 
       // toolStripLabel2
       // 
@@ -256,13 +255,13 @@
       toolStripLabel2.ImageScaling = ToolStripItemImageScaling.None;
       toolStripLabel2.Margin = new Padding(2, 2, 0, 4);
       toolStripLabel2.Name = "toolStripLabel2";
-      toolStripLabel2.Size = new Size(99, 26);
-      toolStripLabel2.Text = "Filter name";
+      toolStripLabel2.Size = new Size(129, 34);
+      toolStripLabel2.Text = "Search name";
       // 
       // SearchTextbox
       // 
       SearchTextbox.Name = "SearchTextbox";
-      SearchTextbox.Size = new Size(200, 32);
+      SearchTextbox.Size = new Size(249, 40);
       SearchTextbox.ToolTipText = "Filter list to functions containing substring";
       SearchTextbox.TextChanged += SearchTextbox_TextChanged;
       // 
@@ -273,67 +272,68 @@
       SearchResetButton.ImageScaling = ToolStripItemImageScaling.None;
       SearchResetButton.ImageTransparentColor = Color.Magenta;
       SearchResetButton.Name = "SearchResetButton";
-      SearchResetButton.Size = new Size(29, 29);
+      SearchResetButton.Size = new Size(34, 35);
       SearchResetButton.Text = "toolStripButton1";
+      SearchResetButton.ToolTipText = "Clear searched name";
       SearchResetButton.Click += SearchResetButton_Click;
       // 
       // RegexCheckbox
       // 
       RegexCheckbox.CheckOnClick = true;
       RegexCheckbox.DisplayStyle = ToolStripItemDisplayStyle.Text;
-      RegexCheckbox.Enabled = false;
       RegexCheckbox.Image = (Image)resources.GetObject("RegexCheckbox.Image");
       RegexCheckbox.ImageTransparentColor = Color.Magenta;
       RegexCheckbox.Name = "RegexCheckbox";
-      RegexCheckbox.Size = new Size(29, 29);
+      RegexCheckbox.Size = new Size(35, 35);
       RegexCheckbox.Text = "R*";
-      RegexCheckbox.ToolTipText = "Use regex function name filter";
+      RegexCheckbox.ToolTipText = "Use Regex function name filter";
+      RegexCheckbox.CheckedChanged += RegexCheckbox_CheckedChanged;
       // 
       // statusStrip1
       // 
       statusStrip1.ImageScalingSize = new Size(28, 28);
       statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, SymbolCountLabel, toolStripStatusLabel2, TotalSymbolCountLabel, StatusLabel, ProgressBar });
-      statusStrip1.Location = new Point(0, 775);
+      statusStrip1.Location = new Point(0, 969);
       statusStrip1.Name = "statusStrip1";
-      statusStrip1.Padding = new Padding(1, 0, 9, 0);
-      statusStrip1.Size = new Size(1253, 26);
+      statusStrip1.Padding = new Padding(1, 0, 11, 0);
+      statusStrip1.Size = new Size(1566, 32);
       statusStrip1.TabIndex = 1;
       statusStrip1.Text = "statusStrip1";
       // 
       // toolStripStatusLabel1
       // 
       toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-      toolStripStatusLabel1.Size = new Size(68, 20);
+      toolStripStatusLabel1.Size = new Size(84, 25);
       toolStripStatusLabel1.Text = "Symbols:";
       // 
       // SymbolCountLabel
       // 
       SymbolCountLabel.Name = "SymbolCountLabel";
-      SymbolCountLabel.Size = new Size(17, 20);
+      SymbolCountLabel.Size = new Size(22, 25);
       SymbolCountLabel.Text = "0";
       // 
       // toolStripStatusLabel2
       // 
       toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-      toolStripStatusLabel2.Size = new Size(42, 20);
+      toolStripStatusLabel2.Size = new Size(49, 25);
       toolStripStatusLabel2.Text = "Total";
       // 
       // TotalSymbolCountLabel
       // 
       TotalSymbolCountLabel.Name = "TotalSymbolCountLabel";
-      TotalSymbolCountLabel.Size = new Size(17, 20);
+      TotalSymbolCountLabel.Size = new Size(22, 25);
       TotalSymbolCountLabel.Text = "0";
       // 
       // StatusLabel
       // 
       StatusLabel.Name = "StatusLabel";
-      StatusLabel.Size = new Size(112, 20);
+      StatusLabel.Size = new Size(134, 25);
       StatusLabel.Text = "No PDB loaded";
       // 
       // ProgressBar
       // 
       ProgressBar.Name = "ProgressBar";
-      ProgressBar.Size = new Size(67, 21);
+      ProgressBar.Size = new Size(84, 24);
       ProgressBar.Style = ProgressBarStyle.Marquee;
       ProgressBar.Visible = false;
       // 
@@ -345,7 +345,7 @@
       // splitContainer1
       // 
       splitContainer1.Dock = DockStyle.Fill;
-      splitContainer1.Location = new Point(0, 32);
+      splitContainer1.Location = new Point(0, 40);
       splitContainer1.Margin = new Padding(2);
       splitContainer1.Name = "splitContainer1";
       splitContainer1.Orientation = Orientation.Horizontal;
@@ -357,8 +357,8 @@
       // splitContainer1.Panel2
       // 
       splitContainer1.Panel2.Controls.Add(tabControl1);
-      splitContainer1.Size = new Size(1253, 743);
-      splitContainer1.SplitterDistance = 424;
+      splitContainer1.Size = new Size(1566, 929);
+      splitContainer1.SplitterDistance = 530;
       splitContainer1.SplitterWidth = 2;
       splitContainer1.TabIndex = 2;
       // 
@@ -372,7 +372,7 @@
       FunctionListView.Margin = new Padding(2);
       FunctionListView.MultiSelect = false;
       FunctionListView.Name = "FunctionListView";
-      FunctionListView.Size = new Size(1253, 424);
+      FunctionListView.Size = new Size(1566, 530);
       FunctionListView.TabIndex = 3;
       FunctionListView.UseCompatibleStateImageBehavior = false;
       FunctionListView.View = View.Details;
@@ -417,17 +417,17 @@
       tabControl1.Margin = new Padding(2);
       tabControl1.Name = "tabControl1";
       tabControl1.SelectedIndex = 0;
-      tabControl1.Size = new Size(1253, 317);
+      tabControl1.Size = new Size(1566, 397);
       tabControl1.TabIndex = 0;
       // 
       // tabPage1
       // 
       tabPage1.Controls.Add(FunctionDeteailsTextBox);
-      tabPage1.Location = new Point(4, 29);
+      tabPage1.Location = new Point(4, 34);
       tabPage1.Margin = new Padding(2);
       tabPage1.Name = "tabPage1";
       tabPage1.Padding = new Padding(2);
-      tabPage1.Size = new Size(1245, 284);
+      tabPage1.Size = new Size(1558, 359);
       tabPage1.TabIndex = 0;
       tabPage1.Text = "Details";
       tabPage1.UseVisualStyleBackColor = true;
@@ -444,17 +444,17 @@
       FunctionDeteailsTextBox.Name = "FunctionDeteailsTextBox";
       FunctionDeteailsTextBox.PlaceholderText = "Selected function information";
       FunctionDeteailsTextBox.ReadOnly = true;
-      FunctionDeteailsTextBox.Size = new Size(1241, 280);
+      FunctionDeteailsTextBox.Size = new Size(1554, 355);
       FunctionDeteailsTextBox.TabIndex = 0;
       // 
       // tabPage2
       // 
       tabPage2.Controls.Add(splitContainer2);
-      tabPage2.Location = new Point(4, 29);
+      tabPage2.Location = new Point(4, 34);
       tabPage2.Margin = new Padding(2);
       tabPage2.Name = "tabPage2";
       tabPage2.Padding = new Padding(2);
-      tabPage2.Size = new Size(1245, 284);
+      tabPage2.Size = new Size(1558, 359);
       tabPage2.TabIndex = 1;
       tabPage2.Text = "Source Lines";
       tabPage2.UseVisualStyleBackColor = true;
@@ -463,6 +463,7 @@
       // 
       splitContainer2.Dock = DockStyle.Fill;
       splitContainer2.Location = new Point(2, 2);
+      splitContainer2.Margin = new Padding(4);
       splitContainer2.Name = "splitContainer2";
       // 
       // splitContainer2.Panel1
@@ -472,8 +473,9 @@
       // splitContainer2.Panel2
       // 
       splitContainer2.Panel2.Controls.Add(tabControl2);
-      splitContainer2.Size = new Size(1241, 280);
-      splitContainer2.SplitterDistance = 481;
+      splitContainer2.Size = new Size(1554, 355);
+      splitContainer2.SplitterDistance = 602;
+      splitContainer2.SplitterWidth = 5;
       splitContainer2.TabIndex = 0;
       // 
       // SourceLineListView
@@ -484,12 +486,12 @@
       SourceLineListView.GridLines = true;
       SourceLineListView.Location = new Point(0, 0);
       SourceLineListView.Margin = new Padding(2);
-      SourceLineListView.MultiSelect = false;
       SourceLineListView.Name = "SourceLineListView";
-      SourceLineListView.Size = new Size(481, 280);
+      SourceLineListView.Size = new Size(602, 355);
       SourceLineListView.TabIndex = 4;
       SourceLineListView.UseCompatibleStateImageBehavior = false;
       SourceLineListView.View = View.Details;
+      SourceLineListView.SelectedIndexChanged += SourceLineListView_SelectedIndexChanged;
       // 
       // columnHeader9
       // 
@@ -514,49 +516,137 @@
       // columnHeader14
       // 
       columnHeader14.Text = "File";
-      columnHeader14.Width = 100;
+      columnHeader14.Width = 250;
       // 
       // tabControl2
       // 
-      tabControl2.Controls.Add(tabPage3);
       tabControl2.Controls.Add(tabPage4);
+      tabControl2.Controls.Add(tabPage3);
       tabControl2.Dock = DockStyle.Fill;
       tabControl2.Location = new Point(0, 0);
+      tabControl2.Margin = new Padding(4);
       tabControl2.Name = "tabControl2";
       tabControl2.SelectedIndex = 0;
-      tabControl2.Size = new Size(756, 280);
+      tabControl2.Size = new Size(947, 355);
       tabControl2.TabIndex = 0;
+      // 
+      // tabPage4
+      // 
+      tabPage4.Controls.Add(SourceTextBox);
+      tabPage4.Controls.Add(LineNumbersTextBox);
+      tabPage4.Controls.Add(toolStrip2);
+      tabPage4.Location = new Point(4, 34);
+      tabPage4.Margin = new Padding(4);
+      tabPage4.Name = "tabPage4";
+      tabPage4.Padding = new Padding(4);
+      tabPage4.Size = new Size(939, 317);
+      tabPage4.TabIndex = 1;
+      tabPage4.Text = "Source Preview";
+      tabPage4.UseVisualStyleBackColor = true;
+      // 
+      // SourceTextBox
+      // 
+      SourceTextBox.BackColor = SystemColors.Window;
+      SourceTextBox.BorderStyle = BorderStyle.None;
+      SourceTextBox.Dock = DockStyle.Fill;
+      SourceTextBox.Font = new Font("Consolas", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+      SourceTextBox.HideSelection = false;
+      SourceTextBox.Location = new Point(84, 38);
+      SourceTextBox.Margin = new Padding(16, 4, 4, 4);
+      SourceTextBox.Name = "SourceTextBox";
+      SourceTextBox.ReadOnly = true;
+      SourceTextBox.Size = new Size(851, 275);
+      SourceTextBox.TabIndex = 0;
+      SourceTextBox.Text = "Open source file";
+      SourceTextBox.WordWrap = false;
+      SourceTextBox.SelectionChanged += SourceTextBox_SelectionChanged;
+      SourceTextBox.VScroll += SourceTextBox_VScroll;
+      SourceTextBox.TextChanged += SourceTextBox_TextChanged;
+      // 
+      // LineNumbersTextBox
+      // 
+      LineNumbersTextBox.BackColor = SystemColors.Window;
+      LineNumbersTextBox.BorderStyle = BorderStyle.None;
+      LineNumbersTextBox.Dock = DockStyle.Left;
+      LineNumbersTextBox.Font = new Font("Consolas", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+      LineNumbersTextBox.ForeColor = Color.DarkBlue;
+      LineNumbersTextBox.Location = new Point(4, 38);
+      LineNumbersTextBox.Margin = new Padding(4);
+      LineNumbersTextBox.Name = "LineNumbersTextBox";
+      LineNumbersTextBox.ReadOnly = true;
+      LineNumbersTextBox.ScrollBars = RichTextBoxScrollBars.None;
+      LineNumbersTextBox.Size = new Size(80, 275);
+      LineNumbersTextBox.TabIndex = 2;
+      LineNumbersTextBox.TabStop = false;
+      LineNumbersTextBox.Text = "";
+      LineNumbersTextBox.WordWrap = false;
+      LineNumbersTextBox.MouseDown += LineNumbersTextBox_MouseDown;
+      // 
+      // toolStrip2
+      // 
+      toolStrip2.BackColor = SystemColors.Control;
+      toolStrip2.GripStyle = ToolStripGripStyle.Hidden;
+      toolStrip2.ImageScalingSize = new Size(20, 20);
+      toolStrip2.Items.AddRange(new ToolStripItem[] { SourceOpenButton, toolStripSeparator5, SourceFileLabel });
+      toolStrip2.Location = new Point(4, 4);
+      toolStrip2.Name = "toolStrip2";
+      toolStrip2.RenderMode = ToolStripRenderMode.System;
+      toolStrip2.Size = new Size(931, 34);
+      toolStrip2.TabIndex = 1;
+      toolStrip2.Text = "toolStrip2";
+      // 
+      // SourceOpenButton
+      // 
+      SourceOpenButton.Image = (Image)resources.GetObject("SourceOpenButton.Image");
+      SourceOpenButton.ImageScaling = ToolStripItemImageScaling.None;
+      SourceOpenButton.ImageTransparentColor = Color.Magenta;
+      SourceOpenButton.Name = "SourceOpenButton";
+      SourceOpenButton.Size = new Size(76, 29);
+      SourceOpenButton.Text = "Open";
+      SourceOpenButton.Click += SourceOpenButton_Click;
+      // 
+      // toolStripSeparator5
+      // 
+      toolStripSeparator5.Name = "toolStripSeparator5";
+      toolStripSeparator5.Size = new Size(6, 34);
+      // 
+      // SourceFileLabel
+      // 
+      SourceFileLabel.Name = "SourceFileLabel";
+      SourceFileLabel.Size = new Size(181, 29);
+      SourceFileLabel.Text = "No source file loaded";
       // 
       // tabPage3
       // 
-      tabPage3.Controls.Add(listView2);
-      tabPage3.Location = new Point(4, 29);
+      tabPage3.Controls.Add(InlineeListView);
+      tabPage3.Location = new Point(4, 34);
+      tabPage3.Margin = new Padding(4);
       tabPage3.Name = "tabPage3";
-      tabPage3.Padding = new Padding(3);
-      tabPage3.Size = new Size(748, 247);
+      tabPage3.Padding = new Padding(4);
+      tabPage3.Size = new Size(939, 317);
       tabPage3.TabIndex = 0;
       tabPage3.Text = "Inlinees";
       tabPage3.UseVisualStyleBackColor = true;
       // 
-      // listView2
+      // InlineeListView
       // 
-      listView2.Columns.AddRange(new ColumnHeader[] { columnHeader13, columnHeader11, columnHeader12, columnHeader15 });
-      listView2.Dock = DockStyle.Fill;
-      listView2.FullRowSelect = true;
-      listView2.GridLines = true;
-      listView2.Location = new Point(3, 3);
-      listView2.Margin = new Padding(2);
-      listView2.MultiSelect = false;
-      listView2.Name = "listView2";
-      listView2.Size = new Size(742, 241);
-      listView2.TabIndex = 6;
-      listView2.UseCompatibleStateImageBehavior = false;
-      listView2.View = View.Details;
+      InlineeListView.Columns.AddRange(new ColumnHeader[] { columnHeader13, columnHeader11, columnHeader12, columnHeader15 });
+      InlineeListView.Dock = DockStyle.Fill;
+      InlineeListView.FullRowSelect = true;
+      InlineeListView.GridLines = true;
+      InlineeListView.Location = new Point(4, 4);
+      InlineeListView.Margin = new Padding(2);
+      InlineeListView.MultiSelect = false;
+      InlineeListView.Name = "InlineeListView";
+      InlineeListView.Size = new Size(931, 309);
+      InlineeListView.TabIndex = 6;
+      InlineeListView.UseCompatibleStateImageBehavior = false;
+      InlineeListView.View = View.Details;
       // 
       // columnHeader13
       // 
       columnHeader13.Text = "Inlinee Name";
-      columnHeader13.Width = 250;
+      columnHeader13.Width = 400;
       // 
       // columnHeader11
       // 
@@ -571,94 +661,18 @@
       // columnHeader15
       // 
       columnHeader15.Text = "File Name";
-      columnHeader15.Width = 200;
+      columnHeader15.Width = 250;
       // 
-      // tabPage4
+      // SourceOpenFileDialog
       // 
-      tabPage4.Controls.Add(toolStrip2);
-      tabPage4.Controls.Add(richTextBox1);
-      tabPage4.Location = new Point(4, 29);
-      tabPage4.Name = "tabPage4";
-      tabPage4.Padding = new Padding(3);
-      tabPage4.Size = new Size(748, 247);
-      tabPage4.TabIndex = 1;
-      tabPage4.Text = "Source Preview";
-      tabPage4.UseVisualStyleBackColor = true;
-      // 
-      // toolStrip2
-      // 
-      toolStrip2.BackColor = SystemColors.Control;
-      toolStrip2.GripStyle = ToolStripGripStyle.Hidden;
-      toolStrip2.ImageScalingSize = new Size(20, 20);
-      toolStrip2.Items.AddRange(new ToolStripItem[] { toolStripButton1, toolStripSeparator5, toolStripButton2, toolStripButton3, toolStripSeparator6, toolStripLabel3 });
-      toolStrip2.Location = new Point(3, 3);
-      toolStrip2.Name = "toolStrip2";
-      toolStrip2.Size = new Size(742, 27);
-      toolStrip2.TabIndex = 1;
-      toolStrip2.Text = "toolStrip2";
-      // 
-      // toolStripButton1
-      // 
-      toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
-      toolStripButton1.ImageScaling = ToolStripItemImageScaling.None;
-      toolStripButton1.ImageTransparentColor = Color.Magenta;
-      toolStripButton1.Name = "toolStripButton1";
-      toolStripButton1.Size = new Size(65, 24);
-      toolStripButton1.Text = "Open";
-      // 
-      // toolStripSeparator5
-      // 
-      toolStripSeparator5.Name = "toolStripSeparator5";
-      toolStripSeparator5.Size = new Size(6, 27);
-      // 
-      // toolStripButton2
-      // 
-      toolStripButton2.DisplayStyle = ToolStripItemDisplayStyle.Image;
-      toolStripButton2.Image = (Image)resources.GetObject("toolStripButton2.Image");
-      toolStripButton2.ImageScaling = ToolStripItemImageScaling.None;
-      toolStripButton2.ImageTransparentColor = Color.Magenta;
-      toolStripButton2.Name = "toolStripButton2";
-      toolStripButton2.Size = new Size(29, 24);
-      toolStripButton2.Text = "toolStripButton2";
-      // 
-      // toolStripButton3
-      // 
-      toolStripButton3.DisplayStyle = ToolStripItemDisplayStyle.Image;
-      toolStripButton3.Image = (Image)resources.GetObject("toolStripButton3.Image");
-      toolStripButton3.ImageScaling = ToolStripItemImageScaling.None;
-      toolStripButton3.ImageTransparentColor = Color.Magenta;
-      toolStripButton3.Name = "toolStripButton3";
-      toolStripButton3.Size = new Size(29, 24);
-      toolStripButton3.Text = "toolStripButton3";
-      // 
-      // toolStripSeparator6
-      // 
-      toolStripSeparator6.Name = "toolStripSeparator6";
-      toolStripSeparator6.Size = new Size(6, 27);
-      // 
-      // toolStripLabel3
-      // 
-      toolStripLabel3.Name = "toolStripLabel3";
-      toolStripLabel3.Size = new Size(152, 24);
-      toolStripLabel3.Text = "No source file loaded";
-      // 
-      // richTextBox1
-      // 
-      richTextBox1.BorderStyle = BorderStyle.None;
-      richTextBox1.Dock = DockStyle.Bottom;
-      richTextBox1.Font = new Font("Consolas", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
-      richTextBox1.Location = new Point(3, 26);
-      richTextBox1.Name = "richTextBox1";
-      richTextBox1.Size = new Size(742, 218);
-      richTextBox1.TabIndex = 0;
-      richTextBox1.Text = "Open source file";
-      richTextBox1.WordWrap = false;
+      SourceOpenFileDialog.FileName = "openFileDialog1";
+      SourceOpenFileDialog.Filter = "Source Files|*.*";
       // 
       // MainForm
       // 
-      AutoScaleDimensions = new SizeF(8F, 20F);
+      AutoScaleDimensions = new SizeF(10F, 25F);
       AutoScaleMode = AutoScaleMode.Font;
-      ClientSize = new Size(1253, 801);
+      ClientSize = new Size(1566, 1001);
       Controls.Add(splitContainer1);
       Controls.Add(statusStrip1);
       Controls.Add(toolStrip1);
@@ -666,6 +680,7 @@
       Name = "MainForm";
       StartPosition = FormStartPosition.CenterScreen;
       Text = "PDB Viewer";
+      Load += MainForm_Load;
       toolStrip1.ResumeLayout(false);
       toolStrip1.PerformLayout();
       statusStrip1.ResumeLayout(false);
@@ -683,11 +698,11 @@
       ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
       splitContainer2.ResumeLayout(false);
       tabControl2.ResumeLayout(false);
-      tabPage3.ResumeLayout(false);
       tabPage4.ResumeLayout(false);
       tabPage4.PerformLayout();
       toolStrip2.ResumeLayout(false);
       toolStrip2.PerformLayout();
+      tabPage3.ResumeLayout(false);
       ResumeLayout(false);
       PerformLayout();
     }
@@ -740,20 +755,19 @@
     private TabControl tabControl2;
     private TabPage tabPage3;
     private TabPage tabPage4;
-    private ListView listView2;
+    private ListView InlineeListView;
     private ColumnHeader columnHeader13;
     private ColumnHeader columnHeader11;
     private ColumnHeader columnHeader12;
     private ColumnHeader columnHeader15;
-    private RichTextBox richTextBox1;
+    private RichTextBox SourceTextBox;
     private ToolStripButton RegexCheckbox;
     private ToolStrip toolStrip2;
-    private ToolStripButton toolStripButton1;
+    private ToolStripButton SourceOpenButton;
     private ToolStripSeparator toolStripSeparator5;
-    private ToolStripButton toolStripButton2;
-    private ToolStripButton toolStripButton3;
-    private ToolStripSeparator toolStripSeparator6;
-    private ToolStripLabel toolStripLabel3;
+    private ToolStripLabel SourceFileLabel;
     private ColumnHeader columnHeader14;
+    private OpenFileDialog SourceOpenFileDialog;
+    private RichTextBox LineNumbersTextBox;
   }
 }
