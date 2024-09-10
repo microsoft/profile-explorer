@@ -510,7 +510,7 @@ public sealed class ProfileCallTree {
     // Merge the other data structures.
     if (otherTree.funcToNodesMap_ != null) {
       funcToNodesMap_ ??= new();
-      var existingNodesSet = new HashSet<ProfileCallTreeNode>(nextNodeId_);
+      var existingNodesSet = new HashSet<ProfileCallTreeNode>();
 
       foreach (var list in funcToNodesMap_.Values) {
         foreach (var node in list) {

@@ -41,45 +41,6 @@ namespace PDBViewer {
       }
     }
 
-    private void PrintFunctionDetails(FunctionDebugInfo item, StringBuilder sb, bool includeName = true) {
-      sb.AppendLine($"Start RVA: 0x{item.RVA:X} ({item.RVA})");
-      sb.AppendLine($"End RVA: 0x{item.EndRVA:X} ({item.EndRVA})");
-      sb.AppendLine($"Length: {item.Size} ({item.Size:X})");
-      sb.AppendLine($"Kind: {(item.IsPublic ? "Public" : "Function")}");
-
-      if (includeName) {
-        sb.AppendLine();
-        sb.AppendLine($"Name: {GetFunctionName(item, true)}");
-        sb.AppendLine();
-        sb.AppendLine($"Mangled name: {item.Name}");
-      }
-    }
-
-    private void FunctionListViewOnRetrieveVirtualItem(object? sender, RetrieveVirtualItemEventArgs e) {
-      if (filteredFuncList_ != null && e.ItemIndex < filteredFuncList_.Count) {
-        var item = filteredFuncList_[e.ItemIndex];
-        var lvi = new ListViewItem();
-        lvi.Text = $"{item.RVA:X}";
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, GetFunctionName(item, DemangleCheckbox.Checked)));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, $"{item.Size} ({item.Size:X})"));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, $"{item.EndRVA:X}"));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.IsPublic ? "Public" : "Function"));
-        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Name));
-
-        if (item.HasSelectionOverlap) {
-          lvi.BackColor = Color.Pink;
-        }
-        else if (item.IsSelected) {
-          lvi.BackColor = Color.LightBlue;
-        }
-        else if (item.HasOverlap) {
-          lvi.BackColor = Color.PaleGoldenrod;
-        }
-
-        e.Item = lvi;
-      }
-    }
-
     private async void OpenButton_Click(object sender, EventArgs e) {
       if (OpenFileDialog.ShowDialog(this) == DialogResult.OK) {
         var filePath = OpenFileDialog.FileName;
@@ -787,6 +748,50 @@ namespace PDBViewer {
 
     private void LineNumbersTextBox_MouseDown(object sender, MouseEventArgs e) {
       SourceTextBox.Focus();
+    }
+
+    private void PrintFunctionDetails(FunctionDebugInfo item, StringBuilder sb, bool includeName = true) {
+      sb.AppendLine($"Start RVA: 0x{item.RVA:X} ({item.RVA})");
+      sb.AppendLine($"End RVA: 0x{item.EndRVA:X} ({item.EndRVA})");
+      sb.AppendLine($"Length: {item.Size} ({item.Size:X})");
+      sb.AppendLine($"Kind: {(item.IsPublic ? "Public" : "Function")}");
+
+      if (includeName) {
+        sb.AppendLine();
+        sb.AppendLine($"Name: {GetFunctionName(item, true)}");
+        sb.AppendLine();
+        sb.AppendLine($"Mangled name: {item.Name}");
+      }
+    }
+
+    private void FunctionListViewOnRetrieveVirtualItem(object? sender, RetrieveVirtualItemEventArgs e) {
+      if (filteredFuncList_ != null && e.ItemIndex < filteredFuncList_.Count) {
+        var item = filteredFuncList_[e.ItemIndex];
+        var lvi = new ListViewItem();
+        lvi.Text = $"{item.RVA:X}";
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, GetFunctionName(item, DemangleCheckbox.Checked)));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, $"{item.Size} ({item.Size:X})"));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, $"{item.EndRVA:X}"));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.IsPublic ? "Public" : "Function"));
+        lvi.SubItems.Add(new ListViewItem.ListViewSubItem(lvi, item.Name));
+
+        if (item.HasSelectionOverlap) {
+          lvi.BackColor = Color.Pink;
+        }
+        else if (item.IsSelected) {
+          lvi.BackColor = Color.LightBlue;
+        }
+        else if (item.HasOverlap) {
+          lvi.BackColor = Color.PaleGoldenrod;
+        }
+
+        e.Item = lvi;
+      }
+    }
+
+    private void AboutButton_Click(object sender, EventArgs e) {
+      var window = new AboutBox();
+      window.ShowDialog(this);
     }
   }
 }

@@ -344,7 +344,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     // Collect all instances associated with the node's function.
     // With multiple nodes selected, the node is a ProfileCallTreeGroupNode,
-    // combine the instances of all functions in the group.
+    // combine the instances of all functions in the group to get the list.
     if (groupNode != null) {
       instanceNodes_ = await Task.Run(() => {
         // For a node group, combine the instances for each node.
@@ -370,24 +370,12 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
 
     // Create the node that sums up all selected nodes.
-    // With multiple nodes selected, the node is a ProfileCallTreeGroupNode,
-    // combine the instances of all functions in the group.
     ProfileCallTreeNode combinedNode = null;
 
     if (groupNode != null) {
-      combinedNode = await Task.Run(() => {
-        // For a node group, combine the instances for each node.
-        var instanceNodes = new List<ProfileCallTreeNode>();
-        var handledFuncts = new HashSet<IRTextFunction>();
-
-        foreach (var n in groupNode.Nodes) {
-          if (handledFuncts.Add(n.Function)) {
-            instanceNodes.Add(callTree.GetCombinedCallTreeNode(n.Function));
-          }
-        }
-
-        return ProfileCallTree.CombinedCallTreeNodes(instanceNodes);
-      });
+      // With multiple nodes selected, the node is a ProfileCallTreeGroupNode,
+      // the instances of all functions in the group are already combined.
+      combinedNode = groupNode;
     }
     else {
       combinedNode = await Task.Run(() => callTree.GetCombinedCallTreeNode(node.Function));

@@ -24,6 +24,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrpcLib", "GrpcLib\GrpcLib.csproj", "{DA5B7FDA-6DE4-4B11-AF93-E785E1DF56A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDBViewer", "PDBViewer\PDBViewer.csproj", "{669B5EBC-A5D6-4CEC-B3DB-6DA7D0CA7B79}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F73AD42A-5BD3-45B7-B915-7584F4588F55} = {F73AD42A-5BD3-45B7-B915-7584F4588F55}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

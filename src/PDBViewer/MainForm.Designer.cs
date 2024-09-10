@@ -46,6 +46,8 @@
       SearchTextbox = new ToolStripTextBox();
       SearchResetButton = new ToolStripButton();
       RegexCheckbox = new ToolStripButton();
+      toolStripSeparator4 = new ToolStripSeparator();
+      AboutButton = new ToolStripButton();
       statusStrip1 = new StatusStrip();
       toolStripStatusLabel1 = new ToolStripStatusLabel();
       SymbolCountLabel = new ToolStripStatusLabel();
@@ -114,7 +116,7 @@
       toolStrip1.CanOverflow = false;
       toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
       toolStrip1.ImageScalingSize = new Size(28, 28);
-      toolStrip1.Items.AddRange(new ToolStripItem[] { OpenButton, toolStripSeparator1, toolStripDropDownButton1, DemangleCheckbox, toolStripSeparator3, toolStripLabel1, RVATextbox, SubtractRVAButton, AddRVAButton, HexCheckbox, toolStripSeparator2, toolStripLabel2, SearchTextbox, SearchResetButton, RegexCheckbox });
+      toolStrip1.Items.AddRange(new ToolStripItem[] { OpenButton, toolStripSeparator1, toolStripDropDownButton1, DemangleCheckbox, toolStripSeparator3, toolStripLabel1, RVATextbox, SubtractRVAButton, AddRVAButton, HexCheckbox, toolStripSeparator2, toolStripLabel2, SearchTextbox, SearchResetButton, RegexCheckbox, toolStripSeparator4, AboutButton });
       toolStrip1.Location = new Point(0, 0);
       toolStrip1.Name = "toolStrip1";
       toolStrip1.RenderMode = ToolStripRenderMode.System;
@@ -289,6 +291,21 @@
       RegexCheckbox.ToolTipText = "Use Regex function name filter";
       RegexCheckbox.CheckedChanged += RegexCheckbox_CheckedChanged;
       // 
+      // toolStripSeparator4
+      // 
+      toolStripSeparator4.Name = "toolStripSeparator4";
+      toolStripSeparator4.Size = new Size(6, 40);
+      // 
+      // AboutButton
+      // 
+      AboutButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+      AboutButton.Image = (Image)resources.GetObject("AboutButton.Image");
+      AboutButton.ImageTransparentColor = Color.Magenta;
+      AboutButton.Name = "AboutButton";
+      AboutButton.Size = new Size(66, 35);
+      AboutButton.Text = "About";
+      AboutButton.Click += AboutButton_Click;
+      // 
       // statusStrip1
       // 
       statusStrip1.ImageScalingSize = new Size(28, 28);
@@ -311,6 +328,7 @@
       SymbolCountLabel.Name = "SymbolCountLabel";
       SymbolCountLabel.Size = new Size(22, 25);
       SymbolCountLabel.Text = "0";
+      SymbolCountLabel.ToolTipText = "Number of symbols in view after search/filtering";
       // 
       // toolStripStatusLabel2
       // 
@@ -323,12 +341,14 @@
       TotalSymbolCountLabel.Name = "TotalSymbolCountLabel";
       TotalSymbolCountLabel.Size = new Size(22, 25);
       TotalSymbolCountLabel.Text = "0";
+      TotalSymbolCountLabel.ToolTipText = "Total number of symbols";
       // 
       // StatusLabel
       // 
       StatusLabel.Name = "StatusLabel";
       StatusLabel.Size = new Size(134, 25);
       StatusLabel.Text = "No PDB loaded";
+      StatusLabel.ToolTipText = "Status message";
       // 
       // ProgressBar
       // 
@@ -410,6 +430,7 @@
       // 
       // tabControl1
       // 
+      tabControl1.Appearance = TabAppearance.FlatButtons;
       tabControl1.Controls.Add(tabPage1);
       tabControl1.Controls.Add(tabPage2);
       tabControl1.Dock = DockStyle.Fill;
@@ -423,18 +444,18 @@
       // tabPage1
       // 
       tabPage1.Controls.Add(FunctionDeteailsTextBox);
-      tabPage1.Location = new Point(4, 34);
+      tabPage1.Location = new Point(4, 37);
       tabPage1.Margin = new Padding(2);
       tabPage1.Name = "tabPage1";
       tabPage1.Padding = new Padding(2);
-      tabPage1.Size = new Size(1558, 359);
+      tabPage1.Size = new Size(1558, 356);
       tabPage1.TabIndex = 0;
       tabPage1.Text = "Details";
       tabPage1.UseVisualStyleBackColor = true;
       // 
       // FunctionDeteailsTextBox
       // 
-      FunctionDeteailsTextBox.BackColor = SystemColors.Control;
+      FunctionDeteailsTextBox.BackColor = SystemColors.Window;
       FunctionDeteailsTextBox.BorderStyle = BorderStyle.None;
       FunctionDeteailsTextBox.Dock = DockStyle.Fill;
       FunctionDeteailsTextBox.HideSelection = false;
@@ -444,17 +465,17 @@
       FunctionDeteailsTextBox.Name = "FunctionDeteailsTextBox";
       FunctionDeteailsTextBox.PlaceholderText = "Selected function information";
       FunctionDeteailsTextBox.ReadOnly = true;
-      FunctionDeteailsTextBox.Size = new Size(1554, 355);
+      FunctionDeteailsTextBox.Size = new Size(1554, 352);
       FunctionDeteailsTextBox.TabIndex = 0;
       // 
       // tabPage2
       // 
       tabPage2.Controls.Add(splitContainer2);
-      tabPage2.Location = new Point(4, 34);
+      tabPage2.Location = new Point(4, 37);
       tabPage2.Margin = new Padding(2);
       tabPage2.Name = "tabPage2";
       tabPage2.Padding = new Padding(2);
-      tabPage2.Size = new Size(1558, 359);
+      tabPage2.Size = new Size(1558, 356);
       tabPage2.TabIndex = 1;
       tabPage2.Text = "Source Lines";
       tabPage2.UseVisualStyleBackColor = true;
@@ -473,7 +494,7 @@
       // splitContainer2.Panel2
       // 
       splitContainer2.Panel2.Controls.Add(tabControl2);
-      splitContainer2.Size = new Size(1554, 355);
+      splitContainer2.Size = new Size(1554, 352);
       splitContainer2.SplitterDistance = 602;
       splitContainer2.SplitterWidth = 5;
       splitContainer2.TabIndex = 0;
@@ -487,7 +508,7 @@
       SourceLineListView.Location = new Point(0, 0);
       SourceLineListView.Margin = new Padding(2);
       SourceLineListView.Name = "SourceLineListView";
-      SourceLineListView.Size = new Size(602, 355);
+      SourceLineListView.Size = new Size(602, 352);
       SourceLineListView.TabIndex = 4;
       SourceLineListView.UseCompatibleStateImageBehavior = false;
       SourceLineListView.View = View.Details;
@@ -520,6 +541,7 @@
       // 
       // tabControl2
       // 
+      tabControl2.Appearance = TabAppearance.FlatButtons;
       tabControl2.Controls.Add(tabPage4);
       tabControl2.Controls.Add(tabPage3);
       tabControl2.Dock = DockStyle.Fill;
@@ -527,7 +549,7 @@
       tabControl2.Margin = new Padding(4);
       tabControl2.Name = "tabControl2";
       tabControl2.SelectedIndex = 0;
-      tabControl2.Size = new Size(947, 355);
+      tabControl2.Size = new Size(947, 352);
       tabControl2.TabIndex = 0;
       // 
       // tabPage4
@@ -535,13 +557,14 @@
       tabPage4.Controls.Add(SourceTextBox);
       tabPage4.Controls.Add(LineNumbersTextBox);
       tabPage4.Controls.Add(toolStrip2);
-      tabPage4.Location = new Point(4, 34);
+      tabPage4.Location = new Point(4, 37);
       tabPage4.Margin = new Padding(4);
       tabPage4.Name = "tabPage4";
       tabPage4.Padding = new Padding(4);
-      tabPage4.Size = new Size(939, 317);
+      tabPage4.Size = new Size(939, 311);
       tabPage4.TabIndex = 1;
       tabPage4.Text = "Source Preview";
+      tabPage4.ToolTipText = "Source file having lines with debug info marked";
       tabPage4.UseVisualStyleBackColor = true;
       // 
       // SourceTextBox
@@ -555,7 +578,8 @@
       SourceTextBox.Margin = new Padding(16, 4, 4, 4);
       SourceTextBox.Name = "SourceTextBox";
       SourceTextBox.ReadOnly = true;
-      SourceTextBox.Size = new Size(851, 275);
+      SourceTextBox.ScrollBars = RichTextBoxScrollBars.Vertical;
+      SourceTextBox.Size = new Size(851, 269);
       SourceTextBox.TabIndex = 0;
       SourceTextBox.Text = "Open source file";
       SourceTextBox.WordWrap = false;
@@ -575,7 +599,7 @@
       LineNumbersTextBox.Name = "LineNumbersTextBox";
       LineNumbersTextBox.ReadOnly = true;
       LineNumbersTextBox.ScrollBars = RichTextBoxScrollBars.None;
-      LineNumbersTextBox.Size = new Size(80, 275);
+      LineNumbersTextBox.Size = new Size(80, 269);
       LineNumbersTextBox.TabIndex = 2;
       LineNumbersTextBox.TabStop = false;
       LineNumbersTextBox.Text = "";
@@ -619,13 +643,14 @@
       // tabPage3
       // 
       tabPage3.Controls.Add(InlineeListView);
-      tabPage3.Location = new Point(4, 34);
+      tabPage3.Location = new Point(4, 37);
       tabPage3.Margin = new Padding(4);
       tabPage3.Name = "tabPage3";
       tabPage3.Padding = new Padding(4);
-      tabPage3.Size = new Size(939, 317);
+      tabPage3.Size = new Size(939, 311);
       tabPage3.TabIndex = 0;
       tabPage3.Text = "Inlinees";
+      tabPage3.ToolTipText = "Functions inlined at the selected line";
       tabPage3.UseVisualStyleBackColor = true;
       // 
       // InlineeListView
@@ -638,7 +663,7 @@
       InlineeListView.Margin = new Padding(2);
       InlineeListView.MultiSelect = false;
       InlineeListView.Name = "InlineeListView";
-      InlineeListView.Size = new Size(931, 309);
+      InlineeListView.Size = new Size(931, 303);
       InlineeListView.TabIndex = 6;
       InlineeListView.UseCompatibleStateImageBehavior = false;
       InlineeListView.View = View.Details;
@@ -769,5 +794,7 @@
     private ColumnHeader columnHeader14;
     private OpenFileDialog SourceOpenFileDialog;
     private RichTextBox LineNumbersTextBox;
+    private ToolStripSeparator toolStripSeparator4;
+    private ToolStripButton AboutButton;
   }
 }

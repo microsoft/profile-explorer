@@ -7,6 +7,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>PDBViewer.Program</StartupObject>
+    <Company>Microsoft Corporation</Company>
+    <Copyright>Copyright (c) 2024 Microsoft Corporation</Copyright>
+    <Product>PDB Viewer</Product>
   </PropertyGroup>
 
   <ItemGroup>
