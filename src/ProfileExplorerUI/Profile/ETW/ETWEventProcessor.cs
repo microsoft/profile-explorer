@@ -118,6 +118,19 @@ public sealed partial class ETWEventProcessor : IDisposable {
     var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
                                               ParserTrackingOptions.ThreadToProcess);
 
+    if (!isRealTime_) {
+      kernel.EventTraceHeader += data => {
+        // If the trace has a known file name it's unlikely
+        // to be using a circular buffer which needs the thread -> process ID table,
+        // stop reading the entire trace early.
+        if (data.LogFileName != "[multiple files]") {
+          source_.StopProcessing();
+        }
+      };
+
+      source_.Process();
+    }
+
     ProfileProcess HandleProcessEvent(ProcessTraceData data) {
       var profileProcess = profile.GetOrCreateProcess(data.ProcessID);
       profileProcess.ProcessId = data.ProcessID;
@@ -190,7 +203,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
   }
 
   public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback,
-                                      CancelableTask cancelableTask) {
+                                      CancelableTask cancelableTask,
+                                      bool isCircularBufferTrace = false) {
     UpdateSamplingInterval(SampleReportingInterval);
     ImageIDTraceData lastImageIdData = null;
     ProfileImage lastProfileImage = null;
@@ -350,7 +364,21 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profile.TraceInfo.CpuSpeed = data.CPUSpeed;
       profile.TraceInfo.ProfileStartTime = data.StartTime;
       profile.TraceInfo.ProfileEndTime = data.EndTime;
+
+      // If the trace has a known file name it's unlikely
+      // to be using a circular buffer which needs the thread -> process ID table,
+      // stop reading the entire trace early.
+      if (!isRealTime_ && data.LogFileName != "[multiple files]") {
+        source_.StopProcessing();
+      }
     };
+
+    if (!isRealTime_) {
+      // Process the trace in case it's using circular buffers
+      // to build the thread -> process ID table.
+      source_.Process();
+    }
+
 
     kernel.SystemConfigCPU += data => {
       profile.TraceInfo.PointerSize = data.PointerSize;
@@ -383,36 +411,36 @@ public sealed partial class ETWEventProcessor : IDisposable {
       int frameCount = data.FrameCount;
       ProfileStack kstack = null;
 
-//       if (!isKernelStack && !isKernelStackStart) {
-//         // This is a user mode stack, check if before it an associated
-//         // kernel mode stack was recorded - if so, merge the two stacks.
-//         ref var lastKernelStack =
-//           ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastKernelStackMap, data.ThreadID, out bool exists);
-//
-//         if (exists && lastKernelStack.StackId != 0 &&
-//             lastKernelStack.Timestamp == data.EventTimeStampQPC) {
-// #if DEBUG
-//           //Trace.WriteLine($"  Found matching KernelStack {lastKernelStack.StackId} at {lastKernelStack.Timestamp} on CPU {data.ProcessorNumber}");
-// #endif
-//           // Append at the end of the kernel stack, marking a user -> kernel mode transition.
-//           kstack = profile.FindStack(lastKernelStack.StackId);
-//           int kstackFrameCount = kstack.FrameCount;
-//           long[] frames = new long[kstack.FrameCount + data.FrameCount];
-//           kstack.FramePointers.CopyTo(frames, 0);
-//
-// #if DEBUG
-//           //Trace.WriteLine($"    kernel mode end IP: {frames[kstackFrameCount - 1]:X}");
-//           //Trace.WriteLine($"    user mode start IP: {data.InstructionPointer(0):X}");
-// #endif
-//           for (int i = 0; i < frameCount; i++) {
-//             frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
-//           }
-//
-//           profile.ReplaceStackFramePointers(kstack, frames, context);
-//           kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
-//           lastKernelStack = (0, 0); // Clear the last kernel stack.
-//         }
-//       }
+      if (!isKernelStack && !isKernelStackStart) {
+        // This is a user mode stack, check if before it an associated
+        // kernel mode stack was recorded - if so, merge the two stacks.
+        ref var lastKernelStack =
+          ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastKernelStackMap, data.ThreadID, out bool exists);
+
+        if (exists && lastKernelStack.StackId != 0 &&
+            lastKernelStack.Timestamp == data.EventTimeStampQPC) {
+#if DEBUG
+          //Trace.WriteLine($"  Found matching KernelStack {lastKernelStack.StackId} at {lastKernelStack.Timestamp} on CPU {data.ProcessorNumber}");
+#endif
+          // Append at the end of the kernel stack, marking a user -> kernel mode transition.
+          kstack = profile.FindStack(lastKernelStack.StackId);
+          int kstackFrameCount = kstack.FrameCount;
+          long[] frames = new long[kstack.FrameCount + data.FrameCount];
+          kstack.FramePointers.CopyTo(frames, 0);
+
+#if DEBUG
+          //Trace.WriteLine($"    kernel mode end IP: {frames[kstackFrameCount - 1]:X}");
+          //Trace.WriteLine($"    user mode start IP: {data.InstructionPointer(0):X}");
+#endif
+          for (int i = 0; i < frameCount; i++) {
+            frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
+          }
+
+          profile.ReplaceStackFramePointers(kstack, frames, context);
+          kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
+          lastKernelStack = (0, 0); // Clear the last kernel stack.
+        }
+      }
 
       if (kstack == null) {
         // This is either a kernel mode stack, or a user mode stack with no associated kernel mode stack.
@@ -420,27 +448,16 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         // Copy data from event to the temp. stack pointer array.
         // Slightly faster to copy the entire array as a whole.
-        // unsafe {
-        //   var ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
-        //   int bytes = data.PointerSize * frameCount;
-        //   var span = new Span<byte>(ptr, bytes);
-        //
-        //   fixed (long* destPtr = stack.FramePointers) {
-        //     var destSpan = new Span<byte>(destPtr, bytes);
-        //     span.CopyTo(destSpan);
-        //   }
-        // }
+        unsafe {
+          var ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
+          int bytes = data.PointerSize * frameCount;
+          var span = new Span<byte>(ptr, bytes);
 
-        for (int i = 0; i < data.FrameCount; i++) {
-          stack.FramePointers[i] = (long)data.InstructionPointer(i);
+          fixed (long* destPtr = stack.FramePointers) {
+            var destSpan = new Span<byte>(destPtr, bytes);
+            span.CopyTo(destSpan);
+          }
         }
-
-        // for (int i = 1; i < frameCount; i++) {
-        //   if ((ulong)stack.FramePointers[i] == 0xFFFFF8026F53D2D0 &&
-        //       (ulong)stack.FramePointers[i - 1] == 0xFFFFF802DDE74AE4) {
-        //     Trace.WriteLine($"Found for i {i}");
-        //   }
-        // }
 
         int stackId = profile.AddStack(stack, context);
 

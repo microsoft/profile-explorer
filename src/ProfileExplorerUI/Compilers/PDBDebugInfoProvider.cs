@@ -921,8 +921,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
              funcSym.length == pubSym.length)) {
           return pubSym;
         }
-
-        return pubSym;
       }
 
       return funcSym;

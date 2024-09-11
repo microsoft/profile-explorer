@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Compilers.ASM;
 
@@ -22,6 +23,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   // For collecting statistics on stack frame resolution.
   private volatile static int UnresolvedStackCount;
   private volatile static int ResolvedStackCount;
+  private Dictionary<ProfileImage, Dictionary<long, (FunctionDebugInfo Info, int SampleCount)>>
+    perModuleSampleStatsMap_;
 #endif
 
   // Per-thread caching of the previously handled image
@@ -221,6 +224,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           ProcessPerformanceCounters(rawProfile, processIds, symbolSettings, progressCallback, cancelableTask);
         }
 
+#if DEBUG
+        PrintSampleStatistics();
+#endif
         Trace.WriteLine($"LoadTraceAsync: Done loading profile in {totalSw.Elapsed}");
         return true;
       });
@@ -352,7 +358,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #if DEBUG
         Interlocked.Increment(ref UnresolvedStackCount);
 #endif
-
         resolvedStack = ProcessUnresolvedStack(stack, context, rawProfile, symbolSettings);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
       }
@@ -361,6 +366,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         Interlocked.Increment(ref ResolvedStackCount);
 #endif
       }
+
+#if DEBUG
+      RecordSampleStatistics(resolvedStack);
+#endif
 
       samples.Add((sample, resolvedStack));
     }
@@ -408,7 +417,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         if (frameImage == null) {
-          resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+          resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack,
+                                 pointerSize);
           continue;
         }
       }
@@ -432,14 +442,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       // Find the function the sample belongs to.
       var funcPair = profileModuleBuilder.GetOrCreateFunction(frameRva);
-
-      if (frameIndex > 0 && funcPair.DebugInfo.Name.Contains("SymCryptAesGcmEncryptStitchedXmm") &&
-          resolvedStack.StackFrames[resolvedStack.FrameCount - 1].FrameDetails.DebugInfo.Name.
-            Contains("KiInterruptDispatch")) {
-        Trace.WriteLine("=> Found pair");
-        Trace.WriteLine($"  IP for SymCrypt: {frameIp:X}, RVA {frameRva:X}");
-        Trace.WriteLine($"  IP for KiInter: {resolvedStack.StackFrames[resolvedStack.FrameCount - 1].FrameIP:X}, RVA{resolvedStack.StackFrames[resolvedStack.FrameCount - 1].FrameRVA:X}");
-      }
 
       // Create the function profile data, with the merged weight of all instances
       // of the func. across all call stacks.
@@ -961,4 +963,46 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       ImageSize = image.Size
     };
   }
+
+#if DEBUG
+  private void RecordSampleStatistics(ResolvedProfileStack resolvedStack) {
+    // Record statistics about the most common RVAs with exclusive samples.
+    if (resolvedStack.FrameCount <= 0) return;
+
+    lock (lockObject_) {
+      perModuleSampleStatsMap_ ??= new();
+      var topFrame = resolvedStack.StackFrames[0];
+      var moduleStats = perModuleSampleStatsMap_.GetOrAddValue(topFrame.FrameDetails.Image);
+
+      if (!moduleStats.TryGetValue(topFrame.FrameRVA, out var rvaStats)) {
+        rvaStats = (topFrame.FrameDetails.DebugInfo, 1);
+        moduleStats[topFrame.FrameRVA] = rvaStats;
+      }
+      else {
+        rvaStats.SampleCount++;
+        moduleStats[topFrame.FrameRVA] = rvaStats;
+      }
+    }
+  }
+
+  private void PrintSampleStatistics() {
+    lock (lockObject_) {
+      if (perModuleSampleStatsMap_ == null) {
+        return;
+      }
+
+      Trace.WriteLine("Per-module RVA sample stats");
+
+      foreach (var moduleStats in perModuleSampleStatsMap_) {
+        Trace.WriteLine($"--------------\n{moduleStats.Key.ModuleName}:");
+        var rvaStats = moduleStats.Value.ToList();
+        rvaStats.Sort((a, b) => b.Item2.SampleCount.CompareTo(a.Item2.SampleCount));
+
+        foreach (var (rva, sampleStats) in rvaStats) {
+          Trace.WriteLine($" - RVA {rva:X}: {sampleStats.SampleCount} samples, func: {sampleStats.Info.Name}");
+        }
+      }
+    }
+  }
+#endif
 }

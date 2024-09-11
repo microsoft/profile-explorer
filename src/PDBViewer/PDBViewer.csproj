@@ -7,11 +7,18 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>PDBViewer.Program</StartupObject>
+    <Company>Microsoft Corporation</Company>
+    <Copyright>Copyright (c) 2024 Microsoft Corporation</Copyright>
+    <Product>PDB Viewer</Product>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.15" />
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -79,17 +79,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
       return null;
     }
 
-    if (loadedDoc.BinaryFileExists) {
-      var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
-
-      if (debugInfo != null) {
-        lock (loadedDoc) {
-          loadedDoc.DebugInfo = debugInfo;
-          return debugInfo;
-        }
-      }
-    }
-
     if (loadedDoc.DebugInfoFileExists) {
       var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
 

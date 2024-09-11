@@ -19,7 +19,7 @@ public class SourceFileMapper {
 
   public Dictionary<string, string> SourceMap => map_;
 
-  public string Map(string sourceFile, Func<string> lookup) {
+  public string Map(string sourceFile, Func<string> lookup = null) {
     if (string.IsNullOrEmpty(sourceFile)) {
       return null;
     }
@@ -30,6 +30,10 @@ public class SourceFileMapper {
       }
 
       if (missingFilesSet_.Contains(sourceFile)) {
+        return null;
+      }
+
+      if (lookup == null) {
         return null;
       }
 
@@ -83,7 +87,7 @@ public class SourceFileMapper {
     return false;
   }
 
-  private void UpdateMap(string originalPath, string mappedPath) {
+  public void UpdateMap(string originalPath, string mappedPath) {
     if (string.IsNullOrEmpty(originalPath) ||
         string.IsNullOrEmpty(mappedPath)) {
       return;
