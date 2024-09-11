@@ -12,6 +12,7 @@ namespace ProfileExplorer.UI.Settings;
 
 [ProtoContract(SkipConstructor = true)]
 public class Workspace : IEquatable<Workspace> {
+  public Workspace() { }
   [ProtoMember(1)]
   public string Name { get; set; }
   [ProtoMember(2)]
@@ -21,7 +22,6 @@ public class Workspace : IEquatable<Workspace> {
   [ProtoMember(4)]
   public int Order { get; set; }
   public bool IsNew { get; set; }
-  public Workspace() { }
 
   public bool Equals(Workspace other) {
     if (ReferenceEquals(null, other))
@@ -63,17 +63,18 @@ public class Workspace : IEquatable<Workspace> {
 public class WorkspaceSettings {
   private static readonly string SettingsFileName = "settings.proto";
   private static readonly string DefaultWorkspaceName = "Default";
+
+  public WorkspaceSettings() {
+    InitializeReferenceMembers();
+    RestoreDefaultWorkspaces();
+  }
+
   [ProtoMember(1)][OptionValue()]
   public List<Workspace> Workspaces { get; set; }
   [ProtoMember(2)][OptionValue()]
   public Workspace ActiveWorkspace { get; set; }
   [ProtoMember(3)][OptionValue()]
   public Dictionary<string, Workspace> CompilerDefaultWorkspace { get; set; }
-
-  public WorkspaceSettings() {
-    InitializeReferenceMembers();
-    RestoreDefaultWorkspaces();
-  }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {

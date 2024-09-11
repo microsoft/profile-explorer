@@ -14,24 +14,6 @@ using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 namespace ProfileExplorer.UI;
 
 public class IRDocumentColumnData {
-  public class ColumnComparer : IEqualityComparer<OptionalColumn> {
-    public bool Equals(OptionalColumn x, OptionalColumn y) {
-      if (ReferenceEquals(x, y))
-        return true;
-      if (ReferenceEquals(x, null))
-        return false;
-      if (ReferenceEquals(y, null))
-        return false;
-      if (x.GetType() != y.GetType())
-        return false;
-      return x.ColumnName == y.ColumnName;
-    }
-
-    public int GetHashCode(OptionalColumn obj) {
-      return obj.ColumnName != null ? obj.ColumnName.GetHashCode() : 0;
-    }
-  }
-
   public IRDocumentColumnData(int capacity = 0) {
     Columns = new List<OptionalColumn>();
     Rows = new Dictionary<IRElement, ElementRowValue>(capacity);
@@ -174,6 +156,24 @@ public class IRDocumentColumnData {
   }
 
   public void Reset() {
+  }
+
+  public class ColumnComparer : IEqualityComparer<OptionalColumn> {
+    public bool Equals(OptionalColumn x, OptionalColumn y) {
+      if (ReferenceEquals(x, y))
+        return true;
+      if (ReferenceEquals(x, null))
+        return false;
+      if (ReferenceEquals(y, null))
+        return false;
+      if (x.GetType() != y.GetType())
+        return false;
+      return x.ColumnName == y.ColumnName;
+    }
+
+    public int GetHashCode(OptionalColumn obj) {
+      return obj.ColumnName != null ? obj.ColumnName.GetHashCode() : 0;
+    }
   }
 }
 

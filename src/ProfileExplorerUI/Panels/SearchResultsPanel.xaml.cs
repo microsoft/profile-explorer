@@ -32,6 +32,14 @@ public static class SearchResultsCommand {
 }
 
 public class SearchResultInfo {
+  public delegate Task<string> SectionTextDelegate(SearchResultKind resultKind, IRTextSection section);
+
+  public enum SearchResultKind {
+    SectionResult,
+    BeforeOutputResult,
+    AfterOutputResult
+  }
+
   private static readonly FontFamily PreviewFont = new("Consolas");
   private bool isMarked_;
   private TextBlock preview_;
@@ -47,14 +55,6 @@ public class SearchResultInfo {
     Section = section;
     Session = session;
     getSectionText_ = getSectionText;
-  }
-
-  public delegate Task<string> SectionTextDelegate(SearchResultKind resultKind, IRTextSection section);
-
-  public enum SearchResultKind {
-    SectionResult,
-    BeforeOutputResult,
-    AfterOutputResult
   }
 
   public SearchResultKind ResultKind { get; set; }
@@ -175,9 +175,6 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
     loadTask_ = new CancelableTaskInstance(false);
   }
 
-  public event EventHandler<OpenSectionEventArgs> OpenSection;
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public bool HideToolbarTray {
     get => hideToolbarTray_;
     set {
@@ -207,6 +204,10 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
       }
     }
   }
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.SearchResults;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<OpenSectionEventArgs> OpenSection;
 
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -341,10 +342,6 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
     }
   }
 
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.SearchResults;
-
   public override async Task OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
     await base.OnDocumentSectionUnloaded(section, document);
     ResetSectionTextCache();
@@ -459,6 +456,4 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
     base.OnSessionEnd();
     ClearSearchResults();
   }
-
-        #endregion
 }

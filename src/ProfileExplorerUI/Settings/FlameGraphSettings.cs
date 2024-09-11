@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System.Collections.Generic;
 using System.Windows.Media;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
@@ -10,13 +9,13 @@ namespace ProfileExplorer.UI;
 [ProtoContract(SkipConstructor = true)]
 public class FlameGraphSettings : SettingsBase {
   public static readonly int DefaultNodePopupDuration = (int)HoverPreview.HoverDuration.TotalMilliseconds;
-  public ColorPalette[] Palettes { get; set; }
-  public ColorPalette ModulesPalette { get; set; }
 
   public FlameGraphSettings() {
     Reset();
   }
 
+  public ColorPalette[] Palettes { get; set; }
+  public ColorPalette ModulesPalette { get; set; }
   [ProtoMember(1)][OptionValue(true)]
   public bool PrependModuleToFunction { get; set; }
   [ProtoMember(2)][OptionValue(true)]

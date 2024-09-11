@@ -123,15 +123,6 @@ public class DocumentMargin : AbstractMargin {
     Version = 1;
   }
 
-  public event EventHandler<Bookmark> BookmarkRemoved;
-  public event EventHandler<Bookmark> BookmarkChanged;
-
-  private enum BookmarkSegmentElement {
-    Bookmark,
-    PinButton,
-    RemoveButton
-  }
-
   public int Version { get; set; }
   public bool DisableBlockRemoval { get; set; }
   public Bookmark SelectedBookmark => selectedBookmark_?.Bookmark;
@@ -144,6 +135,9 @@ public class DocumentMargin : AbstractMargin {
       InvalidateVisual();
     }
   }
+
+  public event EventHandler<Bookmark> BookmarkRemoved;
+  public event EventHandler<Bookmark> BookmarkChanged;
 
   public DocumentMarginState SaveState() {
     var marginState = new DocumentMarginState();
@@ -739,5 +733,11 @@ public class DocumentMargin : AbstractMargin {
     icon.Draw(bounds.Left + 1, bounds.Top, ButtonIconWidth,
               bounds.Width, bounds.Height, drawingContext);
     return bounds;
+  }
+
+  private enum BookmarkSegmentElement {
+    Bookmark,
+    PinButton,
+    RemoveButton
   }
 }

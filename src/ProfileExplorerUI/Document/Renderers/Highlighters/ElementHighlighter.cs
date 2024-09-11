@@ -59,6 +59,22 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
 
   public KnownLayer Layer => KnownLayer.Background;
 
+  public void Draw(TextView textView, DrawingContext drawingContext) {
+    if (textView.Document == null || textView.Document.TextLength == 0) {
+      return;
+    }
+
+    // Find start/end index of visible lines.
+    if (!DocumentUtils.FindVisibleTextOffsets(textView, out int viewStart, out int viewEnd)) {
+      return;
+    }
+
+    // Query and draw visible segments from each group.
+    foreach (var group in groups_) {
+      DrawGroup(group, textView, drawingContext, viewStart, viewEnd);
+    }
+  }
+
   public void Add(HighlightedElementGroup group, bool saveToFile = true) {
     groups_.Add(new HighlightedSegmentGroup(group, saveToFile));
     Version++;
@@ -132,22 +148,6 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
 
     groups_ = StateSerializer.LoadElementGroupState(state.Groups);
     Version++;
-  }
-
-  public void Draw(TextView textView, DrawingContext drawingContext) {
-    if (textView.Document == null || textView.Document.TextLength == 0) {
-      return;
-    }
-
-    // Find start/end index of visible lines.
-    if (!DocumentUtils.FindVisibleTextOffsets(textView, out int viewStart, out int viewEnd)) {
-      return;
-    }
-
-    // Query and draw visible segments from each group.
-    foreach (var group in groups_) {
-      DrawGroup(group, textView, drawingContext, viewStart, viewEnd);
-    }
   }
 
   private void DrawGroup(HighlightedSegmentGroup group, TextView textView,

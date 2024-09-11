@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Runtime.InteropServices;
 using ProtoBuf;
 
@@ -194,6 +193,18 @@ public class PerformanceCounterConfig : IEquatable<PerformanceCounterConfig> {
   [ProtoMember(9)]
   public int DefaultInterval { get; set; }
 
+  public bool Equals(PerformanceCounterConfig other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Id == other.Id && Name == other.Name;
+  }
+
   public static bool operator ==(PerformanceCounterConfig left, PerformanceCounterConfig right) {
     return Equals(left, right);
   }
@@ -220,18 +231,6 @@ public class PerformanceCounterConfig : IEquatable<PerformanceCounterConfig> {
 
   public override int GetHashCode() {
     return HashCode.Combine(Id, Name);
-  }
-
-  public bool Equals(PerformanceCounterConfig other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Id == other.Id && Name == other.Name;
   }
 }
 
@@ -260,6 +259,20 @@ public class PerformanceMetricConfig : IEquatable<PerformanceMetricConfig> {
   [ProtoMember(6)]
   public bool IsEnabled { get; set; }
 
+  public bool Equals(PerformanceMetricConfig other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Name == other.Name &&
+           BaseCounterName == other.BaseCounterName &&
+           RelativeCounterName == other.RelativeCounterName;
+  }
+
   public static bool operator ==(PerformanceMetricConfig left, PerformanceMetricConfig right) {
     return Equals(left, right);
   }
@@ -286,19 +299,5 @@ public class PerformanceMetricConfig : IEquatable<PerformanceMetricConfig> {
 
   public override int GetHashCode() {
     return HashCode.Combine(Name, BaseCounterName, RelativeCounterName, IsPercentage);
-  }
-
-  public bool Equals(PerformanceMetricConfig other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Name == other.Name &&
-           BaseCounterName == other.BaseCounterName &&
-           RelativeCounterName == other.RelativeCounterName;
   }
 }

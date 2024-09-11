@@ -58,10 +58,6 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
   }
 
-  public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
-  public event EventHandler<bool> ShowBeforeOutputChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public bool ShowAfterOutput {
     get => showAfterOutput_;
     set {
@@ -172,6 +168,32 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
       }
     }
   }
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.PassOutput;
+
+  public override ISession Session {
+    get => TextView.Session;
+    set => TextView.Session = value;
+  }
+
+  public override bool HasPinnedContent {
+    get => FixedToolbar.IsPinned;
+    set => FixedToolbar.IsPinned = value;
+  }
+
+  public bool HasPinButton {
+    get => FixedToolbar.HasPinButton;
+    set => FixedToolbar.HasPinButton = value;
+  }
+
+  public bool HasDuplicateButton {
+    get => FixedToolbar.HasDuplicateButton;
+    set => FixedToolbar.HasDuplicateButton = value;
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
+  public event EventHandler<bool> ShowBeforeOutputChanged;
 
   public async Task LoadDiffedPassOutput(DiffMarkingResult diffResult) {
     TextView.RemoveDiffTextSegments();
@@ -350,36 +372,12 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     ScrollChanged?.Invoke(this, e);
   }
 
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.PassOutput;
-
   public void OnPropertyChange(string propertyname) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
   }
 
   public override void OnSessionStart() {
     base.OnSessionStart();
-  }
-
-  public override ISession Session {
-    get => TextView.Session;
-    set => TextView.Session = value;
-  }
-
-  public override bool HasPinnedContent {
-    get => FixedToolbar.IsPinned;
-    set => FixedToolbar.IsPinned = value;
-  }
-
-  public bool HasPinButton {
-    get => FixedToolbar.HasPinButton;
-    set => FixedToolbar.HasPinButton = value;
-  }
-
-  public bool HasDuplicateButton {
-    get => FixedToolbar.HasDuplicateButton;
-    set => FixedToolbar.HasDuplicateButton = value;
   }
 
   public override async void ClonePanel(IToolPanel basePanel) {
@@ -492,6 +490,4 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     base.OnSessionEnd();
     await ResetOutputPanel();
   }
-
-        #endregion
 }

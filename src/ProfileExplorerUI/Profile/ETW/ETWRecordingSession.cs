@@ -6,12 +6,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using ProfileExplorer.Core;
 using Microsoft.Diagnostics.NETCore.Client;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
+using ProfileExplorer.Core;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -86,6 +86,10 @@ public sealed class ETWRecordingSession : IDisposable {
                                            "Clockticks per Instructions retired rate"));
       return list;
     }
+  }
+
+  public void Dispose() {
+    StopSession();
   }
 
   public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback,
@@ -259,10 +263,6 @@ public sealed class ETWRecordingSession : IDisposable {
 
       return profile;
     });
-  }
-
-  public void Dispose() {
-    StopSession();
   }
 
   private void SessionProgressHandler(ProfileLoadProgress info) {

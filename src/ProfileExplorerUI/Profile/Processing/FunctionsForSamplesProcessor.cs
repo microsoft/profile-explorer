@@ -9,10 +9,6 @@ public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
   private HashSet<IRTextFunction> functionSet_;
   private List<ChunkData> chunks_;
 
-  private class ChunkData {
-    public HashSet<IRTextFunction> functionSet_ = new(1024);
-  }
-
   public FunctionsForSamplesProcessor() {
     chunks_ = new List<ChunkData>();
   }
@@ -66,5 +62,9 @@ public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
         functionSet_.Add(func);
       }
     }
+  }
+
+  private class ChunkData {
+    public HashSet<IRTextFunction> functionSet_ = new(1024);
   }
 }

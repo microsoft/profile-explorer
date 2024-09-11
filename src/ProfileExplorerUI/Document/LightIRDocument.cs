@@ -22,6 +22,11 @@ using TextLocation = ProfileExplorer.Core.TextLocation;
 namespace ProfileExplorer.UI;
 
 public sealed class LightIRDocument : TextEditor {
+  public enum TextSearchMode {
+    Mark,
+    Filter
+  }
+
   private ElementHighlighter elementMarker_;
   private List<IRElement> elements_;
   private HighlightingStyle elementStyle_;
@@ -70,11 +75,6 @@ public sealed class LightIRDocument : TextEditor {
     TextArea.SelectionBorder = null;
     Options.EnableEmailHyperlinks = false;
     Options.EnableHyperlinks = false;
-  }
-
-  public enum TextSearchMode {
-    Mark,
-    Filter
   }
 
   public ISession Session {

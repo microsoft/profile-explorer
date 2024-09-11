@@ -19,10 +19,6 @@ public class ElementQueryScript : Script, IElementQuery {
   public QueryDefinition Query { get; set; }
   public ISession Session => session_;
 
-  public QueryDefinition GetDefinition() {
-    throw new NotImplementedException();
-  }
-
   public bool Initialize(ISession session) {
     session_ = session;
     return true;
@@ -31,6 +27,10 @@ public class ElementQueryScript : Script, IElementQuery {
   public bool Execute(QueryData data) {
     MessageBox.Show("Execute ElementQueryScript");
     return true;
+  }
+
+  public QueryDefinition GetDefinition() {
+    throw new NotImplementedException();
   }
 
   //public override bool Execute(ScriptSession session) {

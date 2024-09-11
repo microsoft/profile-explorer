@@ -23,6 +23,9 @@ public partial class DeveloperPanel : ToolPanelControl {
     InitializeComponent();
   }
 
+  public override ToolPanelKind PanelKind => ToolPanelKind.Developer;
+  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
+
   private async void Button_Click(object sender, RoutedEventArgs e) {
     ErrorList.Visibility = Visibility.Collapsed;
     TextView.Visibility = Visibility.Visible;
@@ -72,11 +75,6 @@ public partial class DeveloperPanel : ToolPanelControl {
     }
   }
 
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Developer;
-  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
-
   public override async void OnElementSelected(IRElementEventArgs e) {
     var builder = new StringBuilder();
     builder.AppendLine(e.Element.ToString());
@@ -91,8 +89,6 @@ public partial class DeveloperPanel : ToolPanelControl {
 
     await TextView.SetText(builder.ToString());
   }
-
-        #endregion
 
   private async void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
     ErrorList.Visibility = Visibility.Collapsed;

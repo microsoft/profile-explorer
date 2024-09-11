@@ -14,8 +14,8 @@ using ProfileExplorer.UI.Document;
 namespace ProfileExplorer.UI.Profile;
 
 public class SourceDocumentMarker {
-  private static readonly string SourceOverlayTag = "SourceTag";
   private const int FunctionNameMaxLength = 80;
+  private static readonly string SourceOverlayTag = "SourceTag";
   private SourceDocumentMarkerSettings settings_;
   private ICompilerInfoProvider irInfo_;
 

@@ -12,7 +12,6 @@ namespace ProfileExplorer.UI.Profile;
 
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   public static readonly object MergedNodeTag = new();
-
   public int Id { get; set; }
   public IRTextFunction Function { get; set; }
   public ProfileCallTreeNodeKind Kind { get; set; }

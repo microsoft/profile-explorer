@@ -80,42 +80,6 @@ public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
     }
   }
 
-  public HighlightingStyle GetBlockNodeStyle(BlockIR block) {
-    var loopTag = block.GetTag<LoopBlockTag>();
-
-    if (loopTag != null && options_.MarkLoopBlocks) {
-      if (loopTag.NestingLevel < loopBlockStyles_.Count - 1) {
-        return loopBlockStyles_[loopTag.NestingLevel];
-      }
-
-      return loopBlockStyles_[^1];
-    }
-
-    if (options_.ColorizeNodes) {
-      if (block.HasLoopBackedge) {
-        return loopBackedgeBlockStyle_;
-      }
-
-      if (block.IsBranchBlock) {
-        return branchBlockStyle_;
-      }
-
-      if (block.IsSwitchBlock) {
-        return switchBlockStyle_;
-      }
-
-      if (block.IsReturnBlock) {
-        return returnBlockStyle_;
-      }
-
-      if (block.IsEmpty) {
-        return emptyBlockStyle_;
-      }
-    }
-
-    return defaultNodeStyle_;
-  }
-
   public HighlightingStyle GetDefaultNodeStyle() {
     return defaultNodeStyle_;
   }
@@ -207,5 +171,41 @@ public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
   public bool ShouldUsePolylines() {
     return graph_.Nodes.Find(node => node.InEdges != null &&
                                      node.InEdges.Count > PolylineEdgeThreshold) != null;
+  }
+
+  public HighlightingStyle GetBlockNodeStyle(BlockIR block) {
+    var loopTag = block.GetTag<LoopBlockTag>();
+
+    if (loopTag != null && options_.MarkLoopBlocks) {
+      if (loopTag.NestingLevel < loopBlockStyles_.Count - 1) {
+        return loopBlockStyles_[loopTag.NestingLevel];
+      }
+
+      return loopBlockStyles_[^1];
+    }
+
+    if (options_.ColorizeNodes) {
+      if (block.HasLoopBackedge) {
+        return loopBackedgeBlockStyle_;
+      }
+
+      if (block.IsBranchBlock) {
+        return branchBlockStyle_;
+      }
+
+      if (block.IsSwitchBlock) {
+        return switchBlockStyle_;
+      }
+
+      if (block.IsReturnBlock) {
+        return returnBlockStyle_;
+      }
+
+      if (block.IsEmpty) {
+        return emptyBlockStyle_;
+      }
+    }
+
+    return defaultNodeStyle_;
   }
 }

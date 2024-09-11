@@ -10,7 +10,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
-using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Compilers.ASM;
 
@@ -188,7 +187,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // and creating the function profiles.
         for (int k = 0; k < chunks; k++) {
           int start = Math.Min(k * chunkSize, sampleCount);
-          int end = (k == chunks - 1) ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
+          int end = k == chunks - 1 ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
 
           tasks.Add(taskFactory.StartNew(() => {
             var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,

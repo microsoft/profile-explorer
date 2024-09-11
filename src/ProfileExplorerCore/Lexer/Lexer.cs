@@ -7,6 +7,7 @@ using System.Collections.Generic;
 namespace ProfileExplorer.Core.Lexer;
 
 public sealed class Lexer {
+  public delegate bool TokenAction(Token token);
   private char current_; // The current character.
   private int line_; // The current line.
   private int lineStart_; // The position of the current line start.
@@ -17,8 +18,6 @@ public sealed class Lexer {
     source_ = new CharSource();
     returnedTokens_ = new Stack<Token>(8);
   }
-
-  public delegate bool TokenAction(Token token);
 
   public void Initialize(string text) {
     Reset();

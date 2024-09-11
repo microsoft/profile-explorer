@@ -68,7 +68,8 @@
           Handler="ListViewItem_MouseLeave" />
 
         <Setter Property="OverridesDefaultStyle" Value="true" />
-        <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}" />
+        <Setter Property="Height"
+                Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Background" Value="{Binding BackColor}" />
@@ -90,7 +91,8 @@
 
               <ControlTemplate.Triggers>
                 <Trigger Property="IsSelected" Value="true">
-                  <Setter TargetName="Border" Property="Background" Value="{Binding SelectedLineBrush, RelativeSource={RelativeSource AncestorType={x:Type ProfileExplorerUi:IRDocumentHost}}}" />
+                  <Setter TargetName="Border" Property="Background"
+                          Value="{Binding SelectedLineBrush, RelativeSource={RelativeSource AncestorType={x:Type ProfileExplorerUi:IRDocumentHost}}}" />
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>

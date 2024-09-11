@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 using ProfileExplorer.Core.Utilities;
 
@@ -26,6 +25,12 @@ public class IRTextSummary : IEquatable<IRTextSummary> {
   public Guid Id { get; set; }
   public string ModuleName { get; private set; }
   public List<IRTextFunction> Functions { get; set; }
+
+  public bool Equals(IRTextSummary other) {
+    if (ReferenceEquals(null, other)) return false;
+    if (ReferenceEquals(this, other)) return true;
+    return ModuleName.Equals(other.ModuleName, StringComparison.Ordinal);
+  }
 
   public void SetModuleName(string moduleName) {
     ModuleName = moduleName != null ? string.Intern(moduleName) : null;
@@ -116,7 +121,7 @@ public class IRTextSummary : IEquatable<IRTextSummary> {
   }
 
   public override int GetHashCode() {
-    return (ModuleName != null ? ModuleName.GetHashCode() : 0);
+    return ModuleName != null ? ModuleName.GetHashCode() : 0;
   }
 
   public override string ToString() {
@@ -126,16 +131,10 @@ public class IRTextSummary : IEquatable<IRTextSummary> {
     return sb.ToString();
   }
 
-  public bool Equals(IRTextSummary other) {
-    if (ReferenceEquals(null, other)) return false;
-    if (ReferenceEquals(this, other)) return true;
-    return ModuleName.Equals(other.ModuleName, StringComparison.Ordinal);
-  }
-
   public override bool Equals(object obj) {
     if (ReferenceEquals(null, obj)) return false;
     if (ReferenceEquals(this, obj)) return true;
-    if (obj.GetType() != this.GetType()) return false;
+    if (obj.GetType() != GetType()) return false;
     return Equals((IRTextSummary)obj);
   }
 }

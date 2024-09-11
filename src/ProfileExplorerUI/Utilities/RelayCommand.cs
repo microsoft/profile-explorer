@@ -6,13 +6,8 @@ using System.Windows.Input;
 namespace ProfileExplorer.UI.Utilities;
 
 public class RelayCommand<T> : ICommand {
-    #region Fields
-
   private readonly Action<T> _execute;
   private readonly Predicate<T> _canExecute;
-
-    #endregion
-    #region Constructors
 
   /// <summary>
   ///   Initializes a new instance of <see cref="DelegateCommand{T}" />.
@@ -38,9 +33,6 @@ public class RelayCommand<T> : ICommand {
     _execute = execute;
     _canExecute = canExecute;
   }
-
-    #endregion
-    #region ICommand Members
 
   /// <summary>
   ///   Defines the method that determines whether the command can execute in its current state.
@@ -74,6 +66,4 @@ public class RelayCommand<T> : ICommand {
   public void Execute(object parameter) {
     _execute((T)parameter);
   }
-
-    #endregion
 }

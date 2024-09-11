@@ -466,7 +466,7 @@ public sealed class ProfileCallTree {
                                           Dictionary<IRTextFunction, ProfileCallTreeNode> funcMap,
                                           Dictionary<string, ModuleProfileInfo> moduleMap) {
     // Combine all instances of a function under the node.
-    ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(funcMap, node.Function, out var exists);
+    ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(funcMap, node.Function, out bool exists);
 
     if (!exists) {
       entry = new ProfileCallTreeGroupNode(node.FunctionDebugInfo, node.Function, node.Kind);
@@ -479,7 +479,7 @@ public sealed class ProfileCallTree {
 
     // Collect time and functions per module.
     ref var moduleEntry =
-      ref CollectionsMarshal.GetValueRefOrAddDefault(moduleMap, node.ModuleName, out var moduleExists);
+      ref CollectionsMarshal.GetValueRefOrAddDefault(moduleMap, node.ModuleName, out bool moduleExists);
 
     if (!moduleExists) {
       moduleEntry = new ModuleProfileInfo(node.ModuleName);
@@ -509,7 +509,7 @@ public sealed class ProfileCallTree {
 
     // Merge the other data structures.
     if (otherTree.funcToNodesMap_ != null) {
-      funcToNodesMap_ ??= new();
+      funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
       var existingNodesSet = new HashSet<ProfileCallTreeNode>();
 
       foreach (var list in funcToNodesMap_.Values) {

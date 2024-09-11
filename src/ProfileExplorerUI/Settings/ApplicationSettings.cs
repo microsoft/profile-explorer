@@ -17,6 +17,10 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class ApplicationSettings {
+  public ApplicationSettings() {
+    Reset();
+  }
+
   [ProtoMember(1)]
   public List<string> RecentFiles { get; set; }
   [ProtoMember(2)]
@@ -73,10 +77,6 @@ public class ApplicationSettings {
   public FunctionMarkingSettings MarkingSettings { get; set; }
   [ProtoMember(30)]
   public HashSet<OptionValueId> KnownOptions { get; set; }
-
-  public ApplicationSettings() {
-    Reset();
-  }
 
   public void Reset() {
     InitializeReferenceMembers();

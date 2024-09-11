@@ -142,8 +142,51 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public long EndRVA => RVA + Size - 1;
   public bool IsUnknown => RVA == 0 && Size == 0;
 
+  public int CompareTo(FunctionDebugInfo other) {
+    // Userd by sorting.
+    if (other == null) return 0;
+
+    if (other.StartRVA < StartRVA) {
+      return 1;
+    }
+
+    if (other.StartRVA > StartRVA) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  public int CompareTo(long value) {
+    // Used by binary search.
+    if (value < StartRVA) {
+      return 1;
+    }
+
+    if (value > EndRVA) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  public bool Equals(FunctionDebugInfo other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return RVA == other.RVA &&
+           Size == other.Size &&
+           Id == other.Id &&
+           AuxiliaryId == other.AuxiliaryId;
+  }
+
   public static FunctionDebugInfo BinarySearch(List<FunctionDebugInfo> ranges, long value,
-                                                bool hasOverlappingFuncts = false) {
+                                               bool hasOverlappingFuncts = false) {
     int low = 0;
     int high = ranges.Count - 1;
 
@@ -168,7 +211,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 
             if (otherRange.CompareTo(value) == 0 &&
                 (otherRange.StartRVA != range.StartRVA ||
-                 otherRange.Size > range.Size) ) {
+                 otherRange.Size > range.Size)) {
               return otherRange;
             }
           }
@@ -234,48 +277,5 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
 
   public override string ToString() {
     return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}, AuxId: {AuxiliaryId}";
-  }
-
-  public int CompareTo(FunctionDebugInfo other) {
-    // Userd by sorting.
-    if (other == null) return 0;
-
-    if (other.StartRVA < StartRVA) {
-      return 1;
-    }
-
-    if (other.StartRVA > StartRVA) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  public int CompareTo(long value) {
-    // Used by binary search.
-    if (value < StartRVA) {
-      return 1;
-    }
-
-    if (value > EndRVA) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  public bool Equals(FunctionDebugInfo other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return RVA == other.RVA &&
-           Size == other.Size &&
-           Id == other.Id &&
-           AuxiliaryId == other.AuxiliaryId;
   }
 }

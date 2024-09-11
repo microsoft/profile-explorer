@@ -9,6 +9,12 @@ using System.Threading;
 namespace ProfileExplorer.UI.Profile;
 
 public class ProfilerNamedPipeServer : IDisposable {
+  public delegate void FunctionCallTargetsReceivedDelegate(long functionId, int rejitId, int processId, long address,
+                                                           string name);
+
+  public delegate void FunctionCodeReceivedDelegate(long functionId, int rejitId, int processId, long address,
+                                                    int codeSize, byte[] codeBytes);
+
   public const string PipeName = "IRXProfilerPipe";
   private NamedPipeServer instance_;
 
@@ -16,22 +22,14 @@ public class ProfilerNamedPipeServer : IDisposable {
     instance_ = new NamedPipeServer(PipeName);
   }
 
-  public delegate void FunctionCodeReceivedDelegate(long functionId, int rejitId, int processId, long address,
-                                                    int codeSize, byte[] codeBytes);
-
-  public delegate void FunctionCallTargetsReceivedDelegate(long functionId, int rejitId, int processId, long address,
-                                                           string name);
+  public void Dispose() {
+    if (instance_ != null) {
+      Stop();
+    }
+  }
 
   public event FunctionCodeReceivedDelegate FunctionCodeReceived;
   public event FunctionCallTargetsReceivedDelegate FunctionCallTargetsReceived;
-
-  private enum MessageKind {
-    StartSession,
-    EndSession,
-    FunctionCode,
-    FunctionCallTarget,
-    RequestFunctionCode
-  }
 
   public bool StartReceiving(CancellationToken cancellationToken) {
     try {
@@ -109,10 +107,12 @@ public class ProfilerNamedPipeServer : IDisposable {
     instance_ = null;
   }
 
-  public void Dispose() {
-    if (instance_ != null) {
-      Stop();
-    }
+  private enum MessageKind {
+    StartSession,
+    EndSession,
+    FunctionCode,
+    FunctionCallTarget,
+    RequestFunctionCode
   }
 
   [StructLayout(LayoutKind.Sequential, Pack = 1)]

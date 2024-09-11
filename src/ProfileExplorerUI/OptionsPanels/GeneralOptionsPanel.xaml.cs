@@ -1,13 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Windows;
-using System.Windows.Input;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class GeneralOptionsPanel : OptionsPanelBase {
   private GeneralSettings settings_;
+
   public GeneralOptionsPanel() {
     InitializeComponent();
   }

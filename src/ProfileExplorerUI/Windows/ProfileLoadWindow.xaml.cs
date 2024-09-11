@@ -12,13 +12,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Navigation;
 using System.Windows.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Profile;
-using Microsoft.Win32;
 
 namespace ProfileExplorer.UI;
 
@@ -34,8 +32,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private bool isRecordingProfile_;
   private List<ProcessSummary> processList_;
   private List<ProcessSummary> selectedProcSummary_;
-  private List<ProcessSummary> recoredProcSummaries_;
-  private bool windowClosed_;
   private RecordingSession currentSession_;
   private RecordingSession loadedSession_;
   private int enabledPerfCounters_;
@@ -74,7 +70,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     Closing += ProfileLoadWindow_Closing;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public ISession Session { get; set; }
 
@@ -212,6 +207,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
   }
 
+  public event PropertyChangedEventHandler PropertyChanged;
+
   private void UpdatePerfCounterList() {
     var counters = ETWRecordingSession.BuiltinPerformanceCounters;
 
@@ -337,7 +334,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private async Task LoadProfileTraceFileAndCloseWindow(SymbolFileSourceSettings symbolSettings) {
     SaveCurrentOptions();
 
-    if (await LoadProfileTraceFile(symbolSettings) && !windowClosed_) {
+    if (await LoadProfileTraceFile(symbolSettings)) {
       DialogResult = true;
       Close();
     }
@@ -471,12 +468,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         ProfileLoadStage.TraceReading    => "Reading trace",
         ProfileLoadStage.TraceProcessing => "Processing trace",
         ProfileLoadStage.ComputeCallTree => "Computing Call Tree",
-        ProfileLoadStage.BinaryLoading => "Loading binaries" +
+        ProfileLoadStage.BinaryLoading => "Downloading and loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
-                                            $" ({progressInfo.Optional.TrimToLength(15)})" : ""),
-        ProfileLoadStage.SymbolLoading => "Loading symbols" +
+                                            $" ({progressInfo.Optional.TrimToLength(30)})" : ""),
+        ProfileLoadStage.SymbolLoading => "Downloading and loading symbols" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
-                                            $" ({progressInfo.Optional.TrimToLength(15)})" : ""),
+                                            $" ({progressInfo.Optional.TrimToLength(30)})" : ""),
         ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
         _                                      => ""
       };
@@ -991,11 +988,6 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     }
   }
 
-  private void SymbolPath_OnDropDownClosed(object sender, RoutedPropertyChangedEventArgs<bool> e) {
-    var textBox = sender as FileSystemTextBox;
-    UpdateSymbolPath(textBox);
-  }
-
   private void UpdateSymbolPath(FileSystemTextBox textBox) {
     if (textBox == null) {
       return;
@@ -1017,6 +1009,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       SymbolOptionsPanel.ReloadSettings();
     }
   }
+
   private async void ProcessList_PreviewKeyDown(object sender, KeyEventArgs e) {
     if (e.Key == Key.Enter) {
       await LoadProfileTraceFileAndCloseWindow(symbolSettings_);

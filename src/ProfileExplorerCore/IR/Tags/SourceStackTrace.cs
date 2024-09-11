@@ -19,6 +19,16 @@ public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
   public int Line { get; set; }
   public int Column { get; set; }
 
+  public bool Equals(SourceStackFrame other) {
+    if (ReferenceEquals(null, other))
+      return false;
+    if (ReferenceEquals(this, other))
+      return true;
+    return Line == other.Line && Column == other.Column &&
+           Function.Equals(other.Function, StringComparison.OrdinalIgnoreCase) &&
+           FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
+  }
+
   public static bool operator ==(SourceStackFrame left, SourceStackFrame right) {
     return Equals(left, right);
   }
@@ -33,16 +43,6 @@ public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
 
   public override int GetHashCode() {
     return HashCode.Combine(Function, FilePath, Line, Column);
-  }
-
-  public bool Equals(SourceStackFrame other) {
-    if (ReferenceEquals(null, other))
-      return false;
-    if (ReferenceEquals(this, other))
-      return true;
-    return Line == other.Line && Column == other.Column &&
-           Function.Equals(other.Function, StringComparison.OrdinalIgnoreCase) &&
-           FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
   }
 
   public bool HasSameFunction(SourceStackFrame inlinee) {

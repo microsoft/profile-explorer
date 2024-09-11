@@ -15,14 +15,6 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
   public static readonly DependencyProperty SelectedPaletteProperty =
     DependencyProperty.Register("SelectedPalette", typeof(ColorPalette), typeof(ColorPaletteSelector),
                                 new PropertyMetadata(null, OnSelectedPaletteChanged));
-
-  private static void OnSelectedPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-    var sender = d as ColorPaletteSelector;
-    var value = e.NewValue as ColorPalette;
-    sender.SelectedPalette = value;
-    sender.PaletteViewer.Palette = value;
-  }
-
   public static readonly DependencyProperty PalettesSourceProperty =
     DependencyProperty.Register("PalettesSource", typeof(List<ColorPalette>), typeof(ColorPaletteSelector),
                                 new PropertyMetadata(null));
@@ -60,13 +52,20 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
     }
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private static void OnSelectedPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+    var sender = d as ColorPaletteSelector;
+    var value = e.NewValue as ColorPalette;
+    sender.SelectedPalette = value;
+    sender.PaletteViewer.Palette = value;
+  }
+
   private void PaletteList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
     SelectedPalette = PaletteList.SelectedItem as ColorPalette;
     PaletteSplitButton.IsOpen = false;
   }
-
-  public event PropertyChangedEventHandler PropertyChanged;
-  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

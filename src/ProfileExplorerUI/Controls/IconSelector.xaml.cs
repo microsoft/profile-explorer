@@ -28,7 +28,6 @@ public partial class IconSelector : UserControl {
     DataContext = this;
   }
 
-  public event EventHandler<SelectedIconEventArgs> IconSelected;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ICommand IconSelectedCommand {
@@ -40,6 +39,8 @@ public partial class IconSelector : UserControl {
     get => (IInputElement)GetValue(CommandTargetProperty);
     set => SetValue(CommandTargetProperty, value);
   }
+
+  public event EventHandler<SelectedIconEventArgs> IconSelected;
 
   private void IconSelector_Loaded(object sender, RoutedEventArgs e) {
     Focus();

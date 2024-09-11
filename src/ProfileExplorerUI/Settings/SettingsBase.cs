@@ -63,9 +63,6 @@ public record OptionValueId(string ClassName, int MemberId);
 // Attribute to specify the default value of an option.
 [AttributeUsage(AttributeTargets.All)]
 public class OptionValueAttribute : Attribute {
-  public object Value { get; set; }
-  public bool CreateNewInstance { get; set; }
-
   public OptionValueAttribute() {
     // Create new object of type, calling default constructor.
     CreateNewInstance = true;
@@ -75,15 +72,12 @@ public class OptionValueAttribute : Attribute {
     // Set value to the primitive value passed in.
     Value = value;
   }
+
+  public object Value { get; set; }
+  public bool CreateNewInstance { get; set; }
 }
 
 public class SettingsBase {
-  private delegate bool VisitOptionAction(object settings, PropertyInfo property,
-                                          OptionValueAttribute optionAttr, OptionValueId optionId);
-
-  private delegate void VisitSettingsAction(object settings, int level);
-  private delegate void VisitNestedSettingsAction(object nestedSettings, PropertyInfo property, bool isCollection);
-
   private static void EmptyVisitOptionAction(object settings, PropertyInfo property,
                                              OptionValueAttribute optionAttr, OptionValueId optionId) {
   }
@@ -570,4 +564,10 @@ public class SettingsBase {
     var optionId = new OptionValueId(className, id);
     return optionId;
   }
+
+  private delegate bool VisitOptionAction(object settings, PropertyInfo property,
+                                          OptionValueAttribute optionAttr, OptionValueId optionId);
+
+  private delegate void VisitSettingsAction(object settings, int level);
+  private delegate void VisitNestedSettingsAction(object nestedSettings, PropertyInfo property, bool isCollection);
 }

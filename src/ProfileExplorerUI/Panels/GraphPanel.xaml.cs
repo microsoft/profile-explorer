@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -99,6 +98,13 @@ public partial class GraphPanel : ToolPanelControl {
   }
 
   public IRTextSection Section => Document?.Section;
+  public override ToolPanelKind PanelKind => ToolPanelKind.FlowGraph;
+  public override HandledEventKind HandledEvents =>
+    HandledEventKind.ElementSelection | HandledEventKind.ElementHighlighting;
+  public GraphSettings Settings =>
+    PanelKind == ToolPanelKind.ExpressionGraph
+      ? App.Settings.ExpressionGraphSettings
+      : App.Settings.FlowGraphSettings;
 
   public void BringIntoView(IRElement element) {
     var node = GraphViewer.FindElementNode(element);
@@ -854,38 +860,6 @@ public partial class GraphPanel : ToolPanelControl {
     Session.PopulateBindMenu(this, e);
   }
 
-  private class BlockTooltipInfo {
-    public BlockTooltipInfo(BlockIR block) {
-      PredecessorCount = block.Predecessors.Count;
-      SuccessorCount = block.Successors.Count;
-      var loopTag = block.GetTag<LoopBlockTag>();
-
-      if (loopTag != null) {
-        InLoop = true;
-        LoopNesting = loopTag.NestingLevel;
-        LoopBlocks = loopTag.Loop.Blocks.Count;
-        NestedLoops = loopTag.Loop.NestedLoops.Count;
-      }
-    }
-
-    public bool InLoop { get; set; }
-    public int LoopBlocks { get; set; }
-    public int LoopNesting { get; set; }
-    public int NestedLoops { get; set; }
-    public int PredecessorCount { get; set; }
-    public int SuccessorCount { get; set; }
-  }
-
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.FlowGraph;
-  public override HandledEventKind HandledEvents =>
-    HandledEventKind.ElementSelection | HandledEventKind.ElementHighlighting;
-  public GraphSettings Settings =>
-    PanelKind == ToolPanelKind.ExpressionGraph
-      ? App.Settings.ExpressionGraphSettings
-      : App.Settings.FlowGraphSettings;
-
   public override void OnRegisterPanel() {
     IsPanelEnabled = false;
     ReloadSettings();
@@ -1054,7 +1028,27 @@ public partial class GraphPanel : ToolPanelControl {
     DisplayGraph(newGraph);
   }
 
-        #endregion
+  private class BlockTooltipInfo {
+    public BlockTooltipInfo(BlockIR block) {
+      PredecessorCount = block.Predecessors.Count;
+      SuccessorCount = block.Successors.Count;
+      var loopTag = block.GetTag<LoopBlockTag>();
+
+      if (loopTag != null) {
+        InLoop = true;
+        LoopNesting = loopTag.NestingLevel;
+        LoopBlocks = loopTag.Loop.Blocks.Count;
+        NestedLoops = loopTag.Loop.NestedLoops.Count;
+      }
+    }
+
+    public bool InLoop { get; set; }
+    public int LoopBlocks { get; set; }
+    public int LoopNesting { get; set; }
+    public int NestedLoops { get; set; }
+    public int PredecessorCount { get; set; }
+    public int SuccessorCount { get; set; }
+  }
 }
 
 class GraphQueryInfo {

@@ -47,6 +47,22 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
     set => SetBitState(index, value);
   }
 
+  public bool Equals(SparseBitvector other) {
+    var a = startNode_;
+    var b = other.startNode_;
+
+    while (a != null && b != null) {
+      if (!a.Equals(b)) {
+        return false;
+      }
+
+      a = a.NextNode;
+      b = b.NextNode;
+    }
+
+    return a == null && b == null;
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetBit(int bit) {
     SetBitState(bit, true);
@@ -153,22 +169,6 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
     }
 
     return hash;
-  }
-
-  public bool Equals(SparseBitvector other) {
-    var a = startNode_;
-    var b = other.startNode_;
-
-    while (a != null && b != null) {
-      if (!a.Equals(b)) {
-        return false;
-      }
-
-      a = a.NextNode;
-      b = b.NextNode;
-    }
-
-    return a == null && b == null;
   }
 
   private Node FindOrCreateNode(int bit) {
@@ -303,14 +303,6 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
       }
     }
 
-    public static bool operator ==(Node? left, Node? right) {
-      return Equals(left, right);
-    }
-
-    public static bool operator !=(Node? left, Node? right) {
-      return !Equals(left, right);
-    }
-
     public bool this[int index] {
       [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get {
@@ -328,6 +320,19 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
           data_[index >> DivShift] &= ~(1ul << (index & RemMask));
         }
       }
+    }
+
+    public bool Equals(Node other) {
+      return StartBit == other.StartBit &&
+             data_.SequenceEqual(other.data_);
+    }
+
+    public static bool operator ==(Node? left, Node? right) {
+      return Equals(left, right);
+    }
+
+    public static bool operator !=(Node? left, Node? right) {
+      return !Equals(left, right);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -406,11 +411,6 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
       }
 
       return sb.ToString();
-    }
-
-    public bool Equals(Node other) {
-      return StartBit == other.StartBit &&
-             data_.SequenceEqual(other.data_);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

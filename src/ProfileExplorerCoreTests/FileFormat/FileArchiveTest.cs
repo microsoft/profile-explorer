@@ -5,8 +5,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using ProfileExplorer.Core.FileFormat;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ProfileExplorer.Core.FileFormat;
 
 namespace ProfileExplorerCoreTests.FileFormat;
 
@@ -332,12 +332,6 @@ public class FileArchiveTest {
     Assert.IsTrue(AreFilesEqual(file3, $@"{OutPath}\foo\file3.txt"));
   }
 
-  private class ExtraData {
-    public int Value1 { get; set; }
-    public int Value2 { get; set; }
-    public string Value3 { get; set; }
-  }
-
   [TestMethod]
   public async Task TestOptionalData() {
     string path = $@"{ResultPath}\archive.zip";
@@ -437,5 +431,11 @@ public class FileArchiveTest {
     catch {
       return false;
     }
+  }
+
+  private class ExtraData {
+    public int Value1 { get; set; }
+    public int Value2 { get; set; }
+    public string Value3 { get; set; }
   }
 }

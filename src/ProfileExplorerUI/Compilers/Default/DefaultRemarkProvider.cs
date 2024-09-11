@@ -64,30 +64,6 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
     }
   }
 
-  public RemarkCategory FindRemarkKind(string text, bool isInstructionElement) {
-    if (categories_ == null) {
-      return default(RemarkCategory); // Error loading settings.
-    }
-
-    text = text.Trim();
-
-    foreach (var category in categories_) {
-      // Ignore remarks that expect an entire instruction reference
-      // if the IR is not an instruction.
-      if (category.ExpectInstructionIR && !isInstructionElement) {
-        continue;
-      }
-
-      //? TODO: If SearchKind is Regex, this ends up creating a new Regex
-      //? instance for each remark, should make it once and attach it to category
-      if (TextSearcher.Contains(text, category.SearchedText, category.SearchKind)) {
-        return category;
-      }
-    }
-
-    return defaultCategory_;
-  }
-
   public bool SaveSettings() {
     return false;
   }
@@ -216,6 +192,30 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
     }
 
     return remarks;
+  }
+
+  public RemarkCategory FindRemarkKind(string text, bool isInstructionElement) {
+    if (categories_ == null) {
+      return default(RemarkCategory); // Error loading settings.
+    }
+
+    text = text.Trim();
+
+    foreach (var category in categories_) {
+      // Ignore remarks that expect an entire instruction reference
+      // if the IR is not an instruction.
+      if (category.ExpectInstructionIR && !isInstructionElement) {
+        continue;
+      }
+
+      //? TODO: If SearchKind is Regex, this ends up creating a new Regex
+      //? instance for each remark, should make it once and attach it to category
+      if (TextSearcher.Contains(text, category.SearchedText, category.SearchKind)) {
+        return category;
+      }
+    }
+
+    return defaultCategory_;
   }
 
   private void ExtractInstructionRemarks(List<string> lines, FunctionIR function,

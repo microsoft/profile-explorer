@@ -246,7 +246,8 @@
               Height="16"
               Source="{StaticResource ClearIcon}" />
           </Button>
-          <Separator Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding ProfileFilter.HasFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 
           <TextBlock
             Margin="2,0,0,0"

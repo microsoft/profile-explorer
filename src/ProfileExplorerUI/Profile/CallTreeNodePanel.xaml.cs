@@ -12,14 +12,15 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ProfileExplorer.Core;
-using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI.Utilities;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.Wpf;
+using ProfileExplorer.Core;
+using ProfileExplorer.UI.Controls;
+using ProfileExplorer.UI.Utilities;
+using PlotCommands = OxyPlot.PlotCommands;
 using VerticalAlignment = System.Windows.VerticalAlignment;
 
 namespace ProfileExplorer.UI.Profile;
@@ -83,19 +84,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     CallTreeNode = null;
   }
 
-  public event EventHandler<ProfileCallTreeNode> NodeInstanceChanged;
-  public event EventHandler<ProfileCallTreeNode> BacktraceNodeClick;
-  public event EventHandler<ProfileCallTreeNode> BacktraceNodeDoubleClick;
-  public event EventHandler<ProfileCallTreeNode> InstanceNodeClick;
-  public event EventHandler<ProfileCallTreeNode> InstanceNodeDoubleClick;
-  public event EventHandler<ProfileCallTreeNode> FunctionNodeClick;
-  public event EventHandler<ProfileCallTreeNode> FunctionNodeDoubleClick;
-  public event EventHandler<ProfileCallTreeNode> ModuleNodeClick;
-  public event EventHandler<ProfileCallTreeNode> ModuleNodeDoubleClick;
-  public event EventHandler<List<ProfileCallTreeNode>> NodesSelected;
-  public event EventHandler MarkingChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public override ISession Session {
     get => base.Session;
     set {
@@ -138,16 +126,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
         InvokeSetupInstancesHistogram();
       }
     }
-  }
-
-  public void SaveListColumnSettings() {
-    BacktraceList.SaveColumnsState(settings_.StackListColumns);
-    FunctionList.SaveColumnsState(settings_.FunctionListColumns);
-    ModuleList.SaveColumnsState(settings_.ModuleListColumns);
-    ModuleFunctionList.SaveColumnsState(settings_.ModuleFunctionListColumns);
-    CategoryList.SaveColumnsState(settings_.CategoryListColumns);
-    CategoryFunctionList.SaveColumnsState(settings_.CategoryFunctionListColumns);
-    InstancesList.SaveColumnsState(settings_.InstanceListColumns);
   }
 
   public bool IsInstancesExpanded {
@@ -242,6 +220,94 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   public bool EnableSingleNodeActions {
     get => enableSingleNodeActions_;
     set => SetField(ref enableSingleNodeActions_, value);
+  }
+
+  public RelayCommand<object> ExcludeThreadCommand =>
+    new(async obj => {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
+      }
+    });
+  public RelayCommand<object> ExcludeSameNameThreadCommand =>
+    new(async obj => {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
+      }
+    });
+  public RelayCommand<object> FilterToThreadCommand =>
+    new(async obj => {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
+      }
+    });
+  public RelayCommand<object> FilterToSameNameThreadCommand =>
+    new(async obj => {
+      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
+        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToSameNameThread);
+      }
+    });
+  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
+    if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem &&
+        instancesNode_.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(threadItem.ThreadId);
+      await IRDocumentPopupInstance.ShowPreviewPopup(instancesNode_.CallTreeNode.Function, "",
+                                                     ThreadsExpander, Session, filter);
+    }
+  });
+  public RelayCommand<object> OpenFunctionCommand => new(async obj => {
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+    await OpenFunction(obj, mode);
+  });
+  public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
+    await OpenFunction(obj, OpenSectionKind.NewTabDockRight);
+  });
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
+    if (obj is SelectedColorEventArgs e) {
+      if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
+        foreach (var node in groupNode.Nodes) {
+          MarkModule(node.ModuleName, e.SelectedColor);
+        }
+      }
+      else {
+        MarkModule(CallTreeNode.CallTreeNode.ModuleName, e.SelectedColor);
+      }
+    }
+  });
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
+    if (obj is SelectedColorEventArgs e) {
+      if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
+        foreach (var node in groupNode.Nodes) {
+          string funcName = node.FormatFunctionName(Session);
+          MarkFunction(funcName, e.SelectedColor);
+        }
+      }
+      else {
+        string funcName = CallTreeNode.CallTreeNode.FormatFunctionName(Session);
+        MarkFunction(funcName, e.SelectedColor);
+      }
+    }
+  });
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<ProfileCallTreeNode> NodeInstanceChanged;
+  public event EventHandler<ProfileCallTreeNode> BacktraceNodeClick;
+  public event EventHandler<ProfileCallTreeNode> BacktraceNodeDoubleClick;
+  public event EventHandler<ProfileCallTreeNode> InstanceNodeClick;
+  public event EventHandler<ProfileCallTreeNode> InstanceNodeDoubleClick;
+  public event EventHandler<ProfileCallTreeNode> FunctionNodeClick;
+  public event EventHandler<ProfileCallTreeNode> FunctionNodeDoubleClick;
+  public event EventHandler<ProfileCallTreeNode> ModuleNodeClick;
+  public event EventHandler<ProfileCallTreeNode> ModuleNodeDoubleClick;
+  public event EventHandler<List<ProfileCallTreeNode>> NodesSelected;
+  public event EventHandler MarkingChanged;
+
+  public void SaveListColumnSettings() {
+    BacktraceList.SaveColumnsState(settings_.StackListColumns);
+    FunctionList.SaveColumnsState(settings_.FunctionListColumns);
+    ModuleList.SaveColumnsState(settings_.ModuleListColumns);
+    ModuleFunctionList.SaveColumnsState(settings_.ModuleFunctionListColumns);
+    CategoryList.SaveColumnsState(settings_.CategoryListColumns);
+    CategoryFunctionList.SaveColumnsState(settings_.CategoryFunctionListColumns);
+    InstancesList.SaveColumnsState(settings_.InstanceListColumns);
   }
 
   public void Show(ProfileCallTreeNodeEx nodeEx) {
@@ -610,7 +676,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     // Override tooltip.
     plotView.Controller = new PlotController();
     plotView.Controller.UnbindMouseDown(OxyMouseButton.Left);
-    plotView.Controller.BindMouseEnter(OxyPlot.PlotCommands.HoverSnapTrack);
+    plotView.Controller.BindMouseEnter(PlotCommands.HoverSnapTrack);
 
     object tooltipTemplate = Application.Current.FindResource("HistogramTooltipTemplate");
     plotView.DefaultTrackerTemplate = (ControlTemplate)tooltipTemplate;
@@ -712,21 +778,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }, DispatcherPriority.Render);
   }
 
-  public class BinHistogramItem : HistogramItem {
-    public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count) : base(
-      rangeStart, rangeEnd, area, count) {
-    }
-
-    public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count, OxyColor color) : base(
-      rangeStart, rangeEnd, area, count, color) {
-    }
-
-    public new int Count { get; set; }
-    public TimeSpan AverageWeight { get; set; }
-    public TimeSpan TotalWeight { get; set; }
-    public List<ProfileCallTreeNode> Nodes { get; set; }
-  }
-
   public void Reset() {
     Utils.DisableControl(this);
   }
@@ -745,50 +796,9 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
   }
 
-  public RelayCommand<object> ExcludeThreadCommand =>
-    new(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
-        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeThread);
-      }
-    });
-  public RelayCommand<object> ExcludeSameNameThreadCommand =>
-    new(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
-        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.ExcludeSameNameThread);
-      }
-    });
-  public RelayCommand<object> FilterToThreadCommand =>
-    new(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
-        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToThread);
-      }
-    });
-  public RelayCommand<object> FilterToSameNameThreadCommand =>
-    new(async obj => {
-      if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem) {
-        await ApplyThreadFilterAction(threadItem, ThreadActivityAction.FilterToSameNameThread);
-      }
-    });
-
   private void ThreadContextMenuButton_Click(object sender, RoutedEventArgs e) {
     Utils.ShowContextMenu(sender as FrameworkElement, this);
   }
-
-  public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
-    if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem &&
-        instancesNode_.CallTreeNode != null) {
-      var filter = new ProfileSampleFilter(threadItem.ThreadId);
-      await IRDocumentPopupInstance.ShowPreviewPopup(instancesNode_.CallTreeNode.Function, "",
-                                                     ThreadsExpander, Session, filter);
-    }
-  });
-  public RelayCommand<object> OpenFunctionCommand => new(async obj => {
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-    await OpenFunction(obj, mode);
-  });
-  public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
-    await OpenFunction(obj, OpenSectionKind.NewTabDockRight);
-  });
 
   private async Task OpenFunction(object obj, OpenSectionKind openMode) {
     if (((FrameworkElement)obj).DataContext is ThreadListItem threadItem &&
@@ -819,33 +829,6 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     Utils.ShowContextMenu(sender as FrameworkElement, this);
   }
 
-  public RelayCommand<object> MarkModuleCommand => new(async obj => {
-    if (obj is SelectedColorEventArgs e) {
-      if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
-        foreach (var node in groupNode.Nodes) {
-          MarkModule(node.ModuleName, e.SelectedColor);
-        }
-      }
-      else {
-        MarkModule(CallTreeNode.CallTreeNode.ModuleName, e.SelectedColor);
-      }
-    }
-  });
-  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
-    if (obj is SelectedColorEventArgs e) {
-      if (CallTreeNode.CallTreeNode is ProfileCallTreeGroupNode groupNode) {
-        foreach (var node in groupNode.Nodes) {
-          string funcName = node.FormatFunctionName(Session);
-          MarkFunction(funcName, e.SelectedColor);
-        }
-      }
-      else {
-        string funcName = CallTreeNode.CallTreeNode.FormatFunctionName(Session);
-        MarkFunction(funcName, e.SelectedColor);
-      }
-    }
-  });
-
   private void MarkModule(string module, Color color) {
     var markingSettings = App.Settings.MarkingSettings;
     markingSettings.UseModuleColors = true;
@@ -858,5 +841,20 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     markingSettings.UseFunctionColors = true;
     markingSettings.AddFunctionColor(function, color);
     MarkingChanged?.Invoke(this, EventArgs.Empty);
+  }
+
+  public class BinHistogramItem : HistogramItem {
+    public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count) : base(
+      rangeStart, rangeEnd, area, count) {
+    }
+
+    public BinHistogramItem(double rangeStart, double rangeEnd, double area, int count, OxyColor color) : base(
+      rangeStart, rangeEnd, area, count, color) {
+    }
+
+    public new int Count { get; set; }
+    public TimeSpan AverageWeight { get; set; }
+    public TimeSpan TotalWeight { get; set; }
+    public List<ProfileCallTreeNode> Nodes { get; set; }
   }
 }

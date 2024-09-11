@@ -74,32 +74,6 @@ public sealed class DiffLineHighlighter : IBackgroundRenderer {
   public int Version { get; set; }
   public KnownLayer Layer => KnownLayer.Background;
 
-  public void ForEachDiffSegment(Action<DiffTextSegment, Color> action) {
-    foreach (var segment in segments_) {
-      var pen = GetSegmentColor(segment, false);
-      var color = pen != null ? ((SolidColorBrush)pen).Color : Colors.Transparent;
-      action(segment, color);
-    }
-  }
-
-  public void Add(DiffTextSegment segment) {
-    segments_.Add(segment);
-    Version++;
-  }
-
-  public void Add(List<DiffTextSegment> segments) {
-    foreach (var segment in segments) {
-      segments_.Add(segment);
-    }
-
-    Version++;
-  }
-
-  public void Clear() {
-    segments_.Clear();
-    Version++;
-  }
-
   public void Draw(TextView textView, DrawingContext drawingContext) {
     if (textView.Document == null || textView.Document.TextLength == 0) {
       return;
@@ -130,6 +104,32 @@ public sealed class DiffLineHighlighter : IBackgroundRenderer {
     if (geoBuilder != null && prevSegment != null) {
       DrawGeometry(geoBuilder, prevSegment, drawingContext);
     }
+  }
+
+  public void ForEachDiffSegment(Action<DiffTextSegment, Color> action) {
+    foreach (var segment in segments_) {
+      var pen = GetSegmentColor(segment, false);
+      var color = pen != null ? ((SolidColorBrush)pen).Color : Colors.Transparent;
+      action(segment, color);
+    }
+  }
+
+  public void Add(DiffTextSegment segment) {
+    segments_.Add(segment);
+    Version++;
+  }
+
+  public void Add(List<DiffTextSegment> segments) {
+    foreach (var segment in segments) {
+      segments_.Add(segment);
+    }
+
+    Version++;
+  }
+
+  public void Clear() {
+    segments_.Clear();
+    Version++;
   }
 
   private void CreatePlaceholderTiledBrush(double tileSize) {

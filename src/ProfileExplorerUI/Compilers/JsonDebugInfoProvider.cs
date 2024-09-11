@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
@@ -16,24 +15,8 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   public Machine? Architecture => null;
   public SymbolFileSourceSettings SymbolSettings { get; set; }
 
-  private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
-    return new SourceFileDebugInfo(info.FirstSourceLine.FilePath,
-                                   info.FirstSourceLine.FilePath,
-                                   info.FirstSourceLine.Line);
-  }
-
   public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
     return AnnotateSourceLocations(function, textFunc.Name);
-  }
-
-  public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
-    var funcInfo = FindFunction(functionName);
-
-    if (funcInfo == null) {
-      return false;
-    }
-
-    return AnnotateSourceLocations(function, funcInfo);
   }
 
   public bool AnnotateSourceLocations(FunctionIR function,
@@ -111,21 +94,6 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
     return SourceLineDebugInfo.Unknown;
   }
 
-  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
-    if (!JsonUtils.DeserializeFromFile(debugFilePath, out functions_)) {
-      return false;
-    }
-
-    functions_.Sort();
-    functionMap_ = new Dictionary<string, FunctionDebugInfo>(functions_.Count);
-
-    foreach (var func in functions_) {
-      functionMap_[func.Name] = func;
-    }
-
-    return true;
-  }
-
   public bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null) {
     if (!debugFile.Found) {
       return false;
@@ -142,5 +110,36 @@ public class JsonDebugInfoProvider : IDebugInfoProvider {
   }
 
   public void Dispose() {
+  }
+
+  private static SourceFileDebugInfo GetSourceFileInfo(FunctionDebugInfo info) {
+    return new SourceFileDebugInfo(info.FirstSourceLine.FilePath,
+                                   info.FirstSourceLine.FilePath,
+                                   info.FirstSourceLine.Line);
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
+    var funcInfo = FindFunction(functionName);
+
+    if (funcInfo == null) {
+      return false;
+    }
+
+    return AnnotateSourceLocations(function, funcInfo);
+  }
+
+  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
+    if (!JsonUtils.DeserializeFromFile(debugFilePath, out functions_)) {
+      return false;
+    }
+
+    functions_.Sort();
+    functionMap_ = new Dictionary<string, FunctionDebugInfo>(functions_.Count);
+
+    foreach (var func in functions_) {
+      functionMap_[func.Name] = func;
+    }
+
+    return true;
   }
 }

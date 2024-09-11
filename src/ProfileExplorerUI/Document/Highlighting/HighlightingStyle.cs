@@ -32,6 +32,18 @@ public sealed class HighlightingStyle : IEquatable<HighlightingStyle> {
   [ProtoMember(1)] public Brush BackColor { get; set; }
   [ProtoMember(2)] public Pen Border { get; set; }
 
+  public bool Equals(HighlightingStyle other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Equals(BackColor, other.BackColor) && Equals(Border, other.Border);
+  }
+
   public static bool operator ==(HighlightingStyle left, HighlightingStyle right) {
     return Equals(left, right);
   }
@@ -46,18 +58,6 @@ public sealed class HighlightingStyle : IEquatable<HighlightingStyle> {
 
   public override int GetHashCode() {
     return HashCode.Combine(BackColor, Border);
-  }
-
-  public bool Equals(HighlightingStyle other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Equals(BackColor, other.BackColor) && Equals(Border, other.Border);
   }
 }
 

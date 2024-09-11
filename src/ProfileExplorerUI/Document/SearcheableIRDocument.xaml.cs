@@ -29,8 +29,6 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public bool SearchPanelVisible {
     get => searchPanelVisible_;
     set {
@@ -75,6 +73,8 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
       }
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void OnPropertyChange(string propertyname) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));

@@ -10,12 +10,12 @@ using System.Windows.Controls;
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public interface IOptionsPanel {
+  SettingsBase Settings { get; set; }
+  ISession Session { get; set; }
   event EventHandler PanelClosed;
   event EventHandler PanelReset;
   event EventHandler SettingsChanged;
   event EventHandler<bool> StayOpenChanged;
-  SettingsBase Settings { get; set; }
-  ISession Session { get; set; }
   void Initialize(FrameworkElement parent, SettingsBase settings, ISession session);
   void PanelClosing();
   void PanelResetting();
@@ -28,12 +28,13 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
   public virtual double MinimumHeight => 200;
   public virtual double DefaultWidth => 380;
   public virtual double MinimumWidth => 380;
+  public FrameworkElement Parent { get; set; }
+  public event PropertyChangedEventHandler PropertyChanged;
   public event EventHandler PanelClosed;
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;
   public event EventHandler<bool> StayOpenChanged;
   public ISession Session { get; set; }
-  public FrameworkElement Parent { get; set; }
 
   public SettingsBase Settings {
     get => (SettingsBase)DataContext;
@@ -48,6 +49,29 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
       }
     }
   }
+
+  public virtual void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    Parent = parent;
+    Settings = settings;
+    Session = session;
+    PreviewMouseUp += (sender, args) => {
+      if (Utils.IsOptionsUpdateEvent(args)) {
+        NotifySettingsChanged();
+      }
+    };
+
+    PreviewKeyUp += (sender, args) => {
+      if (Utils.IsOptionsUpdateEvent(args)) {
+        NotifySettingsChanged();
+      }
+    };
+
+    initialized_ = true;
+  }
+
+  public virtual void PanelClosing() { }
+  public virtual void PanelResetting() { }
+  public virtual void PanelAfterReset() { }
 
   public virtual void OnSettingsChanged(object newSettings) {
   }
@@ -79,30 +103,6 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
   public void RaiseStayOpenChanged(bool staysOpen) {
     StayOpenChanged?.Invoke(this, staysOpen);
   }
-
-  public virtual void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
-    Parent = parent;
-    Settings = settings;
-    Session = session;
-    PreviewMouseUp += (sender, args) => {
-      if (Utils.IsOptionsUpdateEvent(args)) {
-        NotifySettingsChanged();
-      }
-    };
-
-    PreviewKeyUp += (sender, args) => {
-      if (Utils.IsOptionsUpdateEvent(args)) {
-        NotifySettingsChanged();
-      }
-    };
-
-    initialized_ = true;
-  }
-
-  public virtual void PanelClosing() { }
-  public virtual void PanelResetting() { }
-  public virtual void PanelAfterReset() { }
-  public event PropertyChangedEventHandler PropertyChanged;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

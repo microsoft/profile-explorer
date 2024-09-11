@@ -9,6 +9,11 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class ColorPalette {
+  public static List<ColorPalette>[] BuiltinPaletteSets = new List<ColorPalette>[] {
+    BuiltinPalettes,
+    GradientBuiltinPalettes
+  };
+
   public ColorPalette(string name = "", string description = "") {
     Name = name;
     Description = description;
@@ -75,23 +80,6 @@ public class ColorPalette {
       ProfileManaged,
       ProfileKernel
     };
-  public static List<ColorPalette>[] BuiltinPaletteSets = new List<ColorPalette>[] {
-    BuiltinPalettes,
-    GradientBuiltinPalettes
-  };
-
-  public static ColorPalette GetPalette(string name) {
-    foreach (var set in BuiltinPaletteSets) {
-      foreach (var palette in set) {
-        if (palette.Name == name) {
-          return palette;
-        }
-      }
-    }
-
-    return Profile;
-  }
-
   public static ColorPalette Profile =>
     new(new[] {
       "#FFF4F1E8",
@@ -161,6 +149,18 @@ public class ColorPalette {
   public List<Brush> Brushes { get; set; }
   public int Count => Colors.Count;
   public Color this[int index] => Colors[index];
+
+  public static ColorPalette GetPalette(string name) {
+    foreach (var set in BuiltinPaletteSets) {
+      foreach (var palette in set) {
+        if (palette.Name == name) {
+          return palette;
+        }
+      }
+    }
+
+    return Profile;
+  }
 
   public static ColorPalette MakeHue(float saturation, float light, int lightSteps) {
     var colors = new List<Color>();

@@ -38,14 +38,6 @@ public sealed class GraphvizReader {
     current_ = lexer_.NextToken();
   }
 
-  private enum Keyword {
-    Graph,
-    Node,
-    Edge,
-    Stop,
-    None
-  }
-
   public Graph ReadGraph() {
     graph_ = new Graph(graphKind_);
 
@@ -364,5 +356,13 @@ public sealed class GraphvizReader {
     }
 
     return edge;
+  }
+
+  private enum Keyword {
+    Graph,
+    Node,
+    Edge,
+    Stop,
+    None
   }
 }

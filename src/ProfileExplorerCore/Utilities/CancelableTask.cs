@@ -22,7 +22,7 @@ public static class WaitHandleExtensions {
     }, taskSource, timeout, true);
 
     taskSource.Task.ContinueWith((_, state) => ((RegisteredWaitHandle)state).Unregister(null), registration,
-                          TaskScheduler.Default);
+                                 TaskScheduler.Default);
     return taskSource.Task;
   }
 }
@@ -44,13 +44,18 @@ public class CancelableTask : IDisposable {
     //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
   }
 
-  ~CancelableTask() {
-    Dispose(false);
-  }
-
   public CancellationToken Token => cancelToken_;
   public bool IsCanceled => cancelToken_.IsCancellationRequested;
   public bool IsCompleted => !IsCanceled && taskCompletedEvent_.WaitOne(0);
+
+  public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  ~CancelableTask() {
+    Dispose(false);
+  }
 
   public void WaitToComplete() {
     //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
@@ -115,11 +120,6 @@ public class CancelableTask : IDisposable {
     if (completeOnCancel_) {
       taskCompletedEvent_.Set();
     }
-  }
-
-  public void Dispose() {
-    Dispose(true);
-    GC.SuppressFinalize(this);
   }
 
   private void Dispose(bool disposing) {

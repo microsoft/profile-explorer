@@ -8,15 +8,6 @@ using ProfileExplorer.Core;
 namespace ProfileExplorer.UI.Profile;
 
 public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
-  public SampleTimeRangeInfo TimeRange { get; set; }
-  public List<int> ThreadIds { get; set; }
-  public List<ProfileCallTreeNode> FunctionInstances { get; set; }
-  public bool HasThreadFilter => ThreadIds is {Count: > 0};
-  public bool HasInstanceFilter => FunctionInstances is {Count: > 0};
-  public bool IncludesAll => TimeRange == null &&
-                             !HasThreadFilter &&
-                             !HasInstanceFilter;
-
   public ProfileSampleFilter() {
   }
 
@@ -26,6 +17,25 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
 
   public ProfileSampleFilter(int threadId) {
     AddThread(threadId);
+  }
+
+  public SampleTimeRangeInfo TimeRange { get; set; }
+  public List<int> ThreadIds { get; set; }
+  public List<ProfileCallTreeNode> FunctionInstances { get; set; }
+  public bool HasThreadFilter => ThreadIds is {Count: > 0};
+  public bool HasInstanceFilter => FunctionInstances is {Count: > 0};
+  public bool IncludesAll => TimeRange == null &&
+                             !HasThreadFilter &&
+                             !HasInstanceFilter;
+
+  public bool Equals(ProfileSampleFilter other) {
+    if (ReferenceEquals(null, other))
+      return false;
+    if (ReferenceEquals(this, other))
+      return true;
+    return Equals(TimeRange, other.TimeRange) &&
+           ThreadIds.AreEqual(other.ThreadIds) &&
+           FunctionInstances.AreEqual(other.FunctionInstances);
   }
 
   public ProfileSampleFilter AddInstance(ProfileCallTreeNode instance) {
@@ -130,16 +140,6 @@ public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
     }
 
     return text;
-  }
-
-  public bool Equals(ProfileSampleFilter other) {
-    if (ReferenceEquals(null, other))
-      return false;
-    if (ReferenceEquals(this, other))
-      return true;
-    return Equals(TimeRange, other.TimeRange) &&
-           ThreadIds.AreEqual(other.ThreadIds) &&
-           FunctionInstances.AreEqual(other.FunctionInstances);
   }
 }
 

@@ -13,6 +13,11 @@ namespace ProfileExplorer.UI;
 public class FunctionMarkingSettings : SettingsBase {
   private ColorPalette modulesPalette_;
   private FunctionMarkingSet builtinMarking_;
+
+  public FunctionMarkingSettings() {
+    Reset();
+  }
+
   [ProtoMember(1)][OptionValue("")]
   public string Title { get; set; }
   [ProtoMember(2)][OptionValue(true)]
@@ -29,7 +34,6 @@ public class FunctionMarkingSettings : SettingsBase {
   public List<FunctionMarkingSet> SavedSets { get; set; }
   public List<FunctionMarkingStyle> ModuleColors => CurrentSet?.ModuleColors;
   public List<FunctionMarkingStyle> FunctionColors => CurrentSet?.FunctionColors;
-
   public bool HasEnabledFunctionMarkings => UseFunctionColors &&
                                             FunctionColors.Find(item => item.IsEnabled) != null;
   public bool HasEnabledModuleMarkings => UseModuleColors &&
@@ -108,8 +112,6 @@ public class FunctionMarkingSettings : SettingsBase {
     SavedSets.RemoveAll(set => set.Title == markingSet.Title);
   }
 
-  private record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
-
   public bool SaveToFile(string filePath) {
     var markings = new Markings(CurrentSet, SavedSets);
     return JsonUtils.SerializeToFile(markings, filePath);
@@ -154,10 +156,6 @@ public class FunctionMarkingSettings : SettingsBase {
     }
 
     return true;
-  }
-
-  public FunctionMarkingSettings() {
-    Reset();
   }
 
   public override void Reset() {
@@ -277,20 +275,22 @@ public class FunctionMarkingSettings : SettingsBase {
   public override string ToString() {
     return PrintOptions(this);
   }
+
+  private record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
 }
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionMarkingSet : SettingsBase {
+  public FunctionMarkingSet() {
+    InitializeReferenceMembers();
+  }
+
   [ProtoMember(1)][OptionValue()]
   public List<FunctionMarkingStyle> ModuleColors { get; set; }
   [ProtoMember(2)][OptionValue()]
   public List<FunctionMarkingStyle> FunctionColors { get; set; }
   [ProtoMember(3)][OptionValue("")]
   public string Title { get; set; }
-
-  public FunctionMarkingSet() {
-    InitializeReferenceMembers();
-  }
 
   public FunctionMarkingSet Clone() {
     var clone = new FunctionMarkingSet();
@@ -355,6 +355,17 @@ public class FunctionMarkingSet : SettingsBase {
 public class FunctionMarkingStyle : SettingsBase {
   private TextSearcher searcher_;
   private string name_;
+
+  public FunctionMarkingStyle(string name, Color color,
+                              string title = null, bool isRegex = false,
+                              bool isEnabled = true) {
+    Name = name;
+    Color = color;
+    Title = title;
+    IsRegex = isRegex;
+    IsEnabled = isEnabled;
+  }
+
   [ProtoMember(1)]
   public bool IsEnabled { get; set; }
   [ProtoMember(2)]
@@ -375,16 +386,6 @@ public class FunctionMarkingStyle : SettingsBase {
   public bool IsRegex { get; set; }
   public bool HasTitle => !string.IsNullOrEmpty(Title);
   public string TitleOrName => HasTitle ? Title : Name;
-
-  public FunctionMarkingStyle(string name, Color color,
-                              string title = null, bool isRegex = false,
-                              bool isEnabled = true) {
-    Name = name;
-    Color = color;
-    Title = title;
-    IsRegex = isRegex;
-    IsEnabled = isEnabled;
-  }
 
   public bool NameMatches(string candidate) {
     if (candidate == null ||

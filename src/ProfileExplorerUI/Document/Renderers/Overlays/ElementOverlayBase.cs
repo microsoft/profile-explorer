@@ -39,10 +39,6 @@ public abstract class ElementOverlayBase : IElementOverlay {
     SaveStateToFile = false;
   }
 
-  public event MouseEventHandler OnClick;
-  public event KeyEventHandler OnKeyPress;
-  public event MouseEventHandler OnHover;
-  public event MouseEventHandler OnHoverEnd;
   [ProtoMember(2)]
   public string Label { get; set; }
   [ProtoMember(3)]
@@ -83,6 +79,30 @@ public abstract class ElementOverlayBase : IElementOverlay {
   public double VirtualColumn { get; set; }
   [ProtoMember(27)]
   public string ToolTip { get; set; }
+  public bool HasLabel => !string.IsNullOrEmpty(Label);
+  public bool HasToolTip => !string.IsNullOrEmpty(ToolTip);
+  protected virtual bool ShowLabel => !string.IsNullOrEmpty(Label) &&
+                                      (!ShowLabelOnMouseOverOnly ||
+                                       IsLabelPinned || IsMouseOver || IsSelected);
+  protected virtual bool ShowBackground => Width > 0 && Height > 0 &&
+                                           (!ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected);
+  protected virtual bool ShowBorder => !ShowBorderOnMouseOverOnly || IsMouseOver || IsSelected;
+  protected virtual Brush CurrentBackgroundBrush => IsSelected && SelectedBackground != null ?
+    SelectedBackground : Background;
+  protected virtual Pen CurrentBorder => ShowBorder ? Border : null;
+  protected virtual Brush CurrentLabelBackgroundBrush => Background == null ||
+                                                         IsSelected && SelectedBackground != null ?
+    SelectedBackground : Background;
+  protected virtual Brush ActiveTextBrush => IsSelected && SelectedTextColor != null ?
+    SelectedTextColor : TextColor ?? Brushes.Black;
+  protected virtual double ActiveOpacity => IsMouseOver || IsSelected ? MouseOverOpacity > 0 ? MouseOverOpacity : 1.0 :
+    DefaultOpacity > 0 ? DefaultOpacity : 1.0;
+  protected double ActualWidth => Width + 2 * Padding;
+  protected double ActualHeight => Height + 2 * Padding;
+  public event MouseEventHandler OnClick;
+  public event KeyEventHandler OnKeyPress;
+  public event MouseEventHandler OnHover;
+  public event MouseEventHandler OnHoverEnd;
   [ProtoMember(5)]
   public double MarginX { get; set; }
   [ProtoMember(6)]
@@ -108,27 +128,6 @@ public abstract class ElementOverlayBase : IElementOverlay {
     get => elementRef_;
     set => elementRef_ = value;
   }
-
-  public bool HasLabel => !string.IsNullOrEmpty(Label);
-  public bool HasToolTip => !string.IsNullOrEmpty(ToolTip);
-  protected virtual bool ShowLabel => !string.IsNullOrEmpty(Label) &&
-                                      (!ShowLabelOnMouseOverOnly ||
-                                       IsLabelPinned || IsMouseOver || IsSelected);
-  protected virtual bool ShowBackground => Width > 0 && Height > 0 &&
-                                           (!ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected);
-  protected virtual bool ShowBorder => !ShowBorderOnMouseOverOnly || IsMouseOver || IsSelected;
-  protected virtual Brush CurrentBackgroundBrush => IsSelected && SelectedBackground != null ?
-    SelectedBackground : Background;
-  protected virtual Pen CurrentBorder => ShowBorder ? Border : null;
-  protected virtual Brush CurrentLabelBackgroundBrush => Background == null ||
-                                                         IsSelected && SelectedBackground != null ?
-    SelectedBackground : Background;
-  protected virtual Brush ActiveTextBrush => IsSelected && SelectedTextColor != null ?
-    SelectedTextColor : TextColor ?? Brushes.Black;
-  protected virtual double ActiveOpacity => IsMouseOver || IsSelected ? MouseOverOpacity > 0 ? MouseOverOpacity : 1.0 :
-    DefaultOpacity > 0 ? DefaultOpacity : 1.0;
-  protected double ActualWidth => Width + 2 * Padding;
-  protected double ActualHeight => Height + 2 * Padding;
 
   public abstract void Draw(Rect elementRect, IRElement element, Typeface font,
                             IElementOverlay previousOverlay, double horizontalOffset,
@@ -215,6 +214,11 @@ public abstract class ElementOverlayBase : IElementOverlay {
     return e.Handled;
   }
 
+  public bool HoveredEnded(MouseEventArgs e) {
+    OnHoverEnd?.Invoke(this, e);
+    return true;
+  }
+
   protected void DrawBackground(Rect elementRect, double opacity, DrawingContext drawingContext) {
     if ((ShowBackground || ShowBorder) && !(ShowLabel && UseLabelBackground)) {
       drawingContext.PushOpacity(opacity);
@@ -297,10 +301,5 @@ public abstract class ElementOverlayBase : IElementOverlay {
     }
 
     return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2);
-  }
-
-  public bool HoveredEnded(MouseEventArgs e) {
-    OnHoverEnd?.Invoke(this, e);
-    return true;
   }
 }

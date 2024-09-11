@@ -2,20 +2,20 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace ProfileExplorer.UI.Profile;
 
 public sealed class CallTreeProcessor : ProfileSampleProcessor {
-  public ProfileCallTree CallTree { get; set; } = new();
   private List<ProfileCallTree> chunks_;
   private int maxChunks_;
 
   public CallTreeProcessor(int maxChunks) {
-    chunks_ = new();
+    chunks_ = new List<ProfileCallTree>();
     maxChunks_ = maxChunks;
   }
+
+  public ProfileCallTree CallTree { get; set; } = new();
 
   public static ProfileCallTree Compute(ProfileData profile, ProfileSampleFilter filter,
                                         int maxChunks = int.MaxValue) {
@@ -55,7 +55,7 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
         var newChunks = new List<ProfileCallTree>(chunks_.Count / step);
 
         for (int i = 0; i < chunks_.Count / step; i++) {
-          var iCopy = i;
+          int iCopy = i;
           newChunks.Add(chunks_[iCopy * step]);
 
           tasks[i] = Task.Run(() => {
@@ -70,7 +70,7 @@ public sealed class CallTreeProcessor : ProfileSampleProcessor {
         // Handle any chunks that were not paired during the parallel phase.
         // With a step of 2 this can happen only in the first round.
         if (chunks_.Count % step != 0) {
-          int lastHandledIndex = (chunks_.Count / step) * step;
+          int lastHandledIndex = chunks_.Count / step * step;
 
           for (int i = lastHandledIndex; i < chunks_.Count; i++) {
             chunks_[0].MergeWith(chunks_[i]);

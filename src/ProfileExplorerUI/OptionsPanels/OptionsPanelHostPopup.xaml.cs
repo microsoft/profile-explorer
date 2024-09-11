@@ -38,6 +38,32 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
     PanelHost.Content = panel;
   }
 
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
+  public bool ShowResetButton { get; set; }
+  public event EventHandler PanelClosed;
+  public event EventHandler PanelReset;
+  public event EventHandler SettingsChanged;
+  public event EventHandler<bool> StayOpenChanged;
+
+  public SettingsBase Settings {
+    get => optionsPanel_.Settings;
+    set => optionsPanel_.Settings = value;
+  }
+
+  public ISession Session {
+    get => optionsPanel_.Session;
+    set => optionsPanel_.Session = value;
+  }
+
+  public void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+    Settings = settings;
+    Session = session;
+  }
+
+  public void PanelClosing() { }
+  public void PanelResetting() { }
+  public void PanelAfterReset() { }
+
   public static OptionsPanelHostPopup Create<T, S>(SettingsBase settings, FrameworkElement relativeControl,
                                                    ISession session,
                                                    Func<S, bool, Task<S>> newSettingsHandler,
@@ -52,7 +78,7 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
     double height = Math.Max(panel.MinimumHeight,
                              Math.Min(relativeControl.ActualHeight, panel.DefaultHeight));
     var position = dockLeft ? new Point(0, 0) :
-                                   new Point(relativeControl.ActualWidth - width, 0);
+      new Point(relativeControl.ActualWidth - width, 0);
     position.Offset(positionAdjustment.X, positionAdjustment.Y);
     var panelHost = new OptionsPanelHostPopup(panel, position, width, height, relativeControl,
                                               settings, session);
@@ -84,32 +110,6 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
     panelHost.IsOpen = true;
     return panelHost;
   }
-
-  public event EventHandler PanelClosed;
-  public event EventHandler PanelReset;
-  public event EventHandler SettingsChanged;
-  public event EventHandler<bool> StayOpenChanged;
-  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
-  public bool ShowResetButton { get; set; }
-
-  public SettingsBase Settings {
-    get => optionsPanel_.Settings;
-    set => optionsPanel_.Settings = value;
-  }
-
-  public ISession Session {
-    get => optionsPanel_.Session;
-    set => optionsPanel_.Session = value;
-  }
-
-  public void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
-    Settings = settings;
-    Session = session;
-  }
-
-  public void PanelClosing() { }
-  public void PanelResetting() { }
-  public void PanelAfterReset() { }
 
   protected override void OnClosed(EventArgs e) {
     base.OnClosed(e);

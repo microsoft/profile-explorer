@@ -64,14 +64,14 @@ public class SourceFileSettings : TextViewSettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class SourceFileFinderSettings : SettingsBase {
+  public SourceFileFinderSettings() {
+    Reset();
+  }
+
   [ProtoMember(1)][OptionValue()]
   public Dictionary<string, string> SourceMappings { get; set; }
   [ProtoMember(2)][OptionValue()]
   public List<string> DisabledSourceMappings { get; set; }
-
-  public SourceFileFinderSettings() {
-    Reset();
-  }
 
   public override void Reset() {
     InitializeReferenceMembers();

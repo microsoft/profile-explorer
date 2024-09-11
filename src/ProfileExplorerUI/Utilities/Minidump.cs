@@ -7,23 +7,6 @@ using System.Runtime.InteropServices;
 namespace ProfileExplorer.UI;
 
 static class Minidump {
-  [DllImport("dbghelp.dll", EntryPoint = "MiniDumpWriteDump",
-             CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode,
-             ExactSpelling = true, SetLastError = true)]
-  private static extern bool MiniDumpWriteDump(IntPtr hProcess, uint processId, SafeHandle hFile,
-                                               uint dumpType, ref MiniDumpExceptionInformation expParam,
-                                               IntPtr userStreamParam, IntPtr callbackParam);
-
-  [DllImport("dbghelp.dll", EntryPoint = "MiniDumpWriteDump",
-             CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode,
-             ExactSpelling = true, SetLastError = true)]
-  private static extern bool MiniDumpWriteDump(IntPtr hProcess, uint processId, SafeHandle hFile,
-                                               uint dumpType, IntPtr expParam, IntPtr userStreamParam,
-                                               IntPtr callbackParam);
-
-  [DllImport("kernel32.dll", EntryPoint = "GetCurrentThreadId", ExactSpelling = true)]
-  private static extern uint GetCurrentThreadId();
-
   public enum ExceptionInfo {
     None,
     Present
@@ -52,6 +35,23 @@ static class Minidump {
     IgnoreInaccessibleMemory = 0x00020000,
     ValidTypeFlags = 0x0003ffff
   }
+
+  [DllImport("dbghelp.dll", EntryPoint = "MiniDumpWriteDump",
+             CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode,
+             ExactSpelling = true, SetLastError = true)]
+  private static extern bool MiniDumpWriteDump(IntPtr hProcess, uint processId, SafeHandle hFile,
+                                               uint dumpType, ref MiniDumpExceptionInformation expParam,
+                                               IntPtr userStreamParam, IntPtr callbackParam);
+
+  [DllImport("dbghelp.dll", EntryPoint = "MiniDumpWriteDump",
+             CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode,
+             ExactSpelling = true, SetLastError = true)]
+  private static extern bool MiniDumpWriteDump(IntPtr hProcess, uint processId, SafeHandle hFile,
+                                               uint dumpType, IntPtr expParam, IntPtr userStreamParam,
+                                               IntPtr callbackParam);
+
+  [DllImport("kernel32.dll", EntryPoint = "GetCurrentThreadId", ExactSpelling = true)]
+  private static extern uint GetCurrentThreadId();
 
   public static bool WriteDump(SafeHandle fileHandle, Option options,
                                ExceptionInfo exceptionInfo = ExceptionInfo.None) {

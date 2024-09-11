@@ -3,9 +3,9 @@
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class ExpressionGraphOptionsPanel : OptionsPanelBase {
-  public override double DefaultHeight => 450;
-
   public ExpressionGraphOptionsPanel() {
     InitializeComponent();
   }
+
+  public override double DefaultHeight => 450;
 }

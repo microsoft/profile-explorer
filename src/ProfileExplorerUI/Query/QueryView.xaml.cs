@@ -15,8 +15,6 @@ public partial class QueryView : UserControl {
     DataContextChanged += QueryView_DataContextChanged;
   }
 
-  public event EventHandler Closed;
-
   public QueryDefinition Query {
     get => query_;
     set {
@@ -28,6 +26,8 @@ public partial class QueryView : UserControl {
       }
     }
   }
+
+  public event EventHandler Closed;
 
   private void QueryView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e) {
     if (e.OldValue != null) {

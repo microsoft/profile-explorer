@@ -56,6 +56,18 @@ public class OptionalColumn : ICloneable {
   public bool IsPerformanceCounter => PerformanceCounter is {IsMetric: false};
   public bool IsPerformanceMetric => PerformanceCounter is {IsMetric: true};
 
+  public object Clone() {
+    var clone = new OptionalColumn(BindingName, CellTemplateName, ColumnName, Title, Tooltip,
+                                   Converter, Width, ColumnTemplateName, Style, IsVisible) {
+      HeaderClickHandler = HeaderClickHandler,
+      HeaderRightClickHandler = HeaderRightClickHandler,
+      HeaderDoubleClickHandler = HeaderDoubleClickHandler,
+      PerformanceCounter = PerformanceCounter
+    };
+
+    return clone;
+  }
+
   public static OptionalColumn Binding(string binding, string columnName, string title, string tooltip = null,
                                        IValueConverter converter = null, double width = double.NaN,
                                        string columnStyle = null,
@@ -230,17 +242,5 @@ public class OptionalColumn : ICloneable {
 
     hashCode_ = HashCode.Combine(ColumnName, IsTemplateBinding);
     return hashCode_;
-  }
-
-  public object Clone() {
-    var clone = new OptionalColumn(BindingName, CellTemplateName, ColumnName, Title, Tooltip,
-                                   Converter, Width, ColumnTemplateName, Style, IsVisible) {
-      HeaderClickHandler = HeaderClickHandler,
-      HeaderRightClickHandler = HeaderRightClickHandler,
-      HeaderDoubleClickHandler = HeaderDoubleClickHandler,
-      PerformanceCounter = PerformanceCounter
-    };
-
-    return clone;
   }
 }

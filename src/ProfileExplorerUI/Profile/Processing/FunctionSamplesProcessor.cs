@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Generic;
-using System.Diagnostics;
 using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
@@ -11,17 +10,6 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   private Dictionary<int, List<SampleIndex>> threadListMap_;
   private List<ChunkData> chunks_;
   private ProfileCallTreeNode node_;
-
-  private class ChunkData {
-    public ChunkData() {
-      AllThreadsList = new List<SampleIndex>();
-      ThreadListMap = new Dictionary<int, List<SampleIndex>>();
-      ThreadListMap[AllThreadsKey] = AllThreadsList;
-    }
-
-    public List<SampleIndex> AllThreadsList;
-    public Dictionary<int, List<SampleIndex>> ThreadListMap;
-  }
 
   public FunctionSamplesProcessor(ProfileCallTreeNode node) {
     node_ = node;
@@ -143,6 +131,17 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
         }
 #endif
       }
+    }
+  }
+
+  private class ChunkData {
+    public List<SampleIndex> AllThreadsList;
+    public Dictionary<int, List<SampleIndex>> ThreadListMap;
+
+    public ChunkData() {
+      AllThreadsList = new List<SampleIndex>();
+      ThreadListMap = new Dictionary<int, List<SampleIndex>>();
+      ThreadListMap[AllThreadsKey] = AllThreadsList;
     }
   }
 }

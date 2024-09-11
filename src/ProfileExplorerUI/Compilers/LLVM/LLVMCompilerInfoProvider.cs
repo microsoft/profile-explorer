@@ -57,10 +57,6 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return null;
   }
 
-  public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings) {
-    return Utils.LocateDebugInfoFile(imagePath, ".pdb");
-  }
-
   DebugFileSearchResult ICompilerInfoProvider.FindDebugInfoFile(SymbolFileDescriptor symbolFile,
                                                                 SymbolFileSourceSettings settings) {
     return DebugFileSearchResult.None;
@@ -78,11 +74,6 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
 
   DebugFileSearchResult ICompilerInfoProvider.FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings) {
     return DebugFileSearchResult.None;
-  }
-
-  public async Task<DebugFileSearchResult>
-    FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
-    return null;
   }
 
   public async Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function) {
@@ -111,5 +102,14 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
 
   public Task ReloadSettings() {
     return Task.CompletedTask;
+  }
+
+  public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings) {
+    return Utils.LocateDebugInfoFile(imagePath, ".pdb");
+  }
+
+  public async Task<DebugFileSearchResult>
+    FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
+    return null;
   }
 }

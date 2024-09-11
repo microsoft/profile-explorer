@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,13 +12,13 @@ namespace ProfileExplorer.UI.OptionsPanels;
 public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
   private FunctionMarkingSettings settings_;
 
-  public override double DefaultHeight => 550;
-  public override double DefaultWidth => 400;
-
   public FunctionMarkingOptionsPanel() {
     InitializeComponent();
     ModulePaletteSelector.PalettesSource = ColorPalette.GradientBuiltinPalettes;
   }
+
+  public override double DefaultHeight => 550;
+  public override double DefaultWidth => 400;
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);

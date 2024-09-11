@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,13 +9,14 @@ using System.Windows.Threading;
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class SourceFileOptionsPanel : OptionsPanelBase {
-  public override double DefaultHeight => 450;
-  public override double DefaultWidth => 400;
   private SourceFileSettings settings_;
 
   public SourceFileOptionsPanel() {
     InitializeComponent();
   }
+
+  public override double DefaultHeight => 450;
+  public override double DefaultWidth => 400;
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);

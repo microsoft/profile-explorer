@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -258,32 +257,32 @@ public static class ProfilingUtils {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
     await CreateMarkedModulesMenu(menu,
-                            async (o, args) => {
-                              if (args.Source is MenuItem menuItem) {
-                                if (menuItem.Tag is FunctionMarkingStyle style) {
-                                  style.IsEnabled = menuItem.IsChecked;
+                                  async (o, args) => {
+                                    if (args.Source is MenuItem menuItem) {
+                                      if (menuItem.Tag is FunctionMarkingStyle style) {
+                                        style.IsEnabled = menuItem.IsChecked;
 
-                                  if (style.IsEnabled) {
-                                    settings.UseModuleColors = true;
-                                  }
+                                        if (style.IsEnabled) {
+                                          settings.UseModuleColors = true;
+                                        }
 
-                                  await changedHandler();
-                                }
-                                else if (menuItem.Tag is IRTextFunction func) {
-                                  // Click on submenu with individual functions.
-                                  await session.SwitchActiveFunction(func);
-                                }
-                              }
-                            },
-                            (o, args) => {
-                              if (args.Source is MenuItem menuItem) {
-                                var style = menuItem.Tag as FunctionMarkingStyle;
-                                settings.ModuleColors.Remove(style);
-                                menu.IsSubmenuOpen = false;
-                                changedHandler();
-                              }
-                            },
-                            settings, session);
+                                        await changedHandler();
+                                      }
+                                      else if (menuItem.Tag is IRTextFunction func) {
+                                        // Click on submenu with individual functions.
+                                        await session.SwitchActiveFunction(func);
+                                      }
+                                    }
+                                  },
+                                  (o, args) => {
+                                    if (args.Source is MenuItem menuItem) {
+                                      var style = menuItem.Tag as FunctionMarkingStyle;
+                                      settings.ModuleColors.Remove(style);
+                                      menu.IsSubmenuOpen = false;
+                                      changedHandler();
+                                    }
+                                  },
+                                  settings, session);
   }
 
   public static async Task PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,

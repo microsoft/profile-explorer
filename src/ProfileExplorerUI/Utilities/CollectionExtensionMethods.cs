@@ -258,13 +258,13 @@ public static class CollectionExtensionMethods {
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static void AccumulateValue<K>(this Dictionary<K, int> dict, K key, int value) {
-    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    ref int currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
     currentValue += value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static void AccumulateValue<K>(this Dictionary<K, long> dict, K key, long value) {
-    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    ref long currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
     currentValue += value;
   }
 
@@ -297,7 +297,7 @@ public static class CollectionExtensionMethods {
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static int CollectMaxValue<K>(this Dictionary<K, int> dict, K key, int value) {
-    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    ref int currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
 
     if (exists) {
       if (value > currentValue) {
@@ -314,7 +314,7 @@ public static class CollectionExtensionMethods {
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static double CollectMaxValue<K>(this Dictionary<K, double> dict, K key, double value) {
-    ref var currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
+    ref double currentValue = ref CollectionsMarshal.GetValueRefOrAddDefault(dict, key, out bool exists);
 
     if (exists) {
       if (value > currentValue) {

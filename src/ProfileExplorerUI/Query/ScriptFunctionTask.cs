@@ -22,23 +22,6 @@ public class ScriptFunctionTask : IFunctionTask {
   public bool Result { get; private set; }
   public string ResultMessage { get; private set; }
 
-  public static FunctionTaskDefinition GetDefinition(string scriptCode) {
-    try {
-      dynamic scriptInstance = ScriptCache.CreateScriptInstance(scriptCode);
-
-      if (scriptInstance == null) {
-        return null; // Failed to load script.
-      }
-
-      FunctionTaskInfo taskInfo = scriptInstance.GetTaskInfo();
-      return new FunctionTaskDefinition(typeof(ScriptFunctionTask), taskInfo, scriptCode);
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to load script function task: {ex.Message}");
-      return null;
-    }
-  }
-
   public async Task<bool> Execute(FunctionIR function, IRDocument document,
                                   CancelableTask cancelableTask) {
     var script = ScriptCache.CreateScript(scriptCode_);
@@ -103,6 +86,23 @@ public class ScriptFunctionTask : IFunctionTask {
 
   public void LoadOptionsFromValues(QueryData data) {
     Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
+  }
+
+  public static FunctionTaskDefinition GetDefinition(string scriptCode) {
+    try {
+      dynamic scriptInstance = ScriptCache.CreateScriptInstance(scriptCode);
+
+      if (scriptInstance == null) {
+        return null; // Failed to load script.
+      }
+
+      FunctionTaskInfo taskInfo = scriptInstance.GetTaskInfo();
+      return new FunctionTaskDefinition(typeof(ScriptFunctionTask), taskInfo, scriptCode);
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to load script function task: {ex.Message}");
+      return null;
+    }
   }
 
   private void LoadOptions() {

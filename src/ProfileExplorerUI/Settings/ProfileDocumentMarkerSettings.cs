@@ -9,12 +9,6 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileDocumentMarkerSettings : SettingsBase {
-  private static ColorPalette defaultBackColorPalette_ = ColorPalette.Profile;
-
-  public ProfileDocumentMarkerSettings() {
-    Reset();
-  }
-
   public enum ValueUnitKind {
     Nanosecond,
     Microsecond,
@@ -23,6 +17,25 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
     Percent,
     Value,
     Default
+  }
+
+  private static ColorPalette defaultBackColorPalette_ = ColorPalette.Profile;
+  public static int DefaultMaxPercentageBarWidth = 50;
+  public static double DefaultElementWeightCutoff = 0.01; // 1%;
+  private static IconDrawing[] orderIcons_;
+
+  static ProfileDocumentMarkerSettings() {
+    // Preload icons used to mark hot elements.
+    orderIcons_ = [
+      IconDrawing.FromIconResource("HotFlameIcon1"),
+      IconDrawing.FromIconResource("HotFlameIcon2"),
+      IconDrawing.FromIconResource("HotFlameIcon3"),
+      IconDrawing.FromIconResource("HotFlameIconTransparent")
+    ];
+  }
+
+  public ProfileDocumentMarkerSettings() {
+    Reset();
   }
 
   //? TODO: Counter shortening list
@@ -74,9 +87,13 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   public Color PerformanceMetricBackColor { get; set; }
   [ProtoMember(24)][OptionValue("#F5F5F5")]
   public Color PerformanceCounterBackColor { get; set; }
-  public static int DefaultMaxPercentageBarWidth = 50;
-  public static double DefaultElementWeightCutoff = 0.01; // 1%;
-  private static IconDrawing[] orderIcons_;
+  public string ValueUnitSuffix => ValueUnit switch {
+    ValueUnitKind.Millisecond => "ms",
+    ValueUnitKind.Microsecond => "µs",
+    ValueUnitKind.Nanosecond  => "ns",
+    ValueUnitKind.Second      => "s",
+    _                         => ""
+  };
 
   public override void Reset() {
     ResetAllOptions(this);
@@ -97,14 +114,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
       _                         => weight.Ticks.ToString()
     };
   }
-
-  public string ValueUnitSuffix => ValueUnit switch {
-    ValueUnitKind.Millisecond => "ms",
-    ValueUnitKind.Microsecond => "µs",
-    ValueUnitKind.Nanosecond  => "ns",
-    ValueUnitKind.Second      => "s",
-    _                         => ""
-  };
 
   public Brush PickBackColor(OptionalColumn column, int order, double percentage) {
     if (!ShouldUseBackColor(column)) {
@@ -226,16 +235,6 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
            !ShouldOverrideIconPercentage(order, percentage)
       ? PickIconForPercentage(percentage)
       : PickIconForOrder(order, percentage);
-  }
-
-  static ProfileDocumentMarkerSettings() {
-    // Preload icons used to mark hot elements.
-    orderIcons_ = [
-      IconDrawing.FromIconResource("HotFlameIcon1"),
-      IconDrawing.FromIconResource("HotFlameIcon2"),
-      IconDrawing.FromIconResource("HotFlameIcon3"),
-      IconDrawing.FromIconResource("HotFlameIconTransparent")
-    ];
   }
 
   public IconDrawing PickIconForOrder(int order, double percentage) {

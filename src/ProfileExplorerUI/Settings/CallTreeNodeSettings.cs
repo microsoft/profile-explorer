@@ -79,12 +79,13 @@ public class CallTreeNodeSettings : SettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileListViewFilter : SettingsBase {
+  public static double DefaultMinWeight = 1;
+  public static int DefaultMinItems = 10;
+
   public ProfileListViewFilter() {
     Reset();
   }
 
-  public static double DefaultMinWeight = 1;
-  public static int DefaultMinItems = 10;
   [ProtoMember(1)][OptionValue(true)]
   public bool IsEnabled { get; set; }
   [ProtoMember(2)][OptionValue(true)]

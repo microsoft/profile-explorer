@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,11 +22,7 @@ public partial class ModuleReportPanel : ToolPanelControl {
     session_ = session;
   }
 
-        #region IToolPanel
-
   public override ToolPanelKind PanelKind => ToolPanelKind.Other;
-
-        #endregion
 
   public void ShowReport(ModuleReport report, IRTextSummary summary) {
     report_ = report;

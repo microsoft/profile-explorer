@@ -24,8 +24,6 @@ public class ElementQueryInfoView : INotifyPropertyChanged {
     Buttons = new ObservableCollectionRefresh<QueryButton>(value.Data.Buttons);
   }
 
-  public event EventHandler Closed;
-  public event PropertyChangedEventHandler PropertyChanged;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public QueryDefinition View {
@@ -47,6 +45,8 @@ public class ElementQueryInfoView : INotifyPropertyChanged {
   public ObservableCollectionRefresh<QueryValue> OutputValues { get; set; }
   public ObservableCollectionRefresh<QueryButton> Buttons { get; set; }
   public bool HasButtons => Buttons.Count > 0;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler Closed;
 
   public void OnClose(object sender, EventArgs e) {
     Closed?.Invoke(this, e);
@@ -105,8 +105,6 @@ public partial class QueryPanel : DraggablePopup, INotifyPropertyChanged {
     DataContext = this;
   }
 
-  public event EventHandler PanelActivated;
-  public event PropertyChangedEventHandler PropertyChanged;
   public ISession Session { get; set; }
 
   public string PanelTitle {
@@ -140,6 +138,8 @@ public partial class QueryPanel : DraggablePopup, INotifyPropertyChanged {
   }
 
   public int QueryCount => activeQueries_.Count;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler PanelActivated;
 
   public void RegisterQuery(QueryDefinition query, bool isBuiltin) {
     if (isBuiltin) {

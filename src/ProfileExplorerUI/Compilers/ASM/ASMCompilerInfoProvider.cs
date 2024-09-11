@@ -216,6 +216,10 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     await sourceMarker.Mark(document, function);
   }
 
+  public Task ReloadSettings() {
+    return Task.CompletedTask;
+  }
+
   private static void CreateBlockLabelOverlays(IRDocument document, FunctionIR function) {
     double overlayHeight = document.TextArea.TextView.DefaultLineHeight;
     var options = App.Settings.DocumentSettings.ProfileMarkerSettings;
@@ -251,9 +255,5 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     document.ResumeUpdate();
-  }
-
-  public Task ReloadSettings() {
-    return Task.CompletedTask;
   }
 }

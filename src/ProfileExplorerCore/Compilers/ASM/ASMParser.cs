@@ -70,19 +70,6 @@ public sealed class ASMParser : ParserBase {
     SkipToken();
   }
 
-  private enum Keyword {
-    None,
-    Byte,
-    Word,
-    Dword,
-    Qword,
-    Xmmword,
-    Ymmword,
-    Zmmword,
-    Ptr,
-    Hex
-  }
-
   public FunctionIR Parse() {
     var function = new FunctionIR(section_.ParentFunction.Name);
     Token startElement = default;
@@ -699,5 +686,18 @@ public sealed class ASMParser : ParserBase {
     while (IsKeyword()) {
       SkipToken();
     }
+  }
+
+  private enum Keyword {
+    None,
+    Byte,
+    Word,
+    Dword,
+    Qword,
+    Xmmword,
+    Ymmword,
+    Zmmword,
+    Ptr,
+    Hex
   }
 }

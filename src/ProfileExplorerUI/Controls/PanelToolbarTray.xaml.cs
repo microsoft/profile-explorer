@@ -47,13 +47,6 @@ public partial class PanelToolbarTray : ToolBarTray {
     InitializeComponent();
   }
 
-  public event EventHandler<PinEventArgs> PinnedChanged;
-  public event EventHandler<DuplicateEventArgs> DuplicateClicked;
-  public event EventHandler SettingsClicked;
-  public event EventHandler HelpClicked;
-  public event EventHandler<BindMenuItemsArgs> BindMenuOpen;
-  public event EventHandler<BindMenuItem> BindMenuItemSelected;
-
   public bool HasPinButton {
     get => (bool)GetValue(HasPinButtonProperty);
     set => SetValue(HasPinButtonProperty, value);
@@ -73,6 +66,13 @@ public partial class PanelToolbarTray : ToolBarTray {
     get => PinButton.IsChecked.HasValue && PinButton.IsChecked.Value;
     set => PinButton.IsChecked = value;
   }
+
+  public event EventHandler<PinEventArgs> PinnedChanged;
+  public event EventHandler<DuplicateEventArgs> DuplicateClicked;
+  public event EventHandler SettingsClicked;
+  public event EventHandler HelpClicked;
+  public event EventHandler<BindMenuItemsArgs> BindMenuOpen;
+  public event EventHandler<BindMenuItem> BindMenuItemSelected;
 
   private static void OnHasPinButtonPropertyChanged(DependencyObject d,
                                                     DependencyPropertyChangedEventArgs e) {

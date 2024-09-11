@@ -1,111 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System.Windows.Media;
-using ProfileExplorer.UI;
-using JetBrains.Annotations;
-using ProtoBuf;
-using Utils = ProfileExplorer.UI.Utils;
-
 namespace ProfileExplorerUITests.Settings;
 
 [TestClass]
 [TestSubject(typeof(SettingsBase))]
 public class SettingsBaseTests {
-  [ProtoContract()]
-  [ProtoInclude(100, typeof(DerivedObject))]
-  private class TestObject : SettingsBase {
-    [ProtoMember(1)][OptionValue(true)]
-    public bool a { get; set; }
-    [ProtoMember(2)][OptionValue(false)]
-    public bool b { get; set; }
-    [ProtoMember(3)][OptionValue(123)]
-    public int c { get; set; }
-    [ProtoMember(4)][OptionValue("foo")]
-    public string s { get; set; }
-
-    public override void Reset() {
-      ResetAllOptions(this, typeof(TestObject));
-    }
-  }
-
-  [ProtoContract()]
-  private class DerivedObject : TestObject {
-    [ProtoMember(1)][OptionValue(true)]
-    public bool d { get; set; }
-    [ProtoMember(2)][OptionValue("bar")]
-    public string s2 { get; set; }
-    [ProtoMember(3)][OptionValue("#F0F0F0")]
-    public Color color { get; set; }
-    [ProtoMember(4)][OptionValue(new string[] {"#F0F0F0", "#1F2F3F"})]
-    public Color[] colorArray { get; set; }
-
-    public override void Reset() {
-      base.Reset();
-      ResetAllOptions(this);
-    }
-  }
-
-  [ProtoContract()]
-  private class NestedObject : SettingsBase {
-    [ProtoMember(1)][OptionValue(123)]
-    public int a { get; set; }
-    [ProtoMember(2)][OptionValue(456)]
-    public int b { get; set; }
-    public bool EqualsCalled = false;
-
-    public override void Reset() {
-      ResetAllOptions(this);
-    }
-
-    public override bool Equals(object? obj) {
-      EqualsCalled = true;
-      return a == ((NestedObject)obj).a && b == ((NestedObject)obj).b;
-    }
-  }
-
-  private class NonSettingsObject {
-    public int a { get; set; } = 123;
-    public int b { get; set; } = 456;
-
-    public override bool Equals(object? obj) {
-      return a == ((NonSettingsObject)obj).a && b == ((NonSettingsObject)obj).b;
-    }
-  }
-
-  [ProtoContract()]
-  private class CombinedObject : SettingsBase {
-    [ProtoMember(1)]
-    public NestedObject nested { get; set; }
-    [ProtoMember(2)]
-    public NestedObject nested2 { get; set; }
-    [ProtoMember(3)]
-    public int a { get; set; }
-    [ProtoMember(4)]
-    public NonSettingsObject ns { get; set; }
-    [ProtoMember(5)]
-    public TestObject test { get; set; }
-    [ProtoMember(6)]
-    public DerivedObject derived { get; set; }
-
-    public override void Reset() {
-      ResetAllOptions(this);
-    }
-  }
-
-  [ProtoContract()]
-  public class CollectionObject : SettingsBase {
-    [ProtoMember(1)][OptionValue()]
-    public List<int> list { get; set; }
-    [ProtoMember(2)][OptionValue()]
-    public Dictionary<string, int> dict { get; set; }
-    [ProtoMember(3)][OptionValue(true)]
-    public bool flag { get; set; }
-
-    public override void Reset() {
-      ResetAllOptions(this);
-    }
-  }
-
   [TestMethod]
   public void TestCollectOptions() {
     var data = new DerivedObject();
@@ -354,5 +253,100 @@ public class SettingsBaseTests {
     Assert.IsNotNull(data.list);
     Assert.IsNotNull(data.dict);
     Assert.IsFalse(data.flag); // Should not be changed.
+  }
+
+  [ProtoContract()]
+  [ProtoInclude(100, typeof(DerivedObject))]
+  private class TestObject : SettingsBase {
+    [ProtoMember(1)][OptionValue(true)]
+    public bool a { get; set; }
+    [ProtoMember(2)][OptionValue(false)]
+    public bool b { get; set; }
+    [ProtoMember(3)][OptionValue(123)]
+    public int c { get; set; }
+    [ProtoMember(4)][OptionValue("foo")]
+    public string s { get; set; }
+
+    public override void Reset() {
+      ResetAllOptions(this, typeof(TestObject));
+    }
+  }
+
+  [ProtoContract()]
+  private class DerivedObject : TestObject {
+    [ProtoMember(1)][OptionValue(true)]
+    public bool d { get; set; }
+    [ProtoMember(2)][OptionValue("bar")]
+    public string s2 { get; set; }
+    [ProtoMember(3)][OptionValue("#F0F0F0")]
+    public Color color { get; set; }
+    [ProtoMember(4)][OptionValue(new string[] {"#F0F0F0", "#1F2F3F"})]
+    public Color[] colorArray { get; set; }
+
+    public override void Reset() {
+      base.Reset();
+      ResetAllOptions(this);
+    }
+  }
+
+  [ProtoContract()]
+  private class NestedObject : SettingsBase {
+    public bool EqualsCalled = false;
+    [ProtoMember(1)][OptionValue(123)]
+    public int a { get; set; }
+    [ProtoMember(2)][OptionValue(456)]
+    public int b { get; set; }
+
+    public override void Reset() {
+      ResetAllOptions(this);
+    }
+
+    public override bool Equals(object? obj) {
+      EqualsCalled = true;
+      return a == ((NestedObject)obj).a && b == ((NestedObject)obj).b;
+    }
+  }
+
+  private class NonSettingsObject {
+    public int a { get; set; } = 123;
+    public int b { get; set; } = 456;
+
+    public override bool Equals(object? obj) {
+      return a == ((NonSettingsObject)obj).a && b == ((NonSettingsObject)obj).b;
+    }
+  }
+
+  [ProtoContract()]
+  private class CombinedObject : SettingsBase {
+    [ProtoMember(1)]
+    public NestedObject nested { get; set; }
+    [ProtoMember(2)]
+    public NestedObject nested2 { get; set; }
+    [ProtoMember(3)]
+    public int a { get; set; }
+    [ProtoMember(4)]
+    public NonSettingsObject ns { get; set; }
+    [ProtoMember(5)]
+    public TestObject test { get; set; }
+    [ProtoMember(6)]
+    public DerivedObject derived { get; set; }
+
+    public override void Reset() {
+      ResetAllOptions(this);
+    }
+  }
+
+  [ProtoContract()]
+  public class CollectionObject : SettingsBase {
+    [ProtoMember(1)][OptionValue()]
+    public List<int> list { get; set; }
+    [ProtoMember(2)][OptionValue()]
+    public Dictionary<string, int> dict { get; set; }
+    [ProtoMember(3)][OptionValue(true)]
+    public bool flag { get; set; }
+
+    public override void Reset() {
+      ResetAllOptions(this);
+    }
   }
 }

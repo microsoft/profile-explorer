@@ -26,7 +26,6 @@ public class QueryDefinition : INotifyPropertyChanged {
     Description = description;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public string Name { get; set; }
   public string Description { get; set; }
 
@@ -46,6 +45,8 @@ public class QueryDefinition : INotifyPropertyChanged {
       }
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public bool CreateQueryInstance(ISession session) {
     if (queryInstance_ == null) {

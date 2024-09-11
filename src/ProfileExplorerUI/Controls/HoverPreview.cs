@@ -28,6 +28,10 @@ public abstract class HoverPreview : IDisposable {
     control_.MouseLeave += OnMouseLeave;
   }
 
+  public void Dispose() {
+    hover_?.Dispose();
+  }
+
   public void Hide() {
     HidePreviewPopup(true);
   }
@@ -92,10 +96,6 @@ public abstract class HoverPreview : IDisposable {
     if (OnHoverStopped(e.GetPosition(control_))) {
       HidePreviewPopupDelayed(HoverDuration);
     }
-  }
-
-  public void Dispose() {
-    hover_?.Dispose();
   }
 }
 

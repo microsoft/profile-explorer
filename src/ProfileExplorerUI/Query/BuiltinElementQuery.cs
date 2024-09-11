@@ -8,10 +8,6 @@ public class BuiltinElementQuery : IElementQuery {
   private ISession session_;
   public ISession Session => session_;
 
-  public QueryDefinition GetDefinition() {
-    throw new NotImplementedException();
-  }
-
   public bool Initialize(ISession session) {
     session_ = session;
     return true;
@@ -23,5 +19,9 @@ public class BuiltinElementQuery : IElementQuery {
     data.SetOutput("Output B", new Random().NextDouble() > 0.5);
     data.SetOutput("Output C", new Random().Next(10000));
     return true;
+  }
+
+  public QueryDefinition GetDefinition() {
+    throw new NotImplementedException();
   }
 }

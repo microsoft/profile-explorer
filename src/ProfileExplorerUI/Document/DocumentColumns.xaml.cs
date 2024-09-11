@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -39,13 +38,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     profileDataRowsMap_ = new Dictionary<IRElement, ElementRowValue>();
   }
 
-  public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
-  public event EventHandler<int> RowSelected;
-  public event EventHandler<ElementRowValue> RowHoverStart;
-  public event EventHandler<ElementRowValue> RowHoverStop;
-  public event PropertyChangedEventHandler PropertyChanged;
-  public event EventHandler<OptionalColumn> ColumnSettingsChanged;
-
   public double ColumnsListItemHeight {
     get => columnsListItemHeight_;
     set {
@@ -68,6 +60,12 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
   public bool UseSmallerFontSize { get; set; }
   public double TextFontSize => UseSmallerFontSize ? settings_.FontSize - 1 : settings_.FontSize;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
+  public event EventHandler<int> RowSelected;
+  public event EventHandler<ElementRowValue> RowHoverStart;
+  public event EventHandler<ElementRowValue> RowHoverStop;
+  public event EventHandler<OptionalColumn> ColumnSettingsChanged;
 
   public void SelectRow(int index) {
     if (index >= 0 && ColumnsList.Items.Count > index) {

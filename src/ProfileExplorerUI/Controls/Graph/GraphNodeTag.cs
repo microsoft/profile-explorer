@@ -7,6 +7,13 @@ using ProfileExplorer.Core.IR;
 namespace ProfileExplorer.UI;
 
 public sealed class GraphNodeTag : ITag {
+  public enum LabelPlacementKind {
+    Top,
+    Bottom,
+    Left,
+    Right
+  }
+
   public static readonly Color[] HeatmapColors = {
     Utils.ColorFromString("#63BE7B"),
     Utils.ColorFromString("#85C77D"),
@@ -31,14 +38,6 @@ public sealed class GraphNodeTag : ITag {
     Utils.ColorFromString("#F88A8B"),
     Utils.ColorFromString("#F8696B")
   };
-
-  public enum LabelPlacementKind {
-    Top,
-    Bottom,
-    Left,
-    Right
-  }
-
   public Color? BackgroundColor { get; set; }
   public Color? BorderColor { get; set; }
   public double BorderThickness { get; set; }

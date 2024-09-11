@@ -184,7 +184,6 @@ public partial class DocumentSearchPanel : DraggablePopup {
 
   private class DocumentSearchInfo : INotifyPropertyChanged {
     private bool panelDetached_;
-    public event PropertyChangedEventHandler PropertyChanged;
     public bool SearchAllFunctions { get; set; }
     public bool SearchPassOutput { get; set; }
     public int FunctionCount { get; set; }
@@ -201,6 +200,8 @@ public partial class DocumentSearchPanel : DraggablePopup {
         }
       }
     }
+
+    public event PropertyChangedEventHandler PropertyChanged;
 
     public void NotifyPropertyChanged(string propertyName) {
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

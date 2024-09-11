@@ -93,6 +93,28 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
   [ProtoMember(5)]
   public int Size { get; }
 
+  public int CompareTo(long value) {
+    if (value < IP) {
+      return 1;
+    }
+
+    if (value > IP + Size) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  public int CompareTo(ManagedMethodMapping other) {
+    return CompareTo(other.IP);
+  }
+
+  public bool Equals(ManagedMethodMapping other) {
+    if (other == null)
+      return false;
+    return IP == other.IP;
+  }
+
   public static ManagedMethodMapping BinarySearch(List<ManagedMethodMapping> ranges, long value) {
     int low = 0;
     int high = ranges.Count - 1;
@@ -123,28 +145,6 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
 
   public override int GetHashCode() {
     return IP.GetHashCode();
-  }
-
-  public int CompareTo(long value) {
-    if (value < IP) {
-      return 1;
-    }
-
-    if (value > IP + Size) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  public int CompareTo(ManagedMethodMapping other) {
-    return CompareTo(other.IP);
-  }
-
-  public bool Equals(ManagedMethodMapping other) {
-    if (other == null)
-      return false;
-    return IP == other.IP;
   }
 }
 

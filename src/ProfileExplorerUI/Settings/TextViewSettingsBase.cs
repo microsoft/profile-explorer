@@ -10,6 +10,10 @@ namespace ProfileExplorer.UI;
 [ProtoInclude(100, typeof(DocumentSettings))]
 [ProtoInclude(200, typeof(SourceFileSettings))]
 public abstract class TextViewSettingsBase : SettingsBase {
+  public TextViewSettingsBase() {
+    Reset();
+  }
+
   [ProtoMember(1)][OptionValue()]
   public ProfileDocumentMarkerSettings ProfileMarkerSettings { get; set; }
   [ProtoMember(2)][OptionValue()]
@@ -36,10 +40,6 @@ public abstract class TextViewSettingsBase : SettingsBase {
   public Color CurrentLineBorderColor { get; set; }
   [ProtoMember(13)][OptionValue(true)]
   public bool HighlightCurrentLine { get; set; }
-
-  public TextViewSettingsBase() {
-    Reset();
-  }
 
   public override void Reset() {
     InitializeReferenceMembers();

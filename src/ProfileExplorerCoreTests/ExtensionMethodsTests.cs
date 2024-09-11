@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorer.Core.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorerCoreTests;
 

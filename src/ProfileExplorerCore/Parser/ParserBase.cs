@@ -13,13 +13,13 @@ namespace ProfileExplorer.Core;
 
 public class ParserBase {
   protected readonly Lexer.Lexer lexer_ = new();
+  private readonly Dictionary<int, BlockIR> blockMap_ = new();
+  private readonly IRParsingErrorHandler errorHandler_;
+  private readonly RegisterTable registerTable_;
   protected ICompilerIRInfo irInfo_;
   protected Token current_;
   protected Token previous_;
   protected IRTextSection section_;
-  private readonly Dictionary<int, BlockIR> blockMap_ = new();
-  private readonly IRParsingErrorHandler errorHandler_;
-  private readonly RegisterTable registerTable_;
   private IRElementId nextElementId_;
   private AssemblyMetadataTag metadataTag_; // Lazy-init.
 

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Compilers;
-using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Interop;
 
 namespace ProfileExplorer.UI.Windows;
 

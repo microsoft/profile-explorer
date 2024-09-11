@@ -48,6 +48,20 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
   public bool IsManagedImage => FileKind == BinaryFileKind.DotNet ||
                                 FileKind == BinaryFileKind.DotNetR2R;
 
+  public bool Equals(BinaryFileDescriptor other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) &&
+           TimeStamp == other.TimeStamp &&
+           ImageSize == other.ImageSize;
+  }
+
   public static bool operator ==(BinaryFileDescriptor left, BinaryFileDescriptor right) {
     return Equals(left, right);
   }
@@ -78,19 +92,5 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
 
   public override string ToString() {
     return $"{ImageName}, Version: {MajorVersion}.{MinorVersion}, TimeStamp: {TimeStamp}, ImageSze: {ImageSize}";
-  }
-
-  public bool Equals(BinaryFileDescriptor other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) &&
-           TimeStamp == other.TimeStamp &&
-           ImageSize == other.ImageSize;
   }
 }

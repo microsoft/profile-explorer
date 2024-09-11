@@ -133,58 +133,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
   }
 
-  private void SearchPanel_NavigateToNextResult(object sender, SearchInfo e) {
-    SelectSearchResult(e.CurrentResult);
-  }
-
-  private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
-    SelectSearchResult(e.CurrentResult);
-  }
-
-  private void SearchPanel_CloseSearchPanel(object sender, SearchInfo e) {
-    SearchPanelVisible = false;
-    resultList_ = null;
-  }
-
-  private void SearchPanel_SearchChanged(object sender, SearchInfo e) {
-    if (itemList_ == null) {
-      return;
-    }
-
-    resultList_ = new List<ProfileListViewItem>();
-
-    foreach (var item in itemList_) {
-      var result = TextSearcher.FirstIndexOf(item.FunctionName, e.SearchedText, 0,
-                                             e.SearchKind);
-
-      if (result.HasValue) {
-        item.SearchResult = result;
-        item.ResetCachedName();
-        resultList_.Add(item);
-      }
-      else {
-        item.SearchResult = null;
-        item.ResetCachedName();
-      }
-    }
-
-    e.CurrentResult = 0;
-    e.ResultCount = resultList_.Count;
-  }
-
-  private void SelectSearchResult(int index) {
-    if (resultList_ == null) {
-      return;
-    }
-
-    ItemList.SelectedItem = resultList_[index];
-    ItemList.ScrollIntoView(ItemList.SelectedItem);
-  }
-
-  ~ProfileListView() {
-    previewPopup_?.UnregisterHoverEvents();
-  }
-
   public CallTreeNodeSettings Settings {
     get => settings_;
     set {
@@ -212,38 +160,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     set => SetField(ref isCategoriesList_, value);
   }
 
-  private void SetupPreviewPopup() {
-    if (previewPopup_ != null) {
-      previewPopup_.UnregisterHoverEvents();
-      previewPopup_ = null;
-    }
-
-    if (!Settings.ShowPreviewPopup) {
-      return;
-    }
-
-    previewPopup_ = new IRDocumentPopupInstance(App.Settings.PreviewPopupSettings, Session);
-    previewPopup_.SetupHoverEvents(ItemList, TimeSpan.FromMilliseconds(Settings.PreviewPopupDuration), () => {
-      var hoveredItem = Utils.FindPointedListViewItem(ItemList);
-      if (hoveredItem == null)
-        return null;
-
-      var item = (ProfileListViewItem)hoveredItem.DataContext;
-
-      if (item.CallTreeNode != null) {
-        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList);
-      }
-
-      return null;
-    });
-  }
-
-  public event EventHandler<ModuleProfileInfo> ModuleClick;
-  public event EventHandler<FunctionMarkingCategory> CategoryClick;
-  public event EventHandler<ProfileCallTreeNode> NodeClick;
-  public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
-  public event EventHandler MarkingChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
   public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var brush = GetMarkedNodeColor(item);
@@ -251,12 +167,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
                                                      ItemList, session_, null, false, brush);
     }
   });
-
-  private Brush GetMarkedNodeColor(ProfileListViewItem node) {
-    return App.Settings.MarkingSettings.
-      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
-  }
-
   public RelayCommand<object> OpenFunctionCommand => new(async obj => {
     var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
@@ -264,13 +174,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
     await OpenFunction(OpenSectionKind.NewTabDockRight);
   });
-
-  private async Task OpenFunction(OpenSectionKind openMode) {
-    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-      await Session.OpenProfileFunction(item.CallTreeNode, openMode);
-    }
-  }
-
   public RelayCommand<object> PreviewFunctionInstanceCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
@@ -285,14 +188,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
     await OpenFunctionInstance(OpenSectionKind.NewTabDockRight);
   });
-
-  private async Task OpenFunctionInstance(OpenSectionKind openMode) {
-    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
-      var filter = new ProfileSampleFilter(item.CallTreeNode);
-      await Session.OpenProfileFunction(item.CallTreeNode, openMode, filter);
-    }
-  }
-
   public RelayCommand<object> SelectFunctionSummaryCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Section);
   });
@@ -376,12 +271,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
 
-  private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
-    if (ItemList.SelectedItem is ProfileListViewItem item) {
-      await Session.SelectProfileFunctionInPanel(item.CallTreeNode, panelKind);
-    }
-  }
-
   public bool SearchPanelVisible {
     get => searchPanelVisible_;
     set {
@@ -457,6 +346,116 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     set => SetField(ref showContextColumn_, value);
   }
 
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private void SearchPanel_NavigateToNextResult(object sender, SearchInfo e) {
+    SelectSearchResult(e.CurrentResult);
+  }
+
+  private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
+    SelectSearchResult(e.CurrentResult);
+  }
+
+  private void SearchPanel_CloseSearchPanel(object sender, SearchInfo e) {
+    SearchPanelVisible = false;
+    resultList_ = null;
+  }
+
+  private void SearchPanel_SearchChanged(object sender, SearchInfo e) {
+    if (itemList_ == null) {
+      return;
+    }
+
+    resultList_ = new List<ProfileListViewItem>();
+
+    foreach (var item in itemList_) {
+      var result = TextSearcher.FirstIndexOf(item.FunctionName, e.SearchedText, 0,
+                                             e.SearchKind);
+
+      if (result.HasValue) {
+        item.SearchResult = result;
+        item.ResetCachedName();
+        resultList_.Add(item);
+      }
+      else {
+        item.SearchResult = null;
+        item.ResetCachedName();
+      }
+    }
+
+    e.CurrentResult = 0;
+    e.ResultCount = resultList_.Count;
+  }
+
+  private void SelectSearchResult(int index) {
+    if (resultList_ == null) {
+      return;
+    }
+
+    ItemList.SelectedItem = resultList_[index];
+    ItemList.ScrollIntoView(ItemList.SelectedItem);
+  }
+
+  ~ProfileListView() {
+    previewPopup_?.UnregisterHoverEvents();
+  }
+
+  private void SetupPreviewPopup() {
+    if (previewPopup_ != null) {
+      previewPopup_.UnregisterHoverEvents();
+      previewPopup_ = null;
+    }
+
+    if (!Settings.ShowPreviewPopup) {
+      return;
+    }
+
+    previewPopup_ = new IRDocumentPopupInstance(App.Settings.PreviewPopupSettings, Session);
+    previewPopup_.SetupHoverEvents(ItemList, TimeSpan.FromMilliseconds(Settings.PreviewPopupDuration), () => {
+      var hoveredItem = Utils.FindPointedListViewItem(ItemList);
+      if (hoveredItem == null)
+        return null;
+
+      var item = (ProfileListViewItem)hoveredItem.DataContext;
+
+      if (item.CallTreeNode != null) {
+        return PreviewPopupArgs.ForFunction(item.CallTreeNode.Function, ItemList);
+      }
+
+      return null;
+    });
+  }
+
+  public event EventHandler<ModuleProfileInfo> ModuleClick;
+  public event EventHandler<FunctionMarkingCategory> CategoryClick;
+  public event EventHandler<ProfileCallTreeNode> NodeClick;
+  public event EventHandler<ProfileCallTreeNode> NodeDoubleClick;
+  public event EventHandler MarkingChanged;
+
+  private Brush GetMarkedNodeColor(ProfileListViewItem node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+
+  private async Task OpenFunction(OpenSectionKind openMode) {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode);
+    }
+  }
+
+  private async Task OpenFunctionInstance(OpenSectionKind openMode) {
+    if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
+      var filter = new ProfileSampleFilter(item.CallTreeNode);
+      await Session.OpenProfileFunction(item.CallTreeNode, openMode, filter);
+    }
+  }
+
+  private async Task SelectFunctionInPanel(ToolPanelKind panelKind) {
+    if (ItemList.SelectedItem is ProfileListViewItem item) {
+      await Session.SelectProfileFunctionInPanel(item.CallTreeNode, panelKind);
+    }
+  }
+
   public void ShowSimpleList(List<ProfileCallTreeNode> nodes) {
     ShowFunctions(nodes);
 
@@ -484,7 +483,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
         if (filter.SortByExclusiveTime) {
           foreach (var node in nodes) {
             if (node.ExclusiveWeight > minWeight) {
-
               filteredNodes.Add(node);
             }
             else break;
@@ -512,17 +510,17 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
       foreach (var node in filteredNodes) {
         var item = ProfileListViewItem.From(node, Session.ProfileData,
                                             Session.CompilerInfo.NameProvider.FormatFunctionName, Settings);
+
         // Stop once weight percentage drops under threshold.
         if (item.Percentage >= filter.MinPercentage ||
             itemList_.Count < filter.MinItems ||
-            (item.Weight > minWeight && itemList_.Count < filter.MinItems * 10)) {
+            item.Weight > minWeight && itemList_.Count < filter.MinItems * 10) {
           itemList_.Add(item);
         }
         else {
           break;
         }
       }
-
     }
     else {
       // No filtering applied.
@@ -532,7 +530,6 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
                                                                            Session.CompilerInfo.NameProvider.
                                                                              FormatFunctionName, Settings)));
     }
-
 
     UpdateMarkedFunctions();
     ItemList.ItemsSource = itemList_;

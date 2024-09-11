@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Win32.SafeHandles;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.ASM;
 using ProfileExplorer.Core.IR;
-using Microsoft.Win32.SafeHandles;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 
@@ -59,6 +59,7 @@ public class DisassemberResult {
 }
 
 public class Disassembler : IDisposable {
+  public delegate string SymbolNameResolverDelegate(long address);
   private PEBinaryInfoProvider peInfo_;
   private List<(ReadOnlyMemory<byte> Data, long StartRVA)> codeSectionData_;
   private long baseAddress_;
@@ -86,7 +87,10 @@ public class Disassembler : IDisposable {
     Initialize(true);
   }
 
-  public delegate string SymbolNameResolverDelegate(long address);
+  public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
 
   public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo,
                                              FunctionNameFormatter funcNameFormatter) {
@@ -167,11 +171,6 @@ public class Disassembler : IDisposable {
     }
 
     return builder.ToString();
-  }
-
-  public void Dispose() {
-    Dispose(true);
-    GC.SuppressFinalize(this);
   }
 
   private void Initialize(bool checkValidCallAddress) {
@@ -474,68 +473,20 @@ public class Disassembler : IDisposable {
   }
 
   private static class Interop {
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_close")]
-    public static extern CapstoneResultCode CloseDisassembler(ref IntPtr pDissembler);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_open")]
-    public static extern CapstoneResultCode CreateDisassembler(Architecture architecture,
-                                                               DisassembleMode disassembleMode,
-                                                               ref IntPtr pDisassembler);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_malloc")]
-    public static extern IntPtr CreateInstruction(DisassemblerHandle hDisassembler);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_disasm")]
-    public static extern IntPtr Disassemble(DisassemblerHandle hDisassembler, IntPtr pCode, IntPtr codeSize,
-                                            long startingAddress, IntPtr count, ref IntPtr pInstructions);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_free")]
-    public static extern void FreeInstructions(IntPtr pInstructions, IntPtr count);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_regs_access")]
-    public static extern CapstoneResultCode GetAccessedRegisters(DisassemblerHandle hDisassembler,
-                                                                 InstructionHandle hInstruction, short[] readRegisters,
-                                                                 ref byte readRegistersCount, short[] writtenRegisters,
-                                                                 ref byte writtenRegistersCount);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_group_name")]
-    public static extern IntPtr GetInstructionGroupName(DisassemblerHandle hDisassembler, int instructionGroupId);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_errno")]
-    public static extern CapstoneResultCode GetLastErrorCode(DisassemblerHandle hDisassembler);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_reg_name")]
-    public static extern IntPtr GetRegisterName(DisassemblerHandle hDisassembler, int registerId);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_version")]
-    public static extern int GetVersion(ref int majorVersion, ref int minorVersion);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_disasm_iter")]
-    [return: MarshalAs(UnmanagedType.I1)]
-    public static extern bool Iterate(DisassemblerHandle hDisassembler, ref IntPtr pCode, ref IntPtr codeSize,
-                                      ref long address, InstructionHandle hInstruction);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("kernel32.dll", CallingConvention = CallingConvention.Winapi, CharSet = CharSet.Ansi,
-               EntryPoint = "LoadLibraryA", SetLastError = true)]
-    public static extern IntPtr LoadLibrary(string libraryFilePath);
-
-    [SuppressUnmanagedCodeSecurity]
-    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_option")]
-    public static extern CapstoneResultCode SetDisassemblerOption(DisassemblerHandle hDisassembler,
-                                                                  DisassemblerOptionType optionType,
-                                                                  IntPtr optionValue);
+    public enum Architecture {
+      Arm,
+      Arm64,
+      Mips,
+      X86,
+      PowerPc,
+      Sparc,
+      SystemZ,
+      XCore,
+      M68K,
+      Tms320C64X,
+      M680X,
+      Evm
+    }
 
     public enum CapstoneResultCode {
       Ok = 0,
@@ -614,20 +565,68 @@ public class Disassembler : IDisposable {
       UseMasmSyntax
     }
 
-    public enum Architecture {
-      Arm,
-      Arm64,
-      Mips,
-      X86,
-      PowerPc,
-      Sparc,
-      SystemZ,
-      XCore,
-      M68K,
-      Tms320C64X,
-      M680X,
-      Evm
-    }
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_close")]
+    public static extern CapstoneResultCode CloseDisassembler(ref IntPtr pDissembler);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_open")]
+    public static extern CapstoneResultCode CreateDisassembler(Architecture architecture,
+                                                               DisassembleMode disassembleMode,
+                                                               ref IntPtr pDisassembler);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_malloc")]
+    public static extern IntPtr CreateInstruction(DisassemblerHandle hDisassembler);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_disasm")]
+    public static extern IntPtr Disassemble(DisassemblerHandle hDisassembler, IntPtr pCode, IntPtr codeSize,
+                                            long startingAddress, IntPtr count, ref IntPtr pInstructions);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_free")]
+    public static extern void FreeInstructions(IntPtr pInstructions, IntPtr count);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_regs_access")]
+    public static extern CapstoneResultCode GetAccessedRegisters(DisassemblerHandle hDisassembler,
+                                                                 InstructionHandle hInstruction, short[] readRegisters,
+                                                                 ref byte readRegistersCount, short[] writtenRegisters,
+                                                                 ref byte writtenRegistersCount);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_group_name")]
+    public static extern IntPtr GetInstructionGroupName(DisassemblerHandle hDisassembler, int instructionGroupId);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_errno")]
+    public static extern CapstoneResultCode GetLastErrorCode(DisassemblerHandle hDisassembler);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_reg_name")]
+    public static extern IntPtr GetRegisterName(DisassemblerHandle hDisassembler, int registerId);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_version")]
+    public static extern int GetVersion(ref int majorVersion, ref int minorVersion);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_disasm_iter")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    public static extern bool Iterate(DisassemblerHandle hDisassembler, ref IntPtr pCode, ref IntPtr codeSize,
+                                      ref long address, InstructionHandle hInstruction);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("kernel32.dll", CallingConvention = CallingConvention.Winapi, CharSet = CharSet.Ansi,
+               EntryPoint = "LoadLibraryA", SetLastError = true)]
+    public static extern IntPtr LoadLibrary(string libraryFilePath);
+
+    [SuppressUnmanagedCodeSecurity]
+    [DllImport("capstone.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "cs_option")]
+    public static extern CapstoneResultCode SetDisassemblerOption(DisassemblerHandle hDisassembler,
+                                                                  DisassemblerOptionType optionType,
+                                                                  IntPtr optionValue);
 
     public static DisassemblerHandle Create(Architecture architecture, DisassembleMode mode) {
       IntPtr disasmPtr = IntPtr.Zero;

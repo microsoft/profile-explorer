@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProtoBuf;
@@ -50,6 +49,12 @@ public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
   public int Age { get; set; }
   public string SymbolName => Utils.TryGetFileName(FileName);
 
+  public bool Equals(SymbolFileDescriptor other) {
+    return FileName.Equals(other.FileName, StringComparison.OrdinalIgnoreCase) &&
+           Id == other.Id &&
+           Age == other.Age;
+  }
+
   public static bool operator ==(SymbolFileDescriptor left, SymbolFileDescriptor right) {
     return Equals(left, right);
   }
@@ -80,11 +85,5 @@ public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
 
   public override int GetHashCode() {
     return HashCode.Combine(FileName.GetHashCode(StringComparison.OrdinalIgnoreCase), Id, Age);
-  }
-
-  public bool Equals(SymbolFileDescriptor other) {
-    return FileName.Equals(other.FileName, StringComparison.OrdinalIgnoreCase) &&
-           Id == other.Id &&
-           Age == other.Age;
   }
 }

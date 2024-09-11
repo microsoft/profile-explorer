@@ -160,85 +160,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     viewMenuItems_ = new[] {
       ViewMenuItem1,
       ViewMenuItem2,
-      ViewMenuItem3,
+      ViewMenuItem3
     };
   }
 
-  private void SetupEvents() {
-    PassOutput.ScrollChanged += PassOutput_ScrollChanged;
-    PassOutput.ShowBeforeOutputChanged += PassOutput_ShowBeforeOutputChanged;
-
-    PreviewKeyDown += IRDocumentHost_PreviewKeyDown;
-    TextView.PreviewMouseRightButtonDown += TextView_PreviewMouseRightButtonDown;
-    TextView.MouseDoubleClick += TextViewOnMouseDoubleClick;
-    TextView.PreviewMouseMove += TextView_PreviewMouseMove;
-    TextView.PreviewMouseDown += TextView_PreviewMouseDown;
-    TextView.BlockSelected += TextView_BlockSelected;
-    TextView.ElementSelected += TextView_ElementSelected;
-    TextView.ElementUnselected += TextView_ElementUnselected;
-    TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
-    TextView.CaretChanged += TextViewOnCaretChanged;
-    TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
-    TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
-    TextView.TextRegionFolded += TextViewOnTextRegionFolded;
-    TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
-    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
-
-    SectionPanel.OpenSection += SectionPanel_OpenSection;
-    SearchPanel.SearchChanged += SearchPanel_SearchChanged;
-    SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
-    SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
-    SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
-    ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
-    ProfileColumns.RowSelected += ProfileColumn_RowSelected;
-    Unloaded += IRDocumentHost_Unloaded;
-  }
-
-  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
-    var targetFunc = targetSection.ParentFunction;
-    ProfileSampleFilter targetFilter = null;
-
-    if (profileFilter_ is {IncludesAll: false}) {
-      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
-    }
-
-    historyManager_.ClearNextStates(); // Reset forward history.
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
-      OpenSectionKind.ReplaceCurrent;
-    await Session.OpenProfileFunction(targetFunc, mode,
-                                      targetFilter, this);
-  }
-
-  private void ProfileColumn_RowSelected(object sender, int line) {
-    if (ignoreNextRowSelectedEvent_) {
-      ignoreNextRowSelectedEvent_ = false;
-      return;
-    }
-
-    TextView.SelectLine(line + 1);
-  }
-
-  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
-    ProfileColumns.HandleTextRegionUnfolded(e);
-  }
-
-  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
-    ProfileColumns.HandleTextRegionFolded(e);
-  }
-
-  private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-    if (Math.Abs(e.VerticalChange) < double.Epsilon) {
-      return;
-    }
-
-    TextView.ScrollToVerticalOffset(e.VerticalOffset);
-  }
-
-  public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
-  public event EventHandler<(double offset, double offsetChangeAmount)> PassOutputVerticalScrollChanged;
-  public event EventHandler<bool> PassOutputShowBeforeChanged;
-  public event EventHandler<bool> PassOutputVisibilityChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
   public string TitlePrefix { get; set; }
   public string TitleSuffix { get; set; }
   public string DescriptionPrefix { get; set; }
@@ -347,6 +272,85 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   public bool HasNextFunctions => historyManager_.HasNextStates;
   public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter: true};
   public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter: true};
+  public RelayCommand<object> CopyDocumentCommand => new(async obj => {
+    await DocumentExporting.CopyAllLinesAsHtml(TextView);
+  });
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private void SetupEvents() {
+    PassOutput.ScrollChanged += PassOutput_ScrollChanged;
+    PassOutput.ShowBeforeOutputChanged += PassOutput_ShowBeforeOutputChanged;
+
+    PreviewKeyDown += IRDocumentHost_PreviewKeyDown;
+    TextView.PreviewMouseRightButtonDown += TextView_PreviewMouseRightButtonDown;
+    TextView.MouseDoubleClick += TextViewOnMouseDoubleClick;
+    TextView.PreviewMouseMove += TextView_PreviewMouseMove;
+    TextView.PreviewMouseDown += TextView_PreviewMouseDown;
+    TextView.BlockSelected += TextView_BlockSelected;
+    TextView.ElementSelected += TextView_ElementSelected;
+    TextView.ElementUnselected += TextView_ElementUnselected;
+    TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
+    TextView.CaretChanged += TextViewOnCaretChanged;
+    TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+    TextView.TextArea.SelectionChanged += TextAreaOnSelectionChanged;
+    TextView.TextRegionFolded += TextViewOnTextRegionFolded;
+    TextView.TextRegionUnfolded += TextViewOnTextRegionUnfolded;
+    TextView.FunctionCallOpen += TextViewOnFunctionCallOpen;
+
+    SectionPanel.OpenSection += SectionPanel_OpenSection;
+    SearchPanel.SearchChanged += SearchPanel_SearchChanged;
+    SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+    SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
+    SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
+    ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
+    ProfileColumns.RowSelected += ProfileColumn_RowSelected;
+    Unloaded += IRDocumentHost_Unloaded;
+  }
+
+  private async void TextViewOnFunctionCallOpen(object sender, IRTextSection targetSection) {
+    var targetFunc = targetSection.ParentFunction;
+    ProfileSampleFilter targetFilter = null;
+
+    if (profileFilter_ is {IncludesAll: false}) {
+      targetFilter = profileFilter_.CloneForCallTarget(targetFunc);
+    }
+
+    historyManager_.ClearNextStates(); // Reset forward history.
+    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
+      OpenSectionKind.ReplaceCurrent;
+    await Session.OpenProfileFunction(targetFunc, mode,
+                                      targetFilter, this);
+  }
+
+  private void ProfileColumn_RowSelected(object sender, int line) {
+    if (ignoreNextRowSelectedEvent_) {
+      ignoreNextRowSelectedEvent_ = false;
+      return;
+    }
+
+    TextView.SelectLine(line + 1);
+  }
+
+  private void TextViewOnTextRegionUnfolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionUnfolded(e);
+  }
+
+  private void TextViewOnTextRegionFolded(object sender, FoldingSection e) {
+    ProfileColumns.HandleTextRegionFolded(e);
+  }
+
+  private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+    if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+      return;
+    }
+
+    TextView.ScrollToVerticalOffset(e.VerticalOffset);
+  }
+
+  public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
+  public event EventHandler<(double offset, double offsetChangeAmount)> PassOutputVerticalScrollChanged;
+  public event EventHandler<bool> PassOutputShowBeforeChanged;
+  public event EventHandler<bool> PassOutputVisibilityChanged;
 
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -2368,22 +2372,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.Copy();
   }
 
-  public RelayCommand<object> CopyDocumentCommand => new(async obj => {
-    await DocumentExporting.CopyAllLinesAsHtml(TextView);
-  });
-
-  private class DummyQuery : IElementQuery {
-    public ISession Session { get; }
-
-    public bool Initialize(ISession session) {
-      return true;
-    }
-
-    public bool Execute(QueryData data) {
-      return true;
-    }
-  }
-
   private async void ViewMenuItem_OnCheckedChanged(object sender, RoutedEventArgs e) {
     await UpdateProfilingColumns();
   }
@@ -2425,6 +2413,18 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private async void NextButton_Click(object sender, RoutedEventArgs e) {
     await LoadNextSection();
   }
+
+  private class DummyQuery : IElementQuery {
+    public ISession Session { get; }
+
+    public bool Initialize(ISession session) {
+      return true;
+    }
+
+    public bool Execute(QueryData data) {
+      return true;
+    }
+  }
 }
 
 class RemarksButtonState : INotifyPropertyChanged {
@@ -2433,8 +2433,6 @@ class RemarksButtonState : INotifyPropertyChanged {
   public RemarksButtonState(RemarkSettings settings) {
     remarkSettings_ = settings.Clone();
   }
-
-  public event PropertyChangedEventHandler PropertyChanged;
 
   public RemarkSettings Settings {
     get => remarkSettings_;
@@ -2467,6 +2465,8 @@ class RemarksButtonState : INotifyPropertyChanged {
       }
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

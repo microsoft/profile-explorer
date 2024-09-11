@@ -273,7 +273,8 @@
                 Height="16"
                 Source="{StaticResource RightArrowIcon}" />
             </Button>
-            <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
             <TextBlock
               Margin="4,0,0,0"

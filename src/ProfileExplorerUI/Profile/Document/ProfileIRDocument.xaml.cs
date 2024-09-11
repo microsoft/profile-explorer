@@ -31,20 +31,6 @@ public class ProfileSourceSyntaxNode {
   private static readonly IconDrawing ElseIcon;
   private static readonly IconDrawing SwitchCaseIcon;
   private static readonly IconDrawing SwitchIcon;
-  public SourceSyntaxNode SyntaxNode { get; set; }
-  public int Level { get; set; }
-  public ProfileSourceSyntaxNode Parent { get; set; }
-  public IRElement StartElement { get; set; }
-  public List<IRElement> Elements { get; set; }
-  public TimeSpan Weight { get; set; }
-  public TimeSpan BodyWeight { get; set; }
-  public TimeSpan ConditionWeight { get; set; }
-  public PerformanceCounterValueSet Counters { get; set; }
-  public bool ShowInDocumentColumns { get; set; }
-  public SourceSyntaxNodeKind Kind => SyntaxNode.Kind;
-  public TextLocation Start { get; set; }
-  public TextLocation End { get; set; }
-  public int Length => End.Offset - Start.Offset;
 
   static ProfileSourceSyntaxNode() {
     LoopIcon = IconDrawing.FromIconResource("LoopIcon");
@@ -60,6 +46,27 @@ public class ProfileSourceSyntaxNode {
     Start = syntaxNode.Start;
     End = syntaxNode.End;
   }
+
+  public SourceSyntaxNode SyntaxNode { get; set; }
+  public int Level { get; set; }
+  public ProfileSourceSyntaxNode Parent { get; set; }
+  public IRElement StartElement { get; set; }
+  public List<IRElement> Elements { get; set; }
+  public TimeSpan Weight { get; set; }
+  public TimeSpan BodyWeight { get; set; }
+  public TimeSpan ConditionWeight { get; set; }
+  public PerformanceCounterValueSet Counters { get; set; }
+  public bool ShowInDocumentColumns { get; set; }
+  public SourceSyntaxNodeKind Kind => SyntaxNode.Kind;
+  public TextLocation Start { get; set; }
+  public TextLocation End { get; set; }
+  public int Length => End.Offset - Start.Offset;
+  public bool IsMarkedNode => SyntaxNode.Kind == SourceSyntaxNodeKind.If ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Else ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.ElseIf ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Loop ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.Switch ||
+                              SyntaxNode.Kind == SourceSyntaxNodeKind.SwitchCase;
 
   public IconDrawing GetIcon() {
     return Kind switch {
@@ -130,13 +137,6 @@ public class ProfileSourceSyntaxNode {
 
     return tooltip.ToString();
   }
-
-  public bool IsMarkedNode => SyntaxNode.Kind == SourceSyntaxNodeKind.If ||
-                              SyntaxNode.Kind == SourceSyntaxNodeKind.Else ||
-                              SyntaxNode.Kind == SourceSyntaxNodeKind.ElseIf ||
-                              SyntaxNode.Kind == SourceSyntaxNodeKind.Loop ||
-                              SyntaxNode.Kind == SourceSyntaxNodeKind.Switch ||
-                              SyntaxNode.Kind == SourceSyntaxNodeKind.SwitchCase;
 }
 
 public class ProfileMenuItem : BindableObject {
@@ -245,16 +245,6 @@ public class ProfileMenuItem : BindableObject {
 }
 
 public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
-  [ProtoContract]
-  public class SourceFileState {
-    [ProtoMember(1)]
-    public double HorizontalOffset;
-    [ProtoMember(2)]
-    public double VerticalOffset;
-    [ProtoMember(3)]
-    public List<bool> AssemblyFoldingStates;
-  }
-
   private List<(IRElement, TimeSpan)> profileElements_;
   private int profileElementIndex_;
   private SourceLineProcessingResult sourceProcessingResult_;
@@ -298,9 +288,71 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     viewMenuItems_ = new[] {
       ViewMenuItem1,
       ViewMenuItem2,
-      ViewMenuItem3,
+      ViewMenuItem3
     };
   }
+
+  public ISession Session { get; set; }
+  public IRTextSection Section => TextView.Section;
+
+  public ProfileSampleFilter ProfileFilter {
+    get => profileFilter_;
+    set {
+      if (value == null) {
+        profileFilter_ = new ProfileSampleFilter();
+      }
+      else {
+        profileFilter_ = value.Clone(); // Clone to detect changes later.
+      }
+
+      UpdateProfileFilterUI();
+      ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
+      ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
+    }
+  }
+
+  public bool HasProfileInfo {
+    get => hasProfileInfo_;
+    set => SetField(ref hasProfileInfo_, value);
+  }
+
+  public bool UseCompactProfilingColumns { get; set; }
+  public bool ShowPerformanceCounterColumns { get; set; }
+  public bool ShowPerformanceMetricColumns { get; set; }
+
+  public bool UseSmallerFontSize {
+    get => ProfileColumns.UseSmallerFontSize;
+    set => ProfileColumns.UseSmallerFontSize = value;
+  }
+
+  public bool ColumnsVisible {
+    get => columnsVisible_;
+    set => SetField(ref columnsVisible_, value);
+  }
+
+  public bool IsPreviewDocument {
+    get => isPreviewDocument_;
+    set => SetField(ref isPreviewDocument_, value);
+  }
+
+  public bool IsSourceFileDocument {
+    get => isSourceFileDocument_;
+    set => SetField(ref isSourceFileDocument_, value);
+  }
+
+  public Brush SelectedLineBrush {
+    get => selectedLineBrush_;
+    set => SetField(ref selectedLineBrush_, value);
+  }
+
+  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
+  public bool HasNextFunctions => historyManager_.HasNextStates;
+  public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter: true};
+  public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter: true};
+  public RelayCommand<object> CopyDocumentCommand => new(async obj => {
+    await CopyAllLinesAsHtml();
+  });
+  public event PropertyChangedEventHandler PropertyChanged;
 
   private void SetupEvents() {
     TextView.CaretChanged += TextView_CaretChanged;
@@ -434,62 +486,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   public event EventHandler<ParsedIRTextSection> LoadedFunctionChanged;
   public event EventHandler<int> LineSelected;
   public event EventHandler FunctionHistoryChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
-  public ISession Session { get; set; }
-  public IRTextSection Section => TextView.Section;
-
-  public ProfileSampleFilter ProfileFilter {
-    get => profileFilter_;
-    set {
-      if (value == null) {
-        profileFilter_ = new ProfileSampleFilter();
-      }
-      else {
-        profileFilter_ = value.Clone(); // Clone to detect changes later.
-      }
-
-      UpdateProfileFilterUI();
-      ProfilingUtils.SyncInstancesMenuWithFilter(InstancesMenu, profileFilter_);
-      ProfilingUtils.SyncThreadsMenuWithFilter(ThreadsMenu, profileFilter_);
-    }
-  }
-
-  public bool HasProfileInfo {
-    get => hasProfileInfo_;
-    set => SetField(ref hasProfileInfo_, value);
-  }
-
-  public bool UseCompactProfilingColumns { get; set; }
-  public bool ShowPerformanceCounterColumns { get; set; }
-  public bool ShowPerformanceMetricColumns { get; set; }
-
-  public bool UseSmallerFontSize {
-    get => ProfileColumns.UseSmallerFontSize;
-    set => ProfileColumns.UseSmallerFontSize = value;
-  }
-
-  public bool ColumnsVisible {
-    get => columnsVisible_;
-    set => SetField(ref columnsVisible_, value);
-  }
-
-  public bool IsPreviewDocument {
-    get => isPreviewDocument_;
-    set => SetField(ref isPreviewDocument_, value);
-  }
-
-  public bool IsSourceFileDocument {
-    get => isSourceFileDocument_;
-    set => SetField(ref isSourceFileDocument_, value);
-  }
-
-  public Brush SelectedLineBrush {
-    get => selectedLineBrush_;
-    set => SetField(ref selectedLineBrush_, value);
-  }
-
-  public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
-  public bool HasNextFunctions => historyManager_.HasNextStates;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -665,9 +661,6 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     DescriptionSuffixChanged?.Invoke(this, ProfilingUtils.
                                        CreateProfileFilterDescription(profileFilter_, Session));
   }
-
-  public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter: true};
-  public bool HasProfileThreadFilter => profileFilter_ is {HasThreadFilter: true};
 
   private string MakeSyntaxNodePreviewText(string text, int maxLength) {
     if (string.IsNullOrEmpty(text)) {
@@ -1974,15 +1967,21 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     TextView.Copy();
   }
 
-  public RelayCommand<object> CopyDocumentCommand => new(async obj => {
-    await CopyAllLinesAsHtml();
-  });
-
   public void ExpandBlockFoldings() {
     SetupSourceAssemblyFolding(false);
   }
 
   public void CollapseBlockFoldings() {
     SetupSourceAssemblyFolding(true);
+  }
+
+  [ProtoContract]
+  public class SourceFileState {
+    [ProtoMember(1)]
+    public double HorizontalOffset;
+    [ProtoMember(2)]
+    public double VerticalOffset;
+    [ProtoMember(3)]
+    public List<bool> AssemblyFoldingStates;
   }
 }

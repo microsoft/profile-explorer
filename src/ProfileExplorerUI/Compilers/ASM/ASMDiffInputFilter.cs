@@ -17,6 +17,33 @@ public class ASMDiffInputFilter : IDiffInputFilter {
     'a', 'b', 'c', 'd', 'e', 'f'
   };
 
+  public void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo) {
+    addressMap_ = new Dictionary<string, int>();
+    nextAddressId_ = 1;
+  }
+
+  public FilteredDiffInput FilterInputText(string text) {
+    string[] lines = text.SplitLines();
+    var result = new FilteredDiffInput(lines.Length);
+
+    var builder = new StringBuilder(text.Length);
+    var linePrefixes = new List<string>(lines.Length);
+
+    foreach (string line in lines) {
+      (string newLine, var replacements) = FilterInputLineImpl(line);
+      builder.AppendLine(newLine);
+      result.LineReplacements.Add(replacements);
+    }
+
+    result.Text = builder.ToString();
+    return result;
+  }
+
+  public string FilterInputLine(string line) {
+    (string result, _) = FilterInputLineImpl(line);
+    return result;
+  }
+
   public (string, List<FilteredDiffInput.Replacement>) FilterInputLineImpl(string line) {
     string newLine = line;
     int index = line.IndexOf(':');
@@ -87,33 +114,6 @@ public class ASMDiffInputFilter : IDiffInputFilter {
     newLine = newLinePrefixReplacement + newLine.Substring(index); //? TODO: In-place replace?
     replacements.Add(new FilteredDiffInput.Replacement(0, newLinePrefixReplacement, newLinePrefix));
     return (newLine, replacements);
-  }
-
-  public void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo) {
-    addressMap_ = new Dictionary<string, int>();
-    nextAddressId_ = 1;
-  }
-
-  public FilteredDiffInput FilterInputText(string text) {
-    string[] lines = text.SplitLines();
-    var result = new FilteredDiffInput(lines.Length);
-
-    var builder = new StringBuilder(text.Length);
-    var linePrefixes = new List<string>(lines.Length);
-
-    foreach (string line in lines) {
-      (string newLine, var replacements) = FilterInputLineImpl(line);
-      builder.AppendLine(newLine);
-      result.LineReplacements.Add(replacements);
-    }
-
-    result.Text = builder.ToString();
-    return result;
-  }
-
-  public string FilterInputLine(string line) {
-    (string result, _) = FilterInputLineImpl(line);
-    return result;
   }
 
   private (string, int) ParseAddress(string line, int startOffset) {

@@ -32,8 +32,6 @@ public class SearchInfo : INotifyPropertyChanged {
     showNavigationSection_ = true;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public TextSearchKind SearchKind {
     get => kind_;
     set => kind_ = value;
@@ -139,6 +137,8 @@ public class SearchInfo : INotifyPropertyChanged {
       }
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void OnPropertyChange(string propertyname) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));

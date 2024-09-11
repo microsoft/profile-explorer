@@ -43,7 +43,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     CallTree = null;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public override ToolPanelKind PanelKind => ToolPanelKind.FlameGraph;
 
   public override ISession Session {
@@ -105,6 +104,22 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
+
+  public FlameGraphNode RootNode {
+    get => rootNode_;
+    set => SetField(ref rootNode_, value);
+  }
+
+  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+    return callTree_.GetBacktrace(node);
+  }
+
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+    ProfileCallTreeNode node) {
+    return callTree_.GetTopFunctionsAndModules(node);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public override async void OnShowPanel() {
     base.OnShowPanel();
@@ -168,15 +183,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     if (showDetails) {
       await NodeDetailsPanel.ShowWithDetailsAsync(node);
     }
-  }
-
-  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-    return callTree_.GetBacktrace(node);
-  }
-
-  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
-    ProfileCallTreeNode node) {
-    return callTree_.GetTopFunctionsAndModules(node);
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -245,11 +251,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     HasRootNode = true;
     RootNode = node;
     GraphHost.ResetWidth();
-  }
-
-  public FlameGraphNode RootNode {
-    get => rootNode_;
-    set => SetField(ref rootNode_, value);
   }
 
   private async Task UpdateNodeDetailsPanel() {

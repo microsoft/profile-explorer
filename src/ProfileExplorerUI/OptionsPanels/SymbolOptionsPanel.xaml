@@ -179,7 +179,8 @@
                   <Style
                     BasedOn="{StaticResource FlatListViewItem}"
                     TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="Background"
+                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                   </Style>
                 </ListView.ItemContainerStyle>
@@ -296,7 +297,8 @@
                   <Style
                     BasedOn="{StaticResource FlatListViewItem}"
                     TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="Background"
+                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                   </Style>
                 </ListView.ItemContainerStyle>
@@ -467,7 +469,8 @@
               <Style
                 BasedOn="{StaticResource FlatListViewItem}"
                 TargetType="{x:Type ListViewItem}">
-                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                <Setter Property="Background"
+                        Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               </Style>
             </ListView.ItemContainerStyle>

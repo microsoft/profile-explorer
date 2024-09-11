@@ -35,8 +35,6 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
     DataContext = this;
   }
 
-  public event EventHandler<ThreadActivityAction> ThreadActivityAction;
-  public event PropertyChangedEventHandler PropertyChanged;
   public RelayCommand<object> IncludeThreadCommand =>
     new(obj => ThreadActivityAction?.Invoke(this, Profile.ThreadActivityAction.IncludeThread));
   public RelayCommand<object> IncludeSameNameThreadCommand =>
@@ -76,6 +74,8 @@ public partial class ActivityTimelineView : UserControl, INotifyPropertyChanged 
 
   public int ThreadId => ActivityHost.ThreadId;
   public string ThreadName => ActivityHost.ThreadName;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<ThreadActivityAction> ThreadActivityAction;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

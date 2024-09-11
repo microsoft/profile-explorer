@@ -8,9 +8,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
-using Microsoft.Win32;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -99,7 +99,6 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
     Utils.OpenExplorerAtFile(symbolSettings_.SymbolCacheDirectoryPath);
   }
 
-
   private void SymbolPath_LostFocus(object sender, RoutedEventArgs e) {
     var textBox = sender as FileSystemTextBox;
     UpdateSymbolPath(textBox);
@@ -130,7 +129,7 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
     }
 
     // Update list with the new text.
-    var newSymbolPath = Utils.RemovePathQuotes(textBox.Text);
+    string newSymbolPath = Utils.RemovePathQuotes(textBox.Text);
     textBox.Text = newSymbolPath;
 
     if (symbolSettings_.SymbolPaths[index] != newSymbolPath) {
@@ -217,11 +216,11 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
     SymbolPathsList.ItemsSource = list;
 
     var binariesList = symbolSettings_.RejectedBinaryFiles.ToList();
-    binariesList.Sort((a, b) => String.Compare(a.ImageName, b.ImageName, StringComparison.OrdinalIgnoreCase));
+    binariesList.Sort((a, b) => string.Compare(a.ImageName, b.ImageName, StringComparison.OrdinalIgnoreCase));
     RejectedBinariesList.ItemsSource = binariesList;
 
     var symbolList = symbolSettings_.RejectedSymbolFiles.ToList();
-    symbolList.Sort((a, b) => String.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
+    symbolList.Sort((a, b) => string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
     RejectedSymbolsList.ItemsSource = symbolList;
   }
 

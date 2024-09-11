@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
@@ -168,7 +166,7 @@ public class ProfileData {
   public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function,
                                                         FunctionDebugInfo debugInfo) {
     ref var funcProfile =
-      ref CollectionsMarshal.GetValueRefOrAddDefault(FunctionProfiles, function, out var exists);
+      ref CollectionsMarshal.GetValueRefOrAddDefault(FunctionProfiles, function, out bool exists);
 
     if (!exists) {
       funcProfile = new FunctionProfileData(debugInfo);

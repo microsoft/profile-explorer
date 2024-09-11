@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using System.Windows.Media;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -35,7 +34,6 @@ public class GeneralSettings : SettingsBase {
   public double CpuCoreLimit { get; set; }
   [ProtoMember(6)][OptionValue(false)]
   public bool DisableAnimations { get; set; }
-
   public int CurrentCpuCoreLimit => (int)Math.Clamp(Math.Floor(CpuCoreLimit * Environment.ProcessorCount),
                                                     MinCpuCoreLimit, MaxCpuCoreLimit);
   public bool UseAnimations => !DisableAnimations && !GlobalDisableAnimations;

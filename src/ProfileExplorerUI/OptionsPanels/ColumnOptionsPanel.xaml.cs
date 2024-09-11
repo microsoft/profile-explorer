@@ -1,13 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Input;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class ColumnOptionsPanel : OptionsPanelBase {
+  public ColumnOptionsPanel() {
+    InitializeComponent();
+    ShowIconsComboBox.ItemsSource = PartVisibilityKinds;
+    ShowBackgroundComboBox.ItemsSource = PartVisibilityKinds;
+    ShowPercentageComboBox.ItemsSource = PartVisibilityKinds;
+  }
+
   public override double DefaultHeight => 340;
   public override double MinimumHeight => 340;
   public override double DefaultWidth => 280;
@@ -19,11 +23,4 @@ public partial class ColumnOptionsPanel : OptionsPanelBase {
       {OptionalColumnStyle.PartVisibility.Never, "Never"},
       {OptionalColumnStyle.PartVisibility.IfActiveColumn, "If Active Column"}
     };
-
-  public ColumnOptionsPanel() {
-    InitializeComponent();
-    ShowIconsComboBox.ItemsSource = PartVisibilityKinds;
-    ShowBackgroundComboBox.ItemsSource = PartVisibilityKinds;
-    ShowPercentageComboBox.ItemsSource = PartVisibilityKinds;
-  }
 }

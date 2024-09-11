@@ -19,8 +19,6 @@ public sealed class SourceLocationTag : ITag {
   public int Column { get; set; }
   public string FilePath { get; set; }
   public bool HasInlinees => Inlinees != null && Inlinees.Count > 0;
-  public string Name => "Source location";
-  public TaggedObject Owner { get; set; }
 
   public List<SourceStackFrame> InlineesReversed {
     get {
@@ -29,6 +27,9 @@ public sealed class SourceLocationTag : ITag {
       return clone;
     }
   }
+
+  public string Name => "Source location";
+  public TaggedObject Owner { get; set; }
 
   public void AddInlinee(string function, string filePath, int line, int column) {
     Inlinees ??= new List<SourceStackFrame>();

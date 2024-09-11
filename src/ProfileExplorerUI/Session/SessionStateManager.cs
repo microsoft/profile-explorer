@@ -190,6 +190,7 @@ public class SessionStateManager : IDisposable {
   private List<CancelableTask> pendingTasks_;
   private ICompilerInfoProvider compilerInfo_;
   private bool watchDocumentChanges_;
+  private bool disposed_;
 
   public SessionStateManager(string filePath, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
     lockObject_ = new object();
@@ -207,7 +208,6 @@ public class SessionStateManager : IDisposable {
     SyncDiffedDocuments = false;
   }
 
-  public event EventHandler DocumentChanged;
   public SessionInfo Info { get; set; }
   public List<LoadedDocument> Documents => documents_;
   public LoadedDocument MainDocument { get; set; }
@@ -221,6 +221,13 @@ public class SessionStateManager : IDisposable {
   public bool IsAutoSaveEnabled { get; set; }
   public bool IsInTwoDocumentsDiffMode => DiffDocument != null && SyncDiffedDocuments;
   public bool SyncDiffedDocuments { get; set; }
+
+  public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  public event EventHandler DocumentChanged;
 
   public static Task<SessionState> DeserializeSession(byte[] data) {
     return Task.Run(() => {
@@ -448,10 +455,6 @@ public class SessionStateManager : IDisposable {
     DocumentChanged?.Invoke(sender, e);
   }
 
-        #region IDisposable Support
-
-  private bool disposed_;
-
   protected virtual void Dispose(bool disposing) {
     if (!disposed_) {
       documents_.ForEach(item => item.Dispose());
@@ -465,11 +468,4 @@ public class SessionStateManager : IDisposable {
   ~SessionStateManager() {
     Dispose(false);
   }
-
-  public void Dispose() {
-    Dispose(true);
-    GC.SuppressFinalize(this);
-  }
-
-        #endregion
 }

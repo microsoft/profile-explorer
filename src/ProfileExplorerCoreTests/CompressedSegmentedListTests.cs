@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ProfileExplorer.Core.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ProfileExplorer.Core.Collections;
 
 namespace ProfileExplorerCoreTests;
 

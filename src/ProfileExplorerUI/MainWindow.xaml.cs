@@ -16,7 +16,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using AvalonDock;
-using AvalonDock.Controls;
 using AvalonDock.Layout;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
@@ -100,18 +99,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     DataContext = this;
   }
 
-  private void SetupEvents() {
-    ContentRendered += MainWindow_ContentRendered;
-    StateChanged += MainWindow_StateChanged;
-    LocationChanged += MainWindow_LocationChanged;
-    Closing += MainWindow_Closing;
-    Activated += MainWindow_Activated;
-    Deactivated += MainWindow_Deactivated;
-    SizeChanged += MainWindow_SizeChanged;
-  }
-
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
-  public SessionStateManager SessionState => sessionState_;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public bool ProfileControlsVisible {
@@ -123,32 +111,8 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     }
   }
 
-  private static void CheckForUpdate() {
-    string autoUpdateInfo;
-
-    switch (RuntimeInformation.OSArchitecture) {
-      case Architecture.Arm64:
-        autoUpdateInfo = App.AutoUpdateInfoArm64;
-        break;
-      case Architecture.X64:
-        autoUpdateInfo = App.AutoUpdateInfox64;
-        break;
-      default:
-        autoUpdateInfo = App.AutoUpdateInfox64;
-        break;
-    }
-
-    try {
-      AutoUpdater.Start(autoUpdateInfo);
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed update check: {ex}");
-    }
-  }
-
-  private static void InstallExtension() {
-    App.InstallExtension();
-  }
+  public event PropertyChangedEventHandler PropertyChanged;
+  public SessionStateManager SessionState => sessionState_;
 
   public IRTextSummary GetDocumentSummary(IRTextSection section) {
     return sessionState_.FindLoadedDocument(section).Summary;
@@ -190,6 +154,43 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   public Task SwitchActiveFunction(IRTextFunction function, bool handleProfiling = true) {
     return SectionPanel.SelectFunction(function, handleProfiling);
+  }
+
+  private void SetupEvents() {
+    ContentRendered += MainWindow_ContentRendered;
+    StateChanged += MainWindow_StateChanged;
+    LocationChanged += MainWindow_LocationChanged;
+    Closing += MainWindow_Closing;
+    Activated += MainWindow_Activated;
+    Deactivated += MainWindow_Deactivated;
+    SizeChanged += MainWindow_SizeChanged;
+  }
+
+  private static void CheckForUpdate() {
+    string autoUpdateInfo;
+
+    switch (RuntimeInformation.OSArchitecture) {
+      case Architecture.Arm64:
+        autoUpdateInfo = App.AutoUpdateInfoArm64;
+        break;
+      case Architecture.X64:
+        autoUpdateInfo = App.AutoUpdateInfox64;
+        break;
+      default:
+        autoUpdateInfo = App.AutoUpdateInfox64;
+        break;
+    }
+
+    try {
+      AutoUpdater.Start(autoUpdateInfo);
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed update check: {ex}");
+    }
+  }
+
+  private static void InstallExtension() {
+    App.InstallExtension();
   }
 
   protected override void OnSourceInitialized(EventArgs e) {
@@ -1039,33 +1040,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     await SectionPanel.ShowModuleReport();
   }
 
-  private class MainWindowState {
-    public MainWindowState(MainWindow window) {
-      CurrentResizeMode = window.ResizeMode;
-      CurrentWindowStyle = window.WindowStyle;
-      CurrentWindowState = window.WindowState;
-      IsTopmost = window.Topmost;
-      CurrentMenuVisibility = window.MainMenu.Visibility;
-      CurrentMenuHeight = window.MainGrid.RowDefinitions[0].Height;
-    }
-
-    public ResizeMode CurrentResizeMode { get; set; }
-    public WindowStyle CurrentWindowStyle { get; set; }
-    public WindowState CurrentWindowState { get; set; }
-    public bool IsTopmost { get; set; }
-    public Visibility CurrentMenuVisibility { get; set; }
-    public GridLength CurrentMenuHeight { get; set; }
-
-    public void Restore(MainWindow window) {
-      window.ResizeMode = CurrentResizeMode;
-      window.WindowStyle = CurrentWindowStyle;
-      window.WindowState = CurrentWindowState;
-      window.Topmost = IsTopmost;
-      window.MainMenu.Visibility = CurrentMenuVisibility;
-      window.MainGrid.RowDefinitions[0].Height = CurrentMenuHeight;
-    }
-  }
-
   private void ShowWorkspacesMenu_Click(object sender, RoutedEventArgs e) {
     ShowWorkspacesWindow();
   }
@@ -1077,8 +1051,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
-
-  public event PropertyChangedEventHandler PropertyChanged;
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -1112,5 +1084,32 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private void CheckUpdatesMenu_Click(object sender, RoutedEventArgs e) {
     CheckForUpdate();
+  }
+
+  private class MainWindowState {
+    public MainWindowState(MainWindow window) {
+      CurrentResizeMode = window.ResizeMode;
+      CurrentWindowStyle = window.WindowStyle;
+      CurrentWindowState = window.WindowState;
+      IsTopmost = window.Topmost;
+      CurrentMenuVisibility = window.MainMenu.Visibility;
+      CurrentMenuHeight = window.MainGrid.RowDefinitions[0].Height;
+    }
+
+    public ResizeMode CurrentResizeMode { get; set; }
+    public WindowStyle CurrentWindowStyle { get; set; }
+    public WindowState CurrentWindowState { get; set; }
+    public bool IsTopmost { get; set; }
+    public Visibility CurrentMenuVisibility { get; set; }
+    public GridLength CurrentMenuHeight { get; set; }
+
+    public void Restore(MainWindow window) {
+      window.ResizeMode = CurrentResizeMode;
+      window.WindowStyle = CurrentWindowStyle;
+      window.WindowState = CurrentWindowState;
+      window.Topmost = IsTopmost;
+      window.MainMenu.Visibility = CurrentMenuVisibility;
+      window.MainGrid.RowDefinitions[0].Height = CurrentMenuHeight;
+    }
   }
 }

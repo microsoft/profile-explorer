@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using ProtoBuf;
 
@@ -15,13 +16,13 @@ public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultPublicSymbolServer = @"https://msdl.microsoft.com/download/symbols";
   private const string DefaultSymbolCachePath = @"C:\Symbols";
   private const string DefaultEnvironmentVarSymbolPath = @"_NT_SYMBOL_PATH";
-  public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "ProfileExplorer", "symcache");
   public const double DefaultLowSampleModuleCutoff = 0.002; // 0.2%
 
   public SymbolFileSourceSettings() {
     Reset();
   }
 
+  public static string DefaultCacheDirectoryPath => Path.Combine(Path.GetTempPath(), "ProfileExplorer", "symcache");
   [ProtoMember(1)][OptionValue()]
   public List<string> SymbolPaths { get; set; }
   [ProtoMember(2)][OptionValue(true)]
@@ -50,7 +51,6 @@ public class SymbolFileSourceSettings : SettingsBase {
   public string CustomSymbolCacheDirectory { get; set; }
   [ProtoMember(14)][OptionValue(0.002)] // 0.2%
   public double LowSampleModuleCutoff { get; set; }
-
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public string SymbolCacheDirectoryPath => !string.IsNullOrEmpty(CustomSymbolCacheDirectory) ?
     CustomSymbolCacheDirectory :
@@ -219,7 +219,7 @@ public class SymbolFileSourceSettings : SettingsBase {
     //? TODO: Domains/emails should not be hardcoded
 
     try {
-      string domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
+      string domain = IPGlobalProperties.GetIPGlobalProperties().DomainName;
 
       if (domain != null &&
           domain.Contains("redmond", StringComparison.OrdinalIgnoreCase) ||
@@ -289,6 +289,15 @@ public class SymbolFileSourceSettings : SettingsBase {
   }
 
   private class NetAPI32 {
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern void NetFreeAadJoinInformation(
+      IntPtr pJoinInfo);
+
+    [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern int NetGetAadJoinInformation(
+      string pcszTenantId,
+      out IntPtr ppJoinInfo);
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct DSREG_JOIN_INFO {
       public int joinType;
@@ -304,14 +313,5 @@ public class SymbolFileSourceSettings : SettingsBase {
       [MarshalAs(UnmanagedType.LPWStr)] public string UserSettingSyncUrl;
       public IntPtr pUserInfo;
     }
-
-    [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern void NetFreeAadJoinInformation(
-      IntPtr pJoinInfo);
-
-    [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern int NetGetAadJoinInformation(
-      string pcszTenantId,
-      out IntPtr ppJoinInfo);
   }
 }

@@ -6,15 +6,12 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class DocumentOptionsPanel : OptionsPanelBase {
-  public override double DefaultHeight => 470;
-
   private const string DocumentStylesFilePath = @"documentStyles.xml";
   private bool syntaxEditPanelVisible_;
   private List<ColorPickerInfo> syntaxHighlightingColors_;
@@ -27,6 +24,7 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
     InitializeComponent();
   }
 
+  public override double DefaultHeight => 470;
   public bool SyntaxFileChanged { get; set; }
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {

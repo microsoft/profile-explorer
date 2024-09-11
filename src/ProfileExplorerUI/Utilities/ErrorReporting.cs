@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -13,7 +12,8 @@ public static class ErrorReporting {
     var time = DateTime.Now;
     string fileName = $"ProfileExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.trace";
 
-    string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ProfileExplorer");
+    string folderPath =
+      Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ProfileExplorer");
     string path = Path.Combine(folderPath, fileName);
     Directory.CreateDirectory(folderPath);
     File.WriteAllText(path, stackTrace);
@@ -78,7 +78,7 @@ public static class ErrorReporting {
       }
 
       // Report exception to telemetry service.
-      var trace = $"Message: {exception.Message}\nStack trace:\n{stackTrace}";
+      string trace = $"Message: {exception.Message}\nStack trace:\n{stackTrace}";
       string stackTracePath = CreateStackTraceDump(trace);
       string sectionPath = CreateSectionDump();
 

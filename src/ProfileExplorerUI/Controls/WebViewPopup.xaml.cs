@@ -19,7 +19,6 @@ public partial class WebViewPopup : DraggablePopup, INotifyPropertyChanged {
     DataContext = this;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public string PanelTitle {
@@ -31,6 +30,8 @@ public partial class WebViewPopup : DraggablePopup, INotifyPropertyChanged {
       }
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public async Task NavigateToURL(string url) {
     Browser.Source = new Uri(url);

@@ -11,16 +11,6 @@ public class ValueNumberQuery : IElementQuery {
   private static readonly string ValueNumberPrefix = "vn ";
   public ISession Session { get; private set; }
 
-  public static QueryDefinition GetDefinition() {
-    var query = new QueryDefinition(typeof(ValueNumberQuery), "Value Numbers",
-                                    "Details about values with SSA info");
-    query.Data.AddInput("Operand", QueryValueKind.Element);
-    query.Data.AddInput("Consider only dominated values", QueryValueKind.Bool);
-    query.Data.AddInput("Marking color", QueryValueKind.Color);
-    query.Data.AddOutput("Value number", QueryValueKind.String);
-    return query;
-  }
-
   public bool Initialize(ISession session) {
     Session = session;
     return true;
@@ -64,5 +54,15 @@ public class ValueNumberQuery : IElementQuery {
     }
 
     return true;
+  }
+
+  public static QueryDefinition GetDefinition() {
+    var query = new QueryDefinition(typeof(ValueNumberQuery), "Value Numbers",
+                                    "Details about values with SSA info");
+    query.Data.AddInput("Operand", QueryValueKind.Element);
+    query.Data.AddInput("Consider only dominated values", QueryValueKind.Bool);
+    query.Data.AddInput("Marking color", QueryValueKind.Color);
+    query.Data.AddOutput("Value number", QueryValueKind.String);
+    return query;
   }
 }

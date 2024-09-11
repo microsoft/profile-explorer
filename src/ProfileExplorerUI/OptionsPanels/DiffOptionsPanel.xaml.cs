@@ -1,10 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Windows;
-using System.Windows.Input;
-using ProfileExplorer.UI.Diff;
 using Microsoft.Win32;
+using ProfileExplorer.UI.Diff;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

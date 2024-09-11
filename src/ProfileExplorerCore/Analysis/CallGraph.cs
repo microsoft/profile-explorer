@@ -200,6 +200,9 @@ public class CallGraphEventArgs : EventArgs {
 }
 
 public class CallGraph {
+  public delegate bool CallNodeCallback(CallGraphNode node, CallGraphNode parentNode,
+                                        CallGraph callGraph, List<IRTextFunction> targetFuncts);
+
   private List<CallGraphNode> nodes_;
   private List<CallGraphNode> entryNodes_;
   private Dictionary<IRTextFunction, CallGraphNode> funcToNodeMap_;
@@ -221,12 +224,9 @@ public class CallGraph {
     entryNodes_ = new List<CallGraphNode>();
   }
 
-  public delegate bool CallNodeCallback(CallGraphNode node, CallGraphNode parentNode,
-                                        CallGraph callGraph, List<IRTextFunction> targetFuncts);
-
-  public event EventHandler<CallGraphEventArgs> CallGraphNodeCreated;
   public List<CallGraphNode> EntryFunctionNodes => entryNodes_;
   public List<CallGraphNode> FunctionNodes => nodes_;
+  public event EventHandler<CallGraphEventArgs> CallGraphNodeCreated;
 
   public void Execute(IRTextSection section = null, CancelableTask cancelableTask = null) {
     //? TODO: Can be multithreaded, most time spent parsing the functs

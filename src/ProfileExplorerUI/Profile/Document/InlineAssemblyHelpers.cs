@@ -92,19 +92,6 @@ sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
 }
 
 sealed class RangeColorizer : DocumentColorizingTransformer {
-  private class CompareRanges : IComparer<(int StartOffset, int EndOffset)> {
-    public int Compare((int StartOffset, int EndOffset) x, (int StartOffset, int EndOffset) y) {
-      if (x.EndOffset < y.StartOffset) {
-        return -1;
-      }
-      else if (x.StartOffset > y.EndOffset) {
-        return 1;
-      }
-
-      return 0;
-    }
-  }
-
   private List<(int StartOffset, int EndOffset)> ranges_;
   private Brush textColor_;
   private Brush backColor_;
@@ -152,6 +139,19 @@ sealed class RangeColorizer : DocumentColorizingTransformer {
           element.TextRunProperties.SetTypeface(typeface_);
         }
       });
+    }
+  }
+
+  private class CompareRanges : IComparer<(int StartOffset, int EndOffset)> {
+    public int Compare((int StartOffset, int EndOffset) x, (int StartOffset, int EndOffset) y) {
+      if (x.EndOffset < y.StartOffset) {
+        return -1;
+      }
+      else if (x.StartOffset > y.EndOffset) {
+        return 1;
+      }
+
+      return 0;
     }
   }
 }

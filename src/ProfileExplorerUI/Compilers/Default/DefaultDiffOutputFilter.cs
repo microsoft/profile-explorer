@@ -10,24 +10,12 @@ namespace ProfileExplorer.UI.Compilers.Default;
 public sealed class DefaultDiffOutputFilter : IDiffOutputFilter {
   private DiffSettings settings_;
   private ICompilerIRInfo compilerInfo_;
-  public char[] IgnoredDiffLetters => new[] {
-    '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t'
-  };
   private char[] ExpansionStopLetters => new[] {
     '(', ')', '<', '>', ',', '.', ';', ':', '|', '[', ']', '{', '}', '!', ' ', '\t'
   };
-
-  private static bool IsSSANumberEnd(int rightStopIndex, string lineText) {
-    return lineText[rightStopIndex] == '>' ||
-           lineText[rightStopIndex] == 'l' ||
-           lineText[rightStopIndex] == 'r';
-  }
-
-  private static bool IsSSANumberStart(int leftStopIndex, string lineText) {
-    return lineText[leftStopIndex] == '<' ||
-           lineText[leftStopIndex] == '*' ||
-           char.IsDigit(lineText[leftStopIndex]);
-  }
+  public char[] IgnoredDiffLetters => new[] {
+    '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t'
+  };
 
   public void Initialize(DiffSettings settings, ICompilerIRInfo compilerInfo) {
     settings_ = settings;
@@ -91,6 +79,18 @@ public sealed class DefaultDiffOutputFilter : IDiffOutputFilter {
     }
 
     return new AdjustedDiffPiece(documentOffset, change.Text.Length);
+  }
+
+  private static bool IsSSANumberEnd(int rightStopIndex, string lineText) {
+    return lineText[rightStopIndex] == '>' ||
+           lineText[rightStopIndex] == 'l' ||
+           lineText[rightStopIndex] == 'r';
+  }
+
+  private static bool IsSSANumberStart(int leftStopIndex, string lineText) {
+    return lineText[leftStopIndex] == '<' ||
+           lineText[leftStopIndex] == '*' ||
+           char.IsDigit(lineText[leftStopIndex]);
   }
 
   private bool IsTemporaryVariable(string text, out int tempNumber) {

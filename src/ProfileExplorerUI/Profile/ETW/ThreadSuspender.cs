@@ -21,13 +21,13 @@ class WindowsThreadSuspender : CriticalFinalizerObject, IDisposable {
     _suspendedThreads = SuspendThreads();
   }
 
-  ~WindowsThreadSuspender() {
-    Dispose(false);
-  }
-
   public void Dispose() {
     Dispose(true);
     GC.SuppressFinalize(this);
+  }
+
+  ~WindowsThreadSuspender() {
+    Dispose(false);
   }
 
   private int[] SuspendThreads() {
@@ -111,6 +111,13 @@ class WindowsThreadSuspender : CriticalFinalizerObject, IDisposable {
   }
 
   public static class Interop {
+    public enum ThreadAccess {
+      SUSPEND_RESUME = 0x0002,
+      THREAD_ALL_ACCESS = 0x1F03FF
+    }
+
+    private const string Kernel32LibraryName = "kernel32.dll";
+
     [DllImport(Kernel32LibraryName)]
     private static extern bool GetThreadContext(IntPtr hThread, IntPtr lpContext);
 
@@ -125,18 +132,7 @@ class WindowsThreadSuspender : CriticalFinalizerObject, IDisposable {
     [DllImport(Kernel32LibraryName, SetLastError = true)]
     internal static extern int ResumeThread(IntPtr hThread);
 
-    private const string Kernel32LibraryName = "kernel32.dll";
-
-    public enum ThreadAccess {
-      SUSPEND_RESUME = 0x0002,
-      THREAD_ALL_ACCESS = 0x1F03FF
-    }
-
     public sealed class SafeWin32Handle : SafeHandleZeroOrMinusOneIsInvalid {
-      [DllImport("kernel32.dll", SetLastError = true, PreserveSig = true)]
-      [return: MarshalAs(UnmanagedType.Bool)]
-      public static extern bool CloseHandle(IntPtr handle);
-
       public SafeWin32Handle() : base(true) {
       }
 
@@ -148,6 +144,10 @@ class WindowsThreadSuspender : CriticalFinalizerObject, IDisposable {
         : base(ownsHandle) {
         SetHandle(handle);
       }
+
+      [DllImport("kernel32.dll", SetLastError = true, PreserveSig = true)]
+      [return: MarshalAs(UnmanagedType.Bool)]
+      public static extern bool CloseHandle(IntPtr handle);
 
       protected override bool ReleaseHandle() {
         return CloseHandle(handle);

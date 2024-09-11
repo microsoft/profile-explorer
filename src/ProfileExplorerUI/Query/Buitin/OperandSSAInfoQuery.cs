@@ -9,15 +9,6 @@ public class OperandSSAInfoQuery : IElementQuery {
   private ISession session_;
   public ISession Session => session_;
 
-  public static QueryDefinition GetDefinition() {
-    var query = new QueryDefinition(typeof(OperandSSAInfoQuery),
-                                    "Operand SSA details",
-                                    "Details about values with SSA info");
-    query.Data.AddInput("Operand", QueryValueKind.Element);
-    query.Data.AddOutput("User Count", QueryValueKind.Number);
-    return query;
-  }
-
   public bool Initialize(ISession session) {
     session_ = session;
     return true;
@@ -66,5 +57,14 @@ public class OperandSSAInfoQuery : IElementQuery {
     }
 
     return true;
+  }
+
+  public static QueryDefinition GetDefinition() {
+    var query = new QueryDefinition(typeof(OperandSSAInfoQuery),
+                                    "Operand SSA details",
+                                    "Details about values with SSA info");
+    query.Data.AddInput("Operand", QueryValueKind.Element);
+    query.Data.AddOutput("User Count", QueryValueKind.Number);
+    return query;
   }
 }
