@@ -22,7 +22,6 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private List<ElementRowValue> profileDataRows_;
   private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
   private double columnsListItemHeight_;
-  private Brush selectedLineBrush_;
   private ListCollectionView profileRowCollection_;
   private List<(int StartOffset, int EndOffset)> foldedTextRegions_;
   private int rowFilterIndex_;

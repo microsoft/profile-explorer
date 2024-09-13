@@ -148,7 +148,6 @@
               <Image
                 Width="16"
                 Height="16"
-                Margin="0,1,0,0"
                 Source="{StaticResource SourceIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
               <TextBlock
@@ -179,6 +178,7 @@
           <ToggleButton
             Click="ToggleButton_Click"
             Content="m!F"
+            Padding="0,0,0,1"
             IsChecked="{Binding Path=Settings.PrependModuleToFunction, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
           <ToggleButton

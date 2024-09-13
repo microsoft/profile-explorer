@@ -108,7 +108,6 @@ public static class ProfilingUtils {
     var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     var timelineSettings = App.Settings.TimelineSettings;
-    int order = 0;
     double maxWidth = 0;
 
     var node = session.ProfileData.CallTree.GetCombinedCallTreeNode(section.ParentFunction);

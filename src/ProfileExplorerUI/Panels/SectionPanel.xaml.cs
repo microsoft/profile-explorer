@@ -718,7 +718,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                                                       name => name switch {
                                                         "NumberColumnHeader" => SectionFieldKind.Number,
                                                         "NameColumnHeader"   => SectionFieldKind.Name,
-                                                        "BlocksColumnHeader" => SectionFieldKind.Blocks
+                                                        "BlocksColumnHeader" => SectionFieldKind.Blocks,
+                                                        _                    => throw new ArgumentOutOfRangeException()
                                                       },
                                                       (x, y, field, direction, tag) => {
                                                         var sectionX = x as IRTextSectionEx;
@@ -749,7 +750,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     moduleValueSorter_ =
       new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
                                                      name => name switch {
-                                                       "ModuleColumnHeader" => ModuleFieldKind.Name
+                                                       "ModuleColumnHeader" => ModuleFieldKind.Name,
+                                                       _                    => throw new ArgumentOutOfRangeException()
                                                      },
                                                      (x, y, field, direction, tag) => {
                                                        var moduleX = x as ModuleEx;

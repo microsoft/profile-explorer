@@ -12,11 +12,6 @@ using ProtoBuf;
 
 namespace ProfileExplorer.UI.Profile;
 
-//? TODO Perf improvements ideas
-//? - Per-process stacks and samples, reduces dict pressure
-//?     - also removes need to have ProcessId in sample
-//? - Check .NET 8 frozen collections
-
 [ProtoContract(SkipConstructor = true)]
 public class RawProfileData : IDisposable {
   private static ProfileContext tempContext_ = new();
@@ -210,7 +205,6 @@ public class RawProfileData : IDisposable {
 
     foreach (var image in proc.Images(this)) {
       //? TODO: Avoid linear search
-
       if (image.ModuleName.Equals(moduleName, StringComparison.OrdinalIgnoreCase)) {
         if (!data.imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
           // A placeholder is created for cases where the method load event
@@ -222,7 +216,6 @@ public class RawProfileData : IDisposable {
             debugInfo.UpdateArchitecture(architecture);
 
             foreach (var pair in data.patchedMappings_) {
-              //? TODO: List shouldn't grow too much
               if (pair.ModuleId == moduleId) {
                 pair.Mapping.Image = image;
               }
@@ -394,9 +387,6 @@ public class RawProfileData : IDisposable {
       lastProcId_ = context.ProcessId;
       lastProcStacks_ = procStacks;
     }
-
-    //? TODO:  Stack hash computed 3 times,
-    //? do it once and inject it into the ProfileCallStack and StackComparer used by set
 
     if (!procStacks.TryGetValue(stack, out int existingStackId)) {
       // De-duplicate the stack frame pointer array,

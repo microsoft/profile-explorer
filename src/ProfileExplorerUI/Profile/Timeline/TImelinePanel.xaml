@@ -20,12 +20,6 @@
       Command="ProfileExplorerUi:GraphCommand.GraphZoomOut"
       Executed="ExecuteGraphZoomOut" />
     <CommandBinding
-      Command="local:CallTreeCommand.PreviousSearchResult"
-      Executed="PreviousSearchResultExecuted" />
-    <CommandBinding
-      Command="local:CallTreeCommand.NextSearchResult"
-      Executed="NextSearchResultExecuted" />
-    <CommandBinding
       Command="local:CallTreeCommand.RemoveFilters"
       Executed="RemoveFiltersExecuted" />
     <CommandBinding
@@ -293,7 +287,6 @@
               VerticalContentAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-              TextChanged="FunctionFilter_OnTextChanged"
               ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
               <TextBox.InputBindings>
                 <KeyBinding

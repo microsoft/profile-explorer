@@ -554,7 +554,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private async void Window_Loaded(object sender, RoutedEventArgs e) {
     await SetupCompilerTarget();
-
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
     SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
@@ -572,13 +571,30 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       await ShowPanel(ToolPanelKind.Help);
     }
 
+    await ProcessStartupArgs();
+
+    if (!IsSessionStarted) {
+      Utils.DisableControl(DockManager, 0.75);
+    }
+    else {
+      // Hide the start page if a file was loaded on start.
+      HideStartPage();
+    }
+
+    if (App.Settings.GeneralSettings.CheckForUpdates) {
+      StartApplicationUpdateTimer();
+    }
+  }
+
+  private async Task ProcessStartupArgs() {
     //? TODO: This needs a proper arg parsing lib
     string[] args = Environment.GetCommandLineArgs();
 
     if (args.Length > 1 && args[1] == "--open-trace") {
-      // Opening Profile Explorer with a trace is handled once main window is rendered. maybe move all arg parsing and options to there?
+      // TODO: Opening Profile Explorer with a trace is handled once the ProfileLoadWindow is rendered.
     }
     else if (args.Length >= 3) {
+      // Mode for comparing the functions from two different files.
       string baseFilePath = args[1];
       string diffFilePath = args[2];
       bool opened = false;
@@ -623,7 +639,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
           Close();
         }
         else if (args[3].EndsWith("func")) {
-          // Open a certain function and section.
+          // Open a certain function and section from a file.
           string funcName = args[4];
           var func = sessionState_.MainDocument.Summary.FindFunction(funcName);
 
@@ -646,6 +662,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       }
     }
     else if (args.Length == 2) {
+      // Mode for opening a single file.
       string filePath = args[1];
 
       if (File.Exists(filePath)) {
@@ -654,23 +671,12 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       }
     }
 
+    // Mode for starting the GRPC server used by the VS extension.
     foreach (string arg in args) {
       if (arg.Contains("grpc-server")) {
         StartGrpcServer();
         break;
       }
-    }
-
-    if (!IsSessionStarted) {
-      Utils.DisableControl(DockManager, 0.75);
-    }
-    else {
-      // Hide the start page if a file was loaded on start.
-      HideStartPage();
-    }
-
-    if (App.Settings.GeneralSettings.CheckForUpdates) {
-      StartApplicationUpdateTimer();
     }
   }
 
@@ -870,18 +876,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     }
 
     return text.Trim();
-  }
-
-  private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {
-    await EndSession();
-  }
-
-  private void CreateDumpMenu_Click(object sender, RoutedEventArgs e) {
-    TextInputWindow input = new("Save marked functions/modules", "Saved marking set name:", "Save", "Cancel");
-
-    if (input.Show(out string result, true)) {
-      Trace.WriteLine($"Result  ={result}");
-    }
   }
 
   private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section,

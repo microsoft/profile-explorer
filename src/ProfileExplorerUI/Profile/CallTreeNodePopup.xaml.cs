@@ -23,7 +23,6 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private bool showResizeGrip_;
   private bool canExpand_;
   private bool showBacktraceView_;
-  private string backtraceText_;
   private ProfileCallTreeNodeEx nodeEx_;
   private string title_;
   private string titleTooltipText_;

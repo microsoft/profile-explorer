@@ -811,8 +811,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private DebugFileSearchResult GetDebugInfoFile(BinaryFileSearchResult binaryFile,
                                                  ProfileImage image, RawProfileData rawProfile, int processId,
                                                  SymbolFileSourceSettings symbolSettings) {
-    DebugFileSearchResult result = null;
-
     if (binaryFile is {Found: true}) {
       return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
     }

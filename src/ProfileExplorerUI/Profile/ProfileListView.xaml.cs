@@ -21,8 +21,6 @@ public class ProfileListViewItem : SearchableProfileItem {
   private object associatedObject_;
   private Brush functionBackColor_;
   private Brush moduleBackColor_;
-  private ProfileCallTreeNode callTreeNode;
-  private ModuleProfileInfo moduleInfo;
 
   private ProfileListViewItem(FunctionNameFormatter funcNameFormatter,
                               CallTreeNodeSettings settings) :
