@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -15,11 +14,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Dia2Lib;
+using Microsoft.Diagnostics.Symbols;
+using Microsoft.Diagnostics.Symbols.Authentication;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
-using Microsoft.Diagnostics.Symbols;
-using Microsoft.Diagnostics.Symbols.Authentication;
 using StringWriter = System.IO.StringWriter;
 
 namespace ProfileExplorer.UI.Compilers;
@@ -33,13 +32,12 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   //? Invalidate unavailable ones if SymbolOption paths change so they get a chance
   //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
-  private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
-  private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
-  private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
   private static readonly StringWriter authLogWriter_;
   private static readonly SymwebHandler authSymwebHandler_;
   private static object undecorateLock_ = new(); // Global lock for undname.
-
+  private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
+  private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
+  private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
   private object cacheLock_ = new();
   private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
@@ -57,16 +55,212 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private bool loadFailed_;
   private bool disposed_;
 
+  static PDBDebugInfoProvider() {
+    // Create a single instance of the Symweb handler so that
+    // when concurrent requests are made and login must be done,
+    // the login page is displayed a single time, with other requests waiting for a token.
+    var authCredential = new DefaultAzureCredential(
+      new DefaultAzureCredentialOptions() {
+        ExcludeInteractiveBrowserCredential = false,
+        ExcludeManagedIdentityCredential = true
+      });
+
+    authLogWriter_ = new StringWriter();
+    authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
+  }
+
   public PDBDebugInfoProvider(SymbolFileSourceSettings settings) {
     settings_ = settings;
+  }
+
+  public SymbolFileSourceSettings SymbolSettings { get; set; }
+  public Machine? Architecture => null;
+
+  public bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null) {
+    if (debugFile == null || !debugFile.Found) {
+      return false;
+    }
+
+    symbolFile_ = debugFile.SymbolFile;
+    return LoadDebugInfo(debugFile.FilePath, other);
+  }
+
+  public void Unload() {
+    if (globalSymbol_ != null) {
+      Marshal.ReleaseComObject(globalSymbol_);
+      globalSymbol_ = null;
+    }
+
+    if (session_ != null) {
+      Marshal.ReleaseComObject(session_);
+      session_ = null;
+    }
+
+    if (diaSource_ != null) {
+      Marshal.ReleaseComObject(diaSource_);
+      diaSource_ = null;
+    }
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
+    return AnnotateSourceLocations(function, textFunc.Name);
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function, FunctionDebugInfo funcDebugInfo) {
+    var funcSymbol = FindFunctionSymbolByRVA(funcDebugInfo.RVA, true);
+
+    if (funcSymbol == null) {
+      return false;
+    }
+
+    return AnnotateSourceLocationsImpl(function, funcSymbol);
+  }
+
+  public SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
+    return FindFunctionSourceFilePath(textFunc.Name);
+  }
+
+  public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {
+    // Find the first line in the function.
+    if (sourceFileByRvaCache_.TryGetValue(rva, out var fileInfo)) {
+      return fileInfo;
+    }
+
+    var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
+    fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
+
+    sourceFileByRvaCache_.TryAdd(rva, fileInfo);
+    return fileInfo;
+  }
+
+  public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
+    if (sourceFileByNameCache_.TryGetValue(functionName, out var fileInfo)) {
+      return fileInfo;
+    }
+
+    var funcSymbol = FindFunctionSymbol(functionName);
+
+    if (funcSymbol == null) {
+      return SourceFileDebugInfo.Unknown;
+    }
+
+    // Find the first line in the function.
+    var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(funcSymbol.relativeVirtualAddress);
+    fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
+    sourceFileByNameCache_.TryAdd(functionName, fileInfo);
+    return fileInfo;
+  }
+
+  public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
+    return FindSourceLineByRVAImpl(rva, includeInlinees).Item1;
+  }
+
+  public FunctionDebugInfo FindFunctionByRVA(long rva) {
+    try {
+      if (sortedFuncList_ != null) {
+        // Query the function list first. If not found, then still query the actual PDB
+        // because DIA has special lookup for functions split into multiple chunks by PGO for ex.
+        var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
+
+        if (result != null) {
+          return result;
+        }
+      }
+
+      // Preload the function list only when there are enough queries
+      // to justify the time spent in reading the entire PDB.
+      if (sortedFuncList_ == null &&
+          Interlocked.Increment(ref funcCacheMisses_) >= FunctionCacheMissThreshold) {
+        GetSortedFunctions();
+
+        if (sortedFuncList_ != null) {
+          var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
+
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+
+      // Query the PDB file.
+      var symbol = FindFunctionSymbolByRVA(rva);
+
+      if (symbol != null) {
+        return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (uint)symbol.length);
+      }
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
+    }
+
+    return null;
+  }
+
+  public FunctionDebugInfo FindFunction(string functionName) {
+    var funcSym = FindFunctionSymbol(functionName);
+    return funcSym != null ? new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (uint)funcSym.length)
+      : null;
+  }
+
+  public IEnumerable<FunctionDebugInfo> EnumerateFunctions() {
+    return GetSortedFunctions();
+  }
+
+  public List<FunctionDebugInfo> GetSortedFunctions() {
+    if (sortedFuncList_ != null) {
+      return sortedFuncList_;
+    }
+
+    lock (cacheLock_) {
+      var result = Utils.RunSync(GetSortedFunctionsAsync);
+#if DEBUG
+      ValidateSortedList(result);
+#endif
+      return result;
+    }
+  }
+
+  public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
+    if (funcInfo.HasSourceLines) {
+      return true; // Already populated.
+    }
+
+    if (!EnsureLoaded()) {
+      return false;
+    }
+
+    try {
+      session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
+
+      while (true) {
+        lineEnum.Next(1, out var lineNumber, out uint retrieved);
+
+        if (retrieved == 0) {
+          break;
+        }
+
+        funcInfo.AddSourceLine(new SourceLineDebugInfo(
+                                 (int)lineNumber.addressOffset,
+                                 (int)lineNumber.lineNumber,
+                                 (int)lineNumber.columnNumber));
+      }
+
+      return true;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to populate source lines for {funcInfo.Name}: {ex.Message}");
+      return false;
+    }
   }
 
   ~PDBDebugInfoProvider() {
     Dispose(false);
   }
-
-  public SymbolFileSourceSettings SymbolSettings { get; set; }
-  public Machine? Architecture => null;
 
   public static async Task<DebugFileSearchResult>
     LocateDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
@@ -82,20 +276,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return await Task.Run(() => {
       return LocateDebugInfoFile(symbolFile, settings);
     }).ConfigureAwait(false);
-  }
-
-  static PDBDebugInfoProvider() {
-    // Create a single instance of the Symweb handler so that
-    // when concurrent requests are made and login must be done,
-    // the login page is displayed a single time, with other requests waiting for a token.
-    var authCredential = new DefaultAzureCredential(
-      new DefaultAzureCredentialOptions() {
-        ExcludeInteractiveBrowserCredential = false,
-        ExcludeManagedIdentityCredential = true,
-      });
-
-    authLogWriter_ = new StringWriter();
-    authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
   }
 
   public static SymbolReaderAuthenticationHandler CreateAuthHandler(SymbolFileSourceSettings settings) {
@@ -222,15 +402,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return DemangleFunctionName(function.Name, options);
   }
 
-  public bool LoadDebugInfo(DebugFileSearchResult debugFile, IDebugInfoProvider other = null) {
-    if (debugFile == null || !debugFile.Found) {
-      return false;
-    }
-
-    symbolFile_ = debugFile.SymbolFile;
-    return LoadDebugInfo(debugFile.FilePath, other);
-  }
-
   private bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
     if (loadFailed_) {
       return false; // Failed before, don't try again.
@@ -268,37 +439,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return true;
   }
 
-  public void Unload() {
-    if (globalSymbol_ != null) {
-      Marshal.ReleaseComObject(globalSymbol_);
-      globalSymbol_ = null;
-    }
-
-    if (session_ != null) {
-      Marshal.ReleaseComObject(session_);
-      session_ = null;
-    }
-
-    if (diaSource_ != null) {
-      Marshal.ReleaseComObject(diaSource_);
-      diaSource_ = null;
-    }
-  }
-
-  public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
-    return AnnotateSourceLocations(function, textFunc.Name);
-  }
-
-  public bool AnnotateSourceLocations(FunctionIR function, FunctionDebugInfo funcDebugInfo) {
-    var funcSymbol = FindFunctionSymbolByRVA(funcDebugInfo.RVA);
-
-    if (funcSymbol == null) {
-      return false;
-    }
-
-    return AnnotateSourceLocationsImpl(function, funcSymbol);
-  }
-
   public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
     var funcSymbol = FindFunctionSymbol(functionName);
 
@@ -324,110 +464,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return true;
-  }
-
-  public SourceFileDebugInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
-    return FindFunctionSourceFilePath(textFunc.Name);
-  }
-
-  public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) {
-    // Find the first line in the function.
-    if (sourceFileByRvaCache_.TryGetValue(rva, out var fileInfo)) {
-      return fileInfo;
-    }
-
-    var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
-    fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
-
-    sourceFileByRvaCache_.TryAdd(rva, fileInfo);
-    return fileInfo;
-  }
-
-  public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
-    if (sourceFileByNameCache_.TryGetValue(functionName, out var fileInfo)) {
-      return fileInfo;
-    }
-
-    var funcSymbol = FindFunctionSymbol(functionName);
-
-    if (funcSymbol == null) {
-      return SourceFileDebugInfo.Unknown;
-    }
-
-    // Find the first line in the function.
-    var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(funcSymbol.relativeVirtualAddress);
-    fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
-    sourceFileByNameCache_.TryAdd(functionName, fileInfo);
-    return fileInfo;
-  }
-
-  public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees) {
-    return FindSourceLineByRVAImpl(rva, includeInlinees).Item1;
-  }
-
-  public FunctionDebugInfo FindFunctionByRVA(long rva) {
-    try {
-      if (sortedFuncList_ != null) {
-        // Query the function list first. If not found, then still query the actual PDB
-        // because DIA has special lookup for functions split into multiple chunks by PGO for ex.
-        var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
-
-        if (result != null) {
-          return result;
-        }
-      }
-
-      // Preload the function list only when there are enough queries
-      // to justify the time spent in reading the entire PDB.
-      if (sortedFuncList_ == null &&
-          Interlocked.Increment(ref funcCacheMisses_) >= FunctionCacheMissThreshold) {
-        GetSortedFunctions();
-
-        if (sortedFuncList_ != null) {
-          var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
-
-          if (result != null) {
-            return result;
-          }
-        }
-      }
-
-      // Query the PDB file.
-      var symbol = FindFunctionSymbolByRVA(rva);
-
-      if (symbol != null) {
-        return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (uint)symbol.length);
-      }
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
-    }
-
-    return null;
-  }
-
-  public FunctionDebugInfo FindFunction(string functionName) {
-    var funcSym = FindFunctionSymbol(functionName);
-    return funcSym != null ? new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (uint)funcSym.length)
-      : null;
-  }
-
-  public IEnumerable<FunctionDebugInfo> EnumerateFunctions() {
-    return GetSortedFunctions();
-  }
-
-  public List<FunctionDebugInfo> GetSortedFunctions() {
-    if (sortedFuncList_ != null) {
-      return sortedFuncList_;
-    }
-
-    lock (cacheLock_) {
-      var result = Utils.RunSync(GetSortedFunctionsAsync);
-#if DEBUG
-      ValidateSortedList(result);
-#endif
-      return result;
-    }
   }
 
   private bool ValidateSortedList(List<FunctionDebugInfo> list) {
@@ -498,7 +534,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         continue;
       }
 
-      for (int k = i - 1; k >= 0 && (i - k) < 10; k--) {
+      for (int k = i - 1; k >= 0 && i - k < 10; k--) {
         if (sortedFuncList[k].StartRVA != 0 &&
             sortedFuncList[k].StartRVA <= sortedFuncList[i].StartRVA &&
             sortedFuncList[k].EndRVA > sortedFuncList[i].EndRVA) {
@@ -508,11 +544,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return false;
-  }
-
-  public void Dispose() {
-    Dispose(true);
-    GC.SuppressFinalize(this);
   }
 
   private void Dispose(bool disposing) {
@@ -654,7 +685,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
                                                  sourceFile.fileName);
 
         if (includeInlinees) {
-          var funcSymbol = FindFunctionSymbolByRVA(rva);
+          var funcSymbol = FindFunctionSymbolByRVA(rva, true);
 
           if (funcSymbol != null) {
             // Enumerate the functions that got inlined at this call site.
@@ -809,39 +840,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
   }
 
-  public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
-    if (funcInfo.HasSourceLines) {
-      return true; // Already populated.
-    }
-
-    if (!EnsureLoaded()) {
-      return false;
-    }
-
-    try {
-      session_.findLinesByRVA((uint)funcInfo.StartRVA, (uint)funcInfo.Size, out var lineEnum);
-
-      while (true) {
-        lineEnum.Next(1, out var lineNumber, out uint retrieved);
-
-        if (retrieved == 0) {
-          break;
-        }
-
-        funcInfo.AddSourceLine(new SourceLineDebugInfo(
-                                 (int)lineNumber.addressOffset,
-                                 (int)lineNumber.lineNumber,
-                                 (int)lineNumber.columnNumber));
-      }
-
-      return true;
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to populate source lines for {funcInfo.Name}: {ex.Message}");
-      return false;
-    }
-  }
-
   private List<FunctionDebugInfo> CollectFunctionDebugInfo() {
     if (!EnsureLoaded()) {
       return null;
@@ -851,14 +849,16 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     IDiaEnumSymbols publicSymbolEnum = null;
 
     try {
+      var symbolList = new List<FunctionDebugInfo>();
+      var symbolMap = new Dictionary<long, FunctionDebugInfo>();
       globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
       globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
-      var funcSymbolsSet = new HashSet<FunctionDebugInfo>(symbolEnum.count);
 
       foreach (IDiaSymbol sym in symbolEnum) {
         //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
         var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (uint)sym.length);
-        funcSymbolsSet.Add(funcInfo);
+        symbolList.Add(funcInfo);
+        symbolMap[funcInfo.RVA] = funcInfo;
       }
 
       foreach (IDiaSymbol sym in publicSymbolEnum) {
@@ -867,14 +867,19 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
         // Public symbols are preferred over function symbols if they have the same RVA and size.
         // This ensures that the mangled name is saved, set only of public symbols.
-        if (funcSymbolsSet.Contains(funcInfo)) {
-          funcSymbolsSet.Remove(funcInfo);
+        // This tries to mirror the behavior from FindFunctionSymbolByRVA.
+        if (symbolMap.TryGetValue(funcInfo.RVA, out var existingFuncInfo)) {
+          if (existingFuncInfo.Size == funcInfo.Size) {
+            existingFuncInfo.Name = funcInfo.Name;
+          }
         }
-
-        funcSymbolsSet.Add(funcInfo);
+        else {
+          // Consider the public sym if it doesn't overlap a function sym.
+          symbolList.Add(funcInfo);
+        }
       }
 
-      return funcSymbolsSet.ToList();
+      return symbolList;
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
@@ -904,21 +909,26 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return FindFunctionSymbolImpl(SymTagEnum.SymTagPublicSymbol, functionName, demangledName, queryDemangledName);
   }
 
-  private IDiaSymbol FindFunctionSymbolByRVA(long rva) {
+  private IDiaSymbol FindFunctionSymbolByRVA(long rva, bool preferFunctionSym = false) {
     if (!EnsureLoaded()) {
       return null;
     }
 
     try {
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+
+      if (preferFunctionSym && funcSym != null) {
+        return funcSym;
+      }
+
+      // Public symbols are preferred over function symbols if they have the same RVA and size.
+      // This ensures that the mangled name is saved, set only of public symbols.
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
 
       if (pubSym != null) {
-        // Public symbols are preferred over function symbols if they have the same RVA and size.
-        // This ensures that the mangled name is saved, set only of public symbols.
         if (funcSym == null ||
-            (funcSym.relativeVirtualAddress == pubSym.relativeVirtualAddress &&
-             funcSym.length == pubSym.length)) {
+            funcSym.relativeVirtualAddress == pubSym.relativeVirtualAddress &&
+            funcSym.length == pubSym.length) {
           return pubSym;
         }
       }

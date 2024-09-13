@@ -1,15 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Windows;
-using System.Windows.Input;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   private FlameGraphSettings settings_;
-  public override double DefaultHeight => 450;
-  public override double DefaultWidth => 400;
 
   public FlameGraphOptionsPanel() {
     InitializeComponent();
@@ -21,6 +17,9 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
     DetailsPanel.DataContext = App.Settings.CallTreeNodeSettings;
     FunctionListOptionsPanel.DataContext = App.Settings.CallTreeNodeSettings.FunctionListViewFilter;
   }
+
+  public override double DefaultHeight => 450;
+  public override double DefaultWidth => 400;
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);

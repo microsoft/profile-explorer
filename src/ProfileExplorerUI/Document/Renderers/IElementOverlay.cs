@@ -11,10 +11,6 @@ namespace ProfileExplorer.UI.Document;
 [ProtoContract]
 [ProtoInclude(100, typeof(ElementOverlayBase))]
 public interface IElementOverlay {
-  public event MouseEventHandler OnClick;
-  public event KeyEventHandler OnKeyPress;
-  public event MouseEventHandler OnHover;
-  public event MouseEventHandler OnHoverEnd;
   public IRElement Element { get; set; }
   public HorizontalAlignment AlignmentX { get; }
   public VerticalAlignment AlignmentY { get; }
@@ -28,6 +24,10 @@ public interface IElementOverlay {
   public bool ShowOnMarkerBar { get; set; }
   public bool SaveStateToFile { get; set; }
   object Tag { get; set; }
+  public event MouseEventHandler OnClick;
+  public event KeyEventHandler OnKeyPress;
+  public event MouseEventHandler OnHover;
+  public event MouseEventHandler OnHoverEnd;
 
   public void Draw(Rect elementRect, IRElement element, Typeface font,
                    IElementOverlay previousOverlay, double horizontalOffset, DrawingContext drawingContext);

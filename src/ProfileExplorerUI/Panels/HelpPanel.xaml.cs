@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -22,14 +23,14 @@ public class HelpTopic {
 }
 
 public class HelpIndex {
-  public List<HelpTopic> Topics { get; set; }
-  public Dictionary<ToolPanelKind, HelpTopic> PanelTopics { get; set; }
-  public HelpTopic HomeTopic { get; set; }
-
   public HelpIndex() {
     Topics = new List<HelpTopic>();
     PanelTopics = new Dictionary<ToolPanelKind, HelpTopic>();
   }
+
+  public List<HelpTopic> Topics { get; set; }
+  public Dictionary<ToolPanelKind, HelpTopic> PanelTopics { get; set; }
+  public HelpTopic HomeTopic { get; set; }
 
   public static HelpIndex DeserializeFromFile(string filePath) {
     if (JsonUtils.DeserializeFromFile(filePath, out HelpIndex index)) {
@@ -54,12 +55,16 @@ public partial class HelpPanel : ToolPanelControl {
   private SemaphoreSlim loadingTopic_;
   private bool browserInitialized_;
   private Window videoWindow_;
+  private Window previewWindow_;
+  private string previewUrl_;
 
   public HelpPanel() {
     loadingTopic_ = new SemaphoreSlim(1);
 
     InitializeComponent();
   }
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.Help;
 
   public override async void OnActivatePanel() {
     base.OnActivatePanel();
@@ -214,8 +219,6 @@ public partial class HelpPanel : ToolPanelControl {
     Browser.Source = new Uri(url);
   }
 
-  public override ToolPanelKind PanelKind => ToolPanelKind.Help;
-
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
@@ -237,7 +240,7 @@ public partial class HelpPanel : ToolPanelControl {
       return;
     }
 
-    TopicsTreePopup.Placement = System.Windows.Controls.Primitives.PlacementMode.Relative;
+    TopicsTreePopup.Placement = PlacementMode.Relative;
     TopicsTreePopup.PlacementTarget = TopicTextBox;
     TopicsTreePopup.VerticalOffset = TopicTextBox.ActualHeight;
     TopicsTreePopup.Height = TopicsTree.Height;
@@ -298,9 +301,6 @@ public partial class HelpPanel : ToolPanelControl {
       Trace.WriteLine($"Failed to start external browser: {ex.Message}");
     }
   }
-
-  private Window previewWindow_;
-  private string previewUrl_;
 
   private void ShowImagePreview(string url, int width, int height) {
     var window = new Window();

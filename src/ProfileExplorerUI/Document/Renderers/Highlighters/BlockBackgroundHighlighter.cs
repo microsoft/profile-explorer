@@ -27,24 +27,6 @@ public sealed class BlockBackgroundHighlighter : IBackgroundRenderer {
 
   public KnownLayer Layer => KnownLayer.Background;
 
-  public void Add(IRElement elem) {
-    segments_.Add(new IRSegment(elem));
-  }
-
-  public void Clear() {
-    segments_.Clear();
-  }
-
-  public object SaveState() {
-    return segments_.ToList();
-  }
-
-  public void LoadState(object stateObject) {
-    segments_ = new TextSegmentCollection<IRSegment>();
-    var list = stateObject as List<IRSegment>;
-    list.ForEach(item => Add(item.Element));
-  }
-
   public void Draw(TextView textView, DrawingContext drawingContext) {
     if (textView.Document == null) {
       return;
@@ -111,6 +93,24 @@ public sealed class BlockBackgroundHighlighter : IBackgroundRenderer {
                                 new Point(textView.ActualWidth, separatorLines[i].Bottom));
       }
     }
+  }
+
+  public void Add(IRElement elem) {
+    segments_.Add(new IRSegment(elem));
+  }
+
+  public void Clear() {
+    segments_.Clear();
+  }
+
+  public object SaveState() {
+    return segments_.ToList();
+  }
+
+  public void LoadState(object stateObject) {
+    segments_ = new TextSegmentCollection<IRSegment>();
+    var list = stateObject as List<IRSegment>;
+    list.ForEach(item => Add(item.Element));
   }
 
   private BackgroundGeometryBuilder CreateGeometryBuilder() {

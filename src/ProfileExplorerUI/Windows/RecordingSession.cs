@@ -40,44 +40,6 @@ public class RecordingSession : BindableObject {
     description_ = description;
   }
 
-  public static RecordingSession FromCommandLineArgs() {
-    string[] args = Environment.GetCommandLineArgs();
-
-    if (args.Length >= 5 && args[1] == "--open-trace") {
-      var report = new ProfileDataReport();
-      report.TraceInfo = new ProfileTraceInfo(args[2]);
-
-      if (!File.Exists(report.TraceInfo.TraceFilePath) ||
-          Path.GetExtension(report.TraceInfo.TraceFilePath) != ".etl") {
-        MessageBox.Show("Trace file does not exist.");
-        return null;
-      }
-
-      var processName = args[3];
-
-      if (!int.TryParse(args[4], out int processId)) {
-        MessageBox.Show("Process ID is not an integer.");
-        return null;
-      }
-
-      report.Process = new ProfileProcess(processId, processName);
-
-      if (args.Length >= 6) {
-        report.SymbolSettings = App.Settings.SymbolSettings.WithSymbolPaths(args[5]);
-      }
-
-      return new RecordingSession(report, true);
-    }
-
-    return null;
-  }
-
-  public static RecordingSession FromFile(string filePath) {
-    var report = new ProfileDataReport();
-    report.TraceInfo = new ProfileTraceInfo(filePath);
-    return new RecordingSession(report, true);
-  }
-
   public ProfileDataReport Report => report_;
 
   public bool IsNewSession {
@@ -177,6 +139,44 @@ public class RecordingSession : BindableObject {
 
   public string Time => IsNewSession ? ""
     : $"{report_.TraceInfo.ProfileStartTime.ToShortDateString()}, {ToRelativeDate(report_.TraceInfo.ProfileStartTime)}";
+
+  public static RecordingSession FromCommandLineArgs() {
+    string[] args = Environment.GetCommandLineArgs();
+
+    if (args.Length >= 5 && args[1] == "--open-trace") {
+      var report = new ProfileDataReport();
+      report.TraceInfo = new ProfileTraceInfo(args[2]);
+
+      if (!File.Exists(report.TraceInfo.TraceFilePath) ||
+          Path.GetExtension(report.TraceInfo.TraceFilePath) != ".etl") {
+        MessageBox.Show("Trace file does not exist.");
+        return null;
+      }
+
+      string processName = args[3];
+
+      if (!int.TryParse(args[4], out int processId)) {
+        MessageBox.Show("Process ID is not an integer.");
+        return null;
+      }
+
+      report.Process = new ProfileProcess(processId, processName);
+
+      if (args.Length >= 6) {
+        report.SymbolSettings = App.Settings.SymbolSettings.WithSymbolPaths(args[5]);
+      }
+
+      return new RecordingSession(report, true);
+    }
+
+    return null;
+  }
+
+  public static RecordingSession FromFile(string filePath) {
+    var report = new ProfileDataReport();
+    report.TraceInfo = new ProfileTraceInfo(filePath);
+    return new RecordingSession(report, true);
+  }
 
   public static string ToRelativeDate(DateTime input) {
     var x = DateTime.Now - input;

@@ -116,7 +116,8 @@
               Source="{StaticResource HotFlameIcon}"
               Style="{StaticResource DisabledImageStyle}" />
           </Button>
-          <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
           <ToggleButton
             Height="20"

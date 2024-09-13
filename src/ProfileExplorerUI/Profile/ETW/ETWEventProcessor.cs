@@ -7,13 +7,13 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using ProfileExplorer.Core;
-using ProfileExplorer.UI.Compilers;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
+using ProfileExplorer.Core;
+using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -59,6 +59,11 @@ public sealed partial class ETWEventProcessor : IDisposable {
     tracePath_ = tracePath;
     providerOptions_ = providerOptions;
     acceptedProcessId_ = acceptedProcessId;
+  }
+
+  public void Dispose() {
+    source_?.Dispose();
+    source_ = null;
   }
 
   public static bool IsKernelAddress(ulong ip, int pointerSize) {
@@ -115,8 +120,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     // Enable building of a thead ID -> process ID table
     // that is used for circular traces to get the event process ID
     // when it is not set in the trace (-1).
-    var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
-                                              ParserTrackingOptions.ThreadToProcess);
+    var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.ParserTrackingOptions.ThreadToProcess);
 
     if (!isRealTime_) {
       kernel.EventTraceHeader += data => {
@@ -124,7 +128,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
         // to be using a circular buffer which needs the thread -> process ID table,
         // stop reading the entire trace early.
         if (data.LogFileName != "[multiple files]") {
-          source_.StopProcessing();
+          kernel = ReopenTrace();
         }
       };
 
@@ -225,9 +229,27 @@ public sealed partial class ETWEventProcessor : IDisposable {
     // Enable building of a thead ID -> process ID table
     // that is used for circular traces to get the event process ID
     // when it is not set in the trace (-1).
-    var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.
-                                              ParserTrackingOptions.ThreadToProcess);
+    var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.ParserTrackingOptions.ThreadToProcess);
     UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
+
+    kernel.EventTraceHeader += data => {
+      profile.TraceInfo.CpuSpeed = data.CPUSpeed;
+      profile.TraceInfo.ProfileStartTime = data.StartTime;
+      profile.TraceInfo.ProfileEndTime = data.EndTime;
+
+      // If the trace has a known file name it's unlikely
+      // to be using a circular buffer which needs the thread -> process ID table,
+      // stop reading the entire trace early.
+      if (!isRealTime_ && data.LogFileName != "[multiple files]") {
+        kernel = ReopenTrace();
+      }
+    };
+
+    if (!isRealTime_) {
+      // Process the trace in case it's using circular buffers
+      // to build the thread -> process ID table.
+      source_.Process();
+    }
 
     // For ETL file, the image timestamp (needed to find a binary on a symbol server)
     // can show up in the ImageID event instead the usual Kernel.ImageGroup.
@@ -359,26 +381,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
         }
       }
     };
-
-    kernel.EventTraceHeader += data => {
-      profile.TraceInfo.CpuSpeed = data.CPUSpeed;
-      profile.TraceInfo.ProfileStartTime = data.StartTime;
-      profile.TraceInfo.ProfileEndTime = data.EndTime;
-
-      // If the trace has a known file name it's unlikely
-      // to be using a circular buffer which needs the thread -> process ID table,
-      // stop reading the entire trace early.
-      if (!isRealTime_ && data.LogFileName != "[multiple files]") {
-        source_.StopProcessing();
-      }
-    };
-
-    if (!isRealTime_) {
-      // Process the trace in case it's using circular buffers
-      // to build the thread -> process ID table.
-      source_.Process();
-    }
-
 
     kernel.SystemConfigCPU += data => {
       profile.TraceInfo.PointerSize = data.PointerSize;
@@ -666,7 +668,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
       int cpu = data.ProcessorNumber;
       double timestamp = data.TimeStampRelativeMSec;
 
-      ref var perThreadLastTime = ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastTimeMap, data.ThreadID, out bool exists);
+      ref double perThreadLastTime =
+        ref CollectionsMarshal.GetValueRefOrAddDefault(perThreadLastTimeMap, data.ThreadID, out bool exists);
       double weight = timestamp - perThreadLastTime;
 
       if (weight > samplingIntervalLimitMS_) {
@@ -795,9 +798,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
     return profile;
   }
 
-  public void Dispose() {
-    source_?.Dispose();
-    source_ = null;
+  private KernelTraceEventParser ReopenTrace() {
+    // Stop processing the current trace, close it
+    // and create a new one with kernel event provider.
+    source_.StopProcessing();
+    source_.Dispose();
+    source_ = new ETWTraceEventSource(tracePath_);
+    return new KernelTraceEventParser(source_, KernelTraceEventParser.ParserTrackingOptions.ThreadToProcess);
   }
 
   private void UpdateSamplingInterval(int value) {

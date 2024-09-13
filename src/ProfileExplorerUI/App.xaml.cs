@@ -50,7 +50,6 @@ public partial class App : Application {
   public const string AutoUpdateInfoArm64 = @"\\ntperformance\Public\benjaming\ProfileExplorer\arm64\autoupdater.xml";
   private const string SettingsPath = @"Microsoft\ProfileExplorer";
   private const string SettingsFile = "ProfileExplorer.settings";
-
   private const string HelpLocation = @"PLACEHOLDER";
   private const string HelpIndexFile = @"index.json";
   private const string LicenseFile = "NOTICE.md";
@@ -393,7 +392,8 @@ public partial class App : Application {
 
   public static void OpenDocumentation() {
     if (!Utils.OpenExternalFile(DocumentationLocation)) {
-      MessageBox.Show("Failed to open documentation page", "Profile Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+      MessageBox.Show("Failed to open documentation page", "Profile Explorer", MessageBoxButton.OK,
+                      MessageBoxImage.Error);
     }
   }
 

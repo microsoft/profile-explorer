@@ -8,9 +8,7 @@ using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Azure.Identity;
 using Microsoft.Diagnostics.Symbols;
-using Microsoft.Diagnostics.Symbols.Authentication;
 
 namespace ProfileExplorer.UI.Compilers;
 
@@ -104,6 +102,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     }
   }
 
+  public void Dispose() {
+    reader_?.Dispose();
+  }
+
   public static BinaryFileDescriptor GetBinaryFileInfo(string filePath) {
     using var binaryInfo = new PEBinaryInfoProvider(filePath);
 
@@ -163,10 +165,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
       string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(settings);
 
-
       //? TODO: Making a new instance clears the "dead servers",
       //? have a way to share the list between multiple instances.
-      using var symbolReader = new SymbolReader(logWriter, userSearchPath, PDBDebugInfoProvider.CreateAuthHandler(settings));
+      using var symbolReader =
+        new SymbolReader(logWriter, userSearchPath, PDBDebugInfoProvider.CreateAuthHandler(settings));
       symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
       //? TODO: Workaround for cases where the ETL file doesn't have a timestamp
@@ -291,10 +293,6 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     var data = reader_.GetSectionData(header.VirtualAddress);
     var array = data.GetContent();
     return array.AsMemory();
-  }
-
-  public void Dispose() {
-    reader_?.Dispose();
   }
 
   private bool IsARM64ECBinary() {

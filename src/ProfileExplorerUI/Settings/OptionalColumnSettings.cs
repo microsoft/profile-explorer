@@ -9,6 +9,10 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class OptionalColumnSettings : SettingsBase {
+  public OptionalColumnSettings() {
+    Reset();
+  }
+
   [ProtoMember(1)][OptionValue()]
   public Dictionary<string, OptionalColumnStyle> ColumnStyles { get; set; }
   [ProtoMember(2)][OptionValue()]
@@ -19,16 +23,6 @@ public class OptionalColumnSettings : SettingsBase {
   public bool ShowPerformanceCounterColumns { get; set; }
   [ProtoMember(5)][OptionValue(true)]
   public bool ShowPerformanceMetricColumns { get; set; }
-
-  public OptionalColumnSettings() {
-    Reset();
-  }
-
-  [ProtoAfterDeserialization]
-  private void InitializeReferenceMembers() {
-    InitializeReferenceOptions(this);
-  }
-
   public static OptionalColumnStyle DefaultTimePercentageColumnStyle =>
     new() {
       ShowPercentageBar = OptionalColumnStyle.PartVisibility.IfActiveColumn,
@@ -47,6 +41,11 @@ public class OptionalColumnSettings : SettingsBase {
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
+
+  [ProtoAfterDeserialization]
+  private void InitializeReferenceMembers() {
+    InitializeReferenceOptions(this);
+  }
 
   public static OptionalColumnStyle DefaultMetricsColumnStyle(int k) {
     return new OptionalColumnStyle() {
@@ -154,14 +153,14 @@ public class OptionalColumnSettings : SettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class OptionalColumnStyle : SettingsBase {
-  public OptionalColumnStyle() {
-    Reset();
-  }
-
   public enum PartVisibility {
     Always,
     IfActiveColumn,
     Never
+  }
+
+  public OptionalColumnStyle() {
+    Reset();
   }
 
   [ProtoMember(1)][OptionValue("")]

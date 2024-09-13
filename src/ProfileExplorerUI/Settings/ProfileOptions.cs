@@ -48,6 +48,10 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
   public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
   public bool HasTitle => !string.IsNullOrEmpty(Title);
 
+  public bool Equals(ProfileRecordingSessionOptions other) {
+    return AreOptionsEqual(this, other);
+  }
+
   public static bool operator ==(ProfileRecordingSessionOptions left, ProfileRecordingSessionOptions right) {
     return Equals(left, right);
   }
@@ -72,10 +76,6 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
   public ProfileRecordingSessionOptions Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<ProfileRecordingSessionOptions>(serialized);
-  }
-
-  public bool Equals(ProfileRecordingSessionOptions other) {
-    return AreOptionsEqual(this, other);
   }
 
   public override bool Equals(object obj) {

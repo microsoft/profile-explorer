@@ -55,6 +55,160 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
   public Typeface TextFont { get; set; }
   public KnownLayer Layer => KnownLayer.Background;
 
+  public void Draw(TextView textView, DrawingContext drawingContext) {
+    if (updateSuspended_) {
+      return;
+    }
+
+    textView_ = textView;
+    Width = textView.RenderSize.Width;
+    Height = textView.RenderSize.Height;
+    Children.Clear();
+
+    if (textView.Document == null || textView.Document.TextLength == 0) {
+      return;
+    }
+
+    var visual = new DrawingVisual();
+    var overlayDC = visual.RenderOpen();
+
+    // Query and draw visible segments from each group.
+    foreach (var group in highlighter_.Groups) {
+      DrawGroup(group, textView, overlayDC);
+    }
+
+    Tuple<IElementOverlay, IRElement, Rect> hoverSegment = null;
+    Tuple<IElementOverlay, IRElement, Rect> selectedSegment = null;
+    IElementOverlay hoverPrevOverlay = null;
+    IElementOverlay selectedPrevOverlay = null;
+
+    foreach (var segment in overlaySegments_.FindOverlappingSegments(textView_)) {
+      bool isBlockElement = segment.Element is BlockIR;
+      IElementOverlay prevOverlay = null;
+
+      foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
+        foreach (var overlay in segment.Overlays) {
+          // Draw hover/selected overlay last so that it shows up on top
+          // in case there is some overlap between overlays.
+          if (overlay == hoveredOverlay_) {
+            hoverSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
+            hoverPrevOverlay = prevOverlay;
+            prevOverlay = overlay;
+            continue;
+          }
+
+          if (overlay == selectedOverlay_) {
+            selectedSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
+            selectedPrevOverlay = prevOverlay;
+            prevOverlay = overlay;
+            continue;
+          }
+
+          overlay.Draw(rect, segment.Element, TextFont, prevOverlay,
+                       textView.HorizontalOffset, overlayDC);
+          prevOverlay = overlay;
+        }
+
+        // For blocks, consider only the first line, otherwise the overlay
+        // would be applied to each each tuple in the block.
+        if (isBlockElement) {
+          break;
+        }
+      }
+    }
+
+    if (selectedSegment != null) {
+      selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, TextFont,
+                                 selectedPrevOverlay, textView.HorizontalOffset, overlayDC);
+    }
+
+    if (hoverSegment != null) {
+      hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, TextFont,
+                              hoverPrevOverlay, textView.HorizontalOffset, overlayDC);
+    }
+
+    double dotSize = 3;
+    //var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
+    //var dotPen = ColorPens.GetTransparentPen(Colors.DarkRed, 255);
+    bool first = true;
+
+    //? TODO: Disabled, used from IRDocument
+    // Draw extra annotations for remarks in the same context.
+    foreach (var connectedElement in connectedElements_) {
+      var prevSegmentRect = GetRemarkSegmentRect(rootConnectedElement_.Element, textView);
+      var segmentRect = GetRemarkSegmentRect(connectedElement.Element, textView);
+
+      double horizontalOffset = 4;
+      double verticalOffset = prevSegmentRect.Height / 2;
+
+      var startPoint =
+        Utils.SnapPointToPixels(prevSegmentRect.Right + horizontalOffset, prevSegmentRect.Top + verticalOffset);
+      var endPoint = Utils.SnapPointToPixels(segmentRect.Right + horizontalOffset, segmentRect.Top + verticalOffset);
+
+      var edgeStartPoint = startPoint;
+      var edgeEndPoint = endPoint;
+
+      double dx = endPoint.X - startPoint.X;
+      double dy = endPoint.Y - startPoint.Y;
+      var vect = new Vector(dy, -dx);
+      var middlePoint = new Point(startPoint.X + dx / 2, startPoint.Y + dy / 2);
+
+      double factor = FindBezierControlPointFactor(startPoint, endPoint);
+      var controlPoint = middlePoint + -factor * vect;
+
+      // Keep the control point in the horizontal bounds of the document.
+      if (controlPoint.X < 0 || controlPoint.X > Width) {
+        controlPoint = new Point(Math.Clamp(controlPoint.X, 0, Width), controlPoint.Y);
+      }
+
+      //overlayDC.DrawLine(ColorPens.GetPen(Colors.Green, 2), startPoint, middlePoint);
+      //overlayDC.DrawLine(ColorPens.GetPen(Colors.Green, 2), middlePoint, endPoint);
+
+      var startOrientation = FindArrowOrientation(new[] {edgeEndPoint, edgeStartPoint, controlPoint}, out var _);
+      var orientation = FindArrowOrientation(new[] {edgeStartPoint, controlPoint, edgeEndPoint}, out var _);
+
+      edgeStartPoint = edgeStartPoint + startOrientation * (dotSize - 1);
+      edgeEndPoint = edgeEndPoint - orientation * dotSize * 2;
+
+      var edgeGeometry = new StreamGeometry();
+      var edgeSC = edgeGeometry.Open();
+      edgeSC.BeginFigure(edgeStartPoint, false, false);
+      edgeSC.BezierTo(edgeStartPoint, controlPoint, edgeEndPoint, true, false);
+      DrawEdgeArrow(new[] {edgeStartPoint, controlPoint, edgeEndPoint}, edgeSC);
+
+      //edgeSC.BeginFigure(edgeStartPoint, false, false);
+      //edgeSC.LineTo(edgeEndPoint, true, false);
+
+      //edgeSC.BeginFigure(startPoint, false, false);
+      //edgeSC.LineTo(endPoint, true, false);
+
+      // overlayDC.DrawLine(ColorPens.GetPen(Colors.Red, 2), startPoint, endPoint);
+      //overlayDC.DrawLine(ColorPens.GetPen(Colors.Red, 2), point, point2);
+
+      // overlayDC.DrawEllipse(connectedElement.Style.BackColor, connectedElement.Style.Border, endPoint, dotSize, dotSize);
+
+      if (first) {
+        overlayDC.DrawEllipse(rootConnectedElement_.Style.BackColor, rootConnectedElement_.Style.Border, startPoint,
+                              dotSize, dotSize);
+        first = false;
+      }
+
+      edgeSC.Close();
+      edgeGeometry.Freeze();
+      overlayDC.DrawGeometry(connectedElement.Style.BackColor, connectedElement.Style.Border, edgeGeometry);
+
+      //var text = DocumentUtils.CreateFormattedText(textView, i.ToString(), DefaultFont, 11, Brushes.Black);
+      //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
+    }
+
+    overlayDC.Close();
+    Add(visual);
+
+    if (hoverSegment != null) {
+      ShowTooltip(hoverSegment.Item1);
+    }
+  }
+
   public void AddElementOverlay(IRElement element, IElementOverlay overlay,
                                 bool prepend = false) {
     overlay.Element = element;
@@ -227,160 +381,6 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
     }
 
     Version++;
-  }
-
-  public void Draw(TextView textView, DrawingContext drawingContext) {
-    if (updateSuspended_) {
-      return;
-    }
-
-    textView_ = textView;
-    Width = textView.RenderSize.Width;
-    Height = textView.RenderSize.Height;
-    Children.Clear();
-
-    if (textView.Document == null || textView.Document.TextLength == 0) {
-      return;
-    }
-
-    var visual = new DrawingVisual();
-    var overlayDC = visual.RenderOpen();
-
-    // Query and draw visible segments from each group.
-    foreach (var group in highlighter_.Groups) {
-      DrawGroup(group, textView, overlayDC);
-    }
-
-    Tuple<IElementOverlay, IRElement, Rect> hoverSegment = null;
-    Tuple<IElementOverlay, IRElement, Rect> selectedSegment = null;
-    IElementOverlay hoverPrevOverlay = null;
-    IElementOverlay selectedPrevOverlay = null;
-
-    foreach (var segment in overlaySegments_.FindOverlappingSegments(textView_)) {
-      bool isBlockElement = segment.Element is BlockIR;
-      IElementOverlay prevOverlay = null;
-
-      foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-        foreach (var overlay in segment.Overlays) {
-          // Draw hover/selected overlay last so that it shows up on top
-          // in case there is some overlap between overlays.
-          if (overlay == hoveredOverlay_) {
-            hoverSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
-            hoverPrevOverlay = prevOverlay;
-            prevOverlay = overlay;
-            continue;
-          }
-
-          if (overlay == selectedOverlay_) {
-            selectedSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
-            selectedPrevOverlay = prevOverlay;
-            prevOverlay = overlay;
-            continue;
-          }
-
-          overlay.Draw(rect, segment.Element, TextFont, prevOverlay,
-                       textView.HorizontalOffset, overlayDC);
-          prevOverlay = overlay;
-        }
-
-        // For blocks, consider only the first line, otherwise the overlay
-        // would be applied to each each tuple in the block.
-        if (isBlockElement) {
-          break;
-        }
-      }
-    }
-
-    if (selectedSegment != null) {
-      selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, TextFont,
-                                 selectedPrevOverlay, textView.HorizontalOffset, overlayDC);
-    }
-
-    if (hoverSegment != null) {
-      hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, TextFont,
-                              hoverPrevOverlay, textView.HorizontalOffset, overlayDC);
-    }
-
-    double dotSize = 3;
-    //var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
-    //var dotPen = ColorPens.GetTransparentPen(Colors.DarkRed, 255);
-    bool first = true;
-
-    //? TODO: Disabled, used from IRDocument
-    // Draw extra annotations for remarks in the same context.
-    foreach (var connectedElement in connectedElements_) {
-      var prevSegmentRect = GetRemarkSegmentRect(rootConnectedElement_.Element, textView);
-      var segmentRect = GetRemarkSegmentRect(connectedElement.Element, textView);
-
-      double horizontalOffset = 4;
-      double verticalOffset = prevSegmentRect.Height / 2;
-
-      var startPoint =
-        Utils.SnapPointToPixels(prevSegmentRect.Right + horizontalOffset, prevSegmentRect.Top + verticalOffset);
-      var endPoint = Utils.SnapPointToPixels(segmentRect.Right + horizontalOffset, segmentRect.Top + verticalOffset);
-
-      var edgeStartPoint = startPoint;
-      var edgeEndPoint = endPoint;
-
-      double dx = endPoint.X - startPoint.X;
-      double dy = endPoint.Y - startPoint.Y;
-      var vect = new Vector(dy, -dx);
-      var middlePoint = new Point(startPoint.X + dx / 2, startPoint.Y + dy / 2);
-
-      double factor = FindBezierControlPointFactor(startPoint, endPoint);
-      var controlPoint = middlePoint + -factor * vect;
-
-      // Keep the control point in the horizontal bounds of the document.
-      if (controlPoint.X < 0 || controlPoint.X > Width) {
-        controlPoint = new Point(Math.Clamp(controlPoint.X, 0, Width), controlPoint.Y);
-      }
-
-      //overlayDC.DrawLine(ColorPens.GetPen(Colors.Green, 2), startPoint, middlePoint);
-      //overlayDC.DrawLine(ColorPens.GetPen(Colors.Green, 2), middlePoint, endPoint);
-
-      var startOrientation = FindArrowOrientation(new[] {edgeEndPoint, edgeStartPoint, controlPoint}, out var _);
-      var orientation = FindArrowOrientation(new[] {edgeStartPoint, controlPoint, edgeEndPoint}, out var _);
-
-      edgeStartPoint = edgeStartPoint + startOrientation * (dotSize - 1);
-      edgeEndPoint = edgeEndPoint - orientation * dotSize * 2;
-
-      var edgeGeometry = new StreamGeometry();
-      var edgeSC = edgeGeometry.Open();
-      edgeSC.BeginFigure(edgeStartPoint, false, false);
-      edgeSC.BezierTo(edgeStartPoint, controlPoint, edgeEndPoint, true, false);
-      DrawEdgeArrow(new[] {edgeStartPoint, controlPoint, edgeEndPoint}, edgeSC);
-
-      //edgeSC.BeginFigure(edgeStartPoint, false, false);
-      //edgeSC.LineTo(edgeEndPoint, true, false);
-
-      //edgeSC.BeginFigure(startPoint, false, false);
-      //edgeSC.LineTo(endPoint, true, false);
-
-      // overlayDC.DrawLine(ColorPens.GetPen(Colors.Red, 2), startPoint, endPoint);
-      //overlayDC.DrawLine(ColorPens.GetPen(Colors.Red, 2), point, point2);
-
-      // overlayDC.DrawEllipse(connectedElement.Style.BackColor, connectedElement.Style.Border, endPoint, dotSize, dotSize);
-
-      if (first) {
-        overlayDC.DrawEllipse(rootConnectedElement_.Style.BackColor, rootConnectedElement_.Style.Border, startPoint,
-                              dotSize, dotSize);
-        first = false;
-      }
-
-      edgeSC.Close();
-      edgeGeometry.Freeze();
-      overlayDC.DrawGeometry(connectedElement.Style.BackColor, connectedElement.Style.Border, edgeGeometry);
-
-      //var text = DocumentUtils.CreateFormattedText(textView, i.ToString(), DefaultFont, 11, Brushes.Black);
-      //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
-    }
-
-    overlayDC.Close();
-    Add(visual);
-
-    if (hoverSegment != null) {
-      ShowTooltip(hoverSegment.Item1);
-    }
   }
 
   public void SuspendUpdate() {

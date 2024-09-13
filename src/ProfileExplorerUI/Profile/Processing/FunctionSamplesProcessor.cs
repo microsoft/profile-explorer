@@ -12,17 +12,6 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   private List<ChunkData> chunks_;
   private ProfileCallTreeNode node_;
 
-  private class ChunkData {
-    public ChunkData() {
-      AllThreadsList = new List<SampleIndex>();
-      ThreadListMap = new Dictionary<int, List<SampleIndex>>();
-      ThreadListMap[AllThreadsKey] = AllThreadsList;
-    }
-
-    public List<SampleIndex> AllThreadsList;
-    public Dictionary<int, List<SampleIndex>> ThreadListMap;
-  }
-
   public FunctionSamplesProcessor(ProfileCallTreeNode node) {
     node_ = node;
     chunks_ = new List<ChunkData>();
@@ -143,6 +132,17 @@ public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
         }
 #endif
       }
+    }
+  }
+
+  private class ChunkData {
+    public List<SampleIndex> AllThreadsList;
+    public Dictionary<int, List<SampleIndex>> ThreadListMap;
+
+    public ChunkData() {
+      AllThreadsList = new List<SampleIndex>();
+      ThreadListMap = new Dictionary<int, List<SampleIndex>>();
+      ThreadListMap[AllThreadsKey] = AllThreadsList;
     }
   }
 }

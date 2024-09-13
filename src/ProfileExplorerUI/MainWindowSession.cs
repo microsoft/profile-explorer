@@ -57,49 +57,6 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
-                                      Func<FunctionIR, IRTextSection, CancelableTask, Graph> computeGraphAction) {
-    if (document.Function == null) {
-      return; // Function failed to load, ignore.
-    }
-
-    var loadTask = graphPanel.OnGenerateGraphStart(section);
-    var functionGraph = await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
-
-    if (functionGraph != null) {
-      graphPanel.DisplayGraph(functionGraph);
-      graphPanel.OnGenerateGraphDone(loadTask);
-    }
-    else {
-      //? TODO: Handle CFG failure in the UI
-      graphPanel.OnGenerateGraphDone(loadTask, true);
-      Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to load CFG");
-    }
-  }
-
-  public Task<string> GetRawSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
-    var docInfo = sessionState_.FindLoadedDocument(section);
-    return Task.Run(() => docInfo.Loader.GetSectionText(section));
-  }
-
-  public Task<string> GetSectionOutputTextAsync(IRTextSection section, bool useOutputBefore) {
-    var output = useOutputBefore ? section.OutputBefore : section.OutputAfter;
-    var docInfo = sessionState_.FindLoadedDocument(section);
-    return Task.Run(() => docInfo.Loader.GetSectionOutputText(output));
-  }
-
-  public IToolPanel FindAndActivatePanel(ToolPanelKind kind) {
-    var panelInfo = FindTargetPanel(null, kind);
-
-    if (panelInfo != null) {
-      panelInfo.Host.IsActive = true;
-      panelInfo.Host.IsSelected = true;
-      return panelInfo.Panel;
-    }
-
-    return null;
-  }
-
   public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) {
     return sessionState_.FindFunctionWithId(funcNumber, summaryId);
   }
@@ -472,6 +429,56 @@ public partial class MainWindow : Window, ISession {
         DocumentLoadProgressBar.Value = percentage;
       }
     }, DispatcherPriority.Render);
+  }
+
+  public void UpdateDocumentTitles() {
+    foreach (var docHostPair in sessionState_.DocumentHosts) {
+      docHostPair.Host.Title = GetDocumentTitle(docHostPair.DocumentHost, docHostPair.Section);
+      docHostPair.Host.ToolTip = GetDocumentDescription(docHostPair.DocumentHost, docHostPair.Section);
+    }
+  }
+
+  public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
+                                      Func<FunctionIR, IRTextSection, CancelableTask, Graph> computeGraphAction) {
+    if (document.Function == null) {
+      return; // Function failed to load, ignore.
+    }
+
+    var loadTask = graphPanel.OnGenerateGraphStart(section);
+    var functionGraph = await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
+
+    if (functionGraph != null) {
+      graphPanel.DisplayGraph(functionGraph);
+      graphPanel.OnGenerateGraphDone(loadTask);
+    }
+    else {
+      //? TODO: Handle CFG failure in the UI
+      graphPanel.OnGenerateGraphDone(loadTask, true);
+      Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to load CFG");
+    }
+  }
+
+  public Task<string> GetRawSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
+    var docInfo = sessionState_.FindLoadedDocument(section);
+    return Task.Run(() => docInfo.Loader.GetSectionText(section));
+  }
+
+  public Task<string> GetSectionOutputTextAsync(IRTextSection section, bool useOutputBefore) {
+    var output = useOutputBefore ? section.OutputBefore : section.OutputAfter;
+    var docInfo = sessionState_.FindLoadedDocument(section);
+    return Task.Run(() => docInfo.Loader.GetSectionOutputText(output));
+  }
+
+  public IToolPanel FindAndActivatePanel(ToolPanelKind kind) {
+    var panelInfo = FindTargetPanel(null, kind);
+
+    if (panelInfo != null) {
+      panelInfo.Host.IsActive = true;
+      panelInfo.Host.IsSelected = true;
+      return panelInfo.Panel;
+    }
+
+    return null;
   }
 
   public void ResetApplicationProgress() {
@@ -1275,13 +1282,6 @@ public partial class MainWindow : Window, ISession {
     var delayedAction = new DelayedAction();
     //delayedAction.Start(TimeSpan.FromMilliseconds(500), () => { document.Opacity = 0.5; });
     return delayedAction;
-  }
-
-  public void UpdateDocumentTitles() {
-    foreach (var docHostPair in sessionState_.DocumentHosts) {
-      docHostPair.Host.Title = GetDocumentTitle(docHostPair.DocumentHost, docHostPair.Section);
-      docHostPair.Host.ToolTip = GetDocumentDescription(docHostPair.DocumentHost, docHostPair.Section);
-    }
   }
 
   private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,

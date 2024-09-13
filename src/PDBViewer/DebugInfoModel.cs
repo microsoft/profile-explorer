@@ -20,10 +20,9 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public List<SourceLineDebugInfo> SourceLines { get; set; }
   public long RVA { get; set; }
   public uint Size { get; set; }
-  public bool HasSourceLines => SourceLines is { Count: > 0 };
+  public bool HasSourceLines => SourceLines is {Count: > 0};
   public SourceLineDebugInfo FirstSourceLine => HasSourceLines ? SourceLines[0] : SourceLineDebugInfo.Unknown;
   public SourceLineDebugInfo LastSourceLine => HasSourceLines ? SourceLines[^1] : SourceLineDebugInfo.Unknown;
-
   public string SourceFileName => HasSourceLines ? SourceLines[0].FilePath : null;
   public string OriginalSourceFileName { get; set; }
   public long StartRVA => RVA;
@@ -33,48 +32,6 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   public bool IsSelected { get; set; }
   public bool HasOverlap { get; set; }
   public bool HasSelectionOverlap { get; set; }
-
-  public static FunctionDebugInfo BinarySearch(List<FunctionDebugInfo> ranges, long value,
-                                               bool hasOverlappingFuncts = false) {
-    int low = 0;
-    int high = ranges.Count - 1;
-
-    while (low <= high) {
-      int mid = low + (high - low) / 2;
-      var range = ranges[mid];
-      int result = range.CompareTo(value);
-
-      if (result == 0) {
-        return range;
-      }
-
-      if (result < 0) {
-        low = mid + 1;
-      }
-      else {
-        high = mid - 1;
-      }
-    }
-
-    return null;
-  }
-
-  public void AddSourceLine(SourceLineDebugInfo sourceLine) {
-    SourceLines ??= new List<SourceLineDebugInfo>(1);
-    SourceLines.Add(sourceLine);
-  }
-
-  public override bool Equals(object obj) {
-    return obj is FunctionDebugInfo info && Equals(info);
-  }
-
-  public override int GetHashCode() {
-    return HashCode.Combine(RVA, Size);
-  }
-
-  public override string ToString() {
-    return $"{Name}, RVA: {RVA:X}, Size: {Size}";
-  }
 
   public int CompareTo(FunctionDebugInfo other) {
     // Used by sorting.
@@ -117,24 +74,72 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
     return RVA == other.RVA &&
            Size == other.Size;
   }
+
+  public static FunctionDebugInfo BinarySearch(List<FunctionDebugInfo> ranges, long value,
+                                               bool hasOverlappingFuncts = false) {
+    int low = 0;
+    int high = ranges.Count - 1;
+
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      var range = ranges[mid];
+      int result = range.CompareTo(value);
+
+      if (result == 0) {
+        return range;
+      }
+
+      if (result < 0) {
+        low = mid + 1;
+      }
+      else {
+        high = mid - 1;
+      }
+    }
+
+    return null;
+  }
+
+  public void AddSourceLine(SourceLineDebugInfo sourceLine) {
+    SourceLines ??= new List<SourceLineDebugInfo>(1);
+    SourceLines.Add(sourceLine);
+  }
+
+  public override bool Equals(object obj) {
+    return obj is FunctionDebugInfo info && Equals(info);
+  }
+
+  public override int GetHashCode() {
+    return HashCode.Combine(RVA, Size);
+  }
+
+  public override string ToString() {
+    return $"{Name}, RVA: {RVA:X}, Size: {Size}";
+  }
 }
 
-
 public class SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
-  public int RVA { get; set; }
-  public int Line { get; set; }
-  public int Column { get; set; }
-  public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
-  public List<SourceStackFrame> Inlinees { get; set; }
-  public int InlineeCount => Inlinees != null ? Inlinees.Count : 0;
   public static readonly SourceLineDebugInfo Unknown = new(-1, -1);
-  public bool IsUnknown => Line == -1;
 
   public SourceLineDebugInfo(int rva, int line, int column = 0, string filePath = null) {
     RVA = rva;
     Line = line;
     Column = column;
     FilePath = filePath != null ? string.Intern(filePath) : null;
+  }
+
+  public int RVA { get; set; }
+  public int Line { get; set; }
+  public int Column { get; set; }
+  public string FilePath { get; private set; } //? Move to FunctionDebugInfo, add OriginalFilePath for SourceLink
+  public List<SourceStackFrame> Inlinees { get; set; }
+  public int InlineeCount => Inlinees != null ? Inlinees.Count : 0;
+  public bool IsUnknown => Line == -1;
+
+  public bool Equals(SourceLineDebugInfo other) {
+    return RVA == other.RVA && Line == other.Line &&
+           Column == other.Column &&
+           FilePath.Equals(other.FilePath, StringComparison.Ordinal);
   }
 
   public void AddInlinee(SourceStackFrame inlinee) {
@@ -150,12 +155,6 @@ public class SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     return Inlinees?.Find(item => item.HasSameFunction(inlinee));
   }
 
-  public bool Equals(SourceLineDebugInfo other) {
-    return RVA == other.RVA && Line == other.Line &&
-           Column == other.Column &&
-           FilePath.Equals(other.FilePath, StringComparison.Ordinal);
-  }
-
   public override bool Equals(object obj) {
     return obj is SourceLineDebugInfo other && Equals(other);
   }
@@ -164,7 +163,6 @@ public class SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {
     return HashCode.Combine(FilePath, Line, Column);
   }
 }
-
 
 public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
   public SourceStackFrame(string function, string filePath, int line, int column) {
@@ -178,6 +176,16 @@ public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
   public string FilePath { get; set; }
   public int Line { get; set; }
   public int Column { get; set; }
+
+  public bool Equals(SourceStackFrame other) {
+    if (ReferenceEquals(null, other))
+      return false;
+    if (ReferenceEquals(this, other))
+      return true;
+    return Line == other.Line && Column == other.Column &&
+           Function.Equals(other.Function, StringComparison.OrdinalIgnoreCase) &&
+           FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
+  }
 
   public static bool operator ==(SourceStackFrame left, SourceStackFrame right) {
     return Equals(left, right);
@@ -195,31 +203,13 @@ public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
     return HashCode.Combine(Function, FilePath, Line, Column);
   }
 
-  public bool Equals(SourceStackFrame other) {
-    if (ReferenceEquals(null, other))
-      return false;
-    if (ReferenceEquals(this, other))
-      return true;
-    return Line == other.Line && Column == other.Column &&
-           Function.Equals(other.Function, StringComparison.OrdinalIgnoreCase) &&
-           FilePath.Equals(other.FilePath, StringComparison.OrdinalIgnoreCase);
-  }
-
   public bool HasSameFunction(SourceStackFrame inlinee) {
     return Function.Equals(inlinee.Function, StringComparison.OrdinalIgnoreCase) &&
            FilePath.Equals(inlinee.FilePath, StringComparison.OrdinalIgnoreCase);
   }
 }
 
-
 static class NativeMethods {
-  [DllImport("dbghelp.dll", SetLastError = true, PreserveSig = true)]
-  public static extern int UnDecorateSymbolName(
-    [In][MarshalAs(UnmanagedType.LPStr)] string DecoratedName,
-    [Out] StringBuilder UnDecoratedName,
-    [In][MarshalAs(UnmanagedType.U4)] int UndecoratedLength,
-    [In][MarshalAs(UnmanagedType.U4)] UnDecorateFlags Flags);
-
   // C++ function name demangling
   [Flags]
   public enum UnDecorateFlags {
@@ -239,8 +229,15 @@ static class NativeMethods {
     UNDNAME_NO_RETURN_UDT_MODEL = 0x0400, // Disable expansion of MS model for UDT returns
     UNDNAME_32_BIT_DECODE = 0x0800, // Undecorate 32-bit decorated names
     UNDNAME_NAME_ONLY = 0x1000, // Crack only the name for primary declaration;
-                                // return just [scope::]name.  Does expand template params
+    // return just [scope::]name.  Does expand template params
     UNDNAME_NO_ARGUMENTS = 0x2000, // Don't undecorate arguments to function
     UNDNAME_NO_SPECIAL_SYMS = 0x4000 // Don't undecorate special names (v-table, vcall, vector xxx, metatype, etc)
   }
+
+  [DllImport("dbghelp.dll", SetLastError = true, PreserveSig = true)]
+  public static extern int UnDecorateSymbolName(
+    [In][MarshalAs(UnmanagedType.LPStr)] string DecoratedName,
+    [Out] StringBuilder UnDecoratedName,
+    [In][MarshalAs(UnmanagedType.U4)] int UndecoratedLength,
+    [In][MarshalAs(UnmanagedType.U4)] UnDecorateFlags Flags);
 }

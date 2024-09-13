@@ -14,6 +14,11 @@ namespace ProfileExplorer.UI;
 
 static class ExtensionMethods {
   private static readonly char[] NewLineChars = {'\r', '\n'};
+  private static ConcurrentDictionary<PercentageString, string> percentageStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> nanosecondsTimeStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> microsecondTimeStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> millisecondsTimeStringCache_ = new();
+  private static ConcurrentDictionary<TimeString, string> secondsTimeStringCache_ = new();
 
   public static string RemoveChars(this string value, params char[] charList) {
     if (string.IsNullOrEmpty(value)) {
@@ -99,16 +104,6 @@ static class ExtensionMethods {
   public static Pen AsBoldPen(this Color color) {
     return ColorPens.GetBoldPen(color);
   }
-
-  // Cache percentage and time value to string conversion result
-  // to reduce GC pressure when rendering.
-  private record PercentageString(double value, int digits, bool trim, string suffix);
-  private record TimeString(TimeSpan value, int digits, string suffix);
-  private static ConcurrentDictionary<PercentageString, string> percentageStringCache_ = new();
-  private static ConcurrentDictionary<TimeString, string> nanosecondsTimeStringCache_ = new();
-  private static ConcurrentDictionary<TimeString, string> microsecondTimeStringCache_ = new();
-  private static ConcurrentDictionary<TimeString, string> millisecondsTimeStringCache_ = new();
-  private static ConcurrentDictionary<TimeString, string> secondsTimeStringCache_ = new();
 
   public static string AsTrimmedPercentageString(this double value, int digits = 2, string suffix = "%") {
     return AsPercentageString(value, digits, true, suffix);
@@ -357,4 +352,9 @@ static class ExtensionMethods {
       return hash1 + hash2 * 1566083941;
     }
   }
+
+  // Cache percentage and time value to string conversion result
+  // to reduce GC pressure when rendering.
+  private record PercentageString(double value, int digits, bool trim, string suffix);
+  private record TimeString(TimeSpan value, int digits, string suffix);
 }

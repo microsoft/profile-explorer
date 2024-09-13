@@ -199,7 +199,6 @@ public class IRTextSectionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
     Index = index;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public int Index { get; set; }
   public IRTextSection Section { get; set; }
 
@@ -280,6 +279,7 @@ public class IRTextSectionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
   public string BlockCountString => Section != null ? Section.BlockCount.ToString() : "";
   public int Number => Section?.Number ?? 0;
   public int BlockCount => Section?.BlockCount ?? 0;
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void OnPropertyChanged(string propertyname) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
@@ -328,8 +328,6 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
 
     Statistics = new FunctionCodeStatistics();
   }
-
-  public event PropertyChangedEventHandler PropertyChanged;
 
   public virtual string Name {
     get {
@@ -386,6 +384,8 @@ public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
       OnPropertyChanged(nameof(HasDiffs));
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void OnPropertyChanged(string propertyname) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
@@ -769,13 +769,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
                                                      });
   }
 
-  public event EventHandler<IRTextFunction> FunctionSwitched;
-  public event EventHandler<OpenSectionEventArgs> OpenSection;
-  public event EventHandler<DiffModeEventArgs> EnterDiffMode;
-  public event EventHandler<double> SectionListScrollChanged;
-  public event EventHandler<bool> SyncDiffedDocumentsChanged;
-  public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
-  public event PropertyChangedEventHandler PropertyChanged;
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
 
   //? TODO: Replace all other commands with RelayCommand.
@@ -798,11 +791,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public RelayCommand<object> CopyAllFunctionsCommand => new(async obj => {
     CopyFunctionListAsHtml(true);
   });
-
-  private Brush GetMarkedNodeColor(IRTextFunctionEx node) {
-    return App.Settings.MarkingSettings.
-      GetMarkedNodeBrush(node.Name, node.ModuleName);
-  }
 
   public bool BottomSectionToolbar {
     get => (bool)GetValue(BottomSectionToolbarProperty);
@@ -1107,6 +1095,63 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   public IRTextFunction CurrentFunction => currentFunction_;
   public bool HasAnnotatedSections => annotatedSections_.Count > 0;
   public ICompilerInfoProvider CompilerInfo { get; set; }
+  public override ToolPanelKind PanelKind => ToolPanelKind.Section;
+  public override bool SavesStateToFile => true;
+
+  public List<IRTextSectionEx> Sections {
+    get => sections_;
+    set {
+      if (sections_ != value) {
+        sections_ = value;
+
+        foreach (var sectionEx in sections_) {
+          if (sectionEx.Section != null) {
+            sectionExtMap_[sectionEx.Section] = sectionEx;
+          }
+        }
+
+        UpdateSectionListView();
+      }
+    }
+  }
+
+  public SectionSettings Settings {
+    get => settings_;
+    set => settings_ = value;
+  }
+
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) =>
+                        markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
+    await UpdateMarkedFunctions();
+  });
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => {
+      if (settings_.ShowDemangledNames) {
+        markingSettings.AddFunctionColor(node.AlternateName, color);
+      }
+      else {
+        markingSettings.AddFunctionColor(node.Name, color);
+      }
+    });
+    markingSettings.UseFunctionColors = true;
+    await UpdateMarkedFunctions();
+  });
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<IRTextFunction> FunctionSwitched;
+  public event EventHandler<OpenSectionEventArgs> OpenSection;
+  public event EventHandler<DiffModeEventArgs> EnterDiffMode;
+  public event EventHandler<double> SectionListScrollChanged;
+  public event EventHandler<bool> SyncDiffedDocumentsChanged;
+  public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
+
+  private Brush GetMarkedNodeColor(IRTextFunctionEx node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.Name, node.ModuleName);
+  }
 
   private static void OnBottomSectionToolbarPropertyChanged(
     DependencyObject d, DependencyPropertyChangedEventArgs e) {
@@ -3054,82 +3099,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  private sealed class FunctionDiffKindConverter : IValueConverter {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-      if (value is DiffKind diffKind) {
-        return diffKind switch {
-          DiffKind.Insertion         => "Diff only",
-          DiffKind.Deletion          => "Base only",
-          DiffKind.Modification      => "Modified",
-          DiffKind.MinorModification => "Modified",
-          _                          => ""
-        };
-      }
-
-      return "";
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-      return null;
-    }
-  }
-
-  private sealed class FunctionDiffValueConverter : IValueConverter {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-      if (value is int intValue) {
-        if (intValue > 0) {
-          return $"+{intValue}";
-        }
-
-        if (intValue == 0) {
-          return $" {intValue}";
-        }
-      }
-      else if (value is long longValue) {
-        if (longValue > 0) {
-          return $"+{longValue}";
-        }
-
-        if (longValue == 0) {
-          return $" {longValue}";
-        }
-      }
-
-      return value;
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-      return null;
-    }
-  }
-
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Section;
-  public override bool SavesStateToFile => true;
-
-  public List<IRTextSectionEx> Sections {
-    get => sections_;
-    set {
-      if (sections_ != value) {
-        sections_ = value;
-
-        foreach (var sectionEx in sections_) {
-          if (sectionEx.Section != null) {
-            sectionExtMap_[sectionEx.Section] = sectionEx;
-          }
-        }
-
-        UpdateSectionListView();
-      }
-    }
-  }
-
-  public SectionSettings Settings {
-    get => settings_;
-    set => settings_ = value;
-  }
-
   public IRTextSectionEx GetSectionExtension(IRTextSection section) {
     return sectionExtMap_[section];
   }
@@ -3242,8 +3211,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return callGraph;
   }
 
-#region Dead code for making a call tree from CallGraph, not profile info
-
   //private async Task<ChildFunctionEx> CreateCallTree(IRTextFunction function) {
   //    var (_, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
   //    CallGraphNode otherNode = null;
@@ -3345,8 +3312,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   //    return childInfo;
   //}
 
-#endregion
-
   public override void OnSessionSave() {
     base.OnSessionSave();
     var state = new SectionPanelState();
@@ -3380,8 +3345,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
     await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
-
-  #endregion
 
   private void SectionPreviewKeyDown(object sender, KeyEventArgs e) {
     if (e.Key == Key.Return) {
@@ -3485,32 +3448,60 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ShowSections = false;
   }
 
-  public RelayCommand<object> MarkModuleCommand => new(async obj => {
-    var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) =>
-                        markingSettings.AddModuleColor(node.ModuleName, color));
-    markingSettings.UseModuleColors = true;
-    await UpdateMarkedFunctions();
-  });
-  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
-    var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) => {
-      if (settings_.ShowDemangledNames) {
-        markingSettings.AddFunctionColor(node.AlternateName, color);
-      }
-      else {
-        markingSettings.AddFunctionColor(node.Name, color);
-      }
-    });
-    markingSettings.UseFunctionColors = true;
-    await UpdateMarkedFunctions();
-  });
-
   private void MarkSelectedNodes(object obj, Action<IRTextFunctionEx, Color> action) {
     if (obj is SelectedColorEventArgs e) {
       foreach (IRTextFunctionEx funcEx in FunctionList.SelectedItems) {
         action(funcEx, e.SelectedColor);
       }
+    }
+  }
+
+  private sealed class FunctionDiffKindConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+      if (value is DiffKind diffKind) {
+        return diffKind switch {
+          DiffKind.Insertion         => "Diff only",
+          DiffKind.Deletion          => "Base only",
+          DiffKind.Modification      => "Modified",
+          DiffKind.MinorModification => "Modified",
+          _                          => ""
+        };
+      }
+
+      return "";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+      return null;
+    }
+  }
+
+  private sealed class FunctionDiffValueConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+      if (value is int intValue) {
+        if (intValue > 0) {
+          return $"+{intValue}";
+        }
+
+        if (intValue == 0) {
+          return $" {intValue}";
+        }
+      }
+      else if (value is long longValue) {
+        if (longValue > 0) {
+          return $"+{longValue}";
+        }
+
+        if (longValue == 0) {
+          return $" {longValue}";
+        }
+      }
+
+      return value;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+      return null;
     }
   }
 }

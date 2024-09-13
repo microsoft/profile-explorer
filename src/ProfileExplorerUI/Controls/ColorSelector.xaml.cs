@@ -19,7 +19,6 @@ public partial class ColorSelector : UserControl {
   public static DependencyProperty ColorSelectedCommandProperty =
     DependencyProperty.Register("ColorSelectedCommand", typeof(ICommand), typeof(ColorSelector));
   private static readonly Color[] ButtonColors;
-  public Brush[] ButtonBrushes { get; set; }
 
   static ColorSelector() {
     ButtonColors = new[] {
@@ -55,7 +54,7 @@ public partial class ColorSelector : UserControl {
     }
   }
 
-  public event EventHandler<SelectedColorEventArgs> ColorSelected;
+  public Brush[] ButtonBrushes { get; set; }
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ICommand ColorSelectedCommand {
@@ -67,6 +66,8 @@ public partial class ColorSelector : UserControl {
     get => (IInputElement)GetValue(CommandTargetProperty);
     set => SetValue(CommandTargetProperty, value);
   }
+
+  public event EventHandler<SelectedColorEventArgs> ColorSelected;
 
   private void ColorSelector_Loaded(object sender, RoutedEventArgs e) {
     Focus();

@@ -50,47 +50,6 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     DataContext = this;
   }
 
-  private void SetupEvents() {
-    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
-    ProfileTextView.TitlePrefixChanged += (sender, s) => {
-      TitlePrefix = s;
-      UpdatePopupTitle();
-    };
-    ProfileTextView.TitleSuffixChanged += (sender, s) => {
-      TitleSuffix = s;
-      UpdatePopupTitle();
-    };
-    ProfileTextView.DescriptionPrefixChanged += (sender, s) => {
-      DescriptionPrefix = !string.IsNullOrEmpty(s) ? s + "\n\n" : "";
-      UpdatePopupTitle();
-    };
-    ProfileTextView.DescriptionSuffixChanged += (sender, s) => {
-      DescriptionSuffix = !string.IsNullOrEmpty(s) ? "\n\n" + s : "";
-      UpdatePopupTitle();
-    };
-    ProfileTextView.LoadedFunctionChanged += (sender, s) => {
-      parsedSection_ = s;
-      UpdatePopupTitle();
-    };
-    ProfileTextView.FunctionHistoryChanged += (sender, args) => {
-      ShowHistoryButtons = ProfileTextView.HasPreviousFunctions ||
-                           ProfileTextView.HasNextFunctions;
-      OnPropertyChanged(nameof(HasNextFunctions));
-      OnPropertyChanged(nameof(HasPreviousFunctions));
-    };
-  }
-
-  protected override void SetPanelAccentColor(Color color) {
-    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
-    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
-  }
-
-  public void SetPanelAccentColor(Brush color) {
-    ToolbarPanel.Background = color;
-    PanelBorder.BorderBrush = color;
-  }
-
-  public event PropertyChangedEventHandler PropertyChanged;
   public IRElement PreviewedElement { get; set; }
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
@@ -144,6 +103,48 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public bool ShowModeButtons {
     get => showModeButtons_;
     set => SetField(ref showModeButtons_, value);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private void SetupEvents() {
+    ProfileTextView.PreviewMouseWheel += ProfileTextViewOnMouseWheel;
+    ProfileTextView.TitlePrefixChanged += (sender, s) => {
+      TitlePrefix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.TitleSuffixChanged += (sender, s) => {
+      TitleSuffix = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.DescriptionPrefixChanged += (sender, s) => {
+      DescriptionPrefix = !string.IsNullOrEmpty(s) ? s + "\n\n" : "";
+      UpdatePopupTitle();
+    };
+    ProfileTextView.DescriptionSuffixChanged += (sender, s) => {
+      DescriptionSuffix = !string.IsNullOrEmpty(s) ? "\n\n" + s : "";
+      UpdatePopupTitle();
+    };
+    ProfileTextView.LoadedFunctionChanged += (sender, s) => {
+      parsedSection_ = s;
+      UpdatePopupTitle();
+    };
+    ProfileTextView.FunctionHistoryChanged += (sender, args) => {
+      ShowHistoryButtons = ProfileTextView.HasPreviousFunctions ||
+                           ProfileTextView.HasNextFunctions;
+      OnPropertyChanged(nameof(HasNextFunctions));
+      OnPropertyChanged(nameof(HasPreviousFunctions));
+    };
+  }
+
+  protected override void SetPanelAccentColor(Color color) {
+    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
+    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
+  }
+
+  public void SetPanelAccentColor(Brush color) {
+    ToolbarPanel.Background = color;
+    PanelBorder.BorderBrush = color;
   }
 
   private async Task SetupInitialMode(ParsedIRTextSection parsedSection, bool showSourceCode) {
@@ -632,6 +633,15 @@ public class IRDocumentPopupInstance {
 }
 
 public class PreviewPopupArgs {
+  public string Title { get; set; }
+  public IRElement Element { get; set; }
+  public UIElement RelativeElement { get; set; }
+  public IRDocument Document { get; set; }
+  public ParsedIRTextSection LoadedSection { get; set; }
+  public IRTextSection Section { get; set; }
+  public bool ShowSourceCode { get; set; }
+  public ProfileSampleFilter ProfilerFilter { get; set; }
+
   public static PreviewPopupArgs ForDocument(IRDocument document, IRElement element,
                                              UIElement relativeElement, string title = "") {
     return new PreviewPopupArgs {
@@ -682,13 +692,4 @@ public class PreviewPopupArgs {
       Title = title
     };
   }
-
-  public string Title { get; set; }
-  public IRElement Element { get; set; }
-  public UIElement RelativeElement { get; set; }
-  public IRDocument Document { get; set; }
-  public ParsedIRTextSection LoadedSection { get; set; }
-  public IRTextSection Section { get; set; }
-  public bool ShowSourceCode { get; set; }
-  public ProfileSampleFilter ProfilerFilter { get; set; }
 }

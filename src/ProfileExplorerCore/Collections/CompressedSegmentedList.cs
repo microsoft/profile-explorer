@@ -487,7 +487,6 @@ public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T :
 
       // Check if another (de)compression task is running and wait for it.
       // activeTask_ is being reseet by the thread, use a copy.
-      //? TODO: Could use Interlocked.MemoryBarrierProcessWide?
       Task task = null;
 
       lock (lockObject_) {

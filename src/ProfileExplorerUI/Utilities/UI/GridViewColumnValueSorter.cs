@@ -18,6 +18,8 @@ public interface IGridViewColumnValueSorter {
 }
 
 public class GridViewColumnValueSorter<T> : IGridViewColumnValueSorter where T : Enum {
+  public delegate T ColumnFieldMappingDelegate(string columnName);
+  public delegate int ValueCompareDelegate(object x, object y, T field, ListSortDirection direction, object tag);
   private Dictionary<T, GridViewColumnHeader> fieldColumnMap_;
   private ColumnFieldMappingDelegate fieldMapping_;
   private ValueCompareDelegate valueComparer_;
@@ -42,28 +44,6 @@ public class GridViewColumnValueSorter<T> : IGridViewColumnValueSorter where T :
     }
   }
 
-  public delegate int ValueCompareDelegate(object x, object y, T field, ListSortDirection direction, object tag);
-  public delegate T ColumnFieldMappingDelegate(string columnName);
-
-  public void SortByField(T field, ListSortDirection direction = ListSortDirection.Descending) {
-    if (!fieldColumnMap_.TryGetValue(field, out var column)) {
-      // Field may be associated with a column added later.
-      var gridView = listView_.View as GridView;
-
-      foreach (var gridColumn in gridView.Columns) {
-        if (gridColumn.Header is GridViewColumnHeader header &&
-            !string.IsNullOrEmpty(header.Name)) {
-          if (fieldMapping_(header.Name).Equals(field)) {
-            column = header;
-            break;
-          }
-        }
-      }
-    }
-
-    SortColumn(column, direction, field);
-  }
-
   public void RegisterColumnHeader(GridViewColumnHeader header) {
     header.Click += ColumnHeader_Click;
 
@@ -86,6 +66,25 @@ public class GridViewColumnValueSorter<T> : IGridViewColumnValueSorter where T :
     }
 
     header.Click -= ColumnHeader_Click;
+  }
+
+  public void SortByField(T field, ListSortDirection direction = ListSortDirection.Descending) {
+    if (!fieldColumnMap_.TryGetValue(field, out var column)) {
+      // Field may be associated with a column added later.
+      var gridView = listView_.View as GridView;
+
+      foreach (var gridColumn in gridView.Columns) {
+        if (gridColumn.Header is GridViewColumnHeader header &&
+            !string.IsNullOrEmpty(header.Name)) {
+          if (fieldMapping_(header.Name).Equals(field)) {
+            column = header;
+            break;
+          }
+        }
+      }
+    }
+
+    SortColumn(column, direction, field);
   }
 
   private void ColumnHeader_Click(object sender, RoutedEventArgs e) {

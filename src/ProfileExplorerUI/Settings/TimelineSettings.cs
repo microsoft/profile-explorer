@@ -8,10 +8,6 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class TimelineSettings : SettingsBase {
-  public TimelineSettings() {
-    Reset();
-  }
-
   //? TODO: Options for
   //? - grouping by thread name
   //? - custom colors for thread names
@@ -21,6 +17,11 @@ public class TimelineSettings : SettingsBase {
   //?    - hover time
   //?    - same settings in SectionPanel
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
+
+  public TimelineSettings() {
+    Reset();
+  }
+
   [ProtoMember(1)][OptionValue(true)]
   public bool SyncSelection { get; set; }
   [ProtoMember(2)][OptionValue(true)]

@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using ProfileExplorer.UI.Utilities;
 
@@ -35,12 +34,6 @@ public class DraggablePopup : Popup {
     new(async e => {
       SetPanelAccentColor(e.SelectedColor);
     });
-
-  protected virtual void SetPanelAccentColor(Color color) {
-  }
-
-  public event EventHandler PopupClosed;
-  public event EventHandler PopupDetached;
   public Thumb Thumb { get; private set; } = new() {Width = 0, Height = 0};
 
   public bool IsAlwaysOnTop {
@@ -52,6 +45,12 @@ public class DraggablePopup : Popup {
   }
 
   public bool IsDetached { get; private set; }
+
+  protected virtual void SetPanelAccentColor(Color color) {
+  }
+
+  public event EventHandler PopupClosed;
+  public event EventHandler PopupDetached;
 
   public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {
     return e.LeftButton == MouseButtonState.Pressed;

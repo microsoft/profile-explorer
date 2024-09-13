@@ -36,12 +36,12 @@ public partial class SearchPanel : UserControl {
     }
   }
 
+  public SearchInfo SearchInfo => searchInfo_;
+  public bool UseAutoComplete { get; set; }
   public event EventHandler<SearchInfo> SearchChanged;
   public event EventHandler<SearchInfo> NavigateToNextResult;
   public event EventHandler<SearchInfo> NavigateToPreviousResult;
   public event EventHandler<SearchInfo> CloseSearchPanel;
-  public SearchInfo SearchInfo => searchInfo_;
-  public bool UseAutoComplete { get; set; }
 
   public void Show(SearchInfo initialInfo = null, bool searchAll = false,
                    bool selectTextOnFocus = false) {

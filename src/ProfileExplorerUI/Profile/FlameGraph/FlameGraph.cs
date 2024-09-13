@@ -72,6 +72,18 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
     }
   }
 
+  public bool Equals(FlameGraphNode other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Equals(CallTreeNode, other.CallTreeNode);
+  }
+
   public static bool operator ==(FlameGraphNode left, FlameGraphNode right) {
     return Equals(left, right);
   }
@@ -98,18 +110,6 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
 
   public override int GetHashCode() {
     return CallTreeNode != null ? CallTreeNode.GetHashCode() : 0;
-  }
-
-  public bool Equals(FlameGraphNode other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Equals(CallTreeNode, other.CallTreeNode);
   }
 
   protected override string GetFunctionName() {

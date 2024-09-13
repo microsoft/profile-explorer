@@ -8,23 +8,17 @@ using ProfileExplorer.Core.IR;
 namespace ProfileExplorer.UI.Query;
 
 public class BuiltinFunctionTask : IFunctionTask {
-  private TaskCallback callback_;
-
   public delegate bool TaskCallback(FunctionIR function, IRDocument document,
                                     IFunctionTaskOptions options, ISession session,
                                     CancelableTask cancelableTask);
 
+  private TaskCallback callback_;
   public ISession Session { get; private set; }
   public IFunctionTaskOptions Options { get; private set; }
   public FunctionTaskInfo TaskInfo { get; private set; }
   public bool Result { get; set; }
   public string ResultMessage { get; set; }
   public string OutputText { get; set; }
-
-  public static FunctionTaskDefinition GetDefinition(FunctionTaskInfo taskInfo,
-                                                     TaskCallback callback) {
-    return new FunctionTaskDefinition(typeof(BuiltinFunctionTask), taskInfo, callback);
-  }
 
   public Task<bool> Execute(FunctionIR function, IRDocument document,
                             CancelableTask cancelableTask) {
@@ -64,6 +58,11 @@ public class BuiltinFunctionTask : IFunctionTask {
 
   public void LoadOptionsFromValues(QueryData data) {
     Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
+  }
+
+  public static FunctionTaskDefinition GetDefinition(FunctionTaskInfo taskInfo,
+                                                     TaskCallback callback) {
+    return new FunctionTaskDefinition(typeof(BuiltinFunctionTask), taskInfo, callback);
   }
 
   private void LoadOptions() {

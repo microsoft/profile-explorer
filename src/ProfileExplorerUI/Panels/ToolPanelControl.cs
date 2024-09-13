@@ -22,7 +22,6 @@ public class ToolPanelControl : UserControl, IToolPanel {
   public virtual bool HasPinnedContent { get; set; }
   public virtual bool IgnoreNextLoadEvent { get; set; }
   public virtual bool IgnoreNextUnloadEvent { get; set; }
-  public virtual void OnDocumentLoaded(IRDocument document) { }
 
   public virtual void OnRegisterPanel() {
     IsPanelEnabled = true;
@@ -61,4 +60,6 @@ public class ToolPanelControl : UserControl, IToolPanel {
     Document = null;
     Utils.DisableControl(this, 0.75);
   }
+
+  public virtual void OnDocumentLoaded(IRDocument document) { }
 }

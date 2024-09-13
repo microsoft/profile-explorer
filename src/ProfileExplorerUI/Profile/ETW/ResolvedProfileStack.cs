@@ -3,11 +3,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Compilers;
-using ProtoBuf;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -189,8 +187,7 @@ public struct ResolvedProfileStackFrameKey : IEquatable<ResolvedProfileStackFram
     IsManagedCode = isManagedCode;
   }
 
-  public ResolvedProfileStackFrameKey() {}
-
+  public ResolvedProfileStackFrameKey() { }
   public FunctionDebugInfo DebugInfo;
   public ProfileImage Image;
   public bool IsManagedCode;

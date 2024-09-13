@@ -40,15 +40,6 @@ public class MouseHoverLogic : IDisposable {
   }
 
   /// <summary>
-  ///   Occurs when the mouse starts hovering over a certain location.
-  /// </summary>
-  public event EventHandler<MouseEventArgs> MouseHover;
-  /// <summary>
-  ///   Occurs when the mouse stops hovering over a certain location.
-  /// </summary>
-  public event EventHandler<MouseEventArgs> MouseHoverStopped;
-
-  /// <summary>
   ///   Removes the MouseHover support from the target UIElement.
   /// </summary>
   public void Dispose() {
@@ -60,6 +51,15 @@ public class MouseHoverLogic : IDisposable {
 
     disposed = true;
   }
+
+  /// <summary>
+  ///   Occurs when the mouse starts hovering over a certain location.
+  /// </summary>
+  public event EventHandler<MouseEventArgs> MouseHover;
+  /// <summary>
+  ///   Occurs when the mouse stops hovering over a certain location.
+  /// </summary>
+  public event EventHandler<MouseEventArgs> MouseHoverStopped;
 
   /// <summary>
   ///   Raises the <see cref="MouseHover" /> event.

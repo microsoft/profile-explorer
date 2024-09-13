@@ -11,10 +11,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Editing;
+using Microsoft.CodeAnalysis;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Scripting;
-using Microsoft.CodeAnalysis;
 
 namespace ProfileExplorer.UI;
 
@@ -83,6 +83,8 @@ public partial class ScriptingPanel : ToolPanelControl {
     TextView.MouseHoverStopped += TextView_MouseHoverStopped;
     TextView.TextArea.TextView.BackgroundRenderers.Add(errorHighlighter_);
   }
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.Scripting;
 
   private void TextView_MouseHoverStopped(object sender, MouseEventArgs e) {
     if (errorTooltip_ != null) {
@@ -333,10 +335,6 @@ public partial class ScriptingPanel : ToolPanelControl {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Scripting;
-
   public override void OnSessionStart() {
     base.OnSessionStart();
     TextView.Text = InitialScript;
@@ -348,6 +346,4 @@ public partial class ScriptingPanel : ToolPanelControl {
     Task.Run(() => Script.WarmUp());
     Task.Run(() => ScriptAutoComplete.WarmUp());
   }
-
-        #endregion
 }

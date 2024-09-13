@@ -33,6 +33,21 @@ public class IRTextSection : IEquatable<IRTextSection> {
     set => lineMetadata_ = new CompressedObject<Dictionary<int, string>>(value);
   }
 
+  public bool Equals(IRTextSection other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Number == other.Number &&
+           Name.Equals(other.Name, StringComparison.Ordinal) &&
+           (ParentFunction == null && other.ParentFunction == null ||
+            ParentFunction != null && ParentFunction.Equals(other.ParentFunction));
+  }
+
   public void AddLineMetadata(int lineNumber, string metadata) {
     LineMetadata ??= new Dictionary<int, string>();
     LineMetadata[lineNumber] = metadata;
@@ -76,20 +91,5 @@ public class IRTextSection : IEquatable<IRTextSection> {
 
   public override string ToString() {
     return $"({Number}) {Name}";
-  }
-
-  public bool Equals(IRTextSection other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Number == other.Number &&
-           Name.Equals(other.Name, StringComparison.Ordinal) &&
-           (ParentFunction == null && other.ParentFunction == null ||
-            ParentFunction != null && ParentFunction.Equals(other.ParentFunction));
   }
 }

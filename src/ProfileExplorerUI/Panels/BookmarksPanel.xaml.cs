@@ -30,6 +30,7 @@ public partial class BookmarksPanel : ToolPanelControl {
   }
 
   public ObservableCollectionRefresh<Bookmark> Bookmarks => bookmarks_;
+  public override ToolPanelKind PanelKind => ToolPanelKind.Bookmarks;
 
   public void InitializeForDocument(IRDocument document) {
     Document = document;
@@ -130,10 +131,6 @@ public partial class BookmarksPanel : ToolPanelControl {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Bookmarks;
-
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     InitializeForDocument(document);
     IsPanelEnabled = Document != null;
@@ -152,6 +149,4 @@ public partial class BookmarksPanel : ToolPanelControl {
     base.OnSessionEnd();
     ResetBookmarks();
   }
-
-        #endregion
 }

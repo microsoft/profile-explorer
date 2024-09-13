@@ -20,11 +20,11 @@ using System.Windows.Media;
 using System.Xml;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using Microsoft.Win32;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Controls;
-using Microsoft.Win32;
 using Xceed.Wpf.Toolkit.Core.Utilities;
 
 namespace ProfileExplorer.UI;
@@ -34,6 +34,20 @@ public static class Utils {
                                                                 TaskCreationOptions.None,
                                                                 TaskContinuationOptions.None,
                                                                 TaskScheduler.Default);
+  private static readonly string HTML_COPY_HEADER =
+    "Version:0.9\r\n" +
+    "StartHTML:{0:0000000000}\r\n" +
+    "EndHTML:{1:0000000000}\r\n" +
+    "StartFragment:{2:0000000000}\r\n" +
+    "EndFragment:{3:0000000000}\r\n";
+  private static readonly string HTML_COPY_START =
+    "<html>\r\n" +
+    "<body>\r\n" +
+    "<!--StartFragment-->";
+  private static readonly string HTML_COPY_END =
+    "<!--EndFragment-->\r\n" +
+    "</body>\r\n" +
+    "</html>";
 
   public static TResult RunSync<TResult>(Func<Task<TResult>> func) {
     return TaskFactoryInstance.StartNew<Task<TResult>>(func).
@@ -630,14 +644,6 @@ public static class Utils {
     }
   }
 
-  public struct KeyCharInfo {
-    public bool IsLetter;
-    public char Letter;
-    public bool IsShift;
-    public bool IsControl;
-    public bool IsAlt;
-  }
-
   public static UIElement FindParentHost(UIElement control) {
     var logicalRoot = LogicalTreeHelper.GetParent(control);
 
@@ -845,7 +851,7 @@ public static class Utils {
   }
 
   public static void BringToFront(UIElement target, double width, double height) {
-    var handle = GetHwnd(target);
+    IntPtr handle = GetHwnd(target);
 
     if (NativeMethods.GetWindowRect(handle, out var rect)) {
       NativeMethods.SetWindowPos(handle, NativeMethods.HWND_TOP,
@@ -855,7 +861,7 @@ public static class Utils {
   }
 
   public static void SetAlwaysOnTop(UIElement target, bool value, double width, double height) {
-    var handle = GetHwnd(target);
+    IntPtr handle = GetHwnd(target);
 
     if (NativeMethods.GetWindowRect(handle, out var rect)) {
       NativeMethods.SetWindowPos(handle,
@@ -866,7 +872,7 @@ public static class Utils {
   }
 
   public static void SendToBack(UIElement target, double width, double height) {
-    var handle = GetHwnd(target);
+    IntPtr handle = GetHwnd(target);
 
     if (NativeMethods.GetWindowRect(handle, out var rect)) {
       NativeMethods.SetWindowPos(handle, NativeMethods.HWND_NOTOPMOST,
@@ -1379,13 +1385,12 @@ public static class Utils {
   }
 
   public static bool IsOptionsUpdateEvent(MouseButtonEventArgs e) {
-    var sourceName = e.OriginalSource.GetType().Name;
+    string sourceName = e.OriginalSource.GetType().Name;
     return IsOptionsUpdateEvent(sourceName);
   }
 
-
   public static bool IsOptionsUpdateEvent(KeyEventArgs e) {
-    var sourceName = e.OriginalSource.GetType().Name;
+    string sourceName = e.OriginalSource.GetType().Name;
     return IsOptionsUpdateEvent(sourceName);
   }
 
@@ -1439,26 +1444,19 @@ public static class Utils {
     return encoding.GetString(data);
   }
 
-  private static readonly string HTML_COPY_HEADER =
-    "Version:0.9\r\n" +
-    "StartHTML:{0:0000000000}\r\n" +
-    "EndHTML:{1:0000000000}\r\n" +
-    "StartFragment:{2:0000000000}\r\n" +
-    "EndFragment:{3:0000000000}\r\n";
-  private static readonly string HTML_COPY_START =
-    "<html>\r\n" +
-    "<body>\r\n" +
-    "<!--StartFragment-->";
-  private static readonly string HTML_COPY_END =
-    "<!--EndFragment-->\r\n" +
-    "</body>\r\n" +
-    "</html>";
-
   public static string RemovePathQuotes(string text) {
     if (string.IsNullOrEmpty(text)) {
       return text;
     }
 
     return text.Trim('\"');
+  }
+
+  public struct KeyCharInfo {
+    public bool IsLetter;
+    public char Letter;
+    public bool IsShift;
+    public bool IsControl;
+    public bool IsAlt;
   }
 }

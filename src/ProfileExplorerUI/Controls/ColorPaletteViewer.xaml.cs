@@ -14,11 +14,6 @@ public partial class ColorPaletteViewer : UserControl {
     DependencyProperty.Register("Palette", typeof(ColorPalette), typeof(ColorPaletteViewer),
                                 new PropertyMetadata(null, OnPaletteChanged));
 
-  private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-    var source = d as ColorPaletteViewer;
-    source.Palette = e.NewValue as ColorPalette;
-  }
-
   public ColorPaletteViewer() {
     InitializeComponent();
   }
@@ -29,6 +24,11 @@ public partial class ColorPaletteViewer : UserControl {
       SetValue(PaletteProperty, value);
       InvalidateVisual();
     }
+  }
+
+  private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+    var source = d as ColorPaletteViewer;
+    source.Palette = e.NewValue as ColorPalette;
   }
 
   protected override void OnRender(DrawingContext dc) {

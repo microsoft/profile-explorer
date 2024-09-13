@@ -297,7 +297,8 @@
               </MenuItem.Icon>
             </MenuItem>
           </MenuItem>
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
           <MenuItem
             Command="{Binding CopyFunctionDetailsCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -326,7 +327,8 @@
             InputGestureText="Ctrl+Alt+C"
             ToolTip="Copy the mangled function name to the clipboard (C++)"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
           <MenuItem
             Header="Mark Module"
@@ -362,7 +364,8 @@
 
             </MenuItem>
           </MenuItem>
-          <Separator Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+          <Separator
+            Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
           <MenuItem
             Command="{Binding SelectFunctionSummaryCommand}"

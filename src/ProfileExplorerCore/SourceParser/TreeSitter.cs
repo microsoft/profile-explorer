@@ -111,11 +111,11 @@ public delegate void TSLogger(TSLogType logType, string message);
 /********************/
 
 public sealed class TSParser : IDisposable {
-  private IntPtr Ptr { get; set; }
-
   public TSParser() {
     Ptr = ts_parser_new();
   }
+
+  private IntPtr Ptr { get; set; }
 
   public void Dispose() {
     if (Ptr != IntPtr.Zero) {
@@ -360,11 +360,11 @@ public sealed class TSParser : IDisposable {
 /******************/
 
 public sealed class TSTree : IDisposable {
-  internal IntPtr Ptr { get; private set; }
-
   public TSTree(IntPtr ptr) {
     Ptr = ptr;
   }
+
+  internal IntPtr Ptr { get; private set; }
 
   public void Dispose() {
     if (Ptr != IntPtr.Zero) {
@@ -824,17 +824,8 @@ public struct TSNode {
 /************************/
 
 public sealed class TSCursor : IDisposable {
-  [StructLayout(LayoutKind.Sequential)]
-  public struct TSTreeCursor {
-    private IntPtr Tree;
-    private IntPtr Id;
-    private uint Context0;
-    private uint Context1;
-  }
-
   private IntPtr Ptr;
   private TSTreeCursor cursor;
-  public TSLanguage lang { get; private set; }
 
   public TSCursor(TSTreeCursor cursor, TSLanguage lang) {
     this.cursor = cursor;
@@ -847,6 +838,8 @@ public sealed class TSCursor : IDisposable {
     this.lang = lang;
     Ptr = new IntPtr(1);
   }
+
+  public TSLanguage lang { get; private set; }
 
   public void Dispose() {
     if (Ptr != IntPtr.Zero) {
@@ -878,6 +871,15 @@ public sealed class TSCursor : IDisposable {
   }
 
   public TSCursor copy() { return new TSCursor(ts_tree_cursor_copy(ref cursor), lang); }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct TSTreeCursor {
+    private IntPtr Tree;
+    private IntPtr Id;
+    private uint Context0;
+    private uint Context1;
+  }
+
 #region PInvoke
 
   /**
@@ -989,11 +991,11 @@ public sealed class TSCursor : IDisposable {
 /*******************/
 
 public sealed class TSQuery : IDisposable {
-  internal IntPtr Ptr { get; private set; }
-
   public TSQuery(IntPtr ptr) {
     Ptr = ptr;
   }
+
+  internal IntPtr Ptr { get; private set; }
 
   public void Dispose() {
     if (Ptr != IntPtr.Zero) {
@@ -1102,8 +1104,6 @@ public sealed class TSQuery : IDisposable {
 }
 
 public sealed class TSQueryCursor : IDisposable {
-  private IntPtr Ptr { get; set; }
-
   private TSQueryCursor(IntPtr ptr) {
     Ptr = ptr;
   }
@@ -1111,6 +1111,8 @@ public sealed class TSQueryCursor : IDisposable {
   public TSQueryCursor() {
     Ptr = ts_query_cursor_new();
   }
+
+  private IntPtr Ptr { get; set; }
 
   public void Dispose() {
     if (Ptr != IntPtr.Zero) {
@@ -1210,7 +1212,9 @@ public sealed class TSQueryCursor : IDisposable {
 /**********************/
 
 public sealed class TSLanguage : IDisposable {
-  internal IntPtr Ptr { get; private set; }
+  public string[] symbols;
+  public string[] fields;
+  public Dictionary<string, ushort> fieldIds;
 
   public TSLanguage(IntPtr ptr) {
     Ptr = ptr;
@@ -1247,6 +1251,8 @@ public sealed class TSLanguage : IDisposable {
 #endif
   }
 
+  internal IntPtr Ptr { get; private set; }
+
   public void Dispose() {
     if (Ptr != IntPtr.Zero) {
       //ts_query_cursor_delete(Ptr);
@@ -1259,9 +1265,6 @@ public sealed class TSLanguage : IDisposable {
     return ptr != IntPtr.Zero ? new TSQuery(ptr) : null;
   }
 
-  public string[] symbols;
-  public string[] fields;
-  public Dictionary<string, ushort> fieldIds;
   public uint symbol_count() { return ts_language_symbol_count(Ptr); }
   public string symbol_name(ushort symbol) { return symbol != ushort.MaxValue ? symbols[symbol] : "ERROR"; }
 

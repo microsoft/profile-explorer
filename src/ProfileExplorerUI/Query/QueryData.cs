@@ -18,13 +18,13 @@ public class QueryData : INotifyPropertyChanged {
     Buttons = new List<QueryButton>();
   }
 
-  public event EventHandler ValueChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
   public List<QueryValue> InputValues { get; set; }
   public List<QueryValue> OutputValues { get; set; }
   public List<QueryButton> Buttons { get; set; }
   public bool HasInputValuesSwitchButton { get; set; }
   public IElementQuery Instance { get; set; }
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler ValueChanged;
 
   private static bool ExtractInt(QueryValue queryValue, out int number) {
     try {

@@ -20,7 +20,6 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
     DataContext = this;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public ISession Session {
@@ -37,6 +36,8 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
       }
     }
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void SetText(string text) {
     TextView.SetText(text);

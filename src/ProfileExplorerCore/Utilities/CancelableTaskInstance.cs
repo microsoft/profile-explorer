@@ -7,6 +7,7 @@ namespace ProfileExplorer.Core;
 
 // Manages a unique running instance of a CancelableTask.
 public class CancelableTaskInstance : IDisposable {
+  public delegate void CancelableTaskDelegate(CancelableTask task);
   private CancelableTask taskInstance_;
   private CancelableTaskDelegate registerAction_;
   private CancelableTaskDelegate unregisterAction_;
@@ -21,11 +22,8 @@ public class CancelableTaskInstance : IDisposable {
     unregisterAction_ = unregisterAction;
   }
 
-  public delegate void CancelableTaskDelegate(CancelableTask task);
-
   public CancelableTask CurrentInstance {
-    get
-    {
+    get {
       lock (lockObject_) {
         if (taskInstance_ == null) {
           throw new InvalidOperationException("No task instance running!");
@@ -34,6 +32,10 @@ public class CancelableTaskInstance : IDisposable {
         return taskInstance_;
       }
     }
+  }
+
+  public void Dispose() {
+    taskInstance_?.Dispose();
   }
 
   public CancelableTask CreateTask() {
@@ -188,10 +190,6 @@ public class CancelableTaskInstance : IDisposable {
     if (task != null) {
       await task.WaitToCompleteAsync();
     }
-  }
-
-  public void Dispose() {
-    taskInstance_?.Dispose();
   }
 
   private async Task CancelTaskAndWaitAsync(CancelableTask canceledTask) {

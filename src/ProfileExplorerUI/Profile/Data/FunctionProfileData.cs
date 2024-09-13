@@ -8,7 +8,6 @@ using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
-using ProtoBuf;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -39,12 +38,13 @@ public class FunctionProfileData {
     SampleEndIndex = Math.Max(SampleEndIndex, otherData.SampleEndIndex);
 
     foreach (var pair in otherData.InstructionWeight) {
-      ref var existingValue = ref CollectionsMarshal.GetValueRefOrAddDefault(InstructionWeight, pair.Key, out bool exists);
+      ref var existingValue =
+        ref CollectionsMarshal.GetValueRefOrAddDefault(InstructionWeight, pair.Key, out bool exists);
       existingValue += pair.Value;
     }
 
     if (otherData.HasPerformanceCounters) {
-      InstructionCounters ??= new();
+      InstructionCounters ??= new Dictionary<long, PerformanceCounterValueSet>();
 
       foreach (var pair in otherData.InstructionCounters) {
         ref var existingValue =
@@ -234,17 +234,6 @@ public class FunctionProfileData {
 }
 
 public class FunctionProcessingResult {
-  // Mapping from a source line number to a list
-  // of associated instructions and their weight and/or perf. counters.
-  public record SampledElementsToLineMapping(
-    Dictionary<int, List<(IRElement Element,
-      (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>> SampledElements) {
-    public SampledElementsToLineMapping() :
-      this(new Dictionary<int, List<(IRElement Element,
-             (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>>()) {
-    }
-  }
-
   public FunctionProcessingResult(int capacity = 0) {
     SampledElements = new List<(IRElement, TimeSpan)>(capacity);
     BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
@@ -315,6 +304,17 @@ public class FunctionProcessingResult {
     }
 
     return map;
+  }
+
+  // Mapping from a source line number to a list
+  // of associated instructions and their weight and/or perf. counters.
+  public record SampledElementsToLineMapping(
+    Dictionary<int, List<(IRElement Element,
+      (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>> SampledElements) {
+    public SampledElementsToLineMapping() :
+      this(new Dictionary<int, List<(IRElement Element,
+             (TimeSpan Weight, PerformanceCounterValueSet Counters) Profile)>>()) {
+    }
   }
 }
 

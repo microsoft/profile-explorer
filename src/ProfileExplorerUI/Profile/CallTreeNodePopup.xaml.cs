@@ -17,13 +17,17 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   private const int MaxPreviewNameLength = 80;
   private const double InitialWidth = 450;
   private const double InitialHeight = 400;
+  private const double MaxPopupWidth = 800;
+  private const double MinPopupWidth = 300;
   private Typeface defaultTextFont_;
   private bool showResizeGrip_;
   private bool canExpand_;
   private bool showBacktraceView_;
   private string backtraceText_;
   private ProfileCallTreeNodeEx nodeEx_;
-  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
+  private string title_;
+  private string titleTooltipText_;
+  private string descriptionText_;
 
   public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
                            Point position, UIElement referenceElement,
@@ -47,30 +51,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     DataContext = this;
   }
 
-  private void SetupEvents() {
-    FunctionListView.NodeClick += async (sender, treeNode) => {
-      await Session.ProfileFunctionSelected(treeNode, ToolPanelKind.Other);
-    };
-
-    FunctionListView.NodeDoubleClick += async (sender, treeNode) => {
-      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-      await Session.OpenProfileFunction(treeNode, mode);
-    };
-
-    PanelHost.MarkingChanged += (sender, args) => UpdateMarkingUI();
-    FunctionListView.MarkingChanged += (sender, args) => UpdateMarkingUI();
-  }
-
-  private void UpdateMarkingUI() {
-    Session.FunctionMarkingChanged(ToolPanelKind.Other);
-  }
-
-  protected override void SetPanelAccentColor(Color color) {
-    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
-    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
-  }
-
-  public event PropertyChangedEventHandler PropertyChanged;
+  public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
   public ISession Session { get; set; }
 
   public ProfileCallTreeNodeEx CallTreeNode {
@@ -98,23 +79,15 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     set => SetField(ref showBacktraceView_, value);
   }
 
-  private string title_;
-
   public string TitleText {
     get => CallTreeNode != null ? CallTreeNode.FunctionName : title_;
     set => SetField(ref title_, value);
   }
 
-  private string titleTooltipText_;
-
   public string TitleTooltipText {
     get => CallTreeNode != null ? CallTreeNode.FullFunctionName : titleTooltipText_;
     set => SetField(ref titleTooltipText_, value);
   }
-
-  private string descriptionText_;
-  private const double MaxPopupWidth = 800;
-  private const double MinPopupWidth = 300;
 
   public string DescriptionText {
     get => CallTreeNode != null ? CallTreeNode.ModuleName : descriptionText_;
@@ -125,6 +98,30 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   public bool HasDescriptionText => !string.IsNullOrEmpty(DescriptionText);
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private void SetupEvents() {
+    FunctionListView.NodeClick += async (sender, treeNode) => {
+      await Session.ProfileFunctionSelected(treeNode, ToolPanelKind.Other);
+    };
+
+    FunctionListView.NodeDoubleClick += async (sender, treeNode) => {
+      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      await Session.OpenProfileFunction(treeNode, mode);
+    };
+
+    PanelHost.MarkingChanged += (sender, args) => UpdateMarkingUI();
+    FunctionListView.MarkingChanged += (sender, args) => UpdateMarkingUI();
+  }
+
+  private void UpdateMarkingUI() {
+    Session.FunctionMarkingChanged(ToolPanelKind.Other);
+  }
+
+  protected override void SetPanelAccentColor(Color color) {
+    ToolbarPanel.Background = ColorBrushes.GetBrush(color);
+    PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
+  }
 
   public void ShowBackTrace(ProfileCallTreeNode node, int maxLevel,
                             FunctionNameFormatter nameFormatter) {

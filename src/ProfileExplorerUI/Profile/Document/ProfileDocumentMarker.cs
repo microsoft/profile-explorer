@@ -62,6 +62,29 @@ public class ProfileDocumentMarker {
                             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time",
                             null, 50.0, "TimeColumnHeaderTemplate");
 
+  //? TODO: Should be customizable (at least JSON if not UI)
+  //? TODO: Each column setting should have the abbreviation
+  private static readonly (string, string)[] PerfCounterNameReplacements = {
+    ("Instruction", "Instr"),
+    ("Misprediction", "Mispred")
+  };
+  private FunctionProfileData profile_;
+  private ProfileData globalProfile_;
+  private ProfileDocumentMarkerSettings settings_;
+  private OptionalColumnSettings columnSettings_;
+  private ICompilerInfoProvider irInfo_;
+
+  public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
+                               ProfileDocumentMarkerSettings settings,
+                               OptionalColumnSettings columnSettings,
+                               ICompilerInfoProvider ir) {
+    profile_ = profile;
+    globalProfile_ = globalProfile;
+    settings_ = settings;
+    columnSettings_ = columnSettings;
+    irInfo_ = ir;
+  }
+
   public OptionalColumn TimeColumnTemplate() {
     string timeUnit = settings_.ValueUnit switch {
       ProfileDocumentMarkerSettings.ValueUnitKind.Second      => "sec",
@@ -99,29 +122,6 @@ public class ProfileDocumentMarker {
     }
 
     return column;
-  }
-
-  //? TODO: Should be customizable (at least JSON if not UI)
-  //? TODO: Each column setting should have the abbreviation
-  private static readonly (string, string)[] PerfCounterNameReplacements = {
-    ("Instruction", "Instr"),
-    ("Misprediction", "Mispred")
-  };
-  private FunctionProfileData profile_;
-  private ProfileData globalProfile_;
-  private ProfileDocumentMarkerSettings settings_;
-  private OptionalColumnSettings columnSettings_;
-  private ICompilerInfoProvider irInfo_;
-
-  public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile,
-                               ProfileDocumentMarkerSettings settings,
-                               OptionalColumnSettings columnSettings,
-                               ICompilerInfoProvider ir) {
-    profile_ = profile;
-    globalProfile_ = globalProfile;
-    settings_ = settings;
-    columnSettings_ = columnSettings;
-    irInfo_ = ir;
   }
 
   public static bool IsPerfCounterVisible(PerformanceCounter counter) {
@@ -429,20 +429,6 @@ public class ProfileDocumentMarker {
     }
   }
 
-  private class DummyFunctionProfileInfoProvider : IFunctionProfileInfoProvider {
-    public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-      return new List<ProfileCallTreeNode>();
-    }
-
-    public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
-      return new();
-    }
-
-    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
-      return new List<ModuleProfileInfo>();
-    }
-  }
-
   public void MarkCallSites(IRDocument document, FunctionIR function, IRTextFunction textFunction,
                             SourceLineProfileResult processingResult) {
     var metadataTag = function.GetTag<AssemblyMetadataTag>();
@@ -479,9 +465,8 @@ public class ProfileDocumentMarker {
 
       //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
       var instr = element as InstructionIR;
-      // if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
-      //   continue;
-      if (instr == null) continue;
+      if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
+        continue;
 
       // Mark direct, known call targets with a different icon.
       var callTarget = irInfo_.IR.GetCallTarget(instr);
@@ -855,6 +840,21 @@ public class ProfileDocumentMarker {
       column.IsMainColumn = true;
       UpdateColumnStyle(column, columnData, function, document, settings_, columnSettings_);
     };
+  }
+
+  private class DummyFunctionProfileInfoProvider : IFunctionProfileInfoProvider {
+    public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+      return new List<ProfileCallTreeNode>();
+    }
+
+    public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+      ProfileCallTreeNode node) {
+      return new ValueTuple<List<ProfileCallTreeNode>, List<ModuleProfileInfo>>();
+    }
+
+    public List<ModuleProfileInfo> GetTopModules(ProfileCallTreeNode node) {
+      return new List<ModuleProfileInfo>();
+    }
   }
 
   private struct CounterSortHelper {

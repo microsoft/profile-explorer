@@ -15,6 +15,13 @@ public enum SourceCodeLanguage {
 }
 
 public class SourceCodeParser {
+  private const int ParsingTimeoutSeconds = 3;
+  private SourceCodeLanguage language_;
+
+  public SourceCodeParser(SourceCodeLanguage language = SourceCodeLanguage.Cpp) {
+    language_ = language;
+  }
+
   [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-cpp.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_cpp();
@@ -26,13 +33,6 @@ public class SourceCodeParser {
   [SuppressUnmanagedCodeSecurity]
   [DllImport("tree-sitter-rust.dll", CallingConvention = CallingConvention.Cdecl)]
   private static extern IntPtr tree_sitter_rust();
-
-  private const int ParsingTimeoutSeconds = 3;
-  private SourceCodeLanguage language_;
-
-  public SourceCodeParser(SourceCodeLanguage language = SourceCodeLanguage.Cpp) {
-    language_ = language;
-  }
 
   private TSLanguage InitializeParserLanguage(SourceCodeLanguage language) {
     switch (language) {

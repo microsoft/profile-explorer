@@ -66,7 +66,6 @@ public class GraphVizPrinter {
       RedirectStandardOutput = true
     };
 
-    //? TODO: Put path between " to support whitespace in the path.
     try {
       using var process = new Process {StartInfo = psi, EnableRaisingEvents = true};
 

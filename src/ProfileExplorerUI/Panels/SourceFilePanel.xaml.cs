@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -18,7 +17,6 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
-using ProtoBuf;
 
 namespace ProfileExplorer.UI;
 
@@ -42,14 +40,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     DataContext = this;
     SetupEvents();
     loadTask_ = new CancelableTaskInstance(false);
-  }
-
-  private void SetupEvents() {
-    ProfileTextView.LineSelected += (s, line) => {
-      if (settings_.SyncLineWithDocument) {
-        associatedDocument_?.SelectElementsOnSourceLine(line, currentInlinee_);
-      }
-    };
   }
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Source;
@@ -90,11 +80,6 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
   }
 
-  private void ReloadSourceFileFinder(SourceFileFinderSettings settings) {
-    sourceFileFinder_ = new SourceFileFinder(Session);
-    sourceFileFinder_.LoadSettings(settings);
-  }
-
   public string InlineeText {
     get => inlineeText_;
     set {
@@ -112,6 +97,19 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+
+  private void SetupEvents() {
+    ProfileTextView.LineSelected += (s, line) => {
+      if (settings_.SyncLineWithDocument) {
+        associatedDocument_?.SelectElementsOnSourceLine(line, currentInlinee_);
+      }
+    };
+  }
+
+  private void ReloadSourceFileFinder(SourceFileFinderSettings settings) {
+    sourceFileFinder_ = new SourceFileFinder(Session);
+    sourceFileFinder_.LoadSettings(settings);
+  }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

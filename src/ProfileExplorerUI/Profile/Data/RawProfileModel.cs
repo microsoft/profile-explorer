@@ -157,6 +157,19 @@ public class ProfileStack : IEquatable<ProfileStack> {
   public bool IsUnknown => FramePointers == null;
   public int FrameCount => FramePointers.Length;
 
+  public bool Equals(ProfileStack other) {
+    Debug.Assert(other != null);
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    // FramePointers is allocated using interning, ref. equality is sufficient.
+    return ContextId == other.ContextId &&
+           UserModeTransitionIndex == other.UserModeTransitionIndex &&
+           FramePointers == other.FramePointers;
+  }
+
   public static bool operator ==(ProfileStack left, ProfileStack right) {
     return Equals(left, right);
   }
@@ -204,19 +217,6 @@ public class ProfileStack : IEquatable<ProfileStack> {
 
   public override string ToString() {
     return $"#{FrameCount}, ContextId: {ContextId}";
-  }
-
-  public bool Equals(ProfileStack other) {
-    Debug.Assert(other != null);
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    // FramePointers is allocated using interning, ref. equality is sufficient.
-    return ContextId == other.ContextId &&
-           UserModeTransitionIndex == other.UserModeTransitionIndex &&
-           (FramePointers == other.FramePointers);
   }
 
   private long[] RentArray(int frameCount) {
@@ -303,6 +303,18 @@ public sealed class ProfileContext : IEquatable<ProfileContext> {
   [ProtoMember(3)]
   public int ProcessorNumber { get; set; }
 
+  public bool Equals(ProfileContext other) {
+    Debug.Assert(other != null);
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return ProcessId == other.ProcessId &&
+           ThreadId == other.ThreadId &&
+           ProcessorNumber == other.ProcessorNumber;
+  }
+
   public static bool operator ==(ProfileContext left, ProfileContext right) {
     return Equals(left, right);
   }
@@ -340,18 +352,6 @@ public sealed class ProfileContext : IEquatable<ProfileContext> {
   public override string ToString() {
     return $"ProcessId: {ProcessId}, ThreadId: {ThreadId}, Processor: {ProcessorNumber}";
   }
-
-  public bool Equals(ProfileContext other) {
-    Debug.Assert(other != null);
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return ProcessId == other.ProcessId &&
-           ThreadId == other.ThreadId &&
-           ProcessorNumber == other.ProcessorNumber;
-  }
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -388,6 +388,30 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
   public long Checksum { get; set; }
   public long BaseAddressEnd => BaseAddress + Size;
   public string ModuleName => Utils.TryGetFileName(FilePath);
+
+  public int CompareTo(ProfileImage other) {
+    if (BaseAddress < other.BaseAddress && BaseAddressEnd < other.BaseAddressEnd) {
+      return -1;
+    }
+
+    if (BaseAddress > other.BaseAddress && BaseAddressEnd > other.BaseAddressEnd) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  public bool Equals(ProfileImage other) {
+    Debug.Assert(other != null);
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Size == other.Size &&
+           FilePath == other.FilePath &&
+           Checksum == other.Checksum;
+  }
 
   public static bool operator ==(ProfileImage left, ProfileImage right) {
     return Equals(left, right);
@@ -435,30 +459,6 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
     return
       $"ModuleName: {ModuleName}, FilePath: {FilePath}, Id: {Id}, Base: {BaseAddress:X}, DefaultBase: {DefaultBaseAddress:X} Size: {Size}, Checksum {Checksum:X}";
   }
-
-  public int CompareTo(ProfileImage other) {
-    if (BaseAddress < other.BaseAddress && BaseAddressEnd < other.BaseAddressEnd) {
-      return -1;
-    }
-
-    if (BaseAddress > other.BaseAddress && BaseAddressEnd > other.BaseAddressEnd) {
-      return 1;
-    }
-
-    return 0;
-  }
-
-  public bool Equals(ProfileImage other) {
-    Debug.Assert(other != null);
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Size == other.Size &&
-           FilePath == other.FilePath &&
-           Checksum == other.Checksum;
-  }
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -497,6 +497,17 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
   public List<int> ThreadIds { get; set; }
   [ProtoMember(8)]
   public DateTime StartTime { get; set; }
+
+  public bool Equals(ProfileProcess other) {
+    Debug.Assert(other != null);
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return ProcessId == other.ProcessId &&
+           Name == other.Name;
+  }
 
   public static bool operator ==(ProfileProcess left, ProfileProcess right) {
     return Equals(left, right);
@@ -565,17 +576,6 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
       $"{Name}, ImageFileName {ImageFileName}, ID: {ProcessId}, ParentID: {ParentId}, Images: {ImageIds.Count}, Threads: {ThreadIds.Count}";
   }
 
-  public bool Equals(ProfileProcess other) {
-    Debug.Assert(other != null);
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return ProcessId == other.ProcessId &&
-           Name == other.Name;
-  }
-
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     ImageIds ??= new List<int>();
@@ -600,6 +600,16 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
   [ProtoMember(3)]
   public string Name { get; set; }
   public bool HasName => !string.IsNullOrEmpty(Name);
+
+  public bool Equals(ProfileThread other) {
+    Debug.Assert(other != null);
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return ThreadId == other.ThreadId && ProcessId == other.ProcessId;
+  }
 
   public static bool operator ==(ProfileThread left, ProfileThread right) {
     return Equals(left, right);
@@ -629,15 +639,5 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
 
   public override string ToString() {
     return $"{ThreadId}, ProcessId: {ProcessId}, Name: {Name}";
-  }
-
-  public bool Equals(ProfileThread other) {
-    Debug.Assert(other != null);
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return ThreadId == other.ThreadId && ProcessId == other.ProcessId;
   }
 }

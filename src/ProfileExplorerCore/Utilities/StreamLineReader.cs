@@ -18,10 +18,15 @@ public class StreamLineReader : IDisposable {
     fileStream_ = stream;
   }
 
-  /// <summary>
-  ///   CurrentLine number
-  /// </summary>
   public long CurrentPosition => currentPosition_;
+
+  public void Dispose() {
+    if (fileStream_ != null) {
+      fileStream_.Close();
+      fileStream_.Dispose();
+      fileStream_ = null;
+    }
+  }
 
   public void Seek(long offset) {
     fileStream_.Seek(offset, SeekOrigin.Begin);
@@ -64,13 +69,5 @@ public class StreamLineReader : IDisposable {
     }
 
     return builder.ToString();
-  }
-
-  public void Dispose() {
-    if (fileStream_ != null) {
-      fileStream_.Close();
-      fileStream_.Dispose();
-      fileStream_ = null;
-    }
   }
 }

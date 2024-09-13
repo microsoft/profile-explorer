@@ -1,17 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Enumeration;
 using System.Threading;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
-using ProfileExplorer.Core.FileFormat;
 using ProfileExplorer.UI.Compilers;
-using ProtoBuf;
 
 namespace ProfileExplorer.UI.Profile;
 

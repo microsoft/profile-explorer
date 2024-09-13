@@ -30,6 +30,18 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 
   public bool HasSingleTarget => Targets.Count == 1;
 
+  public bool Equals(ProfileCallSite other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return RVA == other.RVA;
+  }
+
   public static bool operator ==(ProfileCallSite left, ProfileCallSite right) {
     return Equals(left, right);
   }
@@ -89,18 +101,6 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
 
   public override int GetHashCode() {
     return RVA.GetHashCode();
-  }
-
-  public bool Equals(ProfileCallSite other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return RVA == other.RVA;
   }
 
   public override string ToString() {

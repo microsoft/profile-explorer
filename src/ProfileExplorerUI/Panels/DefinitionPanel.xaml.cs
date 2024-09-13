@@ -26,6 +26,14 @@ public partial class DefinitionPanel : ToolPanelControl {
     loadTask_ = new CancelableTaskInstance(false);
   }
 
+  public override ToolPanelKind PanelKind => ToolPanelKind.Definition;
+  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
+
+  public override bool HasPinnedContent {
+    get => FixedToolbar.IsPinned;
+    set => FixedToolbar.IsPinned = value;
+  }
+
   private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
@@ -36,16 +44,6 @@ public partial class DefinitionPanel : ToolPanelControl {
 
   private void PanelToolbarTray_PinnedChanged(object sender, PinEventArgs e) {
     HasPinnedContent = e.IsPinned;
-  }
-
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Definition;
-  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
-
-  public override bool HasPinnedContent {
-    get => FixedToolbar.IsPinned;
-    set => FixedToolbar.IsPinned = value;
   }
 
   public override void OnElementSelected(IRElementEventArgs e) {
@@ -149,6 +147,4 @@ public partial class DefinitionPanel : ToolPanelControl {
     var defPanel = sourcePanel as DefinitionPanel;
     await TextView.InitializeFromDocument(defPanel.TextView);
   }
-
-        #endregion
 }

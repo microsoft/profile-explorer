@@ -29,10 +29,6 @@ public partial class ActionPanel : UserControl, INotifyPropertyChanged {
     ActionButtonsPanel.ItemsSource = buttons_;
   }
 
-  public event EventHandler RemarksButtonClicked;
-  public event EventHandler<ActionPanelButton> ActionButtonClicked;
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public bool ShowRemarksButton {
     get => showRemarksButton_;
     set {
@@ -44,6 +40,9 @@ public partial class ActionPanel : UserControl, INotifyPropertyChanged {
   }
 
   public bool HasActionButtons => buttons_.Count > 0;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler RemarksButtonClicked;
+  public event EventHandler<ActionPanelButton> ActionButtonClicked;
 
   public ActionPanelButton AddActionButton(string name, object tag = null) {
     var button = new ActionPanelButton(name, tag);

@@ -1,18 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using System;
 using System.Windows;
-using System.Windows.Input;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class SectionOptionsPanel : OptionsPanelBase {
-  public override double DefaultHeight => 450;
-  public override double DefaultWidth => 400;
-
   public SectionOptionsPanel() {
     InitializeComponent();
   }
+
+  public override double DefaultHeight => 450;
+  public override double DefaultWidth => 400;
 
   public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
     base.Initialize(parent, settings, session);

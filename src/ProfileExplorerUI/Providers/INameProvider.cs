@@ -27,7 +27,6 @@ public interface INameProvider {
 
   string DemangleFunctionName(string name, FunctionNameDemanglingOptions options);
   string FormatFunctionName(IRTextFunction function);
-
   string FormatFunctionName(string name);
 
   void SettingsChanged();

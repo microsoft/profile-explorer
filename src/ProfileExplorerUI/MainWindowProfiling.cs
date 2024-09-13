@@ -22,14 +22,12 @@ public partial class MainWindow : Window, ISession {
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
   private OptionsPanelHostPopup markingOptionsPanelPopup_;
-
-  public ProfileData ProfileData => sessionState_?.ProfileData;
   public bool IsProfileSession => ProfileData != null;
-
   public bool HasEnabledMarkedFunctions =>
     MarkingSettings.HasEnabledFunctionMarkings;
   public bool HasEnabledMarkedModules =>
     MarkingSettings.HasEnabledModuleMarkings;
+  public ProfileData ProfileData => sessionState_?.ProfileData;
 
   public ProfileFilterState ProfileFilter {
     get => profileFilter_;
@@ -139,12 +137,6 @@ public partial class MainWindow : Window, ISession {
     ResetApplicationProgress();
     StopUIUpdate();
     return true;
-  }
-
-  private void SetActiveProfileFilter(ProfileFilterState state) {
-    ProfileFilter = state;
-    ProfileFilterStateHost.DataContext = null;
-    ProfileFilterStateHost.DataContext = state;
   }
 
   public async Task<bool> RemoveProfileSamplesFilter() {
@@ -412,6 +404,52 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
+  public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
+    return await CompilerInfo.GetOrCreateDebugInfoProvider(function).ConfigureAwait(false);
+  }
+
+  public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {
+    if (sourcePanelKind != ToolPanelKind.Section) {
+      if (FindPanel(ToolPanelKind.Section) is SectionPanelPair panel) {
+        await panel.UpdateMarkedFunctions(true);
+      }
+    }
+
+    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
+      var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+      panel?.UpdateMarkedFunctions(true);
+    }
+
+    if (sourcePanelKind != ToolPanelKind.CallTree) {
+      if (FindPanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
+        await panel.UpdateMarkedFunctions(true);
+      }
+    }
+
+    if (sourcePanelKind != ToolPanelKind.CallerCallee) {
+      if (FindPanel(ToolPanelKind.CallerCallee) is CallTreePanel panel) {
+        await panel.UpdateMarkedFunctions(true);
+      }
+    }
+
+    // Also update any detached profiling popup.
+    foreach (var popup in detachedPanels_) {
+      if (popup is CallTreeNodePopup nodePopup) {
+        nodePopup.UpdateMarkedFunctions();
+      }
+    }
+
+    OnPropertyChanged(nameof(HasEnabledMarkedModules));
+    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
+    return true;
+  }
+
+  private void SetActiveProfileFilter(ProfileFilterState state) {
+    ProfileFilter = state;
+    ProfileFilterStateHost.DataContext = null;
+    ProfileFilterStateHost.DataContext = state;
+  }
+
   private void UnloadProfilingDebugInfo() {
     if (ProfileData == null) {
       return;
@@ -563,46 +601,6 @@ public partial class MainWindow : Window, ISession {
     }
 
     return callNodes.ToList();
-  }
-
-  public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
-    return await CompilerInfo.GetOrCreateDebugInfoProvider(function).ConfigureAwait(false);
-  }
-
-  public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {
-    if (sourcePanelKind != ToolPanelKind.Section) {
-      if (FindPanel(ToolPanelKind.Section) is SectionPanelPair panel) {
-        await panel.UpdateMarkedFunctions(true);
-      }
-    }
-
-    if (sourcePanelKind != ToolPanelKind.FlameGraph) {
-      var panel = FindPanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
-      panel?.UpdateMarkedFunctions(true);
-    }
-
-    if (sourcePanelKind != ToolPanelKind.CallTree) {
-      if (FindPanel(ToolPanelKind.CallTree) is CallTreePanel panel) {
-        await panel.UpdateMarkedFunctions(true);
-      }
-    }
-
-    if (sourcePanelKind != ToolPanelKind.CallerCallee) {
-      if (FindPanel(ToolPanelKind.CallerCallee) is CallTreePanel panel) {
-        await panel.UpdateMarkedFunctions(true);
-      }
-    }
-
-    // Also update any detached profiling popup.
-    foreach (var popup in detachedPanels_) {
-      if (popup is CallTreeNodePopup nodePopup) {
-        nodePopup.UpdateMarkedFunctions();
-      }
-    }
-
-    OnPropertyChanged(nameof(HasEnabledMarkedModules));
-    OnPropertyChanged(nameof(HasEnabledMarkedFunctions));
-    return true;
   }
 
   private void RemoveProfileTimeRangeButton_Click(object sender, RoutedEventArgs e) {

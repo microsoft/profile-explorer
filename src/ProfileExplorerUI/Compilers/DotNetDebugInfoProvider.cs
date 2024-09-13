@@ -5,12 +5,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
-using System.Threading.Tasks;
+using Microsoft.Diagnostics.Symbols;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Utilities;
-using Microsoft.Diagnostics.Symbols;
 
 namespace ProfileExplorer.UI.Compilers;
 
@@ -35,47 +34,8 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   public Machine? Architecture => architecture_;
   public SymbolFileSourceSettings SymbolSettings { get; set; }
 
-  public void UpdateArchitecture(Machine architecture) {
-    if (architecture_ == Machine.Unknown) {
-      architecture_ = architecture;
-    }
-  }
-
-  public MethodCode FindMethodCode(FunctionDebugInfo funcInfo) {
-    return methodCodeMap_?.GetValueOrNull(funcInfo.RVA);
-  }
-
-  public void AddFunctionInfo(FunctionDebugInfo funcInfo) {
-    functions_.Add(funcInfo);
-    functionMap_[funcInfo.Name] = funcInfo;
-  }
-
-  public void AddMethodILToNativeMap(FunctionDebugInfo functionDebugInfo,
-                                     List<(int ILOffset, int NativeOffset)> ilOffsets) {
-    methodILNativeMap_[functionDebugInfo] = ilOffsets;
-  }
-
-  public void LoadingCompleted() {
-    functions_.Sort();
-  }
-
-  public void AddMethodCode(long codeAddress, MethodCode code) {
-    methodCodeMap_ ??= new Dictionary<long, MethodCode>();
-    methodCodeMap_[codeAddress] = code;
-  }
-
   public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
     return AnnotateSourceLocations(function, textFunc.Name);
-  }
-
-  public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
-    var funcInfo = FindFunction(functionName);
-
-    if (funcInfo == null) {
-      return false;
-    }
-
-    return AnnotateSourceLocations(function, funcInfo);
   }
 
   public bool AnnotateSourceLocations(FunctionIR function,
@@ -153,10 +113,6 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
     return SourceLineDebugInfo.Unknown;
   }
 
-  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
-    return true;
-  }
-
   public void Unload() {
   }
 
@@ -168,6 +124,49 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
+    return true;
+  }
+
+  public void UpdateArchitecture(Machine architecture) {
+    if (architecture_ == Machine.Unknown) {
+      architecture_ = architecture;
+    }
+  }
+
+  public MethodCode FindMethodCode(FunctionDebugInfo funcInfo) {
+    return methodCodeMap_?.GetValueOrNull(funcInfo.RVA);
+  }
+
+  public void AddFunctionInfo(FunctionDebugInfo funcInfo) {
+    functions_.Add(funcInfo);
+    functionMap_[funcInfo.Name] = funcInfo;
+  }
+
+  public void AddMethodILToNativeMap(FunctionDebugInfo functionDebugInfo,
+                                     List<(int ILOffset, int NativeOffset)> ilOffsets) {
+    methodILNativeMap_[functionDebugInfo] = ilOffsets;
+  }
+
+  public void LoadingCompleted() {
+    functions_.Sort();
+  }
+
+  public void AddMethodCode(long codeAddress, MethodCode code) {
+    methodCodeMap_ ??= new Dictionary<long, MethodCode>();
+    methodCodeMap_[codeAddress] = code;
+  }
+
+  public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
+    var funcInfo = FindFunction(functionName);
+
+    if (funcInfo == null) {
+      return false;
+    }
+
+    return AnnotateSourceLocations(function, funcInfo);
+  }
+
+  public bool LoadDebugInfo(string debugFilePath, IDebugInfoProvider other = null) {
     return true;
   }
 

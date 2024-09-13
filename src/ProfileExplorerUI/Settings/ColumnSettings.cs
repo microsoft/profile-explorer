@@ -8,12 +8,12 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class ColumnSettings : SettingsBase {
-  [ProtoMember(1)][OptionValue()]
-  public Dictionary<string, ColumnState> ColumnStates { get; set; }
-
   public ColumnSettings() {
     Reset();
   }
+
+  [ProtoMember(1)][OptionValue()]
+  public Dictionary<string, ColumnState> ColumnStates { get; set; }
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
@@ -102,16 +102,16 @@ public class ColumnSettings : SettingsBase {
 
 [ProtoContract(SkipConstructor = true)]
 public class ColumnState : SettingsBase {
+  public ColumnState() {
+    Reset();
+  }
+
   [ProtoMember(1)][OptionValue(true)]
   public bool IsVisible { get; set; }
   [ProtoMember(2)][OptionValue(50)]
   public int Width { get; set; }
   [ProtoMember(3)][OptionValue(int.MaxValue)]
   public int Order { get; set; }
-
-  public ColumnState() {
-    Reset();
-  }
 
   public override void Reset() {
     ResetAllOptions(this);

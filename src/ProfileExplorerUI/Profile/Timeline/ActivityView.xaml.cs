@@ -10,7 +10,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
-using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
@@ -105,16 +104,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     PreviewMouseWheel += ActivityView_PreviewMouseWheel;
   }
 
-  public event EventHandler<SampleTimeRangeInfo> SelectingTimeRange;
-  public event EventHandler<SampleTimeRangeInfo> SelectedTimeRange;
-  public event EventHandler<SampleTimeRangeInfo> FilteredTimeRange;
-  public event EventHandler<bool> ThreadIncludedChanged;
-  public event EventHandler ClearedSelectedTimeRange;
-  public event EventHandler ClearedFilteredTimeRange;
-  public event EventHandler<SampleTimePointInfo> HoveringTimePoint;
-  public event EventHandler<SampleTimePointInfo> SelectedTimePoint;
-  public event EventHandler ClearedTimePoint;
-  public event PropertyChangedEventHandler PropertyChanged;
   public List<MarkedSamples> MarkedSamples => markedSamples_;
   public RelayCommand<object> FilterTimeRangeCommand => new(obj => ApplyTimeRangeFilter());
   public RelayCommand<object> ClearSelectionCommand => new(obj => ClearSelectedTimeRange());
@@ -269,6 +258,16 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
 
   protected override int VisualChildrenCount => 1;
   private TimeSpan SelectionTimeDiff => selectionEndTime_ - selectionStartTime_;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<SampleTimeRangeInfo> SelectingTimeRange;
+  public event EventHandler<SampleTimeRangeInfo> SelectedTimeRange;
+  public event EventHandler<SampleTimeRangeInfo> FilteredTimeRange;
+  public event EventHandler<bool> ThreadIncludedChanged;
+  public event EventHandler ClearedSelectedTimeRange;
+  public event EventHandler ClearedFilteredTimeRange;
+  public event EventHandler<SampleTimePointInfo> HoveringTimePoint;
+  public event EventHandler<SampleTimePointInfo> SelectedTimePoint;
+  public event EventHandler ClearedTimePoint;
 
   public void SelectTimeRange(SampleTimeRangeInfo range) {
     selectionStartTime_ = range.StartTime - startTime_;
@@ -608,10 +607,10 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
             prevSliceList.Slices.Add(currentSlice);
             prevSliceList.TotalWeight += currentSlice.Weight;
             prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
-                                                                   currentSlice.Weight.Ticks));
+                                                                  currentSlice.Weight.Ticks));
           }
 
-          if(!sliceSeriesDict.TryGetValue(queryThreadId, out var sliceList)) {
+          if (!sliceSeriesDict.TryGetValue(queryThreadId, out var sliceList)) {
             sliceList = new SliceList(queryThreadId, (int)Math.Ceiling(slices)) {
               TimePerSlice = TimeSpan.FromTicks((long)timePerSlice),
               MaxSlices = (int)slices
@@ -642,7 +641,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       prevSliceList.Slices.Add(currentSlice);
       prevSliceList.TotalWeight += currentSlice.Weight;
       prevSliceList.MaxWeight = TimeSpan.FromTicks(Math.Max(prevSliceList.MaxWeight.Ticks,
-                                                             currentSlice.Weight.Ticks));
+                                                            currentSlice.Weight.Ticks));
     }
 
     if (sliceSeriesDict.Count == 0) {
@@ -822,7 +821,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 
   private MarkedSamples FindMarkedSamples(TimeSpan time) {
-    var closeTimeDiff = TimeSpan.FromMilliseconds(1); //? TODO: Adjust based on zoom?
+    var closeTimeDiff = TimeSpan.FromMilliseconds(1);
     var querySample = new SampleIndex(0, time);
 
     foreach (var markedSamples in markedSamples_) {

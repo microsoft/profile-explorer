@@ -12,6 +12,7 @@ using System.Threading;
 namespace ProfileExplorer.UI.Profile;
 
 public class NamedPipeServer : IDisposable {
+  public delegate void MessageReceivedDelegate(PipeMessageHeader messageHeader, byte[] messageBody);
   private static readonly int HeaderSize = Marshal.SizeOf<PipeMessageHeader>();
   private NamedPipeServerStream pipeStream_;
   private BinaryReader reader_;
@@ -33,7 +34,18 @@ public class NamedPipeServer : IDisposable {
                                                   0, 0, pipeSecurity);
   }
 
-  public delegate void MessageReceivedDelegate(PipeMessageHeader messageHeader, byte[] messageBody);
+  public void Dispose() {
+    if (connected_) {
+      reader_?.Dispose();
+      writer_?.Dispose();
+
+      if (pipeStream_.IsConnected) {
+        pipeStream_.Disconnect();
+      }
+    }
+
+    pipeStream_.Dispose();
+  }
 
   public void ReceiveMessages(MessageReceivedDelegate action, CancellationToken cancellationToken) {
     if (!Connect()) {
@@ -94,19 +106,6 @@ public class NamedPipeServer : IDisposable {
 
   public void Flush() {
     writer_.Flush();
-  }
-
-  public void Dispose() {
-    if (connected_) {
-      reader_?.Dispose();
-      writer_?.Dispose();
-
-      if (pipeStream_.IsConnected) {
-        pipeStream_.Disconnect();
-      }
-    }
-
-    pipeStream_.Dispose();
   }
 
   private void SendMessageHeader(int kind, int bodySize) {

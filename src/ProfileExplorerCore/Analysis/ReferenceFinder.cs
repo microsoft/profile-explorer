@@ -136,10 +136,6 @@ public sealed class ReferenceFinder {
     }
   }
 
-  public void PrecomputeAllReferences() {
-    //? TODO using single walk to collect all refs for each operand
-  }
-
   //? TODO: Should be moved to the SimilarValueFinder
   public IRElement FindEquivalentValue(IRElement element, bool onlySSA = false) {
     //? by querying an IR-level interface for "equivalent symbols"

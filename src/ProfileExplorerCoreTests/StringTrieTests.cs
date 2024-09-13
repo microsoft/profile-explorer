@@ -2,19 +2,13 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorer.Core.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ProfileExplorer.Core.Collections;
 
 namespace ProfileExplorerCoreTests;
 
 [TestClass]
 public class StringTrieTests {
-  private enum TestEnum {
-    Value1,
-    Value2,
-    Value3
-  }
-
   [TestMethod]
   public void StringValueTest() {
     var trie = new StringTrie<string>();
@@ -100,5 +94,11 @@ public class StringTrieTests {
   private T GenerateRandomEnum<T>(Random random) where T : Enum {
     var values = Enum.GetValues(typeof(T));
     return (T)values.GetValue(random.Next(values.Length));
+  }
+
+  private enum TestEnum {
+    Value1,
+    Value2,
+    Value3
   }
 }

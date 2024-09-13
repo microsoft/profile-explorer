@@ -48,6 +48,7 @@ public class LoadedDocument : IDisposable {
   public Dictionary<IRTextSection, object> SectionStates;
   private FileSystemWatcher documentWatcher_;
   private IRTextSummary summary_;
+  private bool disposed_;
 
   public LoadedDocument(string filePath, string modulePath, Guid id) {
     FilePath = filePath;
@@ -58,7 +59,6 @@ public class LoadedDocument : IDisposable {
     SectionStates = new Dictionary<IRTextSection, object>();
   }
 
-  public event EventHandler DocumentChanged;
   public Guid Id { get; set; }
   public string ModuleName { get; set; }
   public string FilePath { get; set; }
@@ -85,6 +85,13 @@ public class LoadedDocument : IDisposable {
   public bool BinaryFileExists => BinaryFile is {Found: true};
   public bool HasSymbolFileInfo => SymbolFileInfo != null;
   public string FileName => Utils.TryGetFileName(FilePath);
+
+  public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  public event EventHandler DocumentChanged;
 
   public static LoadedDocument CreateDummyDocument(string name) {
     return CreateDummyDocument(name, Guid.NewGuid());
@@ -210,10 +217,6 @@ public class LoadedDocument : IDisposable {
     DocumentChanged?.Invoke(this, new EventArgs());
   }
 
-        #region IDisposable Support
-
-  private bool disposed_;
-
   protected virtual void Dispose(bool disposing) {
     if (!disposed_) {
       Loader?.Dispose();
@@ -226,11 +229,4 @@ public class LoadedDocument : IDisposable {
   ~LoadedDocument() {
     Dispose(false);
   }
-
-  public void Dispose() {
-    Dispose(true);
-    GC.SuppressFinalize(this);
-  }
-
-        #endregion
 }

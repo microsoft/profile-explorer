@@ -19,7 +19,7 @@ public class RegisterTable {
     set => throw new NotImplementedException();
   }
 
-  public virtual RegisterIR GetRegister(string name) {
+  public RegisterIR GetRegister(string name) {
     if (registerMap_.TryGetValue(name, out var register)) {
       return register;
     }
@@ -28,12 +28,8 @@ public class RegisterTable {
     return null;
   }
 
-  public virtual RegisterIR GetRegister(ReadOnlyMemory<char> name) {
+  public RegisterIR GetRegister(ReadOnlyMemory<char> name) {
     return null;
-  }
-
-  public void AddVirtualRegister(RegisterIR register) {
-    //? TODO: Support for gr0-grN, etc
   }
 
   public void AddRegisterAlias(string registerAlias, string register) {

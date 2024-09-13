@@ -26,6 +26,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private const double ZoomAnimationDuration = TimePerFrame * 8;
   private const double EnlargeAnimationDuration = TimePerFrame * 10;
   private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 4;
+  private readonly Stack<FlameGraphState> stateStack_;
   private ProfileCallTree callTree_;
   private bool dragging_;
   private Point draggingStart_;
@@ -40,7 +41,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private FlameGraphSettings settings_;
   private bool showNodePanel_;
   private PopupHoverPreview nodeHoverPreview_;
-  private readonly Stack<FlameGraphState> stateStack_;
   private DoubleAnimation widthAnimation_;
   private DoubleAnimation zoomAnimation_;
   private double zoomPointX_;
@@ -60,7 +60,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public ISession Session { get; set; }
   public FlameGraph FlameGraph => GraphViewer.FlameGraph;
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
-
   public bool UseAnimations => App.Settings.GeneralSettings.UseAnimations;
 
   public bool EnableSingleNodeActions {
@@ -120,17 +119,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       SearchableProfileItem.CopyFunctionListAsHtml(funcList);
     }
   });
-
-  private void MarkSelectedNodes(object obj, Action<FlameGraphNode, Color> action) {
-    if (obj is SelectedColorEventArgs e) {
-      foreach (var node in SelectedNodes) {
-        if (node.HasFunction) {
-          action(node, e.SelectedColor);
-        }
-      }
-    }
-  }
-
   public RelayCommand<object> MarkInstanceCommand => new(async obj => {
     MarkSelectedNodes(obj, (node, color) => GraphViewer.MarkNode(node, GraphViewer.MarkedColoredNodeStyle(color)));
   });
@@ -174,16 +162,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
                                                      GraphViewer, Session, filter, false, brush);
     }
   });
-
-  private Brush GetMarkedNodeColor(FlameGraphNode node) {
-    if (node is not {HasFunction: true}) {
-      return null;
-    }
-
-    return App.Settings.MarkingSettings.
-      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
-  }
-
   public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
@@ -220,27 +198,33 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     return callTree_.GetBacktrace(node);
   }
 
-  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+    ProfileCallTreeNode node) {
     return callTree_.GetTopFunctionsAndModules(node);
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
+
+  private void MarkSelectedNodes(object obj, Action<FlameGraphNode, Color> action) {
+    if (obj is SelectedColorEventArgs e) {
+      foreach (var node in SelectedNodes) {
+        if (node.HasFunction) {
+          action(node, e.SelectedColor);
+        }
+      }
+    }
+  }
+
+  private Brush GetMarkedNodeColor(FlameGraphNode node) {
+    if (node is not {HasFunction: true}) {
+      return null;
+    }
+
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+
   public event EventHandler MarkingChanged;
-
-  private enum FlameGraphStateKind {
-    Default,
-    EnlargeNode,
-    ChangeRootNode
-  }
-
-  private class FlameGraphState {
-    public FlameGraphStateKind Kind { get; set; }
-    public FlameGraphNode Node { get; set; }
-    public double MaxGraphWidth { get; set; }
-    public double HorizontalOffset { get; set; }
-    public double VerticalOffset { get; set; }
-  }
-
   public event EventHandler<FlameGraphNode> NodeSelected;
   public event EventHandler NodesDeselected;
   public event EventHandler<double> HorizontalOffsetChanged;
@@ -1041,7 +1025,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     // Disable animation if scrolling without interruption.
     var time = DateTime.UtcNow;
     var timeElapsed = time - lastWheelZoomTime_;
-    bool animate = UseAnimations && (timeElapsed.TotalMilliseconds > ScrollWheelZoomAnimationDuration);
+    bool animate = UseAnimations && timeElapsed.TotalMilliseconds > ScrollWheelZoomAnimationDuration;
 
     double amount = ScrollWheelZoomAmount * GraphZoomRatio; // Keep step consistent.
     double step = amount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
@@ -1201,6 +1185,42 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
+  public async Task ClearRootNode() {
+    // Undo all states until a root node change is found.
+    while (stateStack_.TryPop(out var state)) {
+      if (state.Kind == FlameGraphStateKind.ChangeRootNode) {
+        RootNodeCleared?.Invoke(this, EventArgs.Empty);
+        GraphViewer.RestoreFixedMarkedNodes();
+        await ChangeRootNode(state.Node, false); // May enable a previous root node.
+        break;
+      }
+    }
+  }
+
+  public void SettingsUpdated(FlameGraphSettings value) {
+    settings_ = value;
+    GraphViewer.SettingsUpdated(value);
+    SetupPreviewPopup();
+  }
+
+  public void ClearSelection() {
+    GraphViewer.ClearSelection();
+  }
+
+  private enum FlameGraphStateKind {
+    Default,
+    EnlargeNode,
+    ChangeRootNode
+  }
+
+  private class FlameGraphState {
+    public FlameGraphStateKind Kind { get; set; }
+    public FlameGraphNode Node { get; set; }
+    public double MaxGraphWidth { get; set; }
+    public double HorizontalOffset { get; set; }
+    public double VerticalOffset { get; set; }
+  }
+
     #region Animation support
 
   public static DependencyProperty FlameGraphWidthProperty =
@@ -1272,26 +1292,4 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
     #endregion
-
-  public async Task ClearRootNode() {
-    // Undo all states until a root node change is found.
-    while (stateStack_.TryPop(out var state)) {
-      if (state.Kind == FlameGraphStateKind.ChangeRootNode) {
-        RootNodeCleared?.Invoke(this, EventArgs.Empty);
-        GraphViewer.RestoreFixedMarkedNodes();
-        await ChangeRootNode(state.Node, false); // May enable a previous root node.
-        break;
-      }
-    }
-  }
-
-  public void SettingsUpdated(FlameGraphSettings value) {
-    settings_ = value;
-    GraphViewer.SettingsUpdated(value);
-    SetupPreviewPopup();
-  }
-
-  public void ClearSelection() {
-    GraphViewer.ClearSelection();
-  }
 }

@@ -18,13 +18,6 @@ public class BeyondCompareDiffBuilder {
   private const string BeyondCompareDirectory = @"Beyond Compare 4";
   private const string BeyondCompareExecutable = @"BCompare.exe";
 
-  private enum Section {
-    All,
-    Begin,
-    Middle,
-    End
-  }
-
   public static string FindBeyondCompareExecutable() {
     // Look for BC in Program Files.
     string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
@@ -321,5 +314,12 @@ public class BeyondCompareDiffBuilder {
 
     node3 = collectionEnum.Current;
     return true;
+  }
+
+  private enum Section {
+    All,
+    Begin,
+    Middle,
+    End
   }
 }

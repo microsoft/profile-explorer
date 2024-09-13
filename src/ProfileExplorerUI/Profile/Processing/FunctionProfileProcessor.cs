@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
@@ -10,22 +9,13 @@ using ProfileExplorer.Core;
 namespace ProfileExplorer.UI.Profile;
 
 public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
-  private class ChunkData {
-    public HashSet<int> StackModules = new();
-    public HashSet<IRTextFunction> StackFunctions = new();
-    public Dictionary<int, TimeSpan> ModuleWeights = new();
-    public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles = new();
-    public TimeSpan TotalWeight = TimeSpan.Zero;
-    public TimeSpan ProfileWeight = TimeSpan.Zero;
-  }
-
   private ProfileSampleFilter filter_;
   private List<List<IRTextFunction>> filterStackFuncts_;
   private List<ChunkData> chunks_;
 
   private FunctionProfileProcessor(ProfileSampleFilter filter) {
     filter_ = filter;
-    chunks_ = new();
+    chunks_ = new List<ChunkData>();
 
     if (filter_ != null && filter_.FunctionInstances is {Count: > 0}) {
       // Compute once the list of functions on the path
@@ -45,6 +35,8 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
     }
   }
 
+  public ProfileData Profile { get; } = new();
+
   private void AddInstanceFilter(ProfileCallTreeNode node) {
     var stackFuncts = new List<IRTextFunction>();
 
@@ -56,8 +48,6 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
     stackFuncts.Reverse();
     filterStackFuncts_.Add(stackFuncts);
   }
-
-  public ProfileData Profile { get; } = new();
 
   public static ProfileData Compute(ProfileData profile, ProfileSampleFilter filter,
                                     int maxChunks = int.MaxValue) {
@@ -138,7 +128,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
       long frameRva = resolvedFrame.FrameRVA;
       var textFunction = frameDetails.Function;
       ref var funcProfile =
-        ref CollectionsMarshal.GetValueRefOrAddDefault(data.FunctionProfiles, frameDetails.Function, out var exists);
+        ref CollectionsMarshal.GetValueRefOrAddDefault(data.FunctionProfiles, frameDetails.Function, out bool exists);
 
       if (!exists) {
         funcProfile = new FunctionProfileData(frameDetails.DebugInfo);
@@ -188,7 +178,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
         var newChunks = new List<ChunkData>(chunks_.Count / step);
 
         for (int i = 0; i < chunks_.Count / step; i++) {
-          var iCopy = i;
+          int iCopy = i;
           newChunks.Add(chunks_[iCopy * step]);
 
           tasks[i] = Task.Run(() => {
@@ -205,7 +195,7 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
         // Handle any chuncks that were not paired during the parallel phase.
         // With a step of 2 this can happen only in the first round.
         if (chunks_.Count % step != 0) {
-          int lastHandledIndex = (chunks_.Count / step) * step;
+          int lastHandledIndex = chunks_.Count / step * step;
 
           for (int i = lastHandledIndex; i < chunks_.Count; i++) {
             MergeChuncks(chunks_[0], chunks_[i]);
@@ -235,5 +225,14 @@ public sealed class FunctionProfileProcessor : ProfileSampleProcessor {
         existingValue = pair.Value;
       }
     }
+  }
+
+  private class ChunkData {
+    public HashSet<int> StackModules = new();
+    public HashSet<IRTextFunction> StackFunctions = new();
+    public Dictionary<int, TimeSpan> ModuleWeights = new();
+    public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles = new();
+    public TimeSpan TotalWeight = TimeSpan.Zero;
+    public TimeSpan ProfileWeight = TimeSpan.Zero;
   }
 }

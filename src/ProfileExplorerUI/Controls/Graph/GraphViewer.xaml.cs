@@ -54,11 +54,6 @@ public partial class GraphViewer : FrameworkElement {
     SetupEvents();
   }
 
-  public event EventHandler<TaggedObject> NodeSelected;
-  public event EventHandler<IRElementEventArgs> BlockSelected;
-  public event EventHandler<IRElementMarkedEventArgs> BlockMarked;
-  public event EventHandler<IRElementMarkedEventArgs> BlockUnmarked;
-  public event EventHandler GraphLoaded;
   public Graph Graph => graph_;
   public bool IsGraphLoaded => graphVisual_ != null;
   public IRElement SelectedElement => element_;
@@ -83,6 +78,11 @@ public partial class GraphViewer : FrameworkElement {
   }
 
   protected override int VisualChildrenCount => 1;
+  public event EventHandler<TaggedObject> NodeSelected;
+  public event EventHandler<IRElementEventArgs> BlockSelected;
+  public event EventHandler<IRElementMarkedEventArgs> BlockMarked;
+  public event EventHandler<IRElementMarkedEventArgs> BlockUnmarked;
+  public event EventHandler GraphLoaded;
 
   public GraphNode GetSelectedNode() {
     if (selectedNodes_.Count > 0) {

@@ -179,8 +179,6 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     hover.MouseHoverStopped += Hover_MouseHoverStopped;
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
-
   public ReferenceKind FilterKind {
     get => filterKind_;
     set {
@@ -254,6 +252,16 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
       }
     }
   }
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.References;
+  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
+
+  public override bool HasPinnedContent {
+    get => FixedToolbar.IsPinned;
+    set => FixedToolbar.IsPinned = value;
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public void OnPropertyChange(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -523,16 +531,6 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     });
   }
 
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.References;
-  public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
-
-  public override bool HasPinnedContent {
-    get => FixedToolbar.IsPinned;
-    set => FixedToolbar.IsPinned = value;
-  }
-
   public override async Task OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
     if (section == section_) {
       return;
@@ -585,6 +583,4 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     documentText_ = sourceRefPanel.documentText_;
     IsPanelEnabled = Document != null;
   }
-
-        #endregion
 }

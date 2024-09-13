@@ -12,9 +12,6 @@ namespace ProfileExplorer.Core;
 
 public static class CompressionUtils {
   public static byte[] Compress(byte[] data, CompressionLevel level = CompressionLevel.Fastest) {
-    //? TODO: Mapping of compression level
-    // https://paulcalvano.com/index.php/2018/07/25/brotli-compression-how-much-will-it-reduce-your-content/
-    //level = (CompressionLevel)3;
     using var uncompressedStream = new MemoryStream(data);
     using var compressedStream = new MemoryStream();
     using var compressorStream = new BrotliStream(compressedStream, level, true);
@@ -105,6 +102,10 @@ public class CompressedString : IEquatable<CompressedString> {
   public int Size => data_.Length;
   public byte[] UniqueId => CompressionUtils.CreateSHA256(data_);
 
+  public bool Equals(CompressedString other) {
+    return Equals((object)other);
+  }
+
   public static bool operator ==(CompressedString left, CompressedString right) {
     return left.Equals(right);
   }
@@ -130,10 +131,6 @@ public class CompressedString : IEquatable<CompressedString> {
   public override string ToString() {
     return CompressionUtils.DecompressString(data_);
   }
-
-  public bool Equals(CompressedString other) {
-    return Equals((object)other);
-  }
 }
 
 public class CompressedObject<T> where T : class {
@@ -145,8 +142,6 @@ public class CompressedObject<T> where T : class {
     value_ = value;
     lockObject_ = new object();
   }
-
-  //? TODO: public async Task CompressAsync
 
   public void Compress() {
     lock (lockObject_) {

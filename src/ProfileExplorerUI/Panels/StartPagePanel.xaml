@@ -74,7 +74,8 @@
             Margin="0,4,0,0"
             IsExpanded="True">
             <Expander.Header>
-              <DockPanel HorizontalAlignment="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType=ContentPresenter}, Mode=OneWayToSource}">
+              <DockPanel
+                HorizontalAlignment="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType=ContentPresenter}, Mode=OneWayToSource}">
                 <TextBlock
                   VerticalAlignment="Center"
                   Text="Recent Profile Sessions" />
@@ -176,7 +177,6 @@
                       HorizontalAlignment="Stretch"
                       Text="{Binding TraceFile}"
                       TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text=", " />
                     <StackPanel
                       HorizontalAlignment="Right"
                       Orientation="Horizontal">
@@ -238,7 +238,8 @@
             Margin="0,16,0,0"
             IsExpanded="True">
             <Expander.Header>
-              <DockPanel HorizontalAlignment="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType=ContentPresenter}, Mode=OneWayToSource}">
+              <DockPanel
+                HorizontalAlignment="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType=ContentPresenter}, Mode=OneWayToSource}">
                 <TextBlock
                   VerticalAlignment="Center"
                   Text="Recent Files" />

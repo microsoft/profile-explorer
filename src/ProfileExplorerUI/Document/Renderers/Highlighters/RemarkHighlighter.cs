@@ -27,6 +27,24 @@ public sealed class RemarkHighlighter : IBackgroundRenderer {
   public int Version { get; set; }
   public KnownLayer Layer => KnownLayer.Background;
 
+  public void Draw(TextView textView, DrawingContext drawingContext) {
+    if (textView.Document == null || textView.Document.TextLength == 0) {
+      return;
+    }
+
+    // Find start/end index of visible lines.
+    if (!DocumentUtils.FindVisibleTextOffsets(textView, out int viewStart, out int viewEnd)) {
+      return;
+    }
+
+    InvalidateRemarkBrushCache();
+
+    // Query and draw visible segments from each group.
+    foreach (var group in groups_) {
+      DrawGroup(group, textView, drawingContext, viewStart, viewEnd);
+    }
+  }
+
   public void Add(HighlightedElementGroup group, bool saveToFile = true) {
     groups_.Add(new HighlightedSegmentGroup(group, saveToFile));
     Version++;
@@ -93,24 +111,6 @@ public sealed class RemarkHighlighter : IBackgroundRenderer {
     groups_.ForEach(group => {
       group.Group.Elements.ForEach(element => { action(element, group.Group.Style); });
     });
-  }
-
-  public void Draw(TextView textView, DrawingContext drawingContext) {
-    if (textView.Document == null || textView.Document.TextLength == 0) {
-      return;
-    }
-
-    // Find start/end index of visible lines.
-    if (!DocumentUtils.FindVisibleTextOffsets(textView, out int viewStart, out int viewEnd)) {
-      return;
-    }
-
-    InvalidateRemarkBrushCache();
-
-    // Query and draw visible segments from each group.
-    foreach (var group in groups_) {
-      DrawGroup(group, textView, drawingContext, viewStart, viewEnd);
-    }
   }
 
   private void DrawGroup(HighlightedSegmentGroup group, TextView textView,

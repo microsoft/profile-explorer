@@ -9,16 +9,6 @@ public class InstructionSSAInfoQuery : IElementQuery {
   private ISession session_;
   public ISession Session => session_;
 
-  public static QueryDefinition GetDefinition() {
-    var query = new QueryDefinition(typeof(InstructionSSAInfoQuery),
-                                    "Instruction SSA details",
-                                    "Details about values with SSA info");
-    query.Data.AddInput("Instruction", QueryValueKind.Element);
-    query.Data.AddOutput("User Count", QueryValueKind.Number);
-    query.Data.AddOutput("Source Definitions Dominate", QueryValueKind.Bool);
-    return query;
-  }
-
   public bool Initialize(ISession session) {
     session_ = session;
     return true;
@@ -69,5 +59,15 @@ public class InstructionSSAInfoQuery : IElementQuery {
     }
 
     return true;
+  }
+
+  public static QueryDefinition GetDefinition() {
+    var query = new QueryDefinition(typeof(InstructionSSAInfoQuery),
+                                    "Instruction SSA details",
+                                    "Details about values with SSA info");
+    query.Data.AddInput("Instruction", QueryValueKind.Element);
+    query.Data.AddOutput("User Count", QueryValueKind.Number);
+    query.Data.AddOutput("Source Definitions Dominate", QueryValueKind.Bool);
+    return query;
   }
 }

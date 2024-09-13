@@ -4,7 +4,6 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -94,43 +93,6 @@ public enum SetWindowPosFlags : uint {
 
 // Code based on answer from https://stackoverflow.com/a/15369563
 public class DialogCenteringHelper : IDisposable {
-  [SuppressUnmanagedCodeSecurity]
-  [DllImport("kernel32.dll")]
-  private static extern int GetCurrentThreadId();
-
-  [SuppressUnmanagedCodeSecurity]
-  [DllImport("user32.dll")]
-  private static extern bool GetWindowRect(IntPtr hWnd, ref Rectangle lpRect);
-
-  [SuppressUnmanagedCodeSecurity]
-  [DllImport("user32.dll")]
-  public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
-
-  [SuppressUnmanagedCodeSecurity]
-  [DllImport("user32.dll")]
-  public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
-
-  [SuppressUnmanagedCodeSecurity]
-  [DllImport("user32.dll")]
-  public static extern int UnhookWindowsHookEx(IntPtr idHook);
-
-  [SuppressUnmanagedCodeSecurity]
-  [DllImport("user32.dll")]
-  [return: MarshalAs(UnmanagedType.Bool)]
-  private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,
-                                          SetWindowPosFlags uFlags);
-
-  private const int WH_CALLWNDPROCRET = 12;
-  private IntPtr ownerHandle_;
-  private HookProc hookProc_;
-  private IntPtr hHook_;
-  private bool isPopup_;
-  private Popup popup_;
-
-  public DialogCenteringHelper(FrameworkElement owner) {
-    Initialize(owner);
-  }
-
   public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
   public delegate void TimerProc(IntPtr hWnd, uint uMsg, UIntPtr nIDEvent, uint dwTime);
 
@@ -159,17 +121,15 @@ public class DialogCenteringHelper : IDisposable {
     HWND_NOTOPMOST = -2
   }
 
-  private enum CbtHookAction {
-    HCBT_MOVESIZE = 0,
-    HCBT_MINMAX = 1,
-    HCBT_QS = 2,
-    HCBT_CREATEWND = 3,
-    HCBT_DESTROYWND = 4,
-    HCBT_ACTIVATE = 5,
-    HCBT_CLICKSKIPPED = 6,
-    HCBT_KEYSKIPPED = 7,
-    HCBT_SYSCOMMAND = 8,
-    HCBT_SETFOCUS = 9
+  private const int WH_CALLWNDPROCRET = 12;
+  private IntPtr ownerHandle_;
+  private HookProc hookProc_;
+  private IntPtr hHook_;
+  private bool isPopup_;
+  private Popup popup_;
+
+  public DialogCenteringHelper(FrameworkElement owner) {
+    Initialize(owner);
   }
 
   public void Dispose() {
@@ -179,6 +139,32 @@ public class DialogCenteringHelper : IDisposable {
 
     UnhookWindowsHookEx(hHook_);
   }
+
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("kernel32.dll")]
+  private static extern int GetCurrentThreadId();
+
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  private static extern bool GetWindowRect(IntPtr hWnd, ref Rectangle lpRect);
+
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
+
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
+
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  public static extern int UnhookWindowsHookEx(IntPtr idHook);
+
+  [SuppressUnmanagedCodeSecurity]
+  [DllImport("user32.dll")]
+  [return: MarshalAs(UnmanagedType.Bool)]
+  private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,
+                                          SetWindowPosFlags uFlags);
 
   private void Initialize(FrameworkElement owner) {
     if (owner is Window window) {
@@ -281,6 +267,19 @@ public class DialogCenteringHelper : IDisposable {
                      SetWindowPosFlags.SWP_NOOWNERZORDER);
       }
     });
+  }
+
+  private enum CbtHookAction {
+    HCBT_MOVESIZE = 0,
+    HCBT_MINMAX = 1,
+    HCBT_QS = 2,
+    HCBT_CREATEWND = 3,
+    HCBT_DESTROYWND = 4,
+    HCBT_ACTIVATE = 5,
+    HCBT_CLICKSKIPPED = 6,
+    HCBT_KEYSKIPPED = 7,
+    HCBT_SYSCOMMAND = 8,
+    HCBT_SETFOCUS = 9
   }
 
   [StructLayout(LayoutKind.Sequential)]

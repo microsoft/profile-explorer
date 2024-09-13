@@ -33,11 +33,6 @@ public partial class SectionPanelPair : ToolPanelControl {
     DiffPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
   }
 
-  public event EventHandler<OpenSectionEventArgs> OpenSection;
-  public event EventHandler<DiffModeEventArgs> EnterDiffMode;
-  public event EventHandler<bool> SyncDiffedDocumentsChanged;
-  public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
-
   public ICompilerInfoProvider CompilerInfo {
     get => MainPanel.CompilerInfo;
     set {
@@ -71,6 +66,11 @@ public partial class SectionPanelPair : ToolPanelControl {
       DiffPanel.Session = value;
     }
   }
+
+  public event EventHandler<OpenSectionEventArgs> OpenSection;
+  public event EventHandler<DiffModeEventArgs> EnterDiffMode;
+  public event EventHandler<bool> SyncDiffedDocumentsChanged;
+  public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
 
   public async Task RefreshModuleSummaries() {
     await MainPanel.Update();

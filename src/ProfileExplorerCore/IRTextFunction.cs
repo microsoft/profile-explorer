@@ -39,19 +39,6 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
   public int SectionCount => Sections?.Count ?? 0;
   public bool HasSections => SectionCount != 0;
 
-  public void AddSection(IRTextSection section) {
-    section.Number = Sections.Count + 1;
-    Sections.Add(section);
-  }
-
-  public IRTextSection FindSection(string name) {
-    return Sections.Find(item => item.Name == name);
-  }
-
-  public List<IRTextSection> FindAllSections(string nameSubstring) {
-    return Sections.FindAll(section => section.Name.Contains(nameSubstring));
-  }
-
   public bool Equals(IRTextFunction other) {
     if (ReferenceEquals(null, other)) {
       return false;
@@ -64,6 +51,19 @@ public class IRTextFunction : IEquatable<IRTextFunction> {
     // Because name is interned, we can use reference equality.
     return ReferenceEquals(Name, other.Name) &&
            HasSameModule(other);
+  }
+
+  public void AddSection(IRTextSection section) {
+    section.Number = Sections.Count + 1;
+    Sections.Add(section);
+  }
+
+  public IRTextSection FindSection(string name) {
+    return Sections.Find(item => item.Name == name);
+  }
+
+  public List<IRTextSection> FindAllSections(string nameSubstring) {
+    return Sections.FindAll(section => section.Name.Contains(nameSubstring));
   }
 
   public override bool Equals(object obj) {

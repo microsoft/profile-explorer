@@ -37,8 +37,14 @@ public abstract class IRTextSectionLoader : IDisposable {
   protected object lockObject_;
   protected long sectionPreprocessingCompleted_;
   protected bool disposed_;
-  public event EventHandler<bool> SectionPreprocessingCompleted;
   public bool SectionSignaturesComputed => Interlocked.Read(ref sectionPreprocessingCompleted_) != 0;
+
+  public void Dispose() {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  public event EventHandler<bool> SectionPreprocessingCompleted;
   public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
   public abstract string GetDocumentOutputText();
   public abstract byte[] GetDocumentTextBytes();
@@ -144,10 +150,5 @@ public abstract class IRTextSectionLoader : IDisposable {
 
   ~IRTextSectionLoader() {
     Dispose(false);
-  }
-
-  public void Dispose() {
-    Dispose(true);
-    GC.SuppressFinalize(this);
   }
 }

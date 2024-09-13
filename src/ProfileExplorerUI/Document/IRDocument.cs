@@ -209,21 +209,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     SetupCommands();
   }
 
-  public event EventHandler<DocumentAction> ActionPerformed;
-  public event EventHandler<IRElementEventArgs> BlockSelected;
-  public event EventHandler<Bookmark> BookmarkAdded;
-  public event EventHandler<Bookmark> BookmarkChanged;
-  public event EventHandler BookmarkListCleared;
-  public event EventHandler<Bookmark> BookmarkRemoved;
-  public event EventHandler<SelectedBookmarkInfo> BookmarkSelected;
-  public event EventHandler<IRHighlightingEventArgs> ElementHighlighting;
-  public event EventHandler<IRElementEventArgs> ElementSelected;
-  public event EventHandler<IRElementEventArgs> ElementUnselected;
-  public event EventHandler<int> CaretChanged;
-  public event EventHandler<FoldingSection> TextRegionFolded;
-  public event EventHandler<FoldingSection> TextRegionUnfolded;
-  public event EventHandler<IRTextSection> FunctionCallOpen;
-  public event PropertyChangedEventHandler PropertyChanged;
   public List<BlockIR> Blocks => Function.Blocks;
   public BookmarkManager BookmarkManager => bookmarks_;
   public ISession Session { get; private set; }
@@ -246,6 +231,21 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   public FunctionProcessingResult ProfileProcessingResult { get; set; }
   public double DefaultLineHeight => TextArea.TextView.DefaultLineHeight;
   public IEnumerable<FoldingSection> BlockFoldings => folding_?.AllFoldings;
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<DocumentAction> ActionPerformed;
+  public event EventHandler<IRElementEventArgs> BlockSelected;
+  public event EventHandler<Bookmark> BookmarkAdded;
+  public event EventHandler<Bookmark> BookmarkChanged;
+  public event EventHandler BookmarkListCleared;
+  public event EventHandler<Bookmark> BookmarkRemoved;
+  public event EventHandler<SelectedBookmarkInfo> BookmarkSelected;
+  public event EventHandler<IRHighlightingEventArgs> ElementHighlighting;
+  public event EventHandler<IRElementEventArgs> ElementSelected;
+  public event EventHandler<IRElementEventArgs> ElementUnselected;
+  public event EventHandler<int> CaretChanged;
+  public event EventHandler<FoldingSection> TextRegionFolded;
+  public event EventHandler<FoldingSection> TextRegionUnfolded;
+  public event EventHandler<IRTextSection> FunctionCallOpen;
 
   private static int AdjustVisibleLine(int line) {
     // Leave a few lines be visible above.

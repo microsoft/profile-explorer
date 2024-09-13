@@ -234,9 +234,6 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
     ContextSearchPanel.NavigateToPreviousResult += ContextSearchPanel_NavigateToResult;
   }
 
-  public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
-  public event EventHandler<Remark> RemarkChanged;
-  public event PropertyChangedEventHandler PropertyChanged;
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   public bool ShowPreview {
@@ -318,6 +315,10 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
     get => RemarkTextView.Session;
     set => RemarkTextView.Session = value;
   }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+  public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
+  public event EventHandler<Remark> RemarkChanged;
 
   public void NotifyPropertyChanged(string propertyName) {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

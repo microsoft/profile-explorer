@@ -139,6 +139,23 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  public async Task<IToolPanel> ShowPanel(ToolPanelKind panelKind) {
+    // Panel hosts must be found at runtime because of deserialization.
+    RegisterDefaultToolPanels(false);
+    var panelHost = FindPanelHostForKind(panelKind);
+
+    if (panelHost != null) {
+      if (panelHost.IsAutoHidden) {
+        panelHost.ToggleAutoHide();
+      }
+
+      panelHost.Show();
+      panelHost.IsActive = true;
+    }
+
+    return FindPanel(panelKind);
+  }
+
   private void RegisterDefaultToolPanels(bool reloadWorkspace = true) {
     Trace.WriteLine($"Register default tool panels");
     RegisterPanel(SectionPanel, SectionPanelHost);
@@ -1341,23 +1358,6 @@ public partial class MainWindow : Window, ISession {
     string panelName = ((MenuItem)sender).Tag as string;
     var panelKind = Enum.Parse<ToolPanelKind>(panelName);
     await ShowPanel(panelKind);
-  }
-
-  public async Task<IToolPanel> ShowPanel(ToolPanelKind panelKind) {
-    // Panel hosts must be found at runtime because of deserialization.
-    RegisterDefaultToolPanels(false);
-    var panelHost = FindPanelHostForKind(panelKind);
-
-    if (panelHost != null) {
-      if (panelHost.IsAutoHidden) {
-        panelHost.ToggleAutoHide();
-      }
-
-      panelHost.Show();
-      panelHost.IsActive = true;
-    }
-
-    return FindPanel(panelKind);
   }
 
   private LayoutAnchorable FindPanelHostForKind(ToolPanelKind panelKind) {

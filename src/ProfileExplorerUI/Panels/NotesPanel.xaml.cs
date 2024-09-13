@@ -29,6 +29,9 @@ public partial class NotesPanel : ToolPanelControl {
     InitializeComponent();
   }
 
+  public override ToolPanelKind PanelKind => ToolPanelKind.Notes;
+  public override bool SavesStateToFile => true;
+
   private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
     Session.DuplicatePanel(this, e.Kind);
   }
@@ -64,11 +67,6 @@ public partial class NotesPanel : ToolPanelControl {
       Utils.PatchComboBoxStyle(control);
     }
   }
-
-        #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.Notes;
-  public override bool SavesStateToFile => true;
 
   public override async void OnSessionStart() {
     base.OnSessionStart();
@@ -143,6 +141,4 @@ public partial class NotesPanel : ToolPanelControl {
     base.OnSessionEnd();
     TextView.UnloadDocument();
   }
-
-        #endregion
 }

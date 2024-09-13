@@ -55,16 +55,16 @@ public struct WINDOWPLACEMENT {
 }
 
 public static class WindowPlacement {
+  private const int SW_SHOWNORMAL = 1;
+  private const int SW_SHOWMINIMIZED = 2;
+  private static Encoding encoding = new UTF8Encoding();
+  private static XmlSerializer serializer = new(typeof(WINDOWPLACEMENT));
+
   [DllImport("user32.dll")]
   private static extern bool SetWindowPlacement(IntPtr hWnd, [In] ref WINDOWPLACEMENT lpwndpl);
 
   [DllImport("user32.dll")]
   private static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
-
-  private const int SW_SHOWNORMAL = 1;
-  private const int SW_SHOWMINIMIZED = 2;
-  private static Encoding encoding = new UTF8Encoding();
-  private static XmlSerializer serializer = new(typeof(WINDOWPLACEMENT));
 
   public static void SetPlacement(IntPtr windowHandle, string placementXml) {
     if (string.IsNullOrEmpty(placementXml)) {

@@ -65,14 +65,11 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     ProfileFilter = new ProfileFilterState();
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
   public override ToolPanelKind PanelKind => ToolPanelKind.Timeline;
 
   public override ISession Session {
     get => base.Session;
-    set {
-      base.Session = value;
-    }
+    set => base.Session = value;
   }
 
   public ProfileCallTree CallTree {
@@ -123,6 +120,17 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private double ActivityViewAreaWidth =>
     Math.Max(0, ActivityViewHost.ViewportWidth - ActivityViewHeader.ActualWidth - 1);
   private double CenterZoomPointX => ActivityScrollBar.HorizontalOffset + ActivityViewAreaWidth / 2;
+
+  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+    return callTree_.GetBacktrace(node);
+  }
+
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+    ProfileCallTreeNode node) {
+    return callTree_.GetTopFunctionsAndModules(node);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
 
   public override async void OnShowPanel() {
     base.OnShowPanel();
@@ -190,14 +198,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public void ClearMarkedFunctionSamples() {
     ActivityView.ClearMarkedSamples();
     threadActivityViews_.ForEach(threadView => threadView.ActivityHost.ClearMarkedSamples());
-  }
-
-  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-    return callTree_.GetBacktrace(node);
-  }
-
-  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(ProfileCallTreeNode node) {
-    return callTree_.GetTopFunctionsAndModules(node);
   }
 
   protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {

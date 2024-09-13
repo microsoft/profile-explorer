@@ -89,6 +89,10 @@ public class RawProfileData : IDisposable {
   public List<PerformanceCounter> PerformanceCounters => perfCounters_;
   public bool HasPerformanceCountersEvents => PerformanceCountersEvents is {Count: > 0};
 
+  public void Dispose() {
+    perfCountersEvents_?.Dispose();
+  }
+
   public bool HasManagedMethods(int processId) {
     return procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
   }
@@ -575,10 +579,6 @@ public class RawProfileData : IDisposable {
     }
   }
 
-  public void Dispose() {
-    perfCountersEvents_?.Dispose();
-  }
-
   internal ProfileContext RentTempContext(int processId, int threadId, int processorNumber) {
     tempContext_.ProcessId = processId;
     tempContext_.ThreadId = threadId;
@@ -595,7 +595,7 @@ public class RawProfileData : IDisposable {
   }
 
   internal int AddContext(ProfileContext context) {
-    ref var existingContextId = ref CollectionsMarshal.GetValueRefOrAddDefault(contextsMap_, context, out bool exists);
+    ref int existingContextId = ref CollectionsMarshal.GetValueRefOrAddDefault(contextsMap_, context, out bool exists);
 
     if (!exists) {
       contexts_.Add(context);

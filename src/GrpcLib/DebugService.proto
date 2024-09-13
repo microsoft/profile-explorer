@@ -104,17 +104,6 @@ message SetCurrentElementRequest {
   string label = 4;
 }
 
-
-
-// Color
-//   r
-//   g
-//   b
-
-// ClientKid
-//   debugger
-//   runtime
-
 enum ElementCommand {
    GoToDefinition = 0;
    MarkBlock = 1;
@@ -145,25 +134,3 @@ message ActiveBreakpointResult {
   string errorMessage = 3;
   bool hasBreakpoint = 4;
 }
-
-// NoteVerbosity
-//   default
-//   verbose
-//   trace
-
-// NoteKind
-//    general
-//    analysis
-//    optimization
-
-// AddNote
-//   long sessionId
-//   long element
-//   string text
-//   NoteKind kind
-//   NoteVerbosity verbosity
-
-// HasActiveBreakpoint
-//    long element
-// AddElementBreakpoint
-// RemoveElementBreakpoint

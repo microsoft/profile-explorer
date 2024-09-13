@@ -188,7 +188,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // and creating the function profiles.
         for (int k = 0; k < chunks; k++) {
           int start = Math.Min(k * chunkSize, sampleCount);
-          int end = (k == chunks - 1) ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
+          int end = k == chunks - 1 ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
 
           tasks.Add(taskFactory.StartNew(() => {
             var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,
@@ -225,7 +225,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
 #if DEBUG
-        PrintSampleStatistics();
+        // PrintSampleStatistics();
 #endif
         Trace.WriteLine($"LoadTraceAsync: Done loading profile in {totalSw.Elapsed}");
         return true;
@@ -829,11 +829,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   private bool IsAcceptedModule(ProfileImage image) {
-    if (!options_.HasBinaryNameWhitelist) {
+    if (!options_.HasBinaryNameAllowedList) {
       return true;
     }
 
-    foreach (string file in options_.BinaryNameWhitelist) {
+    foreach (string file in options_.BinaryNameAllowedList) {
       string fileName = Utils.TryGetFileNameWithoutExtension(file);
 
       if (fileName.Equals(image.ModuleName, StringComparison.OrdinalIgnoreCase)) {
@@ -972,6 +972,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     lock (lockObject_) {
       perModuleSampleStatsMap_ ??= new();
       var topFrame = resolvedStack.StackFrames[0];
+
+      if (topFrame.FrameDetails.Image == null) {
+        return;
+      }
+
       var moduleStats = perModuleSampleStatsMap_.GetOrAddValue(topFrame.FrameDetails.Image);
 
       if (!moduleStats.TryGetValue(topFrame.FrameRVA, out var rvaStats)) {

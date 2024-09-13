@@ -33,7 +33,6 @@ public sealed class DocumentSectionLoader : IRTextSectionLoader {
     var tasks = new List<Task>();
 
     var result = documentReader_.GenerateSummary(progressHandler, (reader, sectionInfo) => {
-      //? TODO: Extract to be reusable?
       if (taskScheduler_ == null) {
         taskScheduler_ = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 2);
         taskFactory_ = new TaskFactory(taskScheduler_.ConcurrentScheduler);
@@ -83,7 +82,7 @@ public sealed class DocumentSectionLoader : IRTextSectionLoader {
     FunctionIR function;
 
     if (sectionParser == null) {
-      function = new FunctionIR(); //? TODO: Workaround for not having an LLVM parser
+      function = new FunctionIR();
     }
     else {
       function = sectionParser.ParseSection(section, text);

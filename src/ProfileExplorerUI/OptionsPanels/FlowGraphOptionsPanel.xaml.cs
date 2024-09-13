@@ -3,9 +3,9 @@
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class FlowGraphOptionsPanel : OptionsPanelBase {
-  public override double DefaultHeight => 450;
-
   public FlowGraphOptionsPanel() {
     InitializeComponent();
   }
+
+  public override double DefaultHeight => 450;
 }

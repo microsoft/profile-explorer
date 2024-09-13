@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -12,6 +11,8 @@ namespace ProfileExplorer.UI.Profile;
 // in parallel, by splitting the samples into multiple chunks, each
 // processed on a different thread.
 public abstract class ProfileSampleProcessor {
+  protected virtual int DefaultThreadCount => App.Settings.GeneralSettings.CurrentCpuCoreLimit;
+
   protected virtual object InitializeChunk(int k, int samplesPerChunk) {
     return null;
   }
@@ -24,8 +25,6 @@ public abstract class ProfileSampleProcessor {
 
   protected virtual void Complete() {
   }
-
-  protected virtual int DefaultThreadCount => App.Settings.GeneralSettings.CurrentCpuCoreLimit;
 
   protected void ProcessSampleChunk(ProfileData profile, ProfileSampleFilter filter,
                                     int maxChunks = int.MaxValue) {
@@ -45,7 +44,7 @@ public abstract class ProfileSampleProcessor {
 
     for (int k = 0; k < chunks; k++) {
       int start = Math.Min(sampleStartIndex + k * chunkSize, sampleEndIndex);
-      int end = (k == chunks - 1) ? sampleEndIndex : Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
+      int end = k == chunks - 1 ? sampleEndIndex : Math.Min(sampleStartIndex + (k + 1) * chunkSize, sampleEndIndex);
 
       // If a single thread is selected, only process the samples for that thread
       // by going through the thread sample ranges.

@@ -16,7 +16,6 @@ using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Utilities;
-using ProtoBuf.WellKnownTypes;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -97,15 +96,6 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
     CallTreeNode is {HasFunction: true} ? CallTreeNode.ModuleName : null;
   public bool HasAnyChildren => Children is {Count: > 0};
 
-  public void AddChild(CallTreeListItem child) {
-    Children ??= new();
-    Children.Add(child);
-  }
-
-  public void ClearChildren() {
-    Children = null;
-  }
-
   public override string FunctionName {
     get {
       string name = base.FunctionName;
@@ -139,6 +129,15 @@ public class CallTreeListItem : SearchableProfileItem, ITreeModel {
       return false;
     var parentNode = (CallTreeListItem)node;
     return parentNode.Children != null && parentNode.Children.Count > 0;
+  }
+
+  public void AddChild(CallTreeListItem child) {
+    Children ??= new List<CallTreeListItem>();
+    Children.Add(child);
+  }
+
+  public void ClearChildren() {
+    Children = null;
   }
 
   protected override string GetFunctionName() {
@@ -195,7 +194,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
-  public event PropertyChangedEventHandler PropertyChanged;
 
   //? TODO: Replace all other commands with RelayCommand.
   public RelayCommand<object> SelectFunctionCallTreeCommand => new(async obj => {
@@ -251,12 +249,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
                                                      CallTreeList, Session, filter, false, brush);
     }
   });
-
-  private Brush GetMarkedNodeColor(CallTreeListItem node) {
-    return App.Settings.MarkingSettings.
-      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
-  }
-
   public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var item = node.Tag as CallTreeListItem;
@@ -288,17 +280,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public bool IsCallerCalleePanel => PanelKind == ToolPanelKind.CallerCallee;
   public bool HasCallTree => callTree_ != null;
 
-  private async Task UpdateCallTree() {
-    callTreeEx_ = null;
-
-    if (IsCallerCalleePanel) {
-      await DisplayProfileCallerCalleeTree(function_);
-    }
-    else {
-      await DisplayProfileCallTree();
-    }
-  }
-
   public bool ShowSearchSection {
     get => showSearchSection_;
     set {
@@ -320,6 +301,48 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public bool HasPreviousState => stateStack_.Count > 0;
+  public RelayCommand<object> MarkModuleCommand => new(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) =>
+                        markingSettings.AddModuleColor(node.ModuleName, color));
+    markingSettings.UseModuleColors = true;
+    await UpdateMarkedFunctions();
+  });
+  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
+    var markingSettings = App.Settings.MarkingSettings;
+    MarkSelectedNodes(obj, (node, color) => {
+      markingSettings.AddFunctionColor(node.FunctionName, color);
+    });
+    markingSettings.UseFunctionColors = true;
+    await UpdateMarkedFunctions();
+  });
+
+  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
+    return callTree_.GetBacktrace(node);
+  }
+
+  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
+    ProfileCallTreeNode node) {
+    return callTree_.GetTopFunctionsAndModules(node);
+  }
+
+  public event PropertyChangedEventHandler PropertyChanged;
+
+  private Brush GetMarkedNodeColor(CallTreeListItem node) {
+    return App.Settings.MarkingSettings.
+      GetMarkedNodeBrush(node.FunctionName, node.ModuleName);
+  }
+
+  private async Task UpdateCallTree() {
+    callTreeEx_ = null;
+
+    if (IsCallerCalleePanel) {
+      await DisplayProfileCallerCalleeTree(function_);
+    }
+    else {
+      await DisplayProfileCallTree();
+    }
+  }
 
   private static void SortCallTreeNodes(CallTreeListItem node) {
     // Sort children in descending order,
@@ -415,15 +438,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       ignoreNextSelectionEvent_ = true;
       CallTreeList.SelectedItem = nodeEx.TreeNode;
     }
-  }
-
-  public List<ProfileCallTreeNode> GetBacktrace(ProfileCallTreeNode node) {
-    return callTree_.GetBacktrace(node);
-  }
-
-  public (List<ProfileCallTreeNode>, List<ModuleProfileInfo> Modules) GetTopFunctionsAndModules(
-    ProfileCallTreeNode node) {
-    return callTree_.GetTopFunctionsAndModules(node);
   }
 
   protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
@@ -1102,19 +1116,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       App.Settings.CallerCalleeSettings;
   }
 
-  #region IToolPanel
-
-  public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
-  public override bool SavesStateToFile => false;
-
-  public override void OnSessionEnd() {
-    base.OnSessionEnd();
-    Settings.TreeListColumns.SaveColumnsState(CallTreeList.View as GridView);
-    Reset();
-  }
-
-    #endregion
-
   private void PanelToolbarTray_OnSettingsClicked(object sender, EventArgs e) {
     ShowOptionsPanel();
   }
@@ -1123,22 +1124,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await UpdateCallTree();
     await UpdateMarkedFunctions();
   }
-
-  public RelayCommand<object> MarkModuleCommand => new(async obj => {
-    var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) =>
-                        markingSettings.AddModuleColor(node.ModuleName, color));
-    markingSettings.UseModuleColors = true;
-    await UpdateMarkedFunctions();
-  });
-  public RelayCommand<object> MarkFunctionCommand => new(async obj => {
-    var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) => {
-      markingSettings.AddFunctionColor(node.FunctionName, color);
-    });
-    markingSettings.UseFunctionColors = true;
-    await UpdateMarkedFunctions();
-  });
 
   private void MarkSelectedNodes(object obj, Action<CallTreeListItem, Color> action) {
     if (obj is SelectedColorEventArgs e) {
@@ -1194,4 +1179,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
   }
+
+  #region IToolPanel
+
+  public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
+  public override bool SavesStateToFile => false;
+
+  public override void OnSessionEnd() {
+    base.OnSessionEnd();
+    Settings.TreeListColumns.SaveColumnsState(CallTreeList.View as GridView);
+    Reset();
+  }
+
+    #endregion
 }

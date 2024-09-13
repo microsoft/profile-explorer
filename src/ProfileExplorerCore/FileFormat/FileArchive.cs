@@ -2,67 +2,22 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.IO;
-using System.Security;
-using System.IO.Compression;
 using System.Diagnostics;
-using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace ProfileExplorer.Core.FileFormat;
 
 public sealed class FileArchive : IDisposable {
+  public delegate void FileProgressDelegate(int currentFile, int totalFiles);
   private const string HeaderFilePath = "HEADER-4F1B8FB1-DD26-4D60-B275-6C0588668EE6";
-  private static readonly Guid FileSignature = new("80BCEE32-5110-4A25-87D3-D359B0C2634C");
   private const int FileBufferSize = 128 * 1024;
   private const int FileFormatVersion = 1;
   private const int MinFileFormatVersion = 1;
-
-  private struct Header {
-    public Guid Signature { get; init; }
-    public int Version { get; init; }
-    public List<FileEntry> Files { get; init; }
-    public object OptionalData { get; set; }
-
-    public void AddFile(string path, int kind, long size) {
-      Files.Add(new FileEntry(path, kind, size));
-    }
-
-    public FileEntry FindFile(string path) {
-      return Files.Find(entry => entry.Name.Equals(path, StringComparison.Ordinal));
-    }
-
-    internal void RemoveFile(string path) {
-      Files.RemoveAll(entry => entry.Name.Equals(path, StringComparison.Ordinal));
-    }
-
-    public T GetOptionalData<T>() {
-      if (OptionalData is JsonElement json) {
-        return json.Deserialize<T>();
-      }
-
-      return (T)OptionalData;
-    }
-  }
-
-  public class FileEntry {
-    public FileEntry(string archivePath, int kind, long size) {
-      ArchivePath = archivePath;
-      Kind = kind;
-      Size = size;
-    }
-
-    public string ArchivePath { get; set; } // Path in archive, can have subdirs.
-    public long Size { get; set; } // Uncompressed size.
-    public int Kind { get; set; } // Optional kind set by client.
-    public string Name => Path.GetFileName(ArchivePath);
-    public string Extension => Path.GetExtension(ArchivePath);
-    public string Directory => Path.GetDirectoryName(ArchivePath);
-    public bool HasDirectory => !string.IsNullOrEmpty(Directory);
-  }
-
+  private static readonly Guid FileSignature = new("80BCEE32-5110-4A25-87D3-D359B0C2634C");
   private Header header_;
   private ZipArchive archive_;
   private Stream archiveStream_;
@@ -86,13 +41,18 @@ public sealed class FileArchive : IDisposable {
     CreateHeader();
   }
 
-  public delegate void FileProgressDelegate(int currentFile, int totalFiles);
-  public event FileProgressDelegate OnFileAdded; // Notified when adding multiple files only.
-  public event FileProgressDelegate OnFileExtracted; // Notified when extracting multiple files only.
   public List<FileEntry> Files => header_.Files;
   public int FileCount => Files.Count;
   public long UncompressedSize => Files.Sum(entry => entry.Size);
   public bool HasOptionalData => header_.OptionalData != null;
+
+  public void Dispose() {
+    Dispose(disposing: true);
+    GC.SuppressFinalize(this);
+  }
+
+  public event FileProgressDelegate OnFileAdded; // Notified when adding multiple files only.
+  public event FileProgressDelegate OnFileExtracted; // Notified when extracting multiple files only.
 
   // Optional data that can be serialized together with the header.
   public void SetOptionalData(object dataObject) {
@@ -689,8 +649,46 @@ public sealed class FileArchive : IDisposable {
     }
   }
 
-  public void Dispose() {
-    Dispose(disposing: true);
-    GC.SuppressFinalize(this);
+  private struct Header {
+    public Guid Signature { get; init; }
+    public int Version { get; init; }
+    public List<FileEntry> Files { get; init; }
+    public object OptionalData { get; set; }
+
+    public void AddFile(string path, int kind, long size) {
+      Files.Add(new FileEntry(path, kind, size));
+    }
+
+    public FileEntry FindFile(string path) {
+      return Files.Find(entry => entry.Name.Equals(path, StringComparison.Ordinal));
+    }
+
+    internal void RemoveFile(string path) {
+      Files.RemoveAll(entry => entry.Name.Equals(path, StringComparison.Ordinal));
+    }
+
+    public T GetOptionalData<T>() {
+      if (OptionalData is JsonElement json) {
+        return json.Deserialize<T>();
+      }
+
+      return (T)OptionalData;
+    }
+  }
+
+  public class FileEntry {
+    public FileEntry(string archivePath, int kind, long size) {
+      ArchivePath = archivePath;
+      Kind = kind;
+      Size = size;
+    }
+
+    public string ArchivePath { get; set; } // Path in archive, can have subdirs.
+    public long Size { get; set; } // Uncompressed size.
+    public int Kind { get; set; } // Optional kind set by client.
+    public string Name => Path.GetFileName(ArchivePath);
+    public string Extension => Path.GetExtension(ArchivePath);
+    public string Directory => Path.GetDirectoryName(ArchivePath);
+    public bool HasDirectory => !string.IsNullOrEmpty(Directory);
   }
 }

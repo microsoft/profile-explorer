@@ -332,7 +332,8 @@
               </StackPanel>
             </ToggleButton>
 
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Menu
               Margin="0,0,0,0"
@@ -410,7 +411,8 @@
               </MenuItem>
             </Menu>
 
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Image
               Margin="2,0,0,0"
@@ -463,7 +465,8 @@
                 Source="{StaticResource ClearIcon}"
                 Style="{StaticResource DisabledImageStyle}" />
             </Button>
-            <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Separator
+              Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <Button
               Click="ScrollUpButton_OnClick"
@@ -581,7 +584,8 @@
 
               <Style.Triggers>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                   <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
@@ -820,7 +824,8 @@
                 <DataTrigger
                   Binding="{Binding Path=IsDeletionDiff}"
                   Value="True">
-                  <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
@@ -829,7 +834,8 @@
                 <DataTrigger
                   Binding="{Binding Path=IsInsertionDiff}"
                   Value="True">
-                  <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
@@ -839,7 +845,8 @@
                   Binding="{Binding Path=HasDiffs}"
                   Value="True">
                   <Setter Property="FontWeight" Value="Medium" />
-                  <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
@@ -852,7 +859,8 @@
                 </DataTrigger>
 
                 <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                  <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                  <Setter Property="Background"
+                          Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </Trigger>
                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                   <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" />
@@ -1086,7 +1094,8 @@
                 ToolTip="Opens the IR document in the default external editor"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
-              <Separator Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+              <Separator
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
               <MenuItem
                 Command="{Binding SelectFunctionCallTreeCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1130,7 +1139,8 @@
                 </MenuItem.Icon>
               </MenuItem>
 
-              <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+              <Separator
+                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
               <MenuItem
                 Command="local:Command.SaveFunctionText"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1472,7 +1482,8 @@
                 <DataTrigger
                   Binding="{Binding Path=IsDeletionDiff}"
                   Value="True">
-                  <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
@@ -1481,7 +1492,8 @@
                 <DataTrigger
                   Binding="{Binding Path=IsInsertionDiff}"
                   Value="True">
-                  <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="FontWeight" Value="Medium" />
                   <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
@@ -1491,7 +1503,8 @@
                   Binding="{Binding Path=HasDiffs}"
                   Value="True">
                   <Setter Property="FontWeight" Value="Medium" />
-                  <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
+                  <Setter Property="Background"
+                          Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                   <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                   <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>

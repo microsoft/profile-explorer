@@ -41,6 +41,19 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
     }
   }
 
+  public bool Equals(ProfileDataReport other) {
+    if (ReferenceEquals(null, other)) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return Equals(RecordingSessionOptions, other.RecordingSessionOptions) &&
+           TraceInfo.HasSameTraceFilePath(other.TraceInfo);
+  }
+
   public static bool operator ==(ProfileDataReport left, ProfileDataReport right) {
     return Equals(left, right);
   }
@@ -108,19 +121,6 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
         Trace.WriteLine($"   - details: {pair.Value.DebugInfoFile.Details}");
       }
     }
-  }
-
-  public bool Equals(ProfileDataReport other) {
-    if (ReferenceEquals(null, other)) {
-      return false;
-    }
-
-    if (ReferenceEquals(this, other)) {
-      return true;
-    }
-
-    return Equals(RecordingSessionOptions, other.RecordingSessionOptions) &&
-           TraceInfo.HasSameTraceFilePath(other.TraceInfo);
   }
 
   public override string ToString() {
