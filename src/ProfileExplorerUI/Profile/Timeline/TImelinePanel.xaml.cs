@@ -26,30 +26,18 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
   private const double ZoomAmount = 500;
   private const double ScrollWheelZoomAmount = 300;
-  private const double FastPanOffset = 1000;
-  private const double DefaultPanOffset = 100;
   private const double ZoomAnimationDuration = TimePerFrame * 10;
-  private const double EnlargeAnimationDuration = TimePerFrame * 12;
   private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
-  private const int MaxPreviewNameLength = 80;
-  private static readonly Typeface DefaultTextFont = new("Segoe UI");
   private TimelineSettings settings_;
   private bool panelVisible_;
   private ProfileCallTree callTree_;
   private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
-  private List<FlameGraphNode> searchResultNodes_;
-  private int searchResultIndex_;
   private List<ActivityTimelineView> threadActivityViews_;
   private Dictionary<int, ActivityTimelineView> threadActivityViewsMap_;
   private Dictionary<int, PopupHoverPreview> threadHoverPreviewMap_;
   private bool changingThreadFiltering_;
-  private DoubleAnimation widthAnimation_;
-  private DoubleAnimation zoomAnimation_;
   private bool showSearchSection_;
   private string searchResultText_;
-  private bool hasThreadFilter_;
-  private string threadFilterText_;
-  private bool showNodePanel_;
   private OptionsPanelHostPopup optionsPanelPopup_;
   private ProfileFilterState profileFilter;
 
@@ -904,63 +892,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private async void UndoButton_Click(object sender, RoutedEventArgs e) {
-    //await RestorePreviousState();
-  }
-
-  private async void FunctionFilter_OnTextChanged(object sender, TextChangedEventArgs e) {
-    string text = FunctionFilter.Text.Trim();
-    await SearchFlameGraph(text);
-  }
-
-  private async Task SearchFlameGraph(string text) {
-    //var prevSearchResultNodes = searchResultNodes_;
-    //searchResultNodes_ = null;
-
-    //if (prevSearchResultNodes != null) {
-    //    bool redraw = text.Length <= 1; // Prevent flicker by redrawing once when search is done.
-    //    GraphViewer.ResetSearchResultNodes(prevSearchResultNodes, redraw);
-    //}
-
-    //if (text.Length > 1) {
-    //    searchResultNodes_ = await Task.Run(() => GraphViewer.FlameGraph.SearchNodes(text));
-    //    GraphViewer.MarkSearchResultNodes(searchResultNodes_);
-
-    //    searchResultIndex_ = -1;
-    //    SelectNextSearchResult();
-    //    ShowSearchSection = true;
-    //}
-    //else {
-    //    ShowSearchSection = false;
-    //}
-  }
-
-  private void UpdateSearchResultText() {
-    SearchResultText = searchResultNodes_ is {Count: > 0} ? $"{searchResultIndex_ + 1} / {searchResultNodes_.Count}"
-      : "Not found";
-  }
-
-  private void SelectPreviousSearchResult() {
-    if (searchResultNodes_ != null && searchResultIndex_ > 0) {
-      searchResultIndex_--;
-      UpdateSearchResultText();
-      //BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
-    }
-  }
-
-  private void SelectNextSearchResult() {
-    if (searchResultNodes_ != null && searchResultIndex_ < searchResultNodes_.Count - 1) {
-      searchResultIndex_++;
-      UpdateSearchResultText();
-      //BringNodeIntoView(searchResultNodes_[searchResultIndex_]);
-    }
-  }
-
-  private void PreviousSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
-    SelectPreviousSearchResult();
-  }
-
-  private void NextSearchResultExecuted(object sender, ExecutedRoutedEventArgs e) {
-    SelectNextSearchResult();
+    // TODO: await RestorePreviousState();
   }
 
   private async void RemoveFiltersExecuted(object sender, ExecutedRoutedEventArgs e) {

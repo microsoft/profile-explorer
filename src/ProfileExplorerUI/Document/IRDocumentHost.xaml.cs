@@ -107,7 +107,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private int profileBlockIndex_;
   private OptionsPanelHostPopup remarkOptionsPanelPopup_;
   private OptionsPanelHostPopup optionsPanelPopup_;
-  private DocumentOptionsPanel optionsPanel_;
   private DelayedAction delayedHideActionPanel_;
   private bool profileVisible_;
   private double columnsListItemHeight_;
@@ -115,7 +114,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileSampleFilter profileFilter_;
   private FunctionProfileData funcProfile_;
   private bool ignoreNextRowSelectedEvent_;
-  private bool ignoreNextSaveFunctionState_;
   private ProfileHistoryManager historyManager_;
   private MenuItem[] viewMenuItems_;
 
@@ -1010,17 +1008,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     if (activeRemarkContext_ != null) {
       activeRemarkContext_ = null;
       await UpdateDocumentRemarks(remarkList_);
-    }
-  }
-
-  private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
-    if (optionsPanelVisible_) {
-      var newSettings = (DocumentSettings)optionsPanelPopup_.Settings;
-
-      if (newSettings != null) {
-        await LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
-        optionsPanelPopup_.Settings = newSettings.Clone();
-      }
     }
   }
 

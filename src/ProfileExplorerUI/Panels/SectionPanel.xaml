@@ -323,7 +323,6 @@
                 <Image
                   Width="16"
                   Height="16"
-                  Margin="0,1,0,0"
                   Source="{StaticResource SourceIcon}"
                   Style="{StaticResource DisabledImageStyle}" />
                 <TextBlock

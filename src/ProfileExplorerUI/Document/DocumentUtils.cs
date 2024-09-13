@@ -278,7 +278,6 @@ public static class DocumentUtils {
     var valueTemplate = (DataTemplate)Application.Current.FindResource("ProfileMenuItemValueTemplate");
     var markerSettings = settings.ProfileMarkerSettings;
     var profile = session.ProfileData;
-    int order = 0;
     double maxWidth = 0;
 
     foreach (var state in states) {

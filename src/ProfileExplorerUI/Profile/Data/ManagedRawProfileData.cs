@@ -43,13 +43,6 @@ public class ManagedRawProfileData {
       }
     }
 
-    // if (!string.IsNullOrEmpty(managedAsmDir)) {
-    //     foreach (var debugInfo in moduleDebugInfoMap_.Values) {
-    //         var asmFilePath = Path.Combine(managedAsmDir, $"{processId}.asm");
-    //         debugInfo.ManagedAsmFilePath = asmFilePath;
-    //     }
-    // }
-
     // A placeholder is created for cases where the method load event
     // is triggered before the module load one, try to assign the image now.
     foreach (var pair in patchedMappings_) {

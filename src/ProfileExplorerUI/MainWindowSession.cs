@@ -1645,54 +1645,51 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void StartAutoSaveTimer() {
-    //? TODO: Disabled for now
-    return;
-
-    try {
-      string filePath = Utils.GetAutoSaveFilePath();
-
-      if (File.Exists(filePath)) {
-        File.Delete(filePath);
-      }
-    }
-    catch (Exception) {
-      Trace.TraceError("Failed to delete autosave file");
-    }
-
-    //? TODO: For huge files, autosaving uses a lot of memory.
-    if (!sessionState_.Info.IsDebugSession) {
-      try {
-        long fileSize = new FileInfo(sessionState_.Info.FilePath).Length;
-
-        if (fileSize > SectionReaderBase.MAX_PRELOADED_FILE_SIZE) {
-          Trace.TraceWarning(
-            $"Disabling auto-saving for large file: {sessionState_.Info.FilePath}");
-
-          sessionState_.IsAutoSaveEnabled = false;
-          return;
-        }
-      }
-      catch (Exception ex) {
-        Trace.TraceError($"Failed to get auto-saved file size: {ex}");
-      }
-    }
-
-    sessionState_.IsAutoSaveEnabled = true;
-    autoSaveTimer_ = new DispatcherTimer {Interval = TimeSpan.FromSeconds(300)};
-    autoSaveTimer_.Tick += async delegate { await AutoSaveSession().ConfigureAwait(false); };
-    autoSaveTimer_.Start();
+    //? TODO: Disabled since saving of profile sessions is also not supported yet.
+    // try {
+    //   string filePath = Utils.GetAutoSaveFilePath();
+    //
+    //   if (File.Exists(filePath)) {
+    //     File.Delete(filePath);
+    //   }
+    // }
+    // catch (Exception) {
+    //   Trace.TraceError("Failed to delete autosave file");
+    // }
+    //
+    // //? TODO: For huge files, autosaving uses a lot of memory.
+    // if (!sessionState_.Info.IsDebugSession) {
+    //   try {
+    //     long fileSize = new FileInfo(sessionState_.Info.FilePath).Length;
+    //
+    //     if (fileSize > SectionReaderBase.MAX_PRELOADED_FILE_SIZE) {
+    //       Trace.TraceWarning(
+    //         $"Disabling auto-saving for large file: {sessionState_.Info.FilePath}");
+    //
+    //       sessionState_.IsAutoSaveEnabled = false;
+    //       return;
+    //     }
+    //   }
+    //   catch (Exception ex) {
+    //     Trace.TraceError($"Failed to get auto-saved file size: {ex}");
+    //   }
+    // }
+    //
+    // sessionState_.IsAutoSaveEnabled = true;
+    // autoSaveTimer_ = new DispatcherTimer {Interval = TimeSpan.FromSeconds(300)};
+    // autoSaveTimer_.Tick += async delegate { await AutoSaveSession().ConfigureAwait(false); };
+    // autoSaveTimer_.Start();
   }
 
   private async Task AutoSaveSession() {
-    return;
-
-    if (sessionState_ == null || !sessionState_.IsAutoSaveEnabled) {
-      return;
-    }
-
-    string filePath = Utils.GetAutoSaveFilePath();
-    bool saved = await SaveSessionDocument(filePath).ConfigureAwait(false);
-    Trace.TraceInformation($"Auto-saved session: {saved}");
+    //? TODO: Disabled since saving of profile sessions is also not supported yet.
+    // if (sessionState_ == null || !sessionState_.IsAutoSaveEnabled) {
+    //   return;
+    // }
+    //
+    // string filePath = Utils.GetAutoSaveFilePath();
+    // bool saved = await SaveSessionDocument(filePath).ConfigureAwait(false);
+    // Trace.TraceInformation($"Auto-saved session: {saved}");
   }
 
   private void OpenNewDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {

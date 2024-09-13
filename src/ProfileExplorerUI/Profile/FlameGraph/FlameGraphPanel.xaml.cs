@@ -17,14 +17,9 @@ namespace ProfileExplorer.UI.Profile;
 
 public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
   private FlameGraphSettings settings_;
-  private bool dragging_;
-  private Point draggingStart_;
-  private Point draggingViewStart_;
   private bool panelVisible_;
   private ProfileCallTree callTree_;
   private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
-  private FlameGraphNode enlargedNode_;
-  private DateTime lastWheelZoomTime_;
   private List<FlameGraphNode> searchResultNodes_;
   private int searchResultIndex_;
   private bool showSearchSection_;
