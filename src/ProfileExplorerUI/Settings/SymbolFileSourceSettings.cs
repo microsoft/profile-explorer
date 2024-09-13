@@ -216,20 +216,17 @@ public class SymbolFileSourceSettings : SettingsBase {
     // Try to detect running as a domain-joined or AAD-joined account,
     // which should have access to a private, internal symbol server.
     // Based on https://stackoverflow.com/questions/926227/how-to-detect-if-machine-is-joined-to-domain
-    //? TODO: Domains/emails should not be hardcoded
-
-    try {
-      string domain = IPGlobalProperties.GetIPGlobalProperties().DomainName;
-
-      if (domain != null &&
-          domain.Contains("redmond", StringComparison.OrdinalIgnoreCase) ||
-          domain.Contains("ntdev", StringComparison.OrdinalIgnoreCase)) {
-        Trace.WriteLine("Set symbol path for domain-joined machine");
-        return true;
-      }
-    }
-    catch (Exception ex) {
-    }
+    // try {
+    //   string domain = IPGlobalProperties.GetIPGlobalProperties().DomainName;
+    //
+    //   if (domain != null &&
+    //       domain.Contains("DOMANIN_NAME", StringComparison.OrdinalIgnoreCase)) {
+    //     Trace.WriteLine("Set symbol path for domain-joined machine");
+    //     return true;
+    //   }
+    // }
+    // catch (Exception ex) {
+    // }
 
     try {
       string pcszTenantId = null;

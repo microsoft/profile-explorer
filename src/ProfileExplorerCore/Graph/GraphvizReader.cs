@@ -239,7 +239,6 @@ public sealed class GraphvizReader {
       return null;
     }
 
-    //? TODO: These commented-out values are currently not used anywhere.
     node.Name = name;
     node.CenterX = x;
     node.CenterY = y;
@@ -256,12 +255,13 @@ public sealed class GraphvizReader {
     }
 
     node.Label = label.ToString();
+    nodeMap_[name.ToString()] = node;
+
+    //? TODO: These commented-out values are currently not used anywhere.
     //node.Style = style;
     //node.Shape = shape;
     //node.BorderColor = borderColor;
     //node.BackgroundColor = backgroundColor;
-
-    nodeMap_[name.ToString()] = node;
 
     // Associate with IR objects.
     if (dataNameMap_.TryGetValue(name.ToString(), out var data)) {
@@ -269,7 +269,6 @@ public sealed class GraphvizReader {
       graph_.DataNodeMap.Add(data, node);
     }
     else {
-      //Debug.Assert(false, $"Could not find block {name}");
       Trace.TraceError($"Could not find Graphviz output block {name}");
     }
 

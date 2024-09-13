@@ -12,8 +12,8 @@ namespace ProfileExplorer.UI.Compilers;
 
 [ProtoContract]
 public class SymbolFileCache {
-  private static int CurrentFileVersion = 1;
-  private static int MinSupportedFileVersion = 1;
+  private static int CurrentFileVersion = 2;
+  private static int MinSupportedFileVersion = 2;
   [ProtoMember(1)]
   public int Version { get; set; }
   [ProtoMember(2)]

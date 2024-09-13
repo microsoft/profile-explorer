@@ -107,7 +107,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public bool AnnotateSourceLocations(FunctionIR function, FunctionDebugInfo funcDebugInfo) {
-    var funcSymbol = FindFunctionSymbolByRVA(funcDebugInfo.RVA);
+    var funcSymbol = FindFunctionSymbolByRVA(funcDebugInfo.RVA, true);
 
     if (funcSymbol == null) {
       return false;
@@ -685,7 +685,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
                                                  sourceFile.fileName);
 
         if (includeInlinees) {
-          var funcSymbol = FindFunctionSymbolByRVA(rva);
+          var funcSymbol = FindFunctionSymbolByRVA(rva, true);
 
           if (funcSymbol != null) {
             // Enumerate the functions that got inlined at this call site.
@@ -849,14 +849,16 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     IDiaEnumSymbols publicSymbolEnum = null;
 
     try {
+      var symbolList = new List<FunctionDebugInfo>();
+      var symbolMap = new Dictionary<long, FunctionDebugInfo>();
       globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
       globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
-      var funcSymbolsSet = new HashSet<FunctionDebugInfo>(symbolEnum.count);
 
       foreach (IDiaSymbol sym in symbolEnum) {
         //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
         var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (uint)sym.length);
-        funcSymbolsSet.Add(funcInfo);
+        symbolList.Add(funcInfo);
+        symbolMap[funcInfo.RVA] = funcInfo;
       }
 
       foreach (IDiaSymbol sym in publicSymbolEnum) {
@@ -865,14 +867,19 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
         // Public symbols are preferred over function symbols if they have the same RVA and size.
         // This ensures that the mangled name is saved, set only of public symbols.
-        if (funcSymbolsSet.Contains(funcInfo)) {
-          funcSymbolsSet.Remove(funcInfo);
+        // This tries to mirror the behavior from FindFunctionSymbolByRVA.
+        if (symbolMap.TryGetValue(funcInfo.RVA, out var existingFuncInfo)) {
+          if (existingFuncInfo.Size == funcInfo.Size) {
+            existingFuncInfo.Name = funcInfo.Name;
+          }
         }
-
-        funcSymbolsSet.Add(funcInfo);
+        else {
+          // Consider the public sym if it doesn't overlap a function sym.
+          symbolList.Add(funcInfo);
+        }
       }
 
-      return funcSymbolsSet.ToList();
+      return symbolList;
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
@@ -902,18 +909,23 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return FindFunctionSymbolImpl(SymTagEnum.SymTagPublicSymbol, functionName, demangledName, queryDemangledName);
   }
 
-  private IDiaSymbol FindFunctionSymbolByRVA(long rva) {
+  private IDiaSymbol FindFunctionSymbolByRVA(long rva, bool preferFunctionSym = false) {
     if (!EnsureLoaded()) {
       return null;
     }
 
     try {
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+
+      if (preferFunctionSym && funcSym != null) {
+        return funcSym;
+      }
+
+      // Public symbols are preferred over function symbols if they have the same RVA and size.
+      // This ensures that the mangled name is saved, set only of public symbols.
       session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var pubSym);
 
       if (pubSym != null) {
-        // Public symbols are preferred over function symbols if they have the same RVA and size.
-        // This ensures that the mangled name is saved, set only of public symbols.
         if (funcSym == null ||
             funcSym.relativeVirtualAddress == pubSym.relativeVirtualAddress &&
             funcSym.length == pubSym.length) {

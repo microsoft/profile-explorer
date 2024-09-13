@@ -821,7 +821,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 
   private MarkedSamples FindMarkedSamples(TimeSpan time) {
-    var closeTimeDiff = TimeSpan.FromMilliseconds(1); //? TODO: Adjust based on zoom?
+    var closeTimeDiff = TimeSpan.FromMilliseconds(1);
     var querySample = new SampleIndex(0, time);
 
     foreach (var markedSamples in markedSamples_) {

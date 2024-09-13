@@ -12,9 +12,6 @@ namespace ProfileExplorer.Core;
 
 public static class CompressionUtils {
   public static byte[] Compress(byte[] data, CompressionLevel level = CompressionLevel.Fastest) {
-    //? TODO: Mapping of compression level
-    // https://paulcalvano.com/index.php/2018/07/25/brotli-compression-how-much-will-it-reduce-your-content/
-    //level = (CompressionLevel)3;
     using var uncompressedStream = new MemoryStream(data);
     using var compressedStream = new MemoryStream();
     using var compressorStream = new BrotliStream(compressedStream, level, true);
@@ -145,8 +142,6 @@ public class CompressedObject<T> where T : class {
     value_ = value;
     lockObject_ = new object();
   }
-
-  //? TODO: public async Task CompressAsync
 
   public void Compress() {
     lock (lockObject_) {

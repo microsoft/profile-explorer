@@ -887,18 +887,18 @@
                     TextWrapping="Wrap" />
 
                   <CheckBox
-                    x:Name="BinaryNameWhitelistCheckbox"
+                    x:Name="BinaryNameAllowedListCheckbox"
                     Margin="0,8,0,0"
-                    Content="Processed binary whitelist (one per line)"
-                    IsChecked="{Binding Path=Options.BinaryNameWhitelistEnabled, Mode=TwoWay}" />
+                    Content="Processed binary accepted list (one per line)"
+                    IsChecked="{Binding Path=Options.BinaryNameAllowedListEnabled, Mode=TwoWay}" />
                   <TextBox
                     Margin="20,4,55,0"
                     HorizontalAlignment="Stretch"
                     AcceptsReturn="True"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                    IsEnabled="{Binding ElementName=BinaryNameWhitelistCheckbox, Path=IsChecked}"
-                    Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                    IsEnabled="{Binding ElementName=BinaryNameAllowedListCheckbox, Path=IsChecked}"
+                    Text="{Binding Path=Options.BinaryNameAllowedList, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                     TextWrapping="Wrap" />
                 </StackPanel>
               </Expander>

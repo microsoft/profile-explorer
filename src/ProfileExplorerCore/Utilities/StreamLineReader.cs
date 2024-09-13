@@ -18,9 +18,6 @@ public class StreamLineReader : IDisposable {
     fileStream_ = stream;
   }
 
-  /// <summary>
-  ///   CurrentLine number
-  /// </summary>
   public long CurrentPosition => currentPosition_;
 
   public void Dispose() {

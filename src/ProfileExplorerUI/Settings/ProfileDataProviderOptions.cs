@@ -14,13 +14,13 @@ public class ProfileDataProviderOptions : SettingsBase {
   [ProtoMember(1)][OptionValue(false)]
   public bool BinarySearchPathsEnabled { get; set; }
   [ProtoMember(2)][OptionValue(false)]
-  public bool BinaryNameWhitelistEnabled { get; set; }
+  public bool BinaryNameAllowedListEnabled { get; set; }
   [ProtoMember(3)][OptionValue(true)]
   public bool DownloadBinaryFiles { get; set; }
   [ProtoMember(4)][OptionValue()]
   public List<string> BinarySearchPaths { get; set; }
   [ProtoMember(5)][OptionValue()]
-  public List<string> BinaryNameWhitelist { get; set; }
+  public List<string> BinaryNameAllowedList { get; set; }
   [ProtoMember(6)][OptionValue(false)]
   public bool MarkInlinedFunctions { get; set; }
   [ProtoMember(7)][OptionValue(true)]
@@ -35,7 +35,7 @@ public class ProfileDataProviderOptions : SettingsBase {
   public List<ProfileDataReport> PreviousRecordingSessions { get; set; }
   [ProtoMember(12)][OptionValue()]
   public List<ProfileDataReport> PreviousLoadedSessions { get; set; }
-  public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
+  public bool HasBinaryNameAllowedList => BinaryNameAllowedListEnabled && BinaryNameAllowedList.Count > 0;
   public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
 
   public override void Reset() {

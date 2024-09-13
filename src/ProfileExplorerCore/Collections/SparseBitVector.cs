@@ -223,7 +223,7 @@ public class SparseBitvector : IEquatable<SparseBitvector> {
 
   private Node AllocateNode(int bit) {
     int startBit = bit / Node.BitsPerNode * Node.BitsPerNode;
-    return new Node(startBit); //? TODO: pool
+    return new Node(startBit);
   }
 
   private void FreeNode(Node node) {

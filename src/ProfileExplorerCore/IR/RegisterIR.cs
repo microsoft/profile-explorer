@@ -58,12 +58,12 @@ public sealed class RegisterIR {
   }
 
   public bool OverlapsWith(RegisterIR other) {
-    //? TODO: ALso check bit range overlap
+    //? TODO: Also check bit range overlap
     return other.Root == Root;
   }
 
   public bool CompletelyOverlapsWith(RegisterIR other) {
-    //? TODO: Impelement
+    //? TODO
     return false;
   }
 

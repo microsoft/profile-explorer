@@ -118,7 +118,7 @@ public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<Func
   [ProtoMember(1)]
   public long Id { get; set; } // Used for MethodToken in managed code.
   [ProtoMember(2)]
-  public string Name { get; private set; }
+  public string Name { get; set; }
   [ProtoMember(3)]
   public List<SourceLineDebugInfo> SourceLines { get; set; }
   [ProtoMember(4)]

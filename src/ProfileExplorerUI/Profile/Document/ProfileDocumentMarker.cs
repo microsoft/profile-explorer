@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -466,7 +467,7 @@ public class ProfileDocumentMarker {
       var instr = element as InstructionIR;
       if (instr == null || !irInfo_.IR.IsCallInstruction(instr))
         continue;
-      
+
       // Mark direct, known call targets with a different icon.
       var callTarget = irInfo_.IR.GetCallTarget(instr);
       bool isDirectCall = callTarget is {HasName: true} &&

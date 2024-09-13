@@ -43,9 +43,6 @@ public sealed class OperandIR : IRElement {
   public bool IsParameterOperand => Role == OperandRole.Parameter;
   public TypeIR Type { get; set; }
   public TupleIR Parent { get; set; }
-
-  //? TODO: Boxing (allocating heap value) can be avoided to reduce GC pressure:
-  //? https://stackoverflow.com/questions/6163335/how-to-store-structs-of-different-types-without-boxing
   public object Value { get; set; }
   public bool IsVariable => Kind == OperandKind.Variable;
   public bool IsTemporary => Kind == OperandKind.Temporary;
