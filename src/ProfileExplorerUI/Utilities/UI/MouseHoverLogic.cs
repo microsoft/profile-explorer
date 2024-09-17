@@ -7,9 +7,8 @@ using System.Windows.Threading;
 
 namespace ProfileExplorer.UI.Utilities.UI;
 
-/// <summary>
-///   Encapsulates and adds MouseHover support to UIElements.
-/// </summary>
+// Based on MouseHoverLogic from AvalonEdit, but with the option
+// of using a different hover time than the default system one.
 public class MouseHoverLogic : IDisposable {
   private UIElement target;
   private TimeSpan hoverDuration;

@@ -46,7 +46,7 @@
         Cursor="Hand"
         Foreground="DarkBlue">
         <Hyperlink
-          NavigateUri="https://aka.ms/ProfileExplorer"
+          NavigateUri="https://github.com/microsoft/profile-explorer"
           RequestNavigate="Hyperlink_RequestNavigate">
           Web site
         </Hyperlink>

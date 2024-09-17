@@ -30,7 +30,7 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   public string CompilerDisplayName => "LLVM";
   public string DefaultSyntaxHighlightingFile => "LLVM";
   public string OpenFileFilter =>
-    "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.irx|Profile Explorer Session Files|*.irx|All Files|*.*";
+    "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.pex|Profile Explorer Session Files|*.pex|All Files|*.*";
   public string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
   public ISession Session => session_;
   public ICompilerIRInfo IR => ir_;

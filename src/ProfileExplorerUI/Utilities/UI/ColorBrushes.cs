@@ -9,9 +9,7 @@ namespace ProfileExplorer.UI;
 
 public static class ColorBrushes {
   private static readonly ThreadLocal<Dictionary<Color, SolidColorBrush>> brushes_ =
-    new(() => {
-      return new Dictionary<Color, SolidColorBrush>();
-    });
+    new(() => new Dictionary<Color, SolidColorBrush>());
 
   // Cache transparent brush, since using it from Brushes
   // does a dictionary lookup.

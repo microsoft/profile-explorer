@@ -10,13 +10,9 @@ namespace ProfileExplorer.UI;
 public static class ColorPens {
   private static readonly double BoldPenThickness = 1.25;
   private static ThreadLocal<Dictionary<Tuple<Color, double>, Pen>> pens_ =
-    new(() => {
-      return new Dictionary<Tuple<Color, double>, Pen>();
-    });
+    new(() => new Dictionary<Tuple<Color, double>, Pen>());
   private static ThreadLocal<Dictionary<Tuple<Color, double, DashStyle>, Pen>> dashedPens_ =
-    new(() => {
-      return new Dictionary<Tuple<Color, double, DashStyle>, Pen>();
-    });
+    new(() => new Dictionary<Tuple<Color, double, DashStyle>, Pen>());
 
   public static Pen GetPen(Color color, double thickness = 1.0) {
     var pair = new Tuple<Color, double>(color, thickness);
@@ -88,10 +84,9 @@ public static class ColorPens {
   }
 
   private static Pen CreateDashedPen(Color color, DashStyle dashStyle, double thickness) {
-    Pen pen;
     var brush = ColorBrushes.GetBrush(color);
 
-    pen = new Pen(brush, thickness) {
+    var pen = new Pen(brush, thickness) {
       DashStyle = dashStyle
     };
 

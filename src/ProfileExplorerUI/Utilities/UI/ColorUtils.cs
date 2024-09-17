@@ -6,7 +6,7 @@ using System.Windows.Media;
 
 namespace ProfileExplorer.UI;
 
-class ColorUtils {
+public static class ColorUtils {
   public static readonly string[] PastelColors = {
     "#f4a3a3",
     "#dabdce",

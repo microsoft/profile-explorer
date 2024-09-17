@@ -151,7 +151,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   public async Task SelectFunction(IRTextFunction function, bool bringIntoView = true) {
     if (!HasCallTree) {
-      return; //? TODO: Maybe do the init now?
+      return;
     }
 
     GraphHost.ClearSelection();
@@ -165,7 +165,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   public async Task SelectFunction(ProfileCallTreeNode node, bool bringIntoView = true, bool showDetails = true) {
     if (!HasCallTree) {
-      return; //? TODO: Maybe do the init now?
+      return;
     }
 
     if (node is ProfileCallTreeGroupNode groupNode) {

@@ -7,6 +7,7 @@ using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.Core.Analysis;
 
+//? TODO: Switch to SparseBitVector to speed up.
 public class CFGReachability {
   private FunctionIR function_;
   private int maxBlockNumber_;
@@ -24,21 +25,18 @@ public class CFGReachability {
     Compute();
   }
 
-  //? TODO: Algo cares only a bit being set at all
   public static int GetCardinality(BitArray bitArray) {
     int[] ints = new int[(bitArray.Count >> 5) + 1];
-
     bitArray.CopyTo(ints, 0);
-
     int count = 0;
 
-    // fix for not truncated bits in last integer that may have been set to true with SetAll()
+    // Fix for not truncated bits in last integer that may have been set to true with SetAll().
     ints[ints.Length - 1] &= ~(-1 << bitArray.Count % 32);
 
     for (int i = 0; i < ints.Length; i++) {
       int c = ints[i];
 
-      // magic (http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel)
+      // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
       unchecked {
         c = c - (c >> 1 & 0x55555555);
         c = (c & 0x33333333) + (c >> 2 & 0x33333333);

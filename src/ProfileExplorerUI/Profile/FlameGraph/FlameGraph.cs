@@ -16,7 +16,6 @@ public class FlameGraphNode : SearchableProfileItem, IEquatable<FlameGraphNode> 
   internal const double RecomputeVisibleRectWidth = MinVisibleRectWidth * 4;
   internal const double MinVisibleWidth = 1;
   internal const int MaxTextParts = 3;
-  private string functionName_;
 
   public FlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth,
                         FunctionNameFormatter funcNameFormatter) :

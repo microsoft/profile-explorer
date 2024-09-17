@@ -100,11 +100,6 @@
 			<XamlRuntime>Wpf</XamlRuntime>
 			<SubType>Designer</SubType>
 		</Page>
-		<Page Update="OptionsPanels\AdvancedOptionsPanel.xaml">
-			<Generator>MSBuild:Compile</Generator>
-			<XamlRuntime>Wpf</XamlRuntime>
-			<SubType>Designer</SubType>
-		</Page>
 		<Page Update="OptionsPanels\GeneralOptionsPanel.xaml">
 			<Generator>MSBuild:Compile</Generator>
 			<XamlRuntime>Wpf</XamlRuntime>
@@ -134,6 +129,11 @@
 			<Generator>MSBuild:Compile</Generator>
 			<XamlRuntime>Wpf</XamlRuntime>
 			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Profile\Document\DocumentColumns.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		  <XamlRuntime>Wpf</XamlRuntime>
+		  <SubType>Designer</SubType>
 		</Page>
 	</ItemGroup>
 

@@ -585,12 +585,12 @@
           <MenuItem Header="Help">
             <MenuItem
               Click="OpenDocsMenu_Click"
-              Header="Documentation">
+              Header="User Guide">
               <MenuItem.Icon>
                 <Image
                   Width="16"
                   Height="16"
-                  Source="{StaticResource HelpIcon}" />
+                  Source="{StaticResource BookIcon}" />
               </MenuItem.Icon>
             </MenuItem>
             <MenuItem
@@ -604,6 +604,11 @@
                   Source="{StaticResource HelpIcon}" />
               </MenuItem.Icon>
             </MenuItem>
+            <Separator />
+
+            <MenuItem
+              Click="CheckUpdatesMenu_Click"
+              Header="Check for Updates" />
             <MenuItem Header="Developer">
               <MenuItem
                 x:Name="DevMenuStartupTime"
@@ -624,10 +629,6 @@
             </MenuItem>
 
             <Separator />
-
-            <MenuItem
-              Click="CheckUpdatesMenu_Click"
-              Header="Check for Updates" />
             <MenuItem
               Click="AboutMenu_Click"
               Header="About Profile Explorer" />
@@ -1290,7 +1291,7 @@
               </Button>
               <Border
                 Margin="0,0,2,0"
-                BorderBrush="Transparent"
+                BorderBrush="DimGray"
                 BorderThickness="1,0,0,0"
                 Visibility="{Binding HasThreadFilter, Converter={StaticResource BoolToVisibilityConverter}}" />
 

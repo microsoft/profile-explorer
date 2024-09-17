@@ -37,7 +37,7 @@
       SelectedIndex="0"
       TabStripPlacement="Left">
       <TabItem
-        Header="Application"
+        Header="General"
         Style="{StaticResource TabControlStyle}">
         <ScrollViewer
           HorizontalScrollBarVisibility="Disabled"
@@ -121,20 +121,6 @@
         </ScrollViewer>
       </TabItem>
       <TabItem
-        Header="Timeline"
-        Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
-          <options:TimelineOptionsPanel
-            x:Name="TimelineOptionsPanel"
-            Width="Auto"
-            Height="Auto"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch" />
-        </ScrollViewer>
-      </TabItem>
-      <TabItem
         Header="Flame Graph"
         Style="{StaticResource TabControlStyle}">
         <ScrollViewer
@@ -142,6 +128,20 @@
           VerticalScrollBarVisibility="Auto">
           <options:FlameGraphOptionsPanel
             x:Name="FlameGraphOptionsPanel"
+            Width="Auto"
+            Height="Auto"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
+        </ScrollViewer>
+      </TabItem>
+      <TabItem
+        Header="Timeline"
+        Style="{StaticResource TabControlStyle}">
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <options:TimelineOptionsPanel
+            x:Name="TimelineOptionsPanel"
             Width="Auto"
             Height="Auto"
             HorizontalAlignment="Stretch"
