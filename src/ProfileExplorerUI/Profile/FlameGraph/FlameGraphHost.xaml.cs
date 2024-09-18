@@ -13,7 +13,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -26,7 +26,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private const double ZoomAnimationDuration = TimePerFrame * 8;
   private const double EnlargeAnimationDuration = TimePerFrame * 10;
   private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 4;
-  private readonly Stack<FlameGraphState> stateStack_;
+  private Stack<FlameGraphState> stateStack_;
   private ProfileCallTree callTree_;
   private bool dragging_;
   private Point draggingStart_;
@@ -56,7 +56,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     ShowNodePanel = true;
   }
 
-  public new bool IsInitialized => GraphViewer.IsInitialized;
   public ISession Session { get; set; }
   public FlameGraph FlameGraph => GraphViewer.FlameGraph;
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
@@ -239,7 +238,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public async Task InitializeFlameGraph(ProfileCallTree callTree) {
     List<(ProfileCallTreeNode Node, HighlightingStyle Style)> markedNodes = null;
 
-    if (IsInitialized) {
+    if (GraphViewer.IsInitialized) {
       markedNodes = new List<(ProfileCallTreeNode Node, HighlightingStyle Style)>();
       GraphViewer.SaveFixedMarkedNodes(markedNodes);
 
@@ -267,7 +266,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   public async Task InitializeTimeline(ProfileCallTree callTree, int threadId) {
     //? TODO: Timeline-style view not used yet.
-    if (IsInitialized) {
+    if (GraphViewer.IsInitialized) {
       Reset();
     }
 
@@ -288,7 +287,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     }
   }
 
-  public void BringNodeIntoView(FlameGraphNode node, bool fitSize) {
+  private void BringNodeIntoView(FlameGraphNode node, bool fitSize) {
     if (node.IsDummyNodeOrChild) {
       // If the node is not visible at all and has no bounds computed,
       // adjust the zoom first to make the node visible, then scroll to it.
@@ -334,7 +333,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void SetHorizontalOffset(double offset) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -388,7 +387,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void SetMaxWidth(double maxWidth, double duration = ZoomAnimationDuration) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -429,7 +428,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private void ResetWidthImpl() {
-    //? TODO: Buttons should be disabled
     if (!GraphViewer.IsInitialized) {
       return;
     }
@@ -448,7 +446,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     ZoomOut(CenterZoomPointX);
   }
 
-  public async Task NavigateToParentNode() {
+  private async Task NavigateToParentNode() {
     if (enlargedNode_ != null && enlargedNode_.Parent != null) {
       SelectNode(enlargedNode_.Parent);
       await EnlargeNode(enlargedNode_.Parent);
@@ -479,7 +477,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void SelectNode(ProfileCallTreeNode node, bool fitSize = false, bool bringIntoView = true) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -491,7 +489,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void SelectNodes(List<ProfileCallTreeNode> nodes, bool fitSize = false, bool bringIntoView = true) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -503,7 +501,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void MarkFunctions(List<ProfileCallTreeNode> nodes, HighlightingStyle style) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -511,7 +509,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void MarkFunctionInstances(IRTextFunction func, HighlightingStyle style) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -520,7 +518,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   public void ClearMarkedFunctions(bool clearFixedNodes = false) {
-    if (!IsInitialized) {
+    if (!GraphViewer.IsInitialized) {
       return;
     }
 
@@ -535,7 +533,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+  private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
     if (EqualityComparer<T>.Default.Equals(field, value)) return false;
     field = value;
     OnPropertyChanged(propertyName);
@@ -550,7 +548,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private void SetupEvents() {
     GraphHost.SizeChanged += (sender, args) => {
-      if (IsInitialized && args.NewSize.Width > GraphViewer.MaxGraphWidth) {
+      if (GraphViewer.IsInitialized && args.NewSize.Width > GraphViewer.MaxGraphWidth) {
         SetMaxWidth(args.NewSize.Width);
       }
     };
@@ -861,7 +859,6 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private void StartMouseDragging(MouseButtonEventArgs e) {
-    //? TODO: Code here is identical to GraphPanel
     HidePreviewPopup();
     dragging_ = true;
     draggingStart_ = e.GetPosition(GraphHost);

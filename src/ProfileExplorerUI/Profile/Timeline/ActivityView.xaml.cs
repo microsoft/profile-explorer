@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -761,17 +761,6 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     if (showPositionLine_ && !startedSelection_) {
       DrawPositionLine(graphDC);
     }
-
-    // foreach (var ev in profile_.Events) {
-    //     var startX = TimeToPosition(ev.Sample.Time);
-    //
-    //     if (startX > visibleArea_.Width) {
-    //         return;
-    //     }
-    //
-    //     graphDC.DrawRectangle(ev.Sample.CounterId != 0 ? Brushes.Red : Brushes.Blue, selectionBorderColor_,
-    //         new Rect(startX, 0, 2, visibleArea_.Height));
-    // }
   }
 
   private void DrawTimeRangeFilter(DrawingContext graphDC) {

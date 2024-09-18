@@ -19,18 +19,15 @@ using Microsoft.Diagnostics.Symbols.Authentication;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.UI.Compilers;
 using StringWriter = System.IO.StringWriter;
 
-namespace ProfileExplorer.UI.Compilers;
+namespace ProfileExplorer.UI.Binary;
 
-//? TODO: Use for-each iterators everywhere
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;
   private const int FunctionCacheMissThreshold = 100;
 
-  //? TODO: Save cache between sessions, including the unavailable PDBs.
-  //? Invalidate unavailable ones if SymbolOption paths change so they get a chance
-  //? to be searched for in new locations.
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
   private static readonly StringWriter authLogWriter_;
   private static readonly SymwebHandler authSymwebHandler_;
@@ -510,8 +507,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
           FunctionList = sortedFuncList_
         };
 
-        //? TODO: Saving can be done on another thread
-        //? to return faster from this function.
         await SymbolFileCache.SerializeAsync(symbolCache_, settings_.SymbolCacheDirectoryPath).
           ConfigureAwait(false);
         Trace.WriteLine($"PDB cache created for {symbolFile_.FileName}");

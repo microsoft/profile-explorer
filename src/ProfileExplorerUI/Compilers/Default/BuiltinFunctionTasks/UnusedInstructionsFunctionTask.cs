@@ -53,8 +53,7 @@ class UnusedInstructionsFunctionTask {
     return true;
   }
 
-  //? TODO: Extract this into it's own class
-  //? Add hooks for quierying IR if an instr is DCE candidate (reject calls for ex)
+  //? TODO: Add hooks for quierying IR if an instr is DCE candidate (reject calls for ex)
   private static SSADefinitionTag GetSSADefinitionTag(InstructionIR instr) {
     if (instr.Destinations.Count == 0) {
       return null;

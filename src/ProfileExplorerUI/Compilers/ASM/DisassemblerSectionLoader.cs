@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers.ASM;
 
 namespace ProfileExplorer.UI.Compilers;
@@ -85,6 +86,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     InitializeDisassembler();
 
     if (preloadFunctions_) {
+      // Used when opening a binary directly.
       var funcList = debugInfo_.GetSortedFunctions();
 
       foreach (var funcInfo in funcList) {
@@ -119,7 +121,6 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     }
 
     // For managed code, the code data is found on each function.
-
     if (debugInfo_.LoadDebugInfo(null)) {
       disassembler_ = Disassembler.CreateForMachine(debugInfo_, compilerInfo_.NameProvider.FormatFunctionName);
       return true;

@@ -51,7 +51,6 @@ public class PanelObjectPairState {
   [ProtoMember(2)]
   public byte[] StateObject;
 
-  //? TODO: state objects should be just byte[] everywhere
   public PanelObjectPairState(ToolPanelKind panelKind, object stateObject) {
     PanelKind = panelKind;
     StateObject = stateObject as byte[];

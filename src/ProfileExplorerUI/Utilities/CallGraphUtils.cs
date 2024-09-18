@@ -5,7 +5,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 
-namespace ProfileExplorer.UI.Utilities;
+namespace ProfileExplorer.UI;
 
 class CallGraphUtils {
   public static Graph BuildCallGraphLayout(IRTextSummary summary, IRTextSection section,

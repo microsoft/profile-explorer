@@ -20,33 +20,7 @@
         Margin="0,2,0,0"
         IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
         Orientation="Horizontal">
-        <TextBlock
-          VerticalAlignment="Center"
-          Text="Max CPU cores used" />
-        <xctk:DoubleUpDown
-          Width="70"
-          Margin="8,0,0,0"
-          VerticalAlignment="Center"
-          FormatString="F0"
-          Increment="5"
-          Maximum="200"
-          Minimum="50"
-          ShowButtonSpinner="True"
-          ToolTip="Maximum number of logical cores used when loading profile traces and other UI tasks"
-          Value="{Binding Path=CpuCoreLimit, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
-        <TextBlock
-          Margin="4,0,0,0"
-          VerticalAlignment="Center"
-          Text="%" />
-        <Button
-          Height="20"
-          Margin="8,0,0,0"
-          Padding="2,0,2,0"
-          VerticalAlignment="Center"
-          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-          Click="CpuCoreLimitButton_Click"
-          Content="Default"
-          ToolTip="Reset the application UI scaling to 100%" />
+
       </StackPanel>
 
       <Separator
@@ -98,6 +72,45 @@
         Content="Disable hardware-accelerated rendering"
         IsChecked="{Binding DisableHardwareRendering, Mode=TwoWay}"
         ToolTip="Switch from hardware-accelerated to software rendering of the application UI" />
-    </StackPanel>
+      <Separator
+        Margin="0,6,0,4"
+        Background="LightGray" />
+
+      <TextBlock
+        FontWeight="Medium"
+        Text="Advanced" />
+      <StackPanel
+        Margin="0,4,0,4"
+        IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
+        Orientation="Horizontal">
+        <TextBlock
+          VerticalAlignment="Center"
+          Text="Max CPU cores used" />
+        <xctk:DoubleUpDown
+          Width="70"
+          Margin="8,0,0,0"
+          VerticalAlignment="Center"
+          FormatString="F0"
+          Increment="5"
+          Maximum="200"
+          Minimum="50"
+          ShowButtonSpinner="True"
+          ToolTip="Maximum number of logical cores used when loading profile traces and other UI tasks"
+          Value="{Binding Path=CpuCoreLimit, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
+        <TextBlock
+          Margin="4,0,0,0"
+          VerticalAlignment="Center"
+          Text="%" />
+        <Button
+          Height="20"
+          Margin="8,0,0,0"
+          Padding="2,0,2,0"
+          VerticalAlignment="Center"
+          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          Click="CpuCoreLimitButton_Click"
+          Content="Default"
+          ToolTip="Reset the application UI scaling to 100%" />
+      </StackPanel>
+      </StackPanel>
   </Grid>
 </local:OptionsPanelBase>

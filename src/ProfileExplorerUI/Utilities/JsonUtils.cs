@@ -32,7 +32,7 @@ public class StringInterningConverter : JsonConverter<string> {
   }
 }
 
-public class JsonUtils {
+public static class JsonUtils {
   public static JsonSerializerOptions GetJsonOptions() {
     var options = new JsonSerializerOptions {
       WriteIndented = true,

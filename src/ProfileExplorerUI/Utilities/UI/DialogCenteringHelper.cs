@@ -94,7 +94,6 @@ public enum SetWindowPosFlags : uint {
 // Code based on answer from https://stackoverflow.com/a/15369563
 public class DialogCenteringHelper : IDisposable {
   public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
-  public delegate void TimerProc(IntPtr hWnd, uint uMsg, UIntPtr nIDEvent, uint dwTime);
 
   /// <summary>
   ///   Special window handles
@@ -140,27 +139,21 @@ public class DialogCenteringHelper : IDisposable {
     UnhookWindowsHookEx(hHook_);
   }
 
-  [SuppressUnmanagedCodeSecurity]
   [DllImport("kernel32.dll")]
   private static extern int GetCurrentThreadId();
 
-  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   private static extern bool GetWindowRect(IntPtr hWnd, ref Rectangle lpRect);
 
-  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
 
-  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
 
-  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   public static extern int UnhookWindowsHookEx(IntPtr idHook);
 
-  [SuppressUnmanagedCodeSecurity]
   [DllImport("user32.dll")]
   [return: MarshalAs(UnmanagedType.Bool)]
   private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,

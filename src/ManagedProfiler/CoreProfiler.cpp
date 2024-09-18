@@ -16,7 +16,7 @@
 #include <vector>
 #include "CLRDataTarget.h"
 
-static const wchar_t* ProfilerPipeName = L"\\\\.\\pipe\\IRXProfilerPipe";
+static const wchar_t* ProfilerPipeName = L"\\\\.\\pipe\\PEXProfilerPipe";
 
 CComPtr<ISOSDacInterface> dac_;
 std::unordered_set<UINT_PTR> recordedAddrs_;
@@ -24,7 +24,7 @@ std::mutex lock_;
 bool sessionEnded_;
 
 HRESULT __stdcall CoreProfiler::QueryInterface(REFIID riid, void** ppvObject) {
-  Log(L"IRX: QueryInterface");
+  Log(L"PEX: QueryInterface");
 
   if (ppvObject == nullptr)
     return E_POINTER;
@@ -180,7 +180,7 @@ USHORT GetTargetMachine() {
 }
 
 HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
-  Log("IRXProfiler: Initialize");
+  Log("PEX: Initialize");
 
   pICorProfilerInfoUnk->QueryInterface(&profilerInfo_);
   profilerInfo_->SetEventMask2(
@@ -194,7 +194,7 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
 
   /*while (!::IsDebuggerPresent())
   {
-          Log(L"IRX: waiting");
+          Log(L"PEX: waiting");
           ::Sleep(1000);
   }*/
 
@@ -206,24 +206,24 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
   pipeClient_ = new NamedPipeClient();
 
   if (!pipeClient_->Initialize(ProfilerPipeName)) {
-    Log("IRXProfiler: Failed to connect to pipe\n");
+    Log("PEX: Failed to connect to pipe\n");
     return S_OK;
   }
 
-  Log("IRXProfiler: Connected to pipe for proc %d\n", processId_);
+  Log("PEX: Connected to pipe for proc %d\n", processId_);
 
   pipeClientThread_ = new std::thread([this]() {
-    Log("IRXProfiler: Started pipe thread\n");
+    Log("PEX: Started pipe thread\n");
     bool canceled = false;
 
     pipeClient_->ReceiveMessages(
         [&](PipeMessageHeader header, std::shared_ptr<char[]> messageBody) {
-          Log("IRXProfiler: Message %d, size %d\n", header.Kind, header.Size);
+          Log("PEX: Message %d, size %d\n", header.Kind, header.Size);
 
           switch (header.Kind) {
             case PipeMessageKind::RequestFunctionCode: {
               auto request = (RequestFunctionCodeMessage*)messageBody.get();
-              Log("IRXProfiler: Request %lld id %lld\n", request->Address,
+              Log("PEX: Request %lld id %lld\n", request->Address,
                   request->FunctionId);
 
               if (request->ProcessId == processId_) {
@@ -235,14 +235,14 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
               sessionEnded_.store(true);
               pipeClient_->Disconnect();
 
-              Log("IRXProfiler: Detaching profiler for proc %d\n", processId_);
+              Log("PEX: Detaching profiler for proc %d\n", processId_);
 
               /*if (FAILED(profilerInfo_->RequestProfilerDetach(10000))) {
-                      Log("IRXProfiler: Failed to detach proc %d\n",
+                      Log("PEX: Failed to detach proc %d\n",
               processId_);
               }
               else {
-                      Log("IRXProfiler: Profiler detached for proc %d\n",
+                      Log("PEX: Profiler detached for proc %d\n",
               processId_);
               }*/
 
@@ -252,7 +252,7 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
         },
         canceled);
 
-    Log(">IRX: Stop pipe thread\n");
+    Log(">PEX: Stop pipe thread\n");
   });
 
   // Load DAC, used mostly to get JIT helper function names.
@@ -272,9 +272,9 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
       auto result = dataProc->QueryInterface(&dac_);
 
       if (SUCCEEDED(result)) {
-        Log("IRXProfiler: DAC initialized");
+        Log("PEX: DAC initialized");
       } else {
-        Log("IRXProfiler: DAC initialization failed: %d", result);
+        Log("PEX: DAC initialization failed: %d", result);
       }
     }
   }
@@ -288,7 +288,7 @@ bool CoreProfiler::SendRequestedFunctionCode(
     return true;
   }
 
-  Log("IRXProfiler: SendRequestedFunctionCode: %s",
+  Log("PEX: SendRequestedFunctionCode: %s",
       GetMethodName(request.FunctionId).c_str());
 
   ModuleID module;
@@ -297,14 +297,14 @@ bool CoreProfiler::SendRequestedFunctionCode(
   ClassID classId;
   if (FAILED(profilerInfo_->GetFunctionInfo(request.FunctionId, &classId,
                                             &module, &token))) {
-    Log("IRXProfiler: Failed GetFunctionInfo\n");
+    Log("PEX: Failed GetFunctionInfo\n");
     return false;
   }
 
   ULONG rejitCount;
   if (FAILED(profilerInfo_->GetReJITIDs(request.FunctionId, 0, &rejitCount,
                                         nullptr))) {
-    Log("IRXProfiler: Failed GetReJITIDs\n");
+    Log("PEX: Failed GetReJITIDs\n");
     return false;
   }
 
@@ -312,7 +312,7 @@ bool CoreProfiler::SendRequestedFunctionCode(
 
   if (FAILED(profilerInfo_->GetReJITIDs(request.FunctionId, rejitCount,
                                         &rejitCount, rejitIds.data()))) {
-    Log("IRXProfiler: Failed GetReJITIDs\n");
+    Log("PEX: Failed GetReJITIDs\n");
     return false;
   }
 
@@ -321,7 +321,7 @@ bool CoreProfiler::SendRequestedFunctionCode(
       continue;
     }
 
-    // Log("IRXProfiler: Handle RejitID %d\n", rejit);
+    // Log("PEX: Handle RejitID %d\n", rejit);
     ULONG32 addrs = 0;
     profilerInfo_->GetNativeCodeStartAddresses(request.FunctionId, rejit, 0,
                                                &addrs, nullptr);
@@ -365,11 +365,11 @@ bool CoreProfiler::SendLoadedFunctionCode(uint64_t funcId,
                                           uint32_t codeSize,
                                           char* codeByes) {
   if (pipeClient_ != nullptr) {
-    Log("IRXProfiler: Sending code for funcId %llu, IP %llu, code size %d\n",
+    Log("PEX: Sending code for funcId %llu, IP %llu, code size %d\n",
         funcId, address, codeSize);
     SendFunctionCode(*pipeClient_, funcId, address, rejitId, processId_,
                      codeSize, codeByes);
-    Log("IRXProfiler: Sent code for funcId %llu, IP %llu, code size %d\n",
+    Log("PEX: Sent code for funcId %llu, IP %llu, code size %d\n",
         funcId, address, codeSize);
   }
 
@@ -377,7 +377,7 @@ bool CoreProfiler::SendLoadedFunctionCode(uint64_t funcId,
 }
 
 HRESULT CoreProfiler::Shutdown() {
-  Log("IRXProfiler: Shutdown");
+  Log("PEX: Shutdown");
 
   profilerInfo_.Release();
   return S_OK;
@@ -474,7 +474,7 @@ HRESULT CoreProfiler::JITCompilationStarted(FunctionID functionId,
 HRESULT CoreProfiler::JITCompilationFinished(FunctionID functionId,
                                              HRESULT hrStatus,
                                              BOOL fIsSafeToBlock) {
-  Log("IRXProfiler: JITCompilationFinished: %s",
+  Log("PEX: JITCompilationFinished: %s",
       GetMethodName(functionId).c_str());
 
   if (fIsSafeToBlock) {
@@ -533,7 +533,7 @@ bool CoreProfiler::HandleLoadedFunction(uint64_t functionId) {
     return true;
   }
 
-  Log("IRXProfiler: JITCompilationFinished: %s",
+  Log("PEX: JITCompilationFinished: %s",
       GetMethodName(functionId).c_str());
 
   ModuleID module;
@@ -542,13 +542,13 @@ bool CoreProfiler::HandleLoadedFunction(uint64_t functionId) {
   ClassID classId;
   if (FAILED(profilerInfo_->GetFunctionInfo(functionId, &classId, &module,
                                             &token))) {
-    Log("IRXProfiler: Failed GetFunctionInfo\n");
+    Log("PEX: Failed GetFunctionInfo\n");
     return false;
   }
 
   ULONG rejitCount;
   if (FAILED(profilerInfo_->GetReJITIDs(functionId, 0, &rejitCount, nullptr))) {
-    Log("IRXProfiler: Failed GetReJITIDs\n");
+    Log("PEX: Failed GetReJITIDs\n");
     return false;
   }
 
@@ -556,7 +556,7 @@ bool CoreProfiler::HandleLoadedFunction(uint64_t functionId) {
 
   if (FAILED(profilerInfo_->GetReJITIDs(functionId, rejitCount, &rejitCount,
                                         rejitIds.data()))) {
-    Log("IRXProfiler: Failed GetReJITIDs\n");
+    Log("PEX: Failed GetReJITIDs\n");
     return false;
   }
 
@@ -899,18 +899,18 @@ HRESULT CoreProfiler::HandleDestroyed(GCHandleID handleId) {
 HRESULT CoreProfiler::InitializeForAttach(IUnknown* pCorProfilerInfoUnk,
                                           void* pvClientData,
                                           UINT cbClientData) {
-  Log("IRXProfiler: InitializeForAttach, data %d\n", cbClientData);
+  Log("PEX: InitializeForAttach, data %d\n", cbClientData);
   return Initialize(pCorProfilerInfoUnk);
 }
 
 HRESULT CoreProfiler::ProfilerAttachComplete() {
-  Log("IRXProfiler: ProfilerAttachComplete\n");
+  Log("PEX: ProfilerAttachComplete\n");
 
   return S_OK;
 }
 
 HRESULT CoreProfiler::ProfilerDetachSucceeded() {
-  Log("IRXProfiler: ProfilerDetachSucceeded");
+  Log("PEX: ProfilerDetachSucceeded");
 
   return S_OK;
 }
@@ -1003,7 +1003,7 @@ CoreProfiler::EventPipeEventDelivered(EVENTPIPE_PROVIDER provider,
 }
 
 HRESULT CoreProfiler::EventPipeProviderCreated(EVENTPIPE_PROVIDER provider) {
-  Log("IRXProfiler: Created provider %llu\n", provider);
+  Log("PEX: Created provider %llu\n", provider);
   return S_OK;
 }
 

@@ -27,7 +27,6 @@ public sealed class LLVMSectionReader : SectionReaderBase, IDisposable {
   }
 
   protected override bool IsBlockStart(string line) {
-    //? TODO: Blocks seem to always start with N:
     return false;
   }
 

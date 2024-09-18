@@ -549,7 +549,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
       //? but a cleaner approach should be having a pass output filter interface,
       //? with Session.GetSectionPassOutputAsync using it, plus a new
       //? GetRawSectionPassOutputAsync so that the remark prov. gets the metadata lines
-      if (!lineText.StartsWith("/// irx:")) {
+      if (!lineText.StartsWith("/// remark:")) {
         var lineTreeNode = new TreeViewItem();
         lineTreeNode.Header = RemarkEx.FormatExtraTextLine(lineText, highlightingList);
         lineTreeNode.ToolTip = lineText.Trim();

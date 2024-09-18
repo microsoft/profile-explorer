@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using ProfileExplorer.Core;
+using ProfileExplorer.UI.Binary;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 
@@ -40,7 +41,7 @@ public sealed class DefaultNameProvider : INameProvider {
     sectionNameFilters_.Add(new FilteredSectionName("", FilteredSectionNameKind.TrimWhitespace));
 
     sectionNameFilters_.Add(
-      new FilteredSectionName("tuples after", FilteredSectionNameKind.RemoveSubstring));
+      new FilteredSectionName("pass", FilteredSectionNameKind.RemoveSubstring));
   }
 
   public bool IsDemanglingSupported => true;

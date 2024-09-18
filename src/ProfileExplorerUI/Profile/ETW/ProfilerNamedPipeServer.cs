@@ -15,7 +15,7 @@ public class ProfilerNamedPipeServer : IDisposable {
   public delegate void FunctionCodeReceivedDelegate(long functionId, int rejitId, int processId, long address,
                                                     int codeSize, byte[] codeBytes);
 
-  public const string PipeName = "IRXProfilerPipe";
+  public const string PipeName = "PEXProfilerPipe";
   private NamedPipeServer instance_;
 
   public ProfilerNamedPipeServer() {

@@ -6,6 +6,7 @@ using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using ProfileExplorer.Core;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;

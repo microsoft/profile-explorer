@@ -25,9 +25,7 @@ public class ASMDiffInputFilter : IDiffInputFilter {
   public FilteredDiffInput FilterInputText(string text) {
     string[] lines = text.SplitLines();
     var result = new FilteredDiffInput(lines.Length);
-
     var builder = new StringBuilder(text.Length);
-    var linePrefixes = new List<string>(lines.Length);
 
     foreach (string line in lines) {
       (string newLine, var replacements) = FilterInputLineImpl(line);
@@ -104,14 +102,14 @@ public class ASMDiffInputFilter : IDiffInputFilter {
         }
 
         string replacementAddress = id.ToString().PadLeft(afterAddress.Length, 'A');
-        newLine = newLine.Replace(afterAddress, replacementAddress); //? TODO: In-place replace?
+        newLine = newLine.Replace(afterAddress, replacementAddress);
         replacements.Add(new FilteredDiffInput.Replacement(offset, replacementAddress, afterAddress));
       }
     }
 
     string newLinePrefix = newLine.Substring(0, index);
     string newLinePrefixReplacement = new(' ', index);
-    newLine = newLinePrefixReplacement + newLine.Substring(index); //? TODO: In-place replace?
+    newLine = newLinePrefixReplacement + newLine.Substring(index);
     replacements.Add(new FilteredDiffInput.Replacement(0, newLinePrefixReplacement, newLinePrefix));
     return (newLine, replacements);
   }

@@ -6,6 +6,8 @@ using System.Runtime.CompilerServices;
 
 namespace ProfileExplorer.Core;
 
+// Used to create an unique ID for an object, to be used
+// for tracking in log files.
 public static class ObjectTracker {
   private static ConditionalWeakTable<object, DebugObjectId> DebugTaskId = new();
 

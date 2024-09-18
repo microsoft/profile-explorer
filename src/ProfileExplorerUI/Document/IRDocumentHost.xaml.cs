@@ -22,7 +22,7 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorer.UI.Query;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -79,7 +79,6 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool duringSwitchSearchResults_;
   private IRElement hoveredElement_;
   private Point hoverPoint_;
-  private bool optionsPanelVisible_;
   private bool remarkOptionsPanelVisible_;
   private IRElement remarkElement_;
   private IRElement selectedElement_;

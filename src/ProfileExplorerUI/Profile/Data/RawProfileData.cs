@@ -7,6 +7,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using ProfileExplorer.Core.Collections;
 using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProtoBuf;
 
@@ -640,119 +641,5 @@ public class StackComparer : IEqualityComparer<long[]> {
     HashCode hash = new();
     hash.AddBytes(MemoryMarshal.AsBytes(data.AsSpan()));
     return hash.ToHashCode();
-  }
-}
-
-public class IpToImageCache {
-  private List<ProfileImage> images_;
-  private long lowestBaseAddress_;
-
-  public IpToImageCache(IEnumerable<ProfileImage> images, long lowestBaseAddress) {
-    lowestBaseAddress_ = lowestBaseAddress;
-    images_ = new List<ProfileImage>(images);
-    images_.Sort();
-  }
-
-  public static IpToImageCache Create(IEnumerable<ProfileImage> images) {
-    long lowestAddr = long.MaxValue;
-
-    foreach (var image in images) {
-      lowestAddr = Math.Min(lowestAddr, image.BaseAddress);
-    }
-
-    return new IpToImageCache(images, lowestAddr);
-  }
-
-  public bool IsValidAddres(long ip) {
-    return ip >= lowestBaseAddress_;
-  }
-
-  public ProfileImage Find(long ip) {
-    Debug.Assert(IsValidAddres(ip));
-    return BinarySearch(images_, ip);
-  }
-
-  private ProfileImage BinarySearch(List<ProfileImage> ranges, long value) {
-    int min = 0;
-    int max = ranges.Count - 1;
-
-    while (min <= max) {
-      int mid = (min + max) / 2;
-      var range = ranges[mid];
-      int comparison = range.CompareTo(value);
-
-      if (comparison == 0) {
-        return range;
-      }
-
-      if (comparison < 0) {
-        min = mid + 1;
-      }
-      else {
-        max = mid - 1;
-      }
-    }
-
-    return null;
-  }
-}
-
-public class ProcessSummaryBuilder {
-  private RawProfileData profile_;
-  private Dictionary<ProfileProcess, TimeSpan> processSamples_ = new();
-  private Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)> procDuration_ = new();
-  private TimeSpan totalWeight_;
-
-  public ProcessSummaryBuilder(RawProfileData profile) {
-    profile_ = profile;
-  }
-
-  public void AddSample(ProfileSample sample) {
-    var context = sample.GetContext(profile_);
-    var process = profile_.GetOrCreateProcess(context.ProcessId);
-    processSamples_.AccumulateValue(process, sample.Weight);
-    totalWeight_ += sample.Weight;
-
-    // Modify in-place.
-    ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, process, out bool found);
-
-    if (!found) {
-      durationRef.First = sample.Time;
-    }
-
-    durationRef.Last = sample.Time;
-  }
-
-  public void AddSample(TimeSpan sampleWeight, TimeSpan sampleTime, int processId) {
-    var process = profile_.GetOrCreateProcess(processId);
-    processSamples_.AccumulateValue(process, sampleWeight);
-    totalWeight_ += sampleWeight;
-
-    // Modify in-place.
-    ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, process, out bool found);
-
-    if (!found) {
-      durationRef.First = sampleTime;
-    }
-
-    durationRef.Last = sampleTime;
-  }
-
-  public List<ProcessSummary> MakeSummaries() {
-    var list = new List<ProcessSummary>(procDuration_.Count);
-
-    foreach (var pair in processSamples_) {
-      var item = new ProcessSummary(pair.Key, pair.Value) {
-        WeightPercentage = 100 * (double)pair.Value.Ticks / totalWeight_.Ticks
-      };
-
-      list.Add(item);
-
-      if (procDuration_.TryGetValue(pair.Key, out var duration)) {
-        item.Duration = duration.Last - duration.First;
-      }
-    }
-
-    return list;
   }
 }

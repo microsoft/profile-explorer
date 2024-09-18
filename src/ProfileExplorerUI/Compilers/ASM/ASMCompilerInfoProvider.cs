@@ -6,6 +6,7 @@ using System.Windows;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.ASM;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Profile;
@@ -199,8 +200,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
     return await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, settings).ConfigureAwait(false);
   }
-
-  //? TODO: << Debug/Binary related functs should not be part of CompilerInfoProvider
 
   public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
     return new BasicBlockFoldingStrategy(function);

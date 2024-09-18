@@ -16,7 +16,7 @@ using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
-using ProfileExplorer.UI.Utilities.UI;
+using ProfileExplorer.UI;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

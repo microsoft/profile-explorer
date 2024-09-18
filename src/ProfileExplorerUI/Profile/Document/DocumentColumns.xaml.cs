@@ -99,6 +99,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     var function = associatedDocument.Function;
     int rowCount = associatedDocument.LineCount;
 
+    // Make a row for each line of the associated document,
+    // with each row having cells in case there is associated profile data.
     var elementValueList = await Task.Run(() => {
       var elementValueList = new List<ElementRowValue>(function.TupleCount);
       var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
@@ -110,6 +112,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
       Dictionary<OptionalColumn, ElementColumnValue> dummyCells = new(comparer);
       Dictionary<OptionalColumn, ElementColumnValue> separatorDummyCells = new(comparer);
 
+      // Since many cells (and often entire rows) are empty,
+      // re-use the same cells to speed up processing.
       ElementColumnValue MakeDummyCell(bool hasSeparator) {
         var columnValue = new ElementColumnValue("");
         columnValue.TextFont = font;
@@ -169,6 +173,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         }
       }
 
+      // Go through the blocks and each tuple in the block
+      // and either create a row with profile data or use a dummy row.
       profileDataRows_ = new List<ElementRowValue>();
 
       foreach (var block in function.SortedBlocks) {
@@ -347,6 +353,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public void SetupFoldedTextRegions(IEnumerable<FoldingSection> regions) {
+    // Used to sync the visible rows with the folding
+    // that can be applied on blocks in the associated document.
     foldedTextRegions_.Clear();
 
     foreach (var region in regions) {

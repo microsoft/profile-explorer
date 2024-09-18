@@ -18,6 +18,7 @@ using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
@@ -491,7 +492,7 @@ public partial class MainWindow : Window, ISession {
     bool isProfilingFile = false;
 
     if (Path.HasExtension(filePath)) {
-      if (Utils.FileHasExtension(filePath, ".irx")) {
+      if (Utils.FileHasExtension(filePath, ".pex")) {
         loadedDoc = await OpenSessionDocument(filePath);
         failed = loadedDoc == null;
       }
@@ -544,11 +545,6 @@ public partial class MainWindow : Window, ISession {
             await SwitchCompilerTarget("ASM", IRMode.x86_64);
             break;
           }
-          case BinaryFileKind.DotNetR2R:
-          case BinaryFileKind.DotNet: {
-            await SwitchCompilerTarget("DotNet", IRMode.x86_64);
-            break;
-          }
         }
 
         break;
@@ -558,11 +554,6 @@ public partial class MainWindow : Window, ISession {
         switch (binaryInfo.FileKind) {
           case BinaryFileKind.Native: {
             await SwitchCompilerTarget("ASM", IRMode.ARM64);
-            break;
-          }
-          case BinaryFileKind.DotNetR2R:
-          case BinaryFileKind.DotNet: {
-            await SwitchCompilerTarget("DotNet", IRMode.ARM64);
             break;
           }
         }
@@ -689,7 +680,7 @@ public partial class MainWindow : Window, ISession {
       return true; // Save over same session file.
     }
 
-    string filePath = Utils.ShowSaveFileDialog("Profile Explorer Session File|*.irx", "*.irx");
+    string filePath = Utils.ShowSaveFileDialog("Profile Explorer Session File|*.pex", "*.pex");
 
     if (filePath == null) {
       return false;
@@ -799,9 +790,6 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void UpdateIRDocumentLoadProgress(IRSectionReader reader, SectionReaderProgressInfo info) {
-    Trace.WriteLine($"Set indeter {info.IsIndeterminate} at\n{Environment.StackTrace}");
-    Trace.WriteLine("===================================================\n");
-
     if (info.IsIndeterminate) {
       Dispatcher.BeginInvoke(new Action(() => {
         SetApplicationProgress(true, double.NaN);

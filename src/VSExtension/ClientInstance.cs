@@ -264,12 +264,12 @@ static class ClientInstance {
     }
 
     try {
-      string irxArgs = "-grpc-server";
-      string irxPath = GetProfileExplorerPath();
+      string args = "-grpc-server";
+      string path = GetProfileExplorerPath();
       ProfileExplorerExtensionPackage.SetStatusBar("Starting Profile Explorer...", true);
-      Logger.Log($"Starting Profile Explorer: {irxPath}");
+      Logger.Log($"Starting Profile Explorer: {path}");
 
-      if (irxPath == null) {
+      if (path == null) {
         VsShellUtilities.ShowMessageBox(
           Package,
           "Could not find Profile Explorer, make sure it is properly installed and found on PATH",
@@ -281,7 +281,7 @@ static class ClientInstance {
         return false;
       }
 
-      var psi = new ProcessStartInfo(irxPath, irxArgs);
+      var psi = new ProcessStartInfo(path, args);
       var process = Process.Start(psi);
       bool result = process != null &&
                     await Task.Run(() => process.WaitForInputIdle(30000));

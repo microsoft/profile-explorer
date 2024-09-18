@@ -36,7 +36,7 @@ public class TextLineInfo {
 }
 
 [Export(typeof(IMouseProcessorProvider))]
-[Name("IrxMouseProcessor")]
+[Name("PEXMouseProcessor")]
 [ContentType("code")]
 [TextViewRole(PredefinedTextViewRoles.Document)]
 [Order(Before = "VisualStudioMouseProcessor")]

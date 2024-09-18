@@ -150,7 +150,7 @@ public class ProfileDocumentMarker {
 
   public static string ShortenPerfCounterName(string name) {
     foreach (var replacement in PerfCounterNameReplacements) {
-      int index = name.LastIndexOf(replacement.Item1);
+      int index = name.LastIndexOf(replacement.Item1, StringComparison.Ordinal);
 
       if (index != -1) {
         string suffix = "";
@@ -783,7 +783,6 @@ public class ProfileDocumentMarker {
 
     // Sort the counters from each column in decreasing order,
     // then assign the ValueOrder for each counter based on the sorting index.
-    //? TODO: Sort lists in parallel
     for (int k = 0; k < perfCounters.Count; k++) {
       var counterValueList = counterSortMap[k];
       counterValueList.Sort((a, b) => -a.Value.CompareTo(b.Value));

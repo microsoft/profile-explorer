@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI.Utilities.UI;
+using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI;
 
