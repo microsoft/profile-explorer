@@ -51,13 +51,9 @@ public interface IProfileDataProvider {
 
 [ProtoContract(SkipConstructor = true)]
 public class ProcessSummary {
-  //[ProtoMember(5)]
-  //public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
-
   public ProcessSummary(ProfileProcess process, TimeSpan weight) {
     Process = process;
     Weight = weight;
-    //ImageWeights = new List<(ProfileImage Image, TimeSpan Weight)>();
   }
 
   [ProtoMember(1)]

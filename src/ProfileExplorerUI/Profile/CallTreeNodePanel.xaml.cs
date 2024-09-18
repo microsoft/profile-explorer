@@ -19,7 +19,7 @@ using OxyPlot.Series;
 using OxyPlot.Wpf;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 using PlotCommands = OxyPlot.PlotCommands;
 using VerticalAlignment = System.Windows.VerticalAlignment;
 
@@ -366,7 +366,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+  private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
     if (EqualityComparer<T>.Default.Equals(field, value)) return false;
     field = value;
     OnPropertyChanged(propertyName);
@@ -455,6 +455,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     ShowInstanceNavigation = instanceNodes_.Count > 1;
     EnableSingleNodeActions = groupNode == null;
 
+    // Setup instance navigation controls.
     if (groupNode == null) {
       nodeInstanceIndex_ = instanceNodes_.FindIndex(instanceNode => instanceNode == node);
     }
@@ -464,7 +465,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
 
     CurrentInstanceIndex = nodeInstanceIndex_ + 1;
 
-    // Show average node.
+    // Show average time.
     var averageNode = instanceNodes_[0].Clone();
     averageNode.Weight = combinedNode.Weight / instanceNodes_.Count;
     averageNode.ExclusiveWeight = combinedNode.ExclusiveWeight / instanceNodes_.Count;

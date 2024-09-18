@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-namespace ProfileExplorer.UI.Utilities.UI;
+namespace ProfileExplorer.UI;
 
 // Based on MouseHoverLogic from AvalonEdit, but with the option
 // of using a different hover time than the default system one.

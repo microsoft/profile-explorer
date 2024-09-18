@@ -29,7 +29,7 @@ using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Scripting;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 using ProfileExplorer.UI.Windows;
 
 namespace ProfileExplorer.UI;
@@ -772,10 +772,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     if (documentHost != null) {
       double height = Math.Max(StartPage.MinHeight, documentHost.ActualHeight * 0.5);
       StartPage.Height = height;
-
-      // double left = documentHost.ActualWidth / 2 - StartPage.ActualWidth / 2;
-      // double top = documentHost.ActualHeight / 2 - height / 2;
-      // StartPage.Margin = new Thickness(left, top, 0, 0);
     }
   }
 
@@ -987,18 +983,6 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     await compilerInfo_.ReloadSettings();
     App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
     SetupMainWindowCompilerTarget();
-  }
-
-  private async void LLVMMenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("LLVM");
-  }
-
-  private async void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("ASM", IRMode.x86_64);
-  }
-
-  private async void ARM64ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-    await SwitchCompilerTarget("ASM", IRMode.ARM64);
   }
 
   private async Task SetupCompilerTarget() {

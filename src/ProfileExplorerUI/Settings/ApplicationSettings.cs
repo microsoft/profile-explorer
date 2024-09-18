@@ -305,7 +305,7 @@ public class ApplicationSettings {
   public bool LoadFromArchive(string filePath) {
     try {
       // Extract first to a temp dir.
-      var tempPath = Directory.CreateTempSubdirectory("irx");
+      var tempPath = Directory.CreateTempSubdirectory("pex");
       ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
 
       if (!App.ContainsSettingsFile(tempPath.FullName)) {

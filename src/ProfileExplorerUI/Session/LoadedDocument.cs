@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using ProfileExplorer.Core;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
@@ -193,12 +194,10 @@ public class LoadedDocument : IDisposable {
       }
     }
 
-    //if (IsDummyDocument) {
     // Used by profiling to represent missing binaries.
     foreach (var func in summary_.Functions) {
       state.FunctionNames.Add(func.Name);
     }
-    //}
 
     return state;
   }
@@ -214,7 +213,7 @@ public class LoadedDocument : IDisposable {
       return;
     }
 
-    DocumentChanged?.Invoke(this, new EventArgs());
+    DocumentChanged?.Invoke(this, EventArgs.Empty);
   }
 
   protected virtual void Dispose(bool disposing) {

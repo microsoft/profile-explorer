@@ -161,21 +161,7 @@ public sealed class DefaultDiffOutputFilter : IDiffOutputFilter {
 
   private bool IsCommentText(string text, int leftStopIndex, int rightStopIndex, string lineText) {
     // Everything following # is debug info and line numbers.
-    if (lineText.LastIndexOf('#', leftStopIndex) != -1) {
-      text = text;
-    }
-
     return lineText.LastIndexOf('#', leftStopIndex) != -1;
-  }
-
-  private bool IsNumber(string text) {
-    foreach (char letter in text) {
-      if (!char.IsDigit(letter)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private string ExpandDiff(string diffText, int lineOffset, string lineText,

@@ -184,7 +184,7 @@ public static class Utils {
   }
 
   public static string GetAutoSaveFilePath() {
-    string AUTO_SAVE_TEMP_FILE = "irx_autosave.pex";
+    string AUTO_SAVE_TEMP_FILE = "autosave.pex";
     return Path.Combine(Path.GetTempPath(), AUTO_SAVE_TEMP_FILE);
   }
 

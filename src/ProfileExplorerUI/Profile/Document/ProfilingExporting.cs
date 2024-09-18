@@ -14,8 +14,8 @@ using HtmlAgilityPack;
 namespace ProfileExplorer.UI.Profile;
 
 public static class ProfilingExporting {
-  public static HtmlNode ExportFunctionListAsHtmlTable(List<ProfileCallTreeNode> list, HtmlDocument doc,
-                                                       ISession session) {
+  private static HtmlNode ExportFunctionListAsHtmlTable(List<ProfileCallTreeNode> list, HtmlDocument doc,
+                                                        ISession session) {
     var itemList = new List<SearchableProfileItem>();
     var markerOptions = App.Settings.DocumentSettings.ProfileMarkerSettings;
 
@@ -122,8 +122,8 @@ public static class ProfilingExporting {
     return table;
   }
 
-  public static string ExportFunctionListAsMarkdownTable(List<ProfileCallTreeNode> list,
-                                                         ISession session) {
+  private static string ExportFunctionListAsMarkdownTable(List<ProfileCallTreeNode> list,
+                                                          ISession session) {
     var itemList = new List<SearchableProfileItem>();
     var nameFormatter = session.CompilerInfo.NameProvider;
 

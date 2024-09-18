@@ -11,10 +11,10 @@ using ProfileExplorer.UI.Document;
 
 namespace ProfileExplorer.UI.Profile.Document;
 
-// A custom line margin that that overrides the default one, with support
+// A custom line margin that overrides the default one, with support
 // for block folding - the lines part of a block folding are not numbered.
 sealed class SourceLineNumberMargin : LineNumberMargin {
-  private readonly IRDocument textView_;
+  private IRDocument textView_;
   private SourceLineProfileResult sourceLineProfileResult_;
 
   static SourceLineNumberMargin() {
@@ -66,7 +66,7 @@ sealed class SourceLineNumberMargin : LineNumberMargin {
   }
 }
 
-// Creates block foldings for the specified ranges, used to create
+// Creates block foldings for the specified ranges, used to display
 // the foldings for inline assembly sections in the source code document.
 sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
   private List<(int StartOffset, int EndOffset)> ranges_;
@@ -91,6 +91,7 @@ sealed class RangeFoldingStrategy : IBlockFoldingStrategy {
   }
 }
 
+// Changes the style of a range of text in IRDocument.
 sealed class RangeColorizer : DocumentColorizingTransformer {
   private List<(int StartOffset, int EndOffset)> ranges_;
   private Brush textColor_;

@@ -6,12 +6,13 @@ using System.Runtime.InteropServices;
 using System.Text;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Collections;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;
 
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
-  public static readonly object MergedNodeTag = new();
+  private static readonly object MergedNodeTag = new();
   public int Id { get; set; }
   public IRTextFunction Function { get; set; }
   public ProfileCallTreeNodeKind Kind { get; set; }

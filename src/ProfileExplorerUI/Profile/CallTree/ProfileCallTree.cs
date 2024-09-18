@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProtoBuf;
 
@@ -68,9 +69,6 @@ public sealed class ProfileCallTree {
       }
       else {
         node = AddChildNode(prevNode, resolvedFrame.FrameDetails.DebugInfo, resolvedFrame.FrameDetails.Function);
-
-        //? TODO: Call sites can be computed on-demand when opening a func
-        //? by going over the samples in the func, similar to how timeline selection works
         prevNode.AddCallSite(node, prevFrame.FrameRVA, sampleWeight);
       }
 
@@ -645,7 +643,6 @@ public sealed class ProfileCallTree {
     return $"Root nodes: {rootNodes_.Count}, Weight: {TotalRootNodesWeight}";
   }
 
-  [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     rootNodes_ ??= new ConcurrentDictionary<IRTextFunction, ProfileCallTreeNode>();
     funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();

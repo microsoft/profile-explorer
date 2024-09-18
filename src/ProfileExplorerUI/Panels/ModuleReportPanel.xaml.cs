@@ -8,7 +8,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI;
 

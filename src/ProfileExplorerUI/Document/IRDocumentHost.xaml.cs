@@ -22,7 +22,7 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorer.UI.Query;
-using ProfileExplorer.UI.Utilities;
+using ProfileExplorer.UI;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

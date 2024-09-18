@@ -15,7 +15,7 @@ using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
-using ProfileExplorer.UI.Utilities.UI;
+using ProfileExplorer.UI;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

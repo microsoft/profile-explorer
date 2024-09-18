@@ -12,8 +12,9 @@ using Microsoft.Win32.SafeHandles;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.ASM;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.UI.Compilers;
 
-namespace ProfileExplorer.UI.Compilers.ASM;
+namespace ProfileExplorer.UI.Binary;
 
 public delegate void DisassemblerProgressHandler(DisassemblerProgress info);
 
@@ -138,8 +139,7 @@ public class Disassembler : IDisposable {
         string addressString = $"{instr.Address:X}:    ";
         builder.Append(addressString);
         int startIndex = 0;
-        bool appendBytes = false; //? TODO: Use option
-        //? TODO: Also adjust column of editor line numbers based on this
+        bool appendBytes = false; //? TODO: Add UI option
 
         if (appendBytes) {
           startIndex += AppendBytes(instr, startIndex, builder);
@@ -152,7 +152,6 @@ public class Disassembler : IDisposable {
         AppendOperands(instr, startRVA, size, builder);
         builder.AppendLine();
 
-        //? TODO: UI option
         if (appendBytes) {
           // For longer instructions, append up to 6 bytes per line.
           while (startIndex < instr.Size) {
@@ -656,6 +655,7 @@ public class Disassembler : IDisposable {
       return new InstructionHandle(CreateInstruction(handle));
     }
 
+    // Must be kept in sync with the definition of cs_insn from Capstone.
     [StructLayout(LayoutKind.Explicit, Size = 256)]
     public unsafe struct Instruction {
       public const int MnemonicLength = 32;

@@ -14,7 +14,7 @@ using ProfileExplorer.Core.Utilities;
 namespace ProfileExplorer.UI.Compilers.Default;
 
 public sealed class DefaultRemarkProvider : IRRemarkProvider {
-  private const string MetadataStartString = "/// irx:";
+  private const string MetadataStartString = "/// remark:";
   private const string RemarkContextStartString = "context_start";
   private const string RemarkContextEndString = "context_end";
   private ICompilerInfoProvider compilerInfo_;
@@ -129,7 +129,8 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
     return null;
   }
 
-  public List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries) {
+  public List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth,
+                                            bool stopAtSectionBoundaries) {
     var list = new List<IRTextSection>();
 
     if (categories_ == null || boundaries_ == null) {
@@ -144,8 +145,8 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
 
       if (stopAtSectionBoundaries && boundaries_.Count > 0) {
         if (boundaries_.Find(boundary =>
-                               TextSearcher.Contains(section.Name, boundary.SearchedText, boundary.SearchKind)) !=
-            null) {
+                               TextSearcher.Contains(section.Name, boundary.SearchedText,
+                                                     boundary.SearchKind)) != null) {
           break; // Stop once section boundary reached.
         }
       }
@@ -223,8 +224,6 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
                                          RemarkProviderOptions options,
                                          RemarkContextState state,
                                          CancelableTask cancelableTask) {
-    var (fakeTuple, fakeBlock) = CreateFakeIRElements();
-
     var similarValueFinder = new SimilarValueFinder(function);
     var refFinder = new ReferenceFinder(function, compilerInfo_.IR);
 
@@ -296,7 +295,6 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
             index += instr.TextLength;
             continue;
           }
-          //? return pool
         }
 
         index++;
@@ -353,13 +351,6 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
     }
 
     return false;
-  }
-
-  private (TupleIR, BlockIR) CreateFakeIRElements() {
-    var func = new FunctionIR();
-    var block = new BlockIR(IRElementId.FromLong(0), 0, func);
-    var tuple = new TupleIR(IRElementId.FromLong(1), TupleKind.Other, block);
-    return (tuple, block);
   }
 
   private class RemarkContextState {

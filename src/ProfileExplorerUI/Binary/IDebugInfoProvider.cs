@@ -5,9 +5,10 @@ using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.UI.Compilers;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Compilers;
+namespace ProfileExplorer.UI.Binary;
 
 public interface IDebugInfoProvider : IDisposable {
   public Machine? Architecture { get; }

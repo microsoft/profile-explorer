@@ -12,7 +12,7 @@ using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
 
-namespace ProfileExplorer.UI.Utilities;
+namespace ProfileExplorer.UI;
 
 public class FontFamilyConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {

@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 

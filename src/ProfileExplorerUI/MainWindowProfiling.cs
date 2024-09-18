@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ProfileExplorer.Core;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
@@ -121,7 +122,6 @@ public partial class MainWindow : Window, ISession {
       allThreadsProfile_ = result;
     }
 
-    //prevProfiles[result.Filter] = result;
     Trace.WriteLine($"ComputeFunctionProfile time: {filterSw.ElapsedMilliseconds} ms");
 
     // Update all profiling panels.

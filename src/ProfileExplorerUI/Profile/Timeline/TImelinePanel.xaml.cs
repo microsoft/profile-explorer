@@ -22,7 +22,6 @@ using ProfileExplorer.UI.Panels;
 namespace ProfileExplorer.UI.Profile;
 
 public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvider, INotifyPropertyChanged {
-  internal const double DefaultTextSize = 12;
   private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
   private const double ZoomAmount = 500;
   private const double ScrollWheelZoomAmount = 300;
@@ -54,11 +53,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Timeline;
-
-  public override ISession Session {
-    get => base.Session;
-    set => base.Session = value;
-  }
 
   public ProfileCallTree CallTree {
     get => callTree_;
@@ -138,7 +132,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await InitializePendingCallTree();
   }
 
-  public bool HasExcludedThreads() {
+  private bool HasExcludedThreads() {
     return CountExcludedThreads() > 0;
   }
 
@@ -791,29 +785,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   }
 
-  private void NodeDetailsPanel_NodesSelected(object sender, List<ProfileCallTreeNode> e) {
-    //var nodes = GraphViewer.SelectNodes(e);
-    //if (nodes.Count > 0) {
-    //    BringNodeIntoView(nodes[0], false);
-    //}
-  }
-
-  private async void NodeDetailsPanel_NodeInstanceChanged(object sender, ProfileCallTreeNode e) {
-    //var node = GraphViewer.SelectNode(e);
-    //BringNodeIntoView(node);
-  }
-
-  private async void NodeDetailsPanel_NodeClick(object sender, ProfileCallTreeNode e) {
-    //var nodes = GraphViewer.SelectNodes(e);
-    //if (nodes.Count > 0) {
-    //    BringNodeIntoView(nodes[0], false);
-    //}
-  }
-
-  private async void NodeDetailsPanel_NodeDoubleClick(object sender, ProfileCallTreeNode e) {
-    await OpenFunction(e);
-  }
-
   private async Task OpenFunction(ProfileCallTreeNode node) {
     if (node is {HasFunction: true} && node.Function.HasSections) {
       var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
@@ -854,10 +825,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     foreach (var threadView in threadActivityViews_) {
       threadView.ActivityHost.SetMaxWidth(newWidth);
-
-      // if (source != threadView.TimelineHost) {
-      //   threadView.TimelineHost.SetMaxWidth(newWidth, false);
-      // }
     }
   }
 
@@ -887,7 +854,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     foreach (var view in threadActivityViews_) {
       view.ActivityHost.SetHorizontalOffset(offset);
-      //view.TimelineHost.SetHorizontalOffset(offset);
     }
   }
 

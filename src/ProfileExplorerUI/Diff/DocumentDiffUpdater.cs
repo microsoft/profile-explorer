@@ -543,16 +543,13 @@ public class DocumentDiffUpdater {
       return false;
     }
 
-    bool signifficant = false;
-
     foreach (char letter in piece.Text) {
       if (!char.IsWhiteSpace(letter) && Array.IndexOf(ignoredDiffLetters_, letter) == -1) {
-        signifficant = true;
-        break;
+        return true;
       }
     }
 
-    return signifficant;
+    return false;
   }
 
   private DiffKind EstimateModificationType(DiffPiece before, DiffPiece after,

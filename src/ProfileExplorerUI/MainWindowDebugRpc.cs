@@ -442,7 +442,7 @@ public partial class MainWindow : Window, ISession {
     for (int i = 0; i < lines.Length; i++) {
       string line = lines[i];
 
-      if (line.StartsWith("/// irx:")) {
+      if (line.StartsWith("/// metadata:")) {
         section.AddLineMetadata(i - metadataLines - 1, line);
         metadataLines++;
       }

@@ -3,7 +3,7 @@
 using System;
 using System.Windows.Input;
 
-namespace ProfileExplorer.UI.Utilities;
+namespace ProfileExplorer.UI;
 
 public class RelayCommand<T> : ICommand {
   private readonly Action<T> _execute;

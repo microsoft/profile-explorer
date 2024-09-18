@@ -64,7 +64,7 @@ public class SearchableProfileItem : BindableObject {
     }
   }
 
-  public virtual void ResetCachedName() {
+  public void ResetCachedName() {
     SetAndNotify(ref name_, null, "Name");
   }
 
@@ -72,7 +72,7 @@ public class SearchableProfileItem : BindableObject {
     return null;
   }
 
-  protected virtual TextBlock CreateOnDemandName() {
+  protected TextBlock CreateOnDemandName() {
     var textBlock = new TextBlock();
 
     if (IsMarked) {

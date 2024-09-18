@@ -39,7 +39,7 @@ public sealed class ETWRecordingSession : IDisposable {
       sessionName_ = KernelTraceEventParser.KernelSessionName;
     }
     else {
-      sessionName_ = sessionName ?? $"IRX-ETW-{Guid.NewGuid()}";
+      sessionName_ = sessionName ?? $"PEX-ETW-{Guid.NewGuid()}";
     }
   }
 

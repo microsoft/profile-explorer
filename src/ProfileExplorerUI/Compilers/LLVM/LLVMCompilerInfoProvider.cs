@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.LLVM;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Query;

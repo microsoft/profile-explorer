@@ -184,7 +184,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
   }
 
-  protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
+  private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null) {
     if (EqualityComparer<T>.Default.Equals(field, value)) return false;
     field = value;
     OnPropertyChanged(propertyName);
@@ -263,6 +263,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
         }
       }
 
+      // Display the a combined view of all selected nodes.
       var combinedNode = await Task.Run(() => ProfileCallTree.CombinedCallTreeNodes(callTreeNodes));
       await NodeDetailsPanel.ShowWithDetailsAsync(combinedNode);
     }
@@ -281,48 +282,50 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
   }
 
   private async void GraphHost_NodeSelected(object sender, FlameGraphNode node) {
-    if (node.HasFunction) {
-      await UpdateNodeDetailsPanel();
+    if (!node.HasFunction) {
+      return;
+    }
 
-      if (settings_.SyncSourceFile) {
-        // Load the source file and scroll to the hottest line.
-        await Session.OpenProfileSourceFile(node.CallTreeNode);
+    await UpdateNodeDetailsPanel();
+
+    if (settings_.SyncSourceFile) {
+      // Load the source file and scroll to the hottest line.
+      await Session.OpenProfileSourceFile(node.CallTreeNode);
+    }
+
+    if (settings_.SyncSelection) {
+      await Session.ProfileFunctionSelected(node.CallTreeNode, PanelKind);
+    }
+
+    // When selecting multiple nodes, display the weight sum in the status bar.
+    var selectedNodes = GraphHost.SelectedNodes;
+
+    if (selectedNodes.Count > 1) {
+      var nodes = new List<ProfileCallTreeNode>();
+
+      foreach (var selectedNode in selectedNodes) {
+        if (selectedNode.HasFunction) {
+          nodes.Add(selectedNode.CallTreeNode);
+        }
       }
 
-      if (settings_.SyncSelection) {
-        await Session.ProfileFunctionSelected(node.CallTreeNode, PanelKind);
-      }
+      var selectionWeight = ProfileCallTree.CombinedCallTreeNodesWeight(nodes);
+      double weightPercentage = 0;
 
-      // When selecting multiple nodes, display the weight sum in the status bar.
-      var selectedNodes = GraphHost.SelectedNodes;
-
-      if (selectedNodes.Count > 1) {
-        var nodes = new List<ProfileCallTreeNode>();
-
-        foreach (var selectedNode in selectedNodes) {
-          if (selectedNode.HasFunction) {
-            nodes.Add(selectedNode.CallTreeNode);
-          }
-        }
-
-        var selectionWeight = ProfileCallTree.CombinedCallTreeNodesWeight(nodes);
-        double weightPercentage = 0;
-
-        if (rootNode_ != null) {
-          // Scale based on the current root node, which may be overriden.
-          weightPercentage = selectionWeight.Ticks / (double)rootNode_.Weight.Ticks;
-        }
-        else {
-          weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
-        }
-
-        string text =
-          $"Selected {nodes.Count}: {weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
-        Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
+      if (rootNode_ != null) {
+        // Scale based on the current root node, which may be overriden.
+        weightPercentage = selectionWeight.Ticks / (double)rootNode_.Weight.Ticks;
       }
       else {
-        Session.SetApplicationStatus("");
+        weightPercentage = Session.ProfileData.ScaleFunctionWeight(selectionWeight);
       }
+
+      string text =
+        $"Selected {nodes.Count}: {weightPercentage.AsPercentageString()} ({selectionWeight.AsMillisecondsString()})";
+      Session.SetApplicationStatus(text, "Sum of selected flame graph nodes");
+    }
+    else {
+      Session.SetApplicationStatus("");
     }
   }
 
@@ -398,6 +401,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
       GraphHost.GraphViewer.MarkSearchResultNodes(searchResultNodes_);
       UpdateSearchResultText();
 
+      // Update search result navigation.
       searchResultIndex_ = -1;
       ShowSearchSection = true;
       SelectNextSearchResultNoLock();

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;
@@ -73,25 +74,6 @@ public class ProfileData {
       list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
       return list;
     }
-  }
-
-  public static ProfileData MakeDummySamples(int countM, TimeSpan duration) {
-    countM *= 1000 * 1000;
-    var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(countM);
-    double timePerSample = (double)duration.Ticks / countM;
-
-    var stack = new ResolvedProfileStack(0, new ProfileContext());
-
-    for (int i = 0; i < countM; i++) {
-      var sample = new ProfileSample {
-        Time = TimeSpan.FromTicks((long)(timePerSample * i)),
-        Weight = TimeSpan.FromTicks(10000)
-      };
-
-      samples.Add((sample, stack));
-    }
-
-    return new ProfileData {Samples = samples};
   }
 
   public void RegisterModuleDebugInfo(string moduleName, IDebugInfoProvider provider) {

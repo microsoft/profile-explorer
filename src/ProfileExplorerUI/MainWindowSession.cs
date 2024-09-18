@@ -18,6 +18,7 @@ using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;

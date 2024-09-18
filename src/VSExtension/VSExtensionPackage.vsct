@@ -155,7 +155,7 @@
 
       <Button guid="guidVSExtensionPackageCmdSet" id="AttachId" priority="0x0100" type="Button">
         <Parent guid="guidVSExtensionPackageCmdSet" id="ToolbarGroup" />
-        <Icon guid="mainImage" id="irxPic" />
+        <Icon guid="mainImage" id="pexPic" />
         <CommandFlag>IconAndText</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
 
@@ -186,7 +186,7 @@
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
       <Bitmap guid="guidImages" href="Resources\Command1.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-      <Bitmap guid="mainImage" href="Resources\icon.png" usedList="irxPic" />
+      <Bitmap guid="mainImage" href="Resources\icon.png" usedList="pexPic" />
       <Bitmap guid="menuImage" href="Resources\list-ordered.png" usedList="menuPic1" />
       </Bitmaps>
   </Commands>
@@ -237,7 +237,7 @@
     </GuidSymbol>
 
     <GuidSymbol name="mainImage" value="{8a2b4264-3397-430f-8664-c8e1428d9122}">
-      <IDSymbol name="irxPic" value="1" />
+      <IDSymbol name="pexPic" value="1" />
     </GuidSymbol>
     <GuidSymbol name="menuImage" value="{8a2b4264-3397-430f-8664-c8e1428d9123}">
       <IDSymbol name="menuPic1" value="1" />

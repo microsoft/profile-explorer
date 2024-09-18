@@ -9,10 +9,10 @@ using System.Windows.Media.Imaging;
 namespace ProfileExplorer.UI.Profile;
 
 public class FlameGraphRenderer {
-  internal const double DefaultTextSize = 12;
-  internal const double DefaultNodeHeight = 18;
-  internal const double CompactTextSize = 11;
-  internal const double CompactNodeHeight = 15;
+  private const double DefaultTextSize = 12;
+  private const double DefaultNodeHeight = 18;
+  private const double CompactTextSize = 11;
+  private const double CompactNodeHeight = 15;
   private const string FontName = "Segoe UI";
   private FlameGraphSettings settings_;
   private FlameGraph flameGraph_;
@@ -25,7 +25,6 @@ public class FlameGraphRenderer {
   private Rect visibleArea_;
   private Rect quadVisibleArea_;
   private Rect quadGraphArea_;
-  private bool isTimeline_;
   private Typeface font_;
   private Typeface nameFont_;
   private double fontSize_;
@@ -50,8 +49,7 @@ public class FlameGraphRenderer {
   private SolidColorBrush nodePercentageBrush_;
   private SolidColorBrush searchResultMarkingBrush_;
 
-  public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea, FlameGraphSettings settings, bool isTimeline) {
-    isTimeline_ = isTimeline;
+  public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea, FlameGraphSettings settings) {
     settings_ = settings;
     flameGraph_ = flameGraph;
     maxWidth_ = visibleArea.Width;
@@ -101,24 +99,6 @@ public class FlameGraphRenderer {
     }
   }
 
-  public static BitmapSource BitmapSourceFromBrush(Brush drawingBrush, int size = 32, int dpi = 96) {
-    // RenderTargetBitmap = builds a bitmap rendering of a visual
-    var pixelFormat = PixelFormats.Pbgra32;
-    var rtb = new RenderTargetBitmap(size, size, dpi, dpi, pixelFormat);
-
-    // Drawing visual allows us to compose graphic drawing parts into a visual to render
-    var drawingVisual = new DrawingVisual();
-
-    using (var context = drawingVisual.RenderOpen()) {
-      // Declaring drawing a rectangle using the input brush to fill up the visual
-      context.DrawRectangle(drawingBrush, null, new Rect(0, 0, size, size));
-    }
-
-    // Actually rendering the bitmap
-    rtb.Render(drawingVisual);
-    return rtb;
-  }
-
   public void SettingsUpdated(FlameGraphSettings settings) {
     settings_ = settings;
     ReloadSettings();
@@ -135,6 +115,7 @@ public class FlameGraphRenderer {
       SetupNode(flameGraph_.RootNode);
     }
 
+    // Text glyph cache used to speed up rendering.
     glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
     nameGlyphs_ = new GlyphRunCache(nameFont_, fontSize_, VisualTreeHelper.GetDpi(graphVisual_).PixelsPerDip);
 
@@ -219,7 +200,8 @@ public class FlameGraphRenderer {
   }
 
   public Rect ComputeNodeBounds(FlameGraphNode node) {
-    return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top, node.Bounds.Width * maxWidth_, node.Bounds.Height);
+    return new Rect(node.Bounds.Left * maxWidth_, node.Bounds.Top,
+                    node.Bounds.Width * maxWidth_, node.Bounds.Height);
   }
 
   public void DrawNode(FlameGraphNode node, DrawingContext dc, bool issueDraw = true) {
@@ -515,10 +497,6 @@ public class FlameGraphRenderer {
   }
 
   private double ScaleNode(FlameGraphNode node) {
-    // if (isTimeline_) {
-    //   return flameGraph_.ScaleDuration(node);
-    // }
-
     return flameGraph_.ScaleWeight(node);
   }
 
@@ -570,7 +548,7 @@ public class FlameGraphRenderer {
         }
 
         // Redraw to show the newly create nodes replacing the dummy ones.
-        if (true || update) {
+        if (update) {
             foreach (var node in nodesQuadTree_.GetNodesInside(quadVisibleArea_)) {
                 DrawNode(node, graphDC);
             }
@@ -610,12 +588,6 @@ public class FlameGraphRenderer {
 
   private void UpdateNodeLayout(FlameGraphNode node, double x, double y, bool redraw) {
     double width = ScaleNode(node);
-
-    // if (isTimeline_) {
-    //   x = flameGraph_.ScaleStartTime(node);
-    // }
-
-    var prevBounds = node.Bounds;
     node.Bounds = new Rect(x, y, width, nodeHeight_);
     node.IsDummyNode = !redraw;
     node.IsHidden = false;
@@ -623,7 +595,6 @@ public class FlameGraphRenderer {
     if (redraw) {
       maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
       double minWidth = minVisibleRectWidth_;
-      //if (isTimeline_) minWidth *= 0.1; // Add more nodes to be zoomed in.
 
       if (node.Bounds.Width > minWidth) {
         nodesQuadTree_.Insert(node, node.Bounds);
@@ -700,7 +671,6 @@ public class FlameGraphRenderer {
 
       // In case child sorting is not by weight, stop extending the range
       // when a larger one is found again.
-      //? TODO: In timeline, nodes not placed properly
       if (childWidth > minVisibleRectWidth_) {
         break;
       }
@@ -718,10 +688,6 @@ public class FlameGraphRenderer {
       return null; // Nothing to draw.
     }
 
-    // if (isTimeline_) {
-    //   x = flameGraph_.ScaleStartTime(startTime);
-    // }
-
     //? TODO: Use a pool for FlameGraphGroupNode instead of new (JIT_New dominates)
     var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
     var dummyNode = new FlameGraphGroupNode(node, startIndex, skippedChildren, totalWeight, node.Depth);
@@ -731,8 +697,6 @@ public class FlameGraphRenderer {
     dummyNode.StartTime = startTime;
     dummyNode.EndTime = endTime;
     dummyNodesQuadTree_.Insert(dummyNode, replacement);
-
-    //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
     return dummyNode;
   }
 

@@ -54,7 +54,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public void SaveFixedMarkedNodes(List<(ProfileCallTreeNode Node,
-                                     HighlightingStyle Style)> list) {
+                                   HighlightingStyle Style)> list) {
     foreach (var pair in fixedMarkedNodes_) {
       if (pair.Key.HasFunction) {
         list.Add((pair.Key.CallTreeNode, pair.Value));
@@ -65,7 +65,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   public List<(ProfileCallTreeNode Node,
       HighlightingStyle Style)>
     RestoreFixedMarkedNodes(List<(ProfileCallTreeNode Node,
-                              HighlightingStyle Style)> markedNodes,
+                            HighlightingStyle Style)> markedNodes,
                             ProfileCallTree callTree) {
     if (markedNodes.Count == 0) {
       return null;
@@ -265,7 +265,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     isTimelineView_ = isTimelineView;
 
     if (isTimelineView_) {
-      flameGraph_.BuildTimeline(Session.ProfileData, threadId);
+      // TODO: Timeline not implemented.
+      // await Task.Run(() => flameGraph_.BuildTimeline(Session.ProfileData, threadId));
     }
     else {
       await Task.Run(() => flameGraph_.Build(rootNode));
@@ -274,7 +275,8 @@ public partial class FlameGraphViewer : FrameworkElement {
     settings_ = settings;
     ReloadSettings();
 
-    renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings, isTimelineView_);
+    // Create the rendered and add the drawing surface as a child control.
+    renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea, settings);
     renderer_.SelectedNodes = selectedNodes_;
     graphVisual_ = renderer_.Setup();
 
@@ -303,6 +305,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     settings_ = settings;
     ReloadSettings();
 
+    // Render the flame graph again.
     renderer_.SettingsUpdated(settings);
     InvalidateMeasure();
     InvalidateVisual();
@@ -379,7 +382,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   protected override void OnMouseLeave(MouseEventArgs e) {
-    if (!IsInitialized) {
+    if (!initialized_) {
       return;
     }
 
@@ -569,6 +572,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     var list = new List<FlameGraphNode>();
     bool found = false;
 
+    // Ensure start node has a larger depth than end node.
     if (startNode.Depth < stopNode.Depth) {
       Utils.Swap(ref startNode, ref stopNode);
     }

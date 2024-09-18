@@ -7,6 +7,7 @@ using System.IO.Enumeration;
 using System.Threading.Tasks;
 using System.Windows;
 using ProfileExplorer.Core;
+using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Profile;
 

@@ -301,7 +301,7 @@ public class WorkspaceSettings {
         File.Delete(filePath);
       }
 
-      var tempPath = Directory.CreateTempSubdirectory("irx");
+      var tempPath = Directory.CreateTempSubdirectory("pex");
       ZipFile.ExtractToDirectory(filePath, tempPath.FullName, true);
       var settings = DeserializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
       settings.LoadFromDirectory(tempPath.FullName, out loadedCount);
@@ -316,7 +316,7 @@ public class WorkspaceSettings {
 
   public bool SaveToArchive(string filePath) {
     try {
-      var tempPath = Directory.CreateTempSubdirectory("irx");
+      var tempPath = Directory.CreateTempSubdirectory("pex");
       CopyToDirectory(tempPath.FullName);
       SerializeWorkspaceSettings(Path.Combine(tempPath.FullName, SettingsFileName));
 
