@@ -178,7 +178,7 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-		<PackageReference Include="OxyPlot.Wpf" Version="2014.1.546" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
 		<PackageReference Include="protobuf-net" Version="3.2.30" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
