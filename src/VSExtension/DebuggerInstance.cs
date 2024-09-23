@@ -10,6 +10,7 @@ using EnvDTE100;
 using EnvDTE90;
 using EnvDTE90a;
 using Debugger = EnvDTE.Debugger;
+using StackFrame = EnvDTE.StackFrame;
 
 namespace ProfileExplorerExtension;
 

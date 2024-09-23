@@ -18,9 +18,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.SourceParser;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
-using ProfileExplorer.UI;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI.Profile.Document;

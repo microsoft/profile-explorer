@@ -19,9 +19,7 @@
       <StackPanel
         Margin="0,2,0,0"
         IsEnabled="{Binding ElementName=FilterWeightCheckBox, Path=IsChecked}"
-        Orientation="Horizontal">
-
-      </StackPanel>
+        Orientation="Horizontal" />
 
       <Separator
         Margin="0,6,0,4"
@@ -111,6 +109,6 @@
           Content="Default"
           ToolTip="Reset the application UI scaling to 100%" />
       </StackPanel>
-      </StackPanel>
+    </StackPanel>
   </Grid>
 </local:OptionsPanelBase>

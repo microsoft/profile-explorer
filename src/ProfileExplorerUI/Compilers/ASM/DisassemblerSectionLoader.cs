@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers.ASM;
 
 namespace ProfileExplorer.UI.Compilers;
 

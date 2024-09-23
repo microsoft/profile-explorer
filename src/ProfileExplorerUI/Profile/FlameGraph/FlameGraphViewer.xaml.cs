@@ -54,7 +54,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public void SaveFixedMarkedNodes(List<(ProfileCallTreeNode Node,
-                                   HighlightingStyle Style)> list) {
+                                     HighlightingStyle Style)> list) {
     foreach (var pair in fixedMarkedNodes_) {
       if (pair.Key.HasFunction) {
         list.Add((pair.Key.CallTreeNode, pair.Value));
@@ -65,7 +65,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   public List<(ProfileCallTreeNode Node,
       HighlightingStyle Style)>
     RestoreFixedMarkedNodes(List<(ProfileCallTreeNode Node,
-                            HighlightingStyle Style)> markedNodes,
+                              HighlightingStyle Style)> markedNodes,
                             ProfileCallTree callTree) {
     if (markedNodes.Count == 0) {
       return null;

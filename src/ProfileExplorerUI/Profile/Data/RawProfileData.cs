@@ -8,7 +8,6 @@ using System.Runtime.InteropServices;
 using ProfileExplorer.Core.Collections;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI.Profile;

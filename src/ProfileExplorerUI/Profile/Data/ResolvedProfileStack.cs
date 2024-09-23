@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;
 

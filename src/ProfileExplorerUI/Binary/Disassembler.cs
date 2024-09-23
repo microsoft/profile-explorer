@@ -12,7 +12,6 @@ using Microsoft.Win32.SafeHandles;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.ASM;
 using ProfileExplorer.Core.IR;
-using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Binary;
 

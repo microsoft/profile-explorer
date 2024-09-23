@@ -19,7 +19,6 @@ using OxyPlot.Series;
 using OxyPlot.Wpf;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI;
 using PlotCommands = OxyPlot.PlotCommands;
 using VerticalAlignment = System.Windows.VerticalAlignment;
 

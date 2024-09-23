@@ -14,7 +14,6 @@ using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;
 

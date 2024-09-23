@@ -28,7 +28,6 @@ using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorer.UI;
 using ProtoBuf;
 using PerformanceCounter = ProfileExplorer.UI.Profile.PerformanceCounter;
 

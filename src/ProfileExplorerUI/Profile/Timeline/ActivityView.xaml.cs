@@ -10,7 +10,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI.Profile;
 

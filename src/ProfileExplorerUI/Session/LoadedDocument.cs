@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
 

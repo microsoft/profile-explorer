@@ -29,8 +29,6 @@ using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Scripting;
-using ProfileExplorer.UI;
-using ProfileExplorer.UI.Windows;
 
 namespace ProfileExplorer.UI;
 

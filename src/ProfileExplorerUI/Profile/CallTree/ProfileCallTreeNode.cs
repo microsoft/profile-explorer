@@ -7,7 +7,6 @@ using System.Text;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Collections;
 using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -56,6 +56,13 @@ class MouseProcessorProvider : IMouseProcessorProvider {
 }
 
 class MouseEventProcessor : MouseProcessorBase {
+  public enum ScrollBarConstants {
+    SB_HORZ,
+    SB_VERT,
+    SB_CTL,
+    SB_BOTH
+  }
+
   private IWpfTextView view_;
   private IVsTextView viewAdapter_;
 
@@ -66,13 +73,6 @@ class MouseEventProcessor : MouseProcessorBase {
   }
 
   public event EventHandler<TextLineInfo> OnMouseUp;
-
-  public enum ScrollBarConstants {
-    SB_HORZ,
-    SB_VERT,
-    SB_CTL,
-    SB_BOTH
-  }
 
   public static int GetPhysicalLeftColumn(IVsTextView view) {
     GetScrollInfo(view, ScrollBarConstants.SB_HORZ, out int num, out int num2,

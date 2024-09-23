@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using ProfileExplorer.UI.Binary;
 using ProtoBuf;

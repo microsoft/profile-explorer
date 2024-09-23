@@ -13,7 +13,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI.Profile;
 

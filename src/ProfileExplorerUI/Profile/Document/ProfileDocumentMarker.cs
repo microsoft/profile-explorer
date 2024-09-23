@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -92,7 +90,7 @@ public class ProfileDocumentMarker {
       ProfileDocumentMarkerSettings.ValueUnitKind.Millisecond => "ms",
       ProfileDocumentMarkerSettings.ValueUnitKind.Microsecond => "µs",
       ProfileDocumentMarkerSettings.ValueUnitKind.Nanosecond  => "ns",
-      _ => throw new ArgumentOutOfRangeException()
+      _                                                       => throw new ArgumentOutOfRangeException()
     };
 
     TimeColumnDefinition.Title = $"Time ({timeUnit})";

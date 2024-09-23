@@ -12,7 +12,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
-using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI.Profile;
 

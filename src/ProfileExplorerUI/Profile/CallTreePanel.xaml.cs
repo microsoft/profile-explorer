@@ -15,7 +15,6 @@ using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
-using ProfileExplorer.UI;
 
 namespace ProfileExplorer.UI.Profile;
 

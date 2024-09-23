@@ -8,10 +8,9 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using EnvDTE;
 using EnvDTE80;
-using ProfileExplorer.Core.Lexer;
-using ProfileExplorerExtension.Windows;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using ProfileExplorer.Core.Lexer;
 using Constants = Microsoft.VisualStudio.Shell.Interop.Constants;
 using Thread = EnvDTE.Thread;
 
@@ -113,7 +112,7 @@ public sealed class ProfileExplorerExtensionPackage : AsyncPackage {
 
   private void DebuggerEvents__OnContextChanged(Process NewProcess, Program NewProgram,
                                                 Thread NewThread,
-                                                EnvDTE.StackFrame NewStackFrame) {
+                                                StackFrame NewStackFrame) {
   }
 
   internal static void RegisterMouseProcessor(MouseEventProcessor instance) {

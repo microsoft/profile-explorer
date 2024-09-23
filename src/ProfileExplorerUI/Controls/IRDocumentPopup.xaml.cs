@@ -16,7 +16,6 @@ using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
-using MouseHoverLogic = ProfileExplorer.UI.MouseHoverLogic;
 
 namespace ProfileExplorer.UI.Controls;
 
