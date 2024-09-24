@@ -79,14 +79,6 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   private async Task<bool> DownloadHelpIndex() {
-#if DEBUG
-    // Open local index file in debug builds.
-    helpIndex_ = HelpIndex.DeserializeFromFile(App.GetHelpIndexFilePath());
-
-    if (helpIndex_ != null) {
-      TopicsTree.ItemsSource = helpIndex_.Topics;
-    }
-#else
     // Download index file from web location.
     if (helpIndex_ != null) {
       return true;
@@ -111,7 +103,6 @@ public partial class HelpPanel : ToolPanelControl {
     catch (Exception ex) {
       Trace.WriteLine($"Failed to download file: {ex.Message}");
     }
-#endif
 
     return helpIndex_ != null;
   }
@@ -131,9 +122,7 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
-    var panel = await session.ShowPanel(ToolPanelKind.Help) as HelpPanel;
-
-    if (panel != null) {
+    if (await session.ShowPanel(ToolPanelKind.Help) is HelpPanel panel) {
       await panel.LoadPanelHelp(kind);
     }
   }
@@ -151,9 +140,8 @@ public partial class HelpPanel : ToolPanelControl {
       return;
     }
 
-    browserInitialized_ = true;
-
     // Place cache files in the settings directory.
+    browserInitialized_ = true;
     var webView2Environment = await CoreWebView2Environment.CreateAsync(null, App.GetSettingsDirectoryPath());
 
     try {
@@ -224,10 +212,8 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   private async void TopicsTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-    var treeView = sender as TreeView;
-    var selectedTopic = treeView.SelectedItem as HelpTopic;
-
-    if (selectedTopic != null) {
+    if (sender is TreeView treeView &&
+        treeView.SelectedItem is HelpTopic selectedTopic) {
       await NavigateToTopic(selectedTopic);
     }
 
@@ -261,10 +247,12 @@ public partial class HelpPanel : ToolPanelControl {
     Browser.CoreWebView2.NewWindowRequested += Browser_NewWindowRequested;
   }
 
-  private async void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
+  private void Browser_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e) {
     try {
       if (e.Uri.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-          e.Uri.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) {
+          e.Uri.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+          e.Uri.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+          e.Uri.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)) {
         if (previewWindow_ != null) {
           // Second click on same image closes current preview.
           bool showPreview = previewUrl_ != e.Uri;
@@ -377,11 +365,11 @@ public partial class HelpPanel : ToolPanelControl {
     await LoadHomeTopic();
   }
 
-  private async void BackButton_Click(object sender, RoutedEventArgs e) {
+  private void BackButton_Click(object sender, RoutedEventArgs e) {
     Browser.GoBack();
   }
 
-  private async void ExternaButton_Click(object sender, RoutedEventArgs e) {
+  private async void ExternalButton_Click(object sender, RoutedEventArgs e) {
     try {
       if (await DownloadHelpIndex()) {
         var psi = new ProcessStartInfo() {

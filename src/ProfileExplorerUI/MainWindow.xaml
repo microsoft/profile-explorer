@@ -590,7 +590,7 @@
                 <Image
                   Width="16"
                   Height="16"
-                  Source="{StaticResource BookIcon}" />
+                  Source="{StaticResource DetailsIcon}" />
               </MenuItem.Icon>
             </MenuItem>
             <MenuItem
@@ -620,12 +620,6 @@
               <MenuItem
                 Click="ForceGCMenu_Click"
                 Header="Force GC" />
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource ToolIcon}" />
-              </MenuItem.Icon>
             </MenuItem>
 
             <Separator />
@@ -1445,8 +1439,8 @@
             <!--  Right panels  -->
             <avalonDock:LayoutAnchorablePaneGroup
               DockMinWidth="50"
-              DockWidth="450"
-              FloatingWidth="400">
+              DockWidth="500"
+              FloatingWidth="500">
               <avalonDock:LayoutAnchorablePane>
                 <avalonDock:LayoutAnchorable
                   x:Name="FlowGraphPanelHost"

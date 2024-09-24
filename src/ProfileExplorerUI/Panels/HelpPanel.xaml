@@ -32,6 +32,27 @@
           VerticalAlignment="Top"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           Loaded="ToolBar_Loaded">
+          <Button
+            Width="20"
+            VerticalAlignment="Center"
+            Click="BackButton_Click"
+            IsEnabled="{Binding CanGoBack, ElementName=Browser}"
+            ToolTip="Home">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource DockLeftIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
+          </Button>
+          <Button
+            Click="HomeButton_Click"
+            ToolTip="Home">
+            <Image
+              Width="16"
+              Height="16"
+              Source="{StaticResource DetailsIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
+          </Button>
           <TextBlock
             Margin="2,0,4,0"
             HorizontalAlignment="Center"
@@ -56,55 +77,37 @@
               Margin="0,1,5,0"
               HorizontalAlignment="Right"
               IsHitTestVisible="False"
-              Source="{StaticResource DownArrowIcon}" />
+              Source="{StaticResource DownArrowIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </Grid>
-          <Button
-            Width="20"
-            Margin="2,0,0,0"
-            VerticalAlignment="Center"
-            Click="BackButton_Click"
-            IsEnabled="{Binding CanGoBack, ElementName=Browser}"
-            ToolTip="Home">
-            <Image
-              Width="16"
-              Height="16"
-              Source="{StaticResource LeftArrowIcon}" />
-          </Button>
-          <Button
-            Margin="2,0,0,0"
-            Click="HomeButton_Click"
-            ToolTip="Home">
-            <Image
-              Width="15"
-              Height="15"
-              Source="{StaticResource DetailsIcon}" />
-          </Button>
-          <Separator />
           <Button
             Margin="2,0,0,0"
             Click="ZoomOutButton_Click"
             ToolTip="Zoom Out (Ctrl+_">
             <Image
-              Width="15"
-              Height="15"
-              Source="{StaticResource ZoomOutIcon}" />
+              Width="16"
+              Height="16"
+              Source="{StaticResource ZoomOutIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </Button>
           <Button
             Click="ZoomInButton_Click"
             ToolTip="Zoom In (Ctrl+=)">
             <Image
-              Width="15"
-              Height="15"
-              Source="{StaticResource ZoomInIcon}" />
+              Width="16"
+              Height="16"
+              Source="{StaticResource ZoomInIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </Button>
           <Separator />
           <Button
-            Click="ExternaButton_Click"
+            Click="ExternalButton_Click"
             ToolTip="Open help in external browser">
             <Image
-              Width="15"
-              Height="15"
-              Source="{StaticResource OpenExternalIcon}" />
+              Width="16"
+              Height="16"
+              Source="{StaticResource OpenExternalIcon}"
+              Style="{StaticResource DisabledImageStyle}"/>
           </Button>
         </ToolBar>
       </ToolBarTray>

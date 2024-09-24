@@ -12,8 +12,15 @@
   mc:Ignorable="d">
   <Border
     Background="#FFD9EFFF"
-    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-    BorderThickness="2,2,2,2">
+    BorderThickness="0">
+    <Border.Effect>
+      <DropShadowEffect
+        BlurRadius="5"
+        Direction="315"
+        RenderingBias="Performance"
+        ShadowDepth="2"
+        Color="#FF929292" />
+    </Border.Effect>
     <DockPanel LastChildFill="True">
       <DockPanel
         Margin="10,10,10,0"
