@@ -10,7 +10,7 @@ rd %_OUT_PATH% /s /q
 rd %_PUBLISH_PATH% /s /q
 mkdir %_OUT_PATH%
 
-dotnet publish -c "Release" -r win-x64 --self-contained  --output %_PUBLISH_PATH% %_BUILD_TARGET%
+dotnet publish -c "Release" -r win-x64 --self-contained --verbosity diagnostic --output %_PUBLISH_PATH% %_BUILD_TARGET%
 
 for /f "delims=" %%i in ('"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -all -prerelease -property installationPath') do set _VS=%%i
 set _VS_ENV=%_VS%\VC\Auxiliary\Build\vcvars64.bat
