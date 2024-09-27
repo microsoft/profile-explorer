@@ -1543,7 +1543,7 @@ public partial class MainWindow : Window, ISession {
       Title = $"Profile Explorer - Reading {documentTitle}";
     }
 
-    Utils.DisableControl(DockManager, 0.85);
+    UpdatePanelEnabledState(false);
     Utils.DisableControl(StartPage, 0.85);
     Mouse.OverrideCursor = Cursors.AppStarting;
     SetApplicationProgress(true, double.NaN, "Loading session");
@@ -1558,14 +1558,14 @@ public partial class MainWindow : Window, ISession {
   }
 
   private void StartUIUpdate() {
-    Utils.DisableControl(DockManager, 0.85);
+    UpdatePanelEnabledState(false);
     Utils.DisableControl(StartPage, 0.85);
     Mouse.OverrideCursor = Cursors.AppStarting;
   }
 
   private void StopUIUpdate() {
     Mouse.OverrideCursor = null;
-    Utils.EnableControl(DockManager);
+    UpdatePanelEnabledState(true);
   }
 
   private void UpdateUIAfterLoadDocument() {
@@ -1577,7 +1577,7 @@ public partial class MainWindow : Window, ISession {
     }
     else {
       Title = "Profile Explorer - Failed to load file";
-      Utils.DisableControl(DockManager, 0.85);
+      UpdatePanelEnabledState(false);
     }
 
     // Hide temporary UI.

@@ -978,6 +978,7 @@ sealed class BasicAuthenticationHandler : SymbolReaderAuthHandler {
 
   public BasicAuthenticationHandler(SymbolFileSourceSettings settings, TextWriter log) :
     base(log, "HTTP Auth") {
+    settings_ = settings;
   }
 
   protected override bool TryGetAuthority(Uri requestUri, out Uri authority) {

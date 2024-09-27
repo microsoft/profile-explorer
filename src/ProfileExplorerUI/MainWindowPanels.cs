@@ -873,6 +873,20 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  private void UpdatePanelEnabledState(bool enabled) {
+    ForEachPanelHost(pair => {
+      // Always keep the help panel enabled.
+      if (pair.Panel.PanelKind != ToolPanelKind.Help) {
+        if (enabled) {
+          Utils.EnableControl(pair.Panel as UIElement);
+        }
+        else {
+          Utils.DisableControl(pair.Panel as UIElement, 0.85);
+        }
+      }
+    });
+  }
+
   private void SwitchCommandFocusToPanel(PanelHostInfo panelHost) {
     var activePanel = FindActivePanel(panelHost.PanelKind);
 

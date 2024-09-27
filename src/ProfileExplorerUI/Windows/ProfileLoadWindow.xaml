@@ -803,7 +803,7 @@
                     ToolTip="Include kernel events from the trace, connecting user mode and kernel mode stacks" />
                   <CheckBox
                     Margin="0,4,0,0"
-                    Content="Handle CPU performance counter samples"
+                    Content="Handle CPU performance counter events"
                     IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}"
                     ToolTip="Include CPU performance counter (PMC) events from the trace" />
                   <CheckBox

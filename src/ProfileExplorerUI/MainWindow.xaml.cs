@@ -572,7 +572,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     await ProcessStartupArgs();
 
     if (!IsSessionStarted) {
-      Utils.DisableControl(DockManager, 0.75);
+      UpdatePanelEnabledState(false);
     }
     else {
       // Hide the start page if a file was loaded on start.

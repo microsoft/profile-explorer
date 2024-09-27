@@ -195,6 +195,7 @@ public partial class HelpPanel : ToolPanelControl {
     // Force light mode for the WebView2 control for now
     // screenshots don't look good in dark mode.
     Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+    Browser.ZoomFactor = 0.9;
   }
 
   private async Task NavigateToURL(string url) {
