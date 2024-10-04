@@ -10,6 +10,18 @@ Summary, flame graph and timeline views of a trace:
 Assembly, source file and flow graph views of a function:
 ![Screenshot 2024-09-25 122416](https://github.com/user-attachments/assets/ed3dc776-cdcc-4eb7-a9d5-db3513cc908c)
 
+# Building
+
+TODO: Building instructions
+- Latest VS with .NET and ARM64 C++ toolset
+- clone with submodules
+- run build.cmd for initial build
+- installer uses InnoSetup, to build use installer/arch/prepare.cmd
+
+# Project structure
+
+TODO: Table with VS project names and description
+
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
