@@ -1,0 +1,4 @@
+- expand hottest path
+- right-click context menu
+- mouse, keyboard shortcuts
+- hover shows preview like in flame graph (details panel)

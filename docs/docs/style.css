@@ -1,0 +1,59 @@
+.md-typeset h4 {
+    font-size: 18px;
+}
+
+.md-typeset h5 {
+    color:rgb(4, 0, 53);
+    text-transform: none;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.md-typeset h1,
+  .md-content__button {
+    display: none;
+}
+
+.md-content__inner {
+    padding-top: 0;
+}
+
+.md-main__inner {
+    margin-top: 0;
+}
+
+.md-typeset__table {
+    line-height: 1;
+}
+
+.md-typeset__table table:not([class]) {
+    font-size: .8rem;
+}
+
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+    padding: 8px 12px;
+    vertical-align:middle;
+}
+
+.md-typeset .admonition,.md-typeset details {
+    font-size: .7rem;
+}
+
+.md-typeset table:not([class]) {
+    overflow: hidden;
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  border-width: 0;
+  border-bottom-width: 1px;
+}
+
+li + li {
+    margin-top: -5px;
+}
+
+html {
+    font-size:larger;
+}

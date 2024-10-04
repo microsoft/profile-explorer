@@ -1,0 +1,5 @@
+- basic blocks coded by color
+- edges color coding, red for exit block, green loop
+- click on node selects block in assembly view, on ASM selects block
+- profiling info annotates hot blocks (label below) and color
+- mouse and keyboard shorcuts for zoom, pan
