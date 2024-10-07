@@ -89,7 +89,7 @@
                 Text="Back" />
             </StackPanel>
           </Button>
-          <Separator />
+          <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}"/>
           <Button
             Command="local:CallTreeCommand.CollapseNodes"
             CommandTarget="{Binding ElementName=CallTreeList}"

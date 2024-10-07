@@ -208,7 +208,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     await SelectFunctionInPanel(obj, ToolPanelKind.Source);
   });
   public RelayCommand<object> CopyFunctionNameCommand => new(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+    if (CallTreeList.SelectedItem is TreeNode node &&
+        node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
       string text = Session.CompilerInfo.NameProvider.GetFunctionName(item.Function);
       Clipboard.SetText(text);
     }
@@ -234,14 +235,16 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
   });
   public RelayCommand<object> PreviewFunctionCommand => new(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+    if (CallTreeList.SelectedItem is TreeNode node &&
+        node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
       var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
                                                      CallTreeList, Session, null, false, brush);
     }
   });
   public RelayCommand<object> PreviewFunctionInstanceCommand => new(async obj => {
-    if (CallTreeList.SelectedItem is TreeNode node && node.Tag is CallTreeListItem item) {
+    if (CallTreeList.SelectedItem is TreeNode node &&
+        node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
       var filter = new ProfileSampleFilter(item.CallTreeNode);
       var brush = GetMarkedNodeColor(item);
       await IRDocumentPopupInstance.ShowPreviewPopup(item.Function, "",
@@ -250,15 +253,17 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   });
   public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var item = node.Tag as CallTreeListItem;
-      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-      await OpenFunctionInstance(item, mode);
+      if (node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
+        var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+        await OpenFunctionInstance(item, mode);
+      }
     }
   });
   public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var item = node.Tag as CallTreeListItem;
-      await OpenFunctionInstance(item, OpenSectionKind.NewTabDockRight);
+      if (node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
+        await OpenFunctionInstance(item, OpenSectionKind.NewTabDockRight);
+      }
     }
   });
 
@@ -302,16 +307,23 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public bool HasPreviousState => stateStack_.Count > 0;
   public RelayCommand<object> MarkModuleCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
-    MarkSelectedNodes(obj, (node, color) =>
-                        markingSettings.AddModuleColor(node.ModuleName, color));
+    MarkSelectedNodes(obj, (node, color) => {
+      if (node.HasCallTreeNode) {
+        markingSettings.AddModuleColor(node.ModuleName, color);
+      }
+    });
+
     markingSettings.UseModuleColors = true;
     await UpdateMarkedFunctions();
   });
   public RelayCommand<object> MarkFunctionCommand => new(async obj => {
     var markingSettings = App.Settings.MarkingSettings;
     MarkSelectedNodes(obj, (node, color) => {
-      markingSettings.AddFunctionColor(node.FunctionName, color);
+      if (node.HasCallTreeNode) {
+        markingSettings.AddFunctionColor(node.FunctionName, color);
+      }
     });
+
     markingSettings.UseFunctionColors = true;
     await UpdateMarkedFunctions();
   });
@@ -873,11 +885,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private void ExpandHottestCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      // Expand hotteest path starting with the node.
+      // Expand hottest path starting with the node.
       ExpandHottestFunctionPath(node);
     }
     else {
-      // Expand hotteest path in the tree.
+      // Expand hottest path in the tree.
       ExpandHottestFunctionPath();
     }
   }
@@ -890,8 +902,13 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
   private async void SelectFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
-      var item = node.Tag as CallTreeListItem;
-      await SwitchFunction(item);
+      if (node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
+        await SwitchFunction(item);
+
+        if (IsCallerCalleePanel) {
+          await DisplayProfileCallerCalleeTree(item.Function);
+        }
+      }
     }
   }
 

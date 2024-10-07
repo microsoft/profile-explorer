@@ -36,7 +36,7 @@ public static class DocumentExporting {
   private static async Task ExportToFile(IRDocument textView, string fileFilter, string defaultExtension,
                                          Func<IRDocument, string, Task<bool>> saveAction) {
     string path = Utils.ShowSaveFileDialog(fileFilter, defaultExtension);
-    bool success = true;
+    bool success = false;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
@@ -54,11 +54,35 @@ public static class DocumentExporting {
     }
   }
 
+
+  public static async Task ExportSourceToExcelFile(IRDocument textView,
+                                                    Func<int, int> toOriginalLineMapper,
+                                                    Func<int, int> fromOriginalLineMapper) {
+    string path = Utils.ShowSaveFileDialog(ExcelFileFilter, ExcelExtension);
+    bool success = false;
+
+    if (!string.IsNullOrEmpty(path)) {
+      try {
+        success = await ExportSourceAsExcelFile(textView, path, toOriginalLineMapper, fromOriginalLineMapper);
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"Failed to save function to {path}: {ex.Message}");
+      }
+
+      if (!success) {
+        using var centerForm = new DialogCenteringHelper(textView);
+        MessageBox.Show($"Failed to save list to {path}", "Profile Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+    }
+  }
+
+
   public static async Task ExportSourceToHtmlFile(IRDocument textView,
                                                   Func<int, int> toOriginalLineMapper,
                                                   Func<int, int> fromOriginalLineMapper) {
     string path = Utils.ShowSaveFileDialog(HtmlFileFilter, HtmlExtension);
-    bool success = true;
+    bool success = false;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
@@ -80,7 +104,7 @@ public static class DocumentExporting {
                                                       Func<int, int> toOriginalLineMapper,
                                                       Func<int, int> fromOriginalLineMapper) {
     string path = Utils.ShowSaveFileDialog(MarkdownFileFilter, MarkdownExtension);
-    bool success = true;
+    bool success = false;
 
     if (!string.IsNullOrEmpty(path)) {
       try {
@@ -98,7 +122,9 @@ public static class DocumentExporting {
     }
   }
 
-  public static async Task<bool> ExportSourceAsExcelFile(IRDocument textView, string filePath) {
+  public static async Task<bool> ExportSourceAsExcelFile(IRDocument textView, string filePath,
+                                                         Func<int, int> toOriginalLineMapper = null,
+                                                         Func<int, int> fromOriginalLineMapper = null) {
     var function = textView.Section.ParentFunction;
     (int firstSourceLineIndex, int lastSourceLineIndex) =
       await DocumentUtils.FindFunctionSourceLineRange(function, textView);
@@ -114,19 +140,32 @@ public static class DocumentExporting {
     int maxLineLength = 0;
 
     for (int i = firstSourceLineIndex; i <= lastSourceLineIndex; i++) {
-      var line = textView.Document.GetLineByNumber(i);
+      // Filter out instructions not in line range if requested.
+      int lineNumber = i;
+
+      if (fromOriginalLineMapper != null) {
+        // Map original source line to the one in the document,
+        // when inline assembly is being displayed.
+        lineNumber = fromOriginalLineMapper(lineNumber);
+
+        if (lineNumber == -1) {
+          continue;
+        }
+      }
+
+      var line = textView.Document.GetLineByNumber(lineNumber);
       string text = textView.Document.GetText(line.Offset, line.Length);
       ws.Cell(rowId, 1).Value = text;
       ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
       maxLineLength = Math.Max(text.Length, maxLineLength);
 
-      ws.Cell(rowId, 2).Value = i;
+      ws.Cell(rowId, 2).Value = lineNumber;
       ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
       ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
 
       if (columnData != null) {
         IRElement tuple = null;
-        tuple = DocumentUtils.FindTupleOnSourceLine(i, textView);
+        tuple = DocumentUtils.FindTupleOnSourceLine(lineNumber, textView);
 
         if (tuple != null) {
           columnData.ExportColumnsToExcel(tuple, ws, rowId, 3);
@@ -136,6 +175,7 @@ public static class DocumentExporting {
       rowId++;
     }
 
+    // Set the table header column names.
     var firstCell = ws.Cell(1, 1);
     var lastCell = ws.LastCellUsed();
     var range = ws.Range(firstCell.Address, lastCell.Address);
@@ -157,9 +197,8 @@ public static class DocumentExporting {
       cell.Style.Fill.BackgroundColor = XLColor.LightGray;
     }
 
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
+    // Adjust the width of the content column.
+    ws.Column(1).AdjustToContents((double)1, maxLineLength);
 
     wb.SaveAs(filePath);
     return true;
@@ -247,7 +286,8 @@ public static class DocumentExporting {
     thead.AppendChild(tr);
     table.AppendChild(thead);
 
-    if (!MapStartEndSourceLines(ref startLine, ref endLine, toOriginalLineMapper)) {
+    if (filterByLine &&
+        !MapStartEndSourceLines(ref startLine, ref endLine, toOriginalLineMapper)) {
       return doc.DocumentNode;
     }
 
@@ -380,7 +420,8 @@ public static class DocumentExporting {
     sb.AppendLine(header);
     sb.AppendLine(separator);
 
-    if (!MapStartEndSourceLines(ref startLine, ref endLine, toOriginalLineMapper)) {
+    if (filterByLine &&
+        !MapStartEndSourceLines(ref startLine, ref endLine, toOriginalLineMapper)) {
       return sb.ToString();
     }
 
@@ -406,7 +447,7 @@ public static class DocumentExporting {
       string text = textView.Document.GetText(line.Offset, line.Length);
       var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
 
-      sb.Append($"| {PreprocessHtmlIndentation(text)} | {i} |");
+      sb.Append($"| {text} | {i} |");
 
       if (columnData != null && tuple != null) {
         columnData.ExportColumnsAsMarkdown(tuple, sb);
@@ -532,7 +573,6 @@ public static class DocumentExporting {
     var columnData = textView.ProfileColumnData;
     bool filterByLine = startLine != -1 && endLine != -1;
     int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
-    int rowId = 1; // First row is for the table column names.
     var doc = new HtmlDocument();
     var table = doc.CreateElement("table");
     table.SetAttributeValue("style", TableStyle);
@@ -604,7 +644,6 @@ public static class DocumentExporting {
           }
         }
 
-        rowId++;
         var line = textView.Document.GetLineByNumber(tuple.TextLocation.Line + 1);
         string text = textView.Document.GetText(line.Offset, line.Length);
         tr = doc.CreateElement("tr");
@@ -750,6 +789,7 @@ public static class DocumentExporting {
       }
     }
 
+    // Set the table header column names.
     var firstCell = ws.Cell(1, 1);
     var lastCell = ws.LastCellUsed();
     var range = ws.Range(firstCell.Address, lastCell.Address);
@@ -771,9 +811,8 @@ public static class DocumentExporting {
       cell.Style.Fill.BackgroundColor = XLColor.LightGray;
     }
 
-    for (int i = 1; i <= 1; i++) {
-      ws.Column(i).AdjustToContents((double)1, maxLineLength);
-    }
+    // Adjust the width of the content column.
+    ws.Column(1).AdjustToContents((double)1, maxLineLength);
 
     await Task.Run(() => wb.SaveAs(filePath));
     return true;
