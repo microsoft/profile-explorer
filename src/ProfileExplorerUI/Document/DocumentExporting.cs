@@ -447,7 +447,7 @@ public static class DocumentExporting {
       string text = textView.Document.GetText(line.Offset, line.Length);
       var tuple = columnData != null ? DocumentUtils.FindTupleOnSourceLine(i, textView) : null;
 
-      sb.Append($"| {PreprocessHtmlIndentation(text)} | {i} |");
+      sb.Append($"| {text} | {i} |");
 
       if (columnData != null && tuple != null) {
         columnData.ExportColumnsAsMarkdown(tuple, sb);
