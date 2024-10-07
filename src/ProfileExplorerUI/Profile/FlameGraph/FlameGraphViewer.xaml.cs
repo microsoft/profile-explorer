@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -136,10 +137,6 @@ public partial class FlameGraphViewer : FrameworkElement {
 
   public void SelectNode(FlameGraphNode graphNode, bool append = false,
                          bool deselectIfSelected = true) {
-    if (!append) {
-      ResetNodeHighlighting(); // Deselect all other nodes.
-    }
-
     if (!selectedNodes_.ContainsKey(graphNode)) {
       // Select a currently unselected node.
       if (!append) {
@@ -150,13 +147,16 @@ public partial class FlameGraphViewer : FrameworkElement {
       selectedNode_ = graphNode; // Last selected node.
     }
     else if (deselectIfSelected) {
+      // Handle a currently selected node.
       if (append) {
         // Remove selection if node is already selected in append mode.
         selectedNodes_.Remove(graphNode);
-        selectedNode_ = null;
+        selectedNode_ = selectedNodes_.Count > 0 ? selectedNodes_.First().Key : null;
+        RestoreNodeStyle(graphNode, true);
       }
       else {
-        // Otherwise select the node again.
+        // Keep the node selected and deselect others.
+        ResetNodeHighlighting();
         HighlightNode(graphNode, HighlighingType.Selected);
         selectedNode_ = graphNode; // Last selected node.
       }
@@ -479,7 +479,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
   }
 
-  private void RestoreNodeStyle(FlameGraphNode node) {
+  private void RestoreNodeStyle(FlameGraphNode node, bool redraw = false) {
     if (!markedNodes_.TryGetValue(node, out var style) &&
         !selectedNodes_.TryGetValue(node, out style) &&
         !hoverNodes_.TryGetValue(node, out style)) {
@@ -493,6 +493,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     node.Style = style;
+
+    if (redraw) {
+      renderer_.Redraw();
+    }
   }
 
   private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
@@ -535,10 +539,12 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+    // On right click, don't deselect node if already selected.
     SelectPointedNode(e, false);
   }
 
   private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+    // On left click, deselect node if already selected.
     SelectPointedNode(e, true);
   }
 
@@ -561,7 +567,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
       }
 
-      SelectNode(graphNode, Utils.IsControlModifierActive(), deselectIfSelected);
+      SelectNode(graphNode, append: Utils.IsControlModifierActive(), deselectIfSelected);
     }
     else {
       ClearSelection();

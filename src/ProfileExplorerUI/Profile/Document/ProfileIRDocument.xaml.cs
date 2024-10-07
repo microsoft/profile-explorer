@@ -1598,10 +1598,13 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
-    await DocumentExporting.ExportToExcelFile(TextView,
-                                              isSourceFileDocument_ ?
-                                                DocumentExporting.ExportSourceAsExcelFile :
-                                                DocumentExporting.ExportFunctionAsExcelFile);
+    if (isSourceFileDocument_) {
+      await DocumentExporting.ExportSourceToExcelFile(TextView, MapToOriginalSourceLineNumber,
+                                                      MapFromOriginalSourceLineNumber);
+    }
+    else {
+      await DocumentExporting.ExportToExcelFile(TextView, DocumentExporting.ExportFunctionAsHtmlFile);
+    }
   }
 
   private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {

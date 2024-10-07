@@ -3086,20 +3086,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     ProfileReportPanel.ShowReportWindow(Session.ProfileData.Report, Session, moduleEx?.Status);
   }
 
-  private void FunctionClick(object sender, MouseButtonEventArgs e) {
-    if (FunctionList.SelectedItems.Count > 1) {
-      var (weight, exclusiveWeight) = ComputeSelectedFunctionsWeight();
-      double weightPercentage = Session.ProfileData.ScaleFunctionWeight(weight);
-      double exclusiveWeightPercentage = Session.ProfileData.ScaleFunctionWeight(exclusiveWeight);
-      string text = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})";
-      text += $", excl {exclusiveWeightPercentage.AsPercentageString()} ({exclusiveWeight.AsMillisecondsString()})";
-      Session.SetApplicationStatus(text, "Sum of selected functions");
-    }
-    else {
-      Session.SetApplicationStatus("");
-    }
-  }
-
   public IRTextSectionEx GetSectionExtension(IRTextSection section) {
     return sectionExtMap_[section];
   }

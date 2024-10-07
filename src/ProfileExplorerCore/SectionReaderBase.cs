@@ -11,7 +11,6 @@ namespace ProfileExplorer.Core;
 
 public abstract class SectionReaderBase : IRSectionReader, IDisposable {
   public static readonly long MAX_PRELOADED_FILE_SIZE = 256 * 1024 * 1024; // 256 MB
-  private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
   private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
   private static readonly int MAX_LINE_LENGTH = 2000;
   private StreamReader dataReader_;

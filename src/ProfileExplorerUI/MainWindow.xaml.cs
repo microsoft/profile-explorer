@@ -857,7 +857,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
 
   private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
     var docInfo = sessionState_.FindLoadedDocument(section);
-    string funcName = compilerInfo_.NameProvider.GetFunctionName(section.ParentFunction);
+    string funcName = compilerInfo_.NameProvider.FormatFunctionName(section.ParentFunction);
     funcName = DocumentUtils.FormatLongFunctionName(funcName);
     string text = $"Module: {section.ModuleName}\nFunction: {funcName}";
 

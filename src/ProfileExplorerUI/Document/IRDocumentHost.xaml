@@ -433,13 +433,13 @@
             <Button
               Command="local:DocumentCommand.PreviousBookmark"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to previous bookmark (Shift+F2)">
+              ToolTip="Jump to previous bookmark">
               <Image Source="{StaticResource UpArrowIcon}" />
             </Button>
             <Button
               Command="local:DocumentCommand.NextBookmark"
               CommandTarget="{Binding ElementName=TextView}"
-              ToolTip="Jump to next bookmark (F2)">
+              ToolTip="Jump to next bookmark">
               <Image Source="{StaticResource DownArrowIcon}" />
             </Button>
             <Separator Visibility="Collapsed" />

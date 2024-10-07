@@ -811,9 +811,6 @@
                 Event="MouseDoubleClick"
                 Handler="FunctionDoubleClick" />
               <EventSetter
-                Event="MouseLeftButtonUp"
-                Handler="FunctionClick" />
-              <EventSetter
                 Event="PreviewKeyDown"
                 Handler="FunctionPreviewKeyDown" />
 
