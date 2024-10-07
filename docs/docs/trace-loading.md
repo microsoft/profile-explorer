@@ -12,7 +12,7 @@ Once the trace file is selected in the *Open File dialog*, the **Load profile tr
 
 From the list, select the process you want to analyze and press the **Load Profile** button (alternatively, use double-click or the Return key). The selected process is loaded from the trace file, any required binary and symbol files are downloaded and the profiling data is analyzed. Once loading is completed, the window closes and the profiling views are populated, as described in [Profiling UI overview](profiling-ui.md).
 
-#### Loading a previosly opened trace
+#### Loading a previously opened trace
 
 Previously opened traces are saved as sessions. Recent sessions can be quickly opened again for the same process using either the *Start page* or the session list on the left of the *Load profile trace* window (use double-click or the Return key).
 
@@ -20,7 +20,7 @@ Previously opened traces are saved as sessions. Recent sessions can be quickly o
 
 #### Symbols configuration
 
-Symbols are the binary (EXE/DLL) and debug information (PDB) files required to analyze the processes recorded in a trace. The binaries are used to disassembly individual functions and the debug files are used to resolve function names and provide the source file and line number information.
+Symbols are the binary (EXE/DLL) and debug info (PDB) files required to analyze the processes recorded in a trace. The binaries are used to disassembly individual functions and the debug files are used to resolve function names and provide the source file and line number information.
 
 [![Load profile window options screenshot](img/symbols_1332x826.png)](img/symbols_1332x826.png){:target="_blank"}
 

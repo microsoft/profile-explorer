@@ -1,6 +1,6 @@
 #### Overview
 
-The summary view displays all modules (binaries) and functions that have profile data in the trace, and makes it easy to identify the functions where most time spent. 
+The summary view displays all modules (binaries) and functions that have profile data in the trace, and makes it easy to identify the functions where most time spent, the application hotspots.
 
 [![Profiling UI screenshot](img/summary-panel_1233x417.png)](img/summary-panel_1233x417.png){:target="_blank"}
 
@@ -20,7 +20,7 @@ By default the *All* entry is active and the function list displays all function
 
 ##### Functions list
 
-The function list has an entry for each function with profile data. Each entry has the demangled (undecorated) function name, module and self (exclusive) execution time and total (inclusive) execution time. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
+The function list has an entry for each function with profile data. An entry has the demangled (undecorated) function name, module and self (exclusive) execution time and total (inclusive) execution time. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
 
 The list is filtered based on the active module. The displayed columns and style can be customized in the Summary options.
 
@@ -31,11 +31,14 @@ The function list is by default sorted by the self (exclusive) execution time in
 ???+ note
     The same sorting actions apply to other list views in the application. Not all list views support sorting currently.  
     
-    The columns in all list views can be resized and reorder.   The new layout is saved across sessions when closing the application.
+    The columns in all list views can be resized and reorder. The new layout is saved across sessions when closing the application.
 
 If marking of functions based on their name or module is active, the function entries use the marking background color.
 
-#### Summary view interaction
+Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.  
+[![Profiling UI screenshot](img/summary-preview_654x551.png){: style="width:450px"}](img/summary-preview_654x551.png){:target="_blank"}
+
+#### View interaction
 
 ???+ abstract "Toolbar"
     | Button | Description |
@@ -44,13 +47,14 @@ If marking of functions based on their name or module is active, the function en
     | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a function also displays the source in the Source file view, with the source lines annotated with profiling data. |
     | Export | Export the current function list into one of multiple formats (Excel, HTML and Markdown) or copy to clipboard the function list as  a HTML/Markdown table. |
     | Search box | Search for functions with a specific name using a case-insensitive substring search. Searching filters the list down to display only the matching entries. Press the *Escape* key to reset the search or the *X* button next to the input box. |
+    | ![](img/summary-toolbar-up.png) | Scrolls up the list to the start (equivalent to pressing Ctrl+Home). |
 
 ???+ abstract "Mouse shortcuts"
     | Action | Description |
     | ------ | ------------|
-    | Hover | Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open. |
+    | Hover | Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.|
     | Click | Selects the function in the other views if *Sync* is enabled in the toolbar and displays the source in the Source file view if *Source* is enabled in the toolbar.  |
-    | Double-click | Opens the Assembly view of the selected function in the current tab. |
+    | Double-click | Opens the Assembly view of the selected function in the active tab. |
     | Shift+Double-click | Opens the Assembly view of the selected function in a new tab. |
     | Right-click | Shows the context menu for the selected functions. |
 
@@ -60,7 +64,7 @@ If marking of functions based on their name or module is active, the function en
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
-    | Return | Opens the Assembly view of the selected function in the current tab. |
+    | Return | Opens the Assembly view of the selected function in the active tab. |
     | Shift+Return | Opens the Assembly view of the selected function in a new tab. |
     | Ctrl+Shift+Left | Opens the Assembly view of the selected function in a new tab docked to the left of the active tab. |
     | Ctrl+Shift+Right | Opens the Assembly view of the selected function in a new tab docked to the right of the active tab. |

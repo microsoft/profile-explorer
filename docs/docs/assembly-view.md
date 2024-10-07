@@ -1,8 +1,8 @@
 #### Overview
 
-The Assembly Code view shows the function's machine code after disassembly, with syntax highlighting for x86_64/ARM64 architectures. The view is interactive, with the text being parsed into instructions with operands and higher-level constructs such as [basic blocks](https://en.wikipedia.org/wiki/Basic_block) and loops are recovered.
+The Assembly view shows the function's machine code after disassembly, with syntax highlighting for x86_64/ARM64 architectures. The view is interactive, with the text being parsed into instructions with operands and higher-level constructs such as [basic blocks](https://en.wikipedia.org/wiki/Basic_block) and loops are recovered.
 
-The assembly instructions are augmented with annotations from the debug information files, such as source line numbers and inlinees, and combined with the execution time from the profile trace.
+The assembly instructions are augmented with annotations from the debug info files, such as source line numbers and inlinees, and combined with the execution time from the profile trace.
 
 [![Profiling UI screenshot](img/assembly-view_1164x473.png)](img/assembly-view_1164x473.png){:target="_blank"}
 
@@ -10,8 +10,8 @@ The view has four parts:
 
 - a main toolbar at the top, with general action buttons.
 - a secondary toolbar underneath with profiling-specific info and action buttons.
-- the text view with the function's assembly
-- several columns on the right side with the profiling data. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
+- the text view with the function's assembly.
+- several columns on the right side with the profiling data for each instruction. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
 
 ???+ note
     When a function is opened in the Assembly view, its corresponding source file is automatically loaded in the *Source File* view and its [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) displayed in the *Flow Graph* view.<br>
@@ -21,18 +21,22 @@ The view has four parts:
 
 The function assembly area can be treated a read-only code editor. Each line corresponds to one instruction, with the following values from left to right:
 
-- instruction number (line number in the text)
-- instruction virtual address (blue text)
-- instruction opcode (bold text)
-- an optional list of instruction operands
+[![Profiling UI screenshot](img/assembly-line_1018x41.png)](img/assembly-line_1018x41.png){:target="_blank"}
+
+- instruction number (line number in the text).
+- optional marking icon for call targets.
+- instruction virtual address (blue text).
+- instruction opcode (bold text).
+- an optional list of instruction operands.
 - source line number associated with the instruction, obtained from the debug info (gray text).
 - inlinees (inlined functions) associated with the instruction, obtained from the debug info (green text).
+- profiling data columns, such as the execution time percentage and value.
 
 ##### Source lines
 
-The debug information files usually contain a mapping between the source line numbers and the instructions that were generated for those lines. If available, the source line number is appended at the end of an instruction. Note that accuracy of this mapping usually depends on the compiler optimization level, with higher levels being less accurate or even lacking the mapping for some instructions.
+The debug info files usually contain a mapping between the source line numbers and the instructions that were generated for those lines. If available, the source line number is appended at the end of an instruction. Note that accuracy of this mapping usually depends on the compiler optimization level, with higher levels being less accurate or even lacking the mapping for some instructions.
 
-Hovering over the line number shows a tooltip with the name and path of the source file. To copy this info to clipboard, first *click* the line number, then press *Ctrl+C*.  
+*Hovering* over the line number shows a tooltip with the name and path of the source file. To copy this info to clipboard, first *click* the line number, then press *Ctrl+C*.  
 
 [![Profiling UI screenshot](img/assemlby-line-number_816x106.png){: style="width:500px"}](img/assemlby-line-number_816x106.png){:target="_blank"}  
 
@@ -44,11 +48,11 @@ Hovering over the line number shows a tooltip with the name and path of the sour
     
 ##### Inlinees
 
-During function inlining, the compiler may preserve additional details about the functions code being inlined so that the origin of an instruction can be saved into the debug information file. If available, the inlinees (inlined functions) are appended after the source line number, separated by the | letter.
+During function inlining, the compiler may preserve additional details about the functions code being inlined so that the origin of an instruction can be saved into the debug info file. If available, the inlinees (inlined functions) are appended after the source line number, separated by the | letter.
 
 For example, if the function contains a call chain like *foo() -> bar()*, with both calls being inlined, the final instructions will record the fact that they originate from *bar*, which got inlined into *foo*, then *foo* inlined into the function.
 
-Hovering over the inlinee shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this info to clipboard, first *click* the inlinee, then press *Ctrl+C*:  
+*Hovering* over the inlinee shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this info to clipboard, first *click* the inlinee, then press *Ctrl+C*:  
 
 [![Profiling UI screenshot](img/assembly-inlinees_926x222.png){: style="width:500px"}](img/assembly-inlinees_926x222.png){:target="_blank"}
 
@@ -80,7 +84,7 @@ Instruction execution time is displayed and annotated on several parts of the as
 
 [![Profiling UI screenshot](img/assembly-marking-blocks_793x203.png)](img/assembly-marking-blocks_793x203.png){:target="_blank"}  
 
-- the basic blocks have a label with the block's execution time percentage, as a sum of its instruction's execution time (in the example above, the 55.73% label for B4). Hovering over the label shows the block's execution time value. The label background color uses the same color coding.
+- the basic blocks have a label with the block's execution time percentage, as a sum of its instruction's execution time (in the example above, the 55.73% label for B4). *Hovering* over the label shows the block's execution time value. The label background color uses the same color coding.
 - the basic blocks in the *Flow Graph* view have below the same execution time percentage label as in the Assembly view, with the corresponding background color.
 
 ???+ note
@@ -96,7 +100,7 @@ Combining the parsed assembly and profiling information, call instructions are m
 - for direct calls (target is an function name/address), a black arrow is used.
 - for indirect or virtual function calls (target is a register or memory operand), a green arrow is used.
 
-Hovering with the mouse over the arrow displays a target functions list, with details about their execution time. For example, the indirect call below at runtime has the *std::_Random_device* function as the only target:
+*Hovering* with the mouse over the arrow displays a target functions list, with details about their execution time. For example, the indirect call below at runtime has the *std::_Random_device* function as the only target:
 
 [![Profiling UI screenshot](img/assembly-call-target_691x172.png){: style="width:500px"}](img/assembly-call-target_691x172.png){:target="_blank"} 
 
@@ -107,7 +111,7 @@ Hovering with the mouse over the arrow displays a target functions list, with de
 
 - *Double-click* on the function name (or the Return key with the name selected) opens the called function in the same tab.  
 - *Shift+Double-Click* (or Shift+Return) opens the called function in a new tab.  
-- *Alt+Return* shows a preview popup with the called function's assembly. Press the *Escape* key to close hte popup.  
+- *Alt+Return* shows a preview popup with the called function's assembly. Press the *Escape* key to close the popup.  
 - *Hovering* with the mouse over the function name also shows the preview popup.
 - Use the shortcuts from the *Opened function history* section below to go back to the caller.
 
@@ -165,31 +169,50 @@ The Instances menu displays the call paths leading to all instances of the funct
 *Click* on a menu entry to filter the profile data to include only the selected instance, updating the execution time and all profiling annotations for instructions and basic blocks.  
 
 The menu entries are checkboxes which allows selecting multiple instances to be included.  
-Use the *All instances* entry or uncheck all instances to view the entire function profile again.
+Use the *All Instances* entry or uncheck all instances to view the entire function profile again.
 
 ##### Threads
 
-By default the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.
+By default the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  
+
+The menu entries are checkboxes which allows selecting multiple threads to be included.  
+Use the *All Threads* entry or uncheck all instances to view the entire function profile again.
+
+[![Profiling UI screenshot](img/assembly-threads_560x214.png){: style="width:350px"}](img/assembly-threads_560x214.png){:target="_blank"}  
 
 ???+ note
-    Hovering with the mouse over the Assembly view'a tab displays a tooltip with details such as the total/self execution time, module and complete function name and if filtering is used, the name of the instances and threads included in the view. 
+    *Hovering* with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and if filtering is used, the name of the instances and threads included in the view. 
 
-#### Assembly view interaction
+##### Export
+
+See the [Exporting](#exporting) documentation section below.
+
+##### View
+
+Displays a menu which allows selecting the columns that should be displayed.  
+The settings are saved across sessions when closing the application.
+
+[![Profiling UI screenshot](img/assembly-view-menu_523x243.png){: style="width:350px"}](img/assembly-view-menu_523x243.png){:target="_blank"} 
+
+#### View interaction
 
 ???+ abstract "Toolbar"
     | Button | Description |
     | ------ | ------------|
-    | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a function also selects it in the other profiling views. |
-    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a function also displays the source in the Source file view, with the source lines annotated with profiling data. |
-    | Export | Export the current function list into one of multiple formats (Excel, HTML and Markdown) or copy to clipboard the function list as  a HTML/Markdown table. |
-    | Search box | Search for functions with a specific name using a case-insensitive substring search. Searching filters the list down to display only the matching entries. Press the *Escape* key to reset the search or the *X* button next to the input box. |
+    | ![](img/assembly-toolbar-nav.png)| Navigate back to a previously opened function or the next one in the sequence. See the [Opened functions history](#opened-functions-history) section for more details. |
+    | ![](img/assembly-toolbar-block-nav.png){: style="width:200px"} | The dropdown displays a list of all basic blocks, selecting one jumps to it. |
+    | ![](img/assemlby-toolbar-block-updown.png) | Jumps to the previous/next basic block in the function. |
+    | ![](img/assembly-toolbar-bookmarks.png) | Displays a menu with options for viewing, setting and removing bookmarks associated with instructions. The up/down arrows jump to the previous/next bookmark. |
+    | ![](img/assembly-toolbar-clear.png) | Displays a menu with options for removing markings from the selected or all instructions and operands. |
+    | ![](img/assembly-toolbar-popup.png) | Opens the current function into a new preview popup. |
+    | ![](img/assembly-toolbar-search.png) | Displays the text search panel. Press the *Escape* key to reset the search and close the panel. |
 
 ???+ abstract "Mouse shortcuts"
     | Action | Description |
     | ------ | ------------|
     | Hover | Hovering over a call target function name displays a popup with the function's assembly. Pin or drag the popup to keep it open. |
     | Click | Selects an instruction and also selects and brings into view its corresponding source line in the *Source File* view and its basic block in the *Flow Graph* view. |
-    | Double-click | If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the current tab. |
+    | Double-click | If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the active tab. |
     | Shift+Double-click | For call target function names, it opens the target function in a new tab.  |
     | Right-click | Shows the context menu for the selected instructions. |
     | Back | If the mouse has an optional *Back* button, navigates back to the previous opened function in the tab. |
@@ -198,7 +221,7 @@ By default the Assembly view displays the function profile accumulated across al
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
-    | Return | If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the current tab. |
+    | Return | If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the active tab. |
     | Shift+Return | For call target function names, it opens the target function in a new tab. |
     | Alt+Return | For direct call target function names, displays a preview popup with the target function's assembly. |
     | Backspace | Navigates back to the previous opened function in the tab. |
@@ -215,21 +238,46 @@ By default the Assembly view displays the function profile accumulated across al
     | Ctrl+B | Add a bookmark associated with the selected instruction. |
     | Ctrl+Arrow Up | Jumps to the previous basic block. |
     | Ctrl+Arrow Down | Jumps to the next basic block. |
+    | Page Up/Down<br>Arrow keys | Scroll text view similar to other text editors. |
 
 #### Exporting
 
 The function's assembly, combined with source line numbers and profiling annotations and execution time can be exported and saved into multiple formats, with the slowest instructions marked using a similar style as in the application:
 
 - Excel worksheet (*.xlsx)  
-  [![Profiling UI screenshot](img/assembly-export-excel_780x441.png){: style="width:450px"}](img/assembly-export-excel_780x441.png){:target="_blank"}
+  [![Profiling UI screenshot](img/assembly-export-excel_780x441.png){: style="width:480px"}](img/assembly-export-excel_780x441.png){:target="_blank"}
 - HTML table (*.html)  
-  [![Profiling UI screenshot](img/assembly-export-html_721x536.png){: style="width:450px"}](img/summary-export-html_1209x287.png){:target="_blank"}
+  [![Profiling UI screenshot](img/assembly-export-html_721x536.png){: style="width:480px"}](img/summary-export-html_1209x287.png){:target="_blank"}
 - Markdown table (*.md)  
-  [![Profiling UI screenshot](img/assembly-export-markdown_984x365.png)](img/assembly-export-markdown_984x365.png){:target="_blank"}
+  [![Profiling UI screenshot](img/assembly-export-markdown_984x365.png){: style="width:480px"}](img/assembly-export-markdown_984x365.png){:target="_blank"}
 
 The Export menu in the toolbar also has an option to copy to clipboard the function's assembly as a HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  
 
 The Ctrl+C keyboard shortcut copies to clipboard only the selected instructions as a HTML/Markdown table.
 
-#### More documentation in progress
-- options panel
+#### View options
+
+*Click* on the *Gears* icon in the top-right part of the view displays the options panel (alternatively, use the *Assembly Code* tab in the application *Settings* window.).  
+
+The tabs below describe each page of the options panel:  
+=== "General"
+    [![Profiling UI screenshot](img/assembly-options-general_559x643.png){: style="width:400px"}](img/details-panel-info_565x786.png){:target="_blank"}  
+
+=== "Appearance"
+    [![Profiling UI screenshot](img/assembly-options-appearance_554x501.png){: style="width:400px"}](img/assembly-options-appearance_554x501.png){:target="_blank"}  
+
+=== "Source File"
+    [![Profiling UI screenshot](img/assembly-options-source_553x422.png){: style="width:400px"}](img/assembly-options-source_553x422.png){:target="_blank"}  
+
+=== "Profiling"
+    [![Profiling UI screenshot](img/assembly-options-profiling_555x758.png){: style="width:400px"}](img/assembly-options-profiling_555x758.png){:target="_blank"}  
+
+#### Column options
+
+*Right-click* on a column, such as the *Time* columns, displays the option panel that allows changing the style and displayed information by the selected column. Each column can have a different style if desired.  
+
+[![Profiling UI screenshot](img/assembly-column-options_463x393.png){: style="width:320px"}](img/assembly-column-options_463x393.png){:target="_blank"}  
+
+#### Documentation in progress
+- View options
+- Column options

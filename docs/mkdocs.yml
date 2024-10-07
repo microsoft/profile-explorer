@@ -14,7 +14,7 @@ nav:
     - Call Tree view: call-tree-panel.md
     - Caller/Callee view: caller-panel.md
   - Function profile views:
-    - Assembly Code view: assembly-view.md
+    - Assembly view: assembly-view.md
     - Source File view: source-panel.md
     - Flow Graph view: flow-graph-panel.md
   - Additional functionality:

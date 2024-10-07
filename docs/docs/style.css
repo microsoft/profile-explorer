@@ -7,6 +7,8 @@
     text-transform: none;
     font-size: 18px;
     font-weight: 500;
+    padding: 0;
+    margin: 0;
 }
 
 .md-typeset h1,
@@ -52,6 +54,11 @@
 
 li + li {
     margin-top: -5px;
+}
+
+.md-typeset .tabbed-labels>label {
+    font-size: .7rem;
+    color:black;
 }
 
 html {
