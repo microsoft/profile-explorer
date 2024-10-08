@@ -12,69 +12,90 @@ The view has three parts:
 - a graph showing the activity of the entire application, with the activity across all threads combined.
 - for each thread, a graph showing the thread's activity. The thread list is sorted by the execution time in descending order.
 
-Each thread entry has the following values and buttons:
+The *All Threads* entry displays on top the trace duration range, split into time units. On the left it also displays the maximum number of *CPU cores* used by the application. Individual threads are considered to use at most one core.
 
-- "eye" button indicating if the thread is included in the profile data or not. Click to toggle between included or excluded state. 2 pics with icon states
-- "stacks" button that shows a menu with thread actions for filtering.
-- the thread ID.
+Each individual thread entry has the following values and buttons:
+
+[![Profiling UI screenshot](img/timeline-threads_599x159.png){: style="width:500px"}](img/timeline-threads_599x159.png){:target="_blank"}
+
+- thread visibility button indicating if the samples from the thread is included in the profile data or not. *Click* to toggle between included ![](img/timeline-eye-button.png) or excluded state ![](img/timeline-eye-button-disabled.png).
+- thread context menu button ![](img/timeline-menu-button.png) that shows thread filtering actions.
+- the thread ID number.
 - the thread execution time, as a sum of the duration of all samples that ran on the thread.
 - if available in the trace, the thread name.
+  
+#### Mouse actions
 
-[![Profiling UI screenshot](img/timeline-threads_708x240.png)](img/timeline-threads_708x240.png){:target="_blank"}
+*Moving* the mouse over the graphs shows the time position and the approximate number of cores used at that point.
 
-Hover
-- gliding over show time position and CPU usage
-- hover longer shows call stack of slowst samples
+[![Profiling UI screenshot](img/timeline-position_570x116.png){: style="width:500px"}](img/timeline-position_570x116.png){:target="_blank"}
 
-Selecting a time range:  
+*Hovering* with the mouse over the graph shows a preview popup with the slowest call path (stack trace) active at that point.  
 
-- To select a time range that includes all threads, *click and drag* over the desired range in the top *All Threads* graph. The duration of the current select is displayed in the top *All Threads* graph.
+[![Profiling UI screenshot](img/timeline-hover_829x394.png){: style="width:600px"}](img/timeline-hover_829x394.png){:target="_blank"}
+
+*Clicking* a thread ID or name creates for the thread a time range selection covering the entire trace duration. If *Sync* is enabled in the toolbar, all functions executing on the selected thread are also selected in the other profiling views.
+
+##### Selecting a time range
+
+- To select a time range that includes all threads, *click and drag* over the desired range in the top *All Threads* graph. The duration of the current select is displayed in the top *All Threads* graph. Note that if some threads are already excluded, the selection will not consider them.    
+  
     [![Profiling UI screenshot](img/timeline-select_879x239.png)](img/timeline-select_879x239.png){:target="_blank"}
-- To select a time range for a single thread, *click and drag* over the desired range in the specific thread graph. To include another thread in the same time range, from the thread action menu click *Include thread* or use its *Eye* icon.
+
+- To select a time range for a single thread, *click and drag* over the desired range in the specific thread graph. To include another thread in the same time range, from the thread action menu click *Include thread* or use the ![](img/timeline-eye-button.png) icon.  
+    
     [![Profiling UI screenshot](img/timeline-select-single_879x199.png)](img/timeline-select-single_879x199.png){:target="_blank"}
 
 ???+ note
-    If the *Sync* option is enabled, selecting a time range also selects the functions executing during that time in the other views.
+    If the *Sync* option is enabled, selecting a time range also selects the functions executing during that time in the other profiling views, taking into consideration if all threads or a subset is included.
 
-##### Filtering
+#### Filtering the profile
 
-When filtering the entire profile data to consider only specific threads and time ranges, all views are updated and recomputed to consider only the included samples. The current filter is displayed in both the toolbar and in the application menu bar.
+The entire profile can be filtered so that only specific threads and time ranges are displayed, with the profiling views updated to include only the profile samples accepted by the filter. The active filter is displayed in both the toolbar and in the application menu bar.
 
-Filtering based on a time range: select the desired time range then *double-click* the selection (alternatively, right-click the selection and click "Filter to Time Range*).
+##### Filtering based on a time range
 
-- time range
-    [![Profiling UI screenshot](img/timeline-filter-time_878x320.png)](img/timeline-filter-time_878x320.png){:target="_blank"}
+Select the desired time range then *double-click* the selection (alternatively, right-click the selection and click "Filter to Time Range*). If the selection is done for a single thread, a thread filter that displays only the selected thread and excludes all others is also added.  
+
+[![Profiling UI screenshot](img/timeline-filter-time_878x320.png)](img/timeline-filter-time_878x320.png){:target="_blank"}
     
-Filtering based on a thread:
+##### Filtering based on a thread
 
-- to include a single thread, *double-click* the thread name, or *click* "Filter to Thread* from the thread action menu.
-- to include another thread, click its eye icon, or *click* "Include Thread" from the thread action menu.
-- to include all threads with the same name, *click* the ...
-- to exclude a thread, click the *eye* icon, or ...
-- to exlude all threads with the same name, 
+There are multiple way to filter based on one or multiple threads, optionally combined with a time range filter.  
 
+[![Profiling UI screenshot](img/timeline-thread-menu_480x317.png){: style="width:350px"}](img/timeline-thread-menu_480x317.png){:target="_blank"}
 
-- threads
-    [![Profiling UI screenshot](img/timeline-filter-time-thread_889x317.png)](img/timeline-filter-time-thread_889x317.png){:target="_blank"}
+- to include a single thread and exclude all others, *double-click* the thread ID, or *click* *Filter to Thread* from the thread action menu.
+- to include another thread, click the ![](img/timeline-eye-button-disabled.png) icon or *click* *Include Thread*.
+- to include all threads with the same name and exclude all others, *click* *Filter to Same Name Threads*.
+- to include all threads with the same name, *click* *Filter to Same Name Threads*.
+- to exclude a thread, click the ![](img/timeline-eye-button.png) icon, or *click* *Exclude Thread*.
+- to exclude all threads with the same name, *click* *Exclude Same Name Threads*.
 
-- threads context menu
-    [![Profiling UI screenshot](img/timeline-thread-menu_480x317.png)](img/timeline-thread-menu_480x317.png){:target="_blank"}
+Example of a filter including a single thread (58540) and a time range of ~2 sec. Excluded threads and time ranges are displayed using faded colors. Use the X buttons next to *Time* and *Threads* in the toolbar to remove the filter.
 
-Longer hover
-[![Profiling UI screenshot](img/timeline-hover_829x604.png)](img/timeline-hover_829x604.png){:target="_blank"}
+[![Profiling UI screenshot](img/timeline-filter-time-thread_889x317.png)](img/timeline-filter-time-thread_889x317.png){:target="_blank"}
 
-Marking
+#### Marking
+
+The samples corresponding to a function instance can be marked from the *Flame Graph view* using the right-click context menu of a node and selecting a color from the *Mark In Timeline* menu entry. 
+[![Profiling UI screenshot](img/timeline-mark-menu_907x233.png)](img/timeline-mark-menu_907x233.png){:target="_blank"}
+
+The *Markers* menu in the toolbar displays the currently marked functions.   
+*Click* on a menu entry to remove the marker.  
 
 [![Profiling UI screenshot](img/timeline-marking_929x333.png)](img/timeline-marking_929x333.png){:target="_blank"}
 
-- display all and each thread
-- threads have ID and optional name, color code by name
-- selection with sync selects functions executing in time range and thread (all threads when done on all)
-- selection in other panels marks samples 
-- right-click on selection context menu to filter by thread and time range. Also with double-click
-- left of threads context menu to filter to, include, exclude, etc
-- filterng also update top-level menu, shows active filter
-- hover shows stack trace of hottest sample at point
+#### View interaction
 
-TODO later:
-- options panel
+???+ abstract "Toolbar"
+    | Button | Description |
+    | ------ | ------------|
+    | ![](img/flame-graph-toolbar-reset.png) | Resets the view to it's original state, displaying the thread graphs for the entire trace duration. |
+    | ![](img/flame-graph-toolbar-minus.png) | Zooms out the thread graphs and updates the time units. |
+    | ![](img/flame-graph-toolbar-plus.png) | Zooms in the thread graphs and updates the time units. |
+    | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a time range also selects executing during that time in the other profiling views. |
+    | Markers | Search for nodes with a specific function name using a case-insensitive substring search. Press the *Escape* key to reset the search or the *X* button next to the input box. |
+
+#### Documentation in progress
+- View options

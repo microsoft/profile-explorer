@@ -131,11 +131,13 @@ See the [Source code outline](#source-code-outline) section above for documentat
 ##### Instances
 
 The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the *Assembly view* feature.  
+
 See the [Profiling toolbar: Instances](assembly-view.md#instances) section in the *Assembly view* page for details.
 
 ##### Threads
 
 The Threads menu displays the threads IDs and their execution time percentage and value, similar to the *Assembly view* feature.  
+
 See the [Profiling toolbar: Threads](assembly-view.md#threads) section in the *Assembly view* page for details.
 
 #### View interaction
