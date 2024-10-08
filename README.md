@@ -10,12 +10,23 @@ The application can be viewed as a companion to [Windows Performance Analyzer (W
 #### Assembly, Source File and Flow Graph views of a function:
 <img width="886" alt="image" src="https://github.com/user-attachments/assets/dac21739-49ba-4274-9d12-e0a1b4937bdf">
 
+## ⬇️ Download
+
+The installers for the latest and previous versions can be downloaded from the [Releases](https://github.com/microsoft/profile-explorer/releases) page.
+
+Latest version installers:  
+- [profile_explorer_installer_1.1.0_x64.exe](https://github.com/microsoft/profile-explorer/releases)
+- [profile_explorer_installer_1.1.0_arm64.exe](https://github.com/microsoft/profile-explorer/releases)
+
+Use the *_arm64* installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (not emulated).  
+The app also has a built-in auto-update feature that will notify you when a new version is released and offer to install it.
+
 ## 📖 Documentation
 
 The documentation pages are available here:  
 #### [https://microsoft.github.io/profile-explorer](https://microsoft.github.io/profile-explorer)
 
-The application also has a built-in *Help panel* that can display the same documentation.  
+The app also has a built-in *Help panel* that can display the same documentation.  
 Most views have a *question mark* icon in the upper-right corner that opens the *Help panel* on the view's documentation page. 
 
 ## 🛠️ Building
@@ -57,8 +68,6 @@ Currently [InnoSetup](https://jrsoftware.org/isdl.php) is used to create the ins
 
 Below is a high-level overview of the main parts of the application.
 
-### Application projects
-
 | Location | Description |
 | --- | --- |
 | src/ProfileExplorerUI | The main project and application UI, implemented using WPF. |
@@ -68,9 +77,7 @@ Below is a high-level overview of the main parts of the application.
 | src/ManagedProfiler | .NET JIT profiler extension for capturing JIT output assembly code. |
 | src/PDBViewer | A small utility, implemented using WinForms, for displaying the contents of PDB debug info files. |
 | src/VSExtension | A Visual Studio extension that connects to the application. Not used for profiling functionality. |
-| src/GrpcLib | Defines the GRPC protobuf format used by the Visual Studio extension to communicate with the application. Not used for profiling functionality. | 
-
-### External dependencies
+| src/GrpcLib | Defines the GRPC protobuf format used by the Visual Studio extension to communicate with the application. Not used for profilin
 
 The following projects are build from source, as either x64 or native arm64 binaries.
 
