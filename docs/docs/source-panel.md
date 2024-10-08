@@ -70,7 +70,10 @@ Similar to the Assembly view, execution time is displayed and annotated on sever
 ???+ note
     When loading a source file, by default, the slowest source line is selected and brought into view (this can be configured in the Source File options). 
     
-    To jump at any time to the slowest source line, *click* the red *Flame* icon from the toolbar or the *Ctrl+H* keyboard shortcut.
+    To jump at any time to the slowest source line, *click* the ![](img/flame-icon.png) icon from the toolbar or the *Ctrl+H* keyboard shortcut.  
+
+    When multiple source lines are selected, the application status bar displays the sum of their execution time as a percentage and value.  
+    [![Profiling UI screenshot](img/source-selection_983x255.png)](img/source-selection_983x255.png){:target="_blank"}
 
 ##### Assembly code sections
 
@@ -118,8 +121,8 @@ The profiling toolbar provides more advanced functionality for identifying the s
 Displays a menu with the slowest source lines, sorted by execution time in decreasing order. Even if assembly sections are enabled, instructions are not included.    
 
 - *Click* on a menu entry to select and bring the source line into view.  
-- The red *Flame* icon jumps to the slowest source line in the function.  
-- The +/- buttons jump to the next/previous slowest source line in the sequence.
+- *Click* the ![](img/flame-icon.png) icon to jump to the slowest source line in the function.  
+- *Click* the +/- buttons to jump to the next/previous slowest source line in the sequence.
 
 [![Profiling UI screenshot](img/source-profile_920x251.png){: style="width:550px"}](img/source-profile_920x251.png){:target="_blank"}  
 
@@ -172,7 +175,7 @@ The Ctrl+C keyboard shortcut copies to clipboard only the selected source lines 
 
 #### View options
 
-*Click* on the *Gears* icon in the top-right part of the view displays the options panel (alternatively, use the *Souce File* tab in the application *Settings* window.).  
+*Click* on the *Gears* icon in the top-right part of the view displays the options panel (alternatively, use the *Source File* tab in the application *Settings* window.).  
 
 The tabs below describe each page of the options panel:  
 === "General"

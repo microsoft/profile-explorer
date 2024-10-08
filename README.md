@@ -12,13 +12,14 @@ The application can be viewed as a companion to [Windows Performance Analyzer (W
 
 ## ⬇️ Download
 
-Latest version installers:
+Installers for latest version:
 - [x64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_x64.exe)
 - [ARM64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_arm64.exe)
 
-Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (not emulated), otherwise use the x64 installer. The installers for previous versions can be downloaded from the [Releases](https://github.com/microsoft/profile-explorer/releases) page.  
+Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (no emulation), otherwise use the x64 installer. Note that the x64 app can open traces taken on ARM64 machines and vice versa.  
 
-The app also has a built-in auto-update feature that will notify you when a new version is released and offer to install it.
+The app also has a built-in auto-update feature that will notify you when a new version is released and offer to download and install it.  
+The installers for previous versions can be downloaded from the [Releases](https://github.com/microsoft/profile-explorer/releases) page.  
 
 ## 📖 Documentation
 

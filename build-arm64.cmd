@@ -19,9 +19,8 @@ if /I "%_CONFIG%"=="debug" (
 	set _BUILD_CONFIG=Release
     echo Building in Release mode...
 ) else (
-    echo Invalid build configuration: %_CONFIG%
-    echo Usage: build.bat [debug|release]
-    exit /b 1
+    set _BUILD_CONFIG=Release
+    echo Building in Release mode...
 )
 
 set _OUT_PATH="src\ProfileExplorerUI\bin\%_BUILD_CONFIG%\%_FRAMEWORK_PATH%"

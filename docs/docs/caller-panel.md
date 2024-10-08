@@ -72,6 +72,14 @@ Expanding a callee function from the list goes down the call tree, showing a lis
 ???+ abstract "Right-click context menu"
     [![Profiling UI screenshot](img/call-tree-context-menu_524x517.png){: style="width:380px"}](img/call-tree-context-menu_524x517.png){:target="_blank"}  
 
+#### View options
+
+*Click* on the *Gears* icon in the top-right part of the view displays the options panel (alternatively, use the *Caller/Callee* tab in the application *Settings* window.).  
+
+The tabs below describe each page of the options panel:  
+=== "General"
+    [![Profiling UI screenshot](img/call-options-general_584x282.png){: style="width:400px"}](img/call-options-general_584x282.png){:target="_blank"} 
+
 #### Documentation in progress
 - Marking nodes
 - View options

@@ -91,7 +91,7 @@ Instruction execution time is displayed and annotated on several parts of the as
     When displaying a function for the first time, by default, the slowest instruction is selected and brought into view (this can be configured in the Assembly options). 
     When the function is displayed subsequently, the last vertical scroll position is used instead.
 
-    To jump at any time to the slowest instruction, *click* the red *Flame* icon from the toolbar or the *Ctrl+H* keyboard shortcut.
+    To jump at any time to the slowest instruction, *click* the red ![](img/flame-icon.png) from the toolbar or the *Ctrl+H* keyboard shortcut.
 
 ##### Call targets
 
@@ -136,8 +136,8 @@ The profiling toolbar provides more advanced functionality for identifying the s
 Displays a menu with the slowest instructions, sorted by execution time in decreasing order.  
 
 - *Click* on a menu entry to select and bring the instruction into view.  
-- The red *Flame* icon jumps to the slowest instruction in the function.  
-- The +/- buttons jump to the next/previous slowest instruction in the sequence.
+- *Click* the ![](img/flame-icon.png) icon to jump to the slowest instruction in the function.  
+- *Click* the +/- buttons to jump to the next/previous slowest instruction in the sequence.
 
 [![Profiling UI screenshot](img/assembly-profile_782x436.png){: style="width:550px"}](img/assembly-profile_782x436.png){:target="_blank"}  
 

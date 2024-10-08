@@ -91,6 +91,17 @@ The *Export* menu in the toolbar also has an option to copy to clipboard the cur
 
 The Ctrl+C keyboard shortcut copies to clipboard only the selected functions as a HTML/Markdown table.
 
+#### View options
+
+*Click* on the *Gears* icon in the top-right part of the view displays the options panel (alternatively, use the *Summary* tab in the application *Settings* window.).  
+
+The tabs below describe each page of the options panel:  
+=== "General"
+    [![Profiling UI screenshot](img/summary-options-general_575x573.png){: style="width:400px"}](img/summary-options-general_575x573.png){:target="_blank"}  
+
+=== "Profiling"
+    [![Profiling UI screenshot](img/summary-options-general_577x398.png){: style="width:400px"}](img/summary-options-general_577x398.png){:target="_blank"}  
+
 #### More documentation in progress
 - Context menu
 - Marking functions
