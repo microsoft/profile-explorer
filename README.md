@@ -4,11 +4,11 @@ Profile Explorer is a tool for viewing CPU profiling traces collected through th
 
 The application can be viewed as a companion to [Windows Performance Analyzer (WPA)](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/windows-performance-analyzer), offering some unique features based on the binary analysis it performs and the IDE-like UI, such as easy navigation through disassembly, improved mapping to source lines, displaying the function control flow graph, viewing of multiple functions at the same time, marking, search and filtering and much more.
 
-#### Summary, flame graph and timeline views of a trace:
-![Screenshot 2024-09-25 111503](https://github.com/user-attachments/assets/438fdbc1-00b8-424e-a323-b46f8e8bdf4d)
+#### Summary, Flame Graph and Timeline views of a trace:
+<img width="884" alt="image" src="https://github.com/user-attachments/assets/dff9ddd1-e3e1-4063-bd29-65419786527e">
 
-#### Assembly, source file and flow graph views of a function:
-![Screenshot 2024-09-25 122416](https://github.com/user-attachments/assets/ed3dc776-cdcc-4eb7-a9d5-db3513cc908c)
+#### Assembly, Source File and Flow Graph views of a function:
+<img width="886" alt="image" src="https://github.com/user-attachments/assets/dac21739-49ba-4274-9d12-e0a1b4937bdf">
 
 ## 📖 Documentation
 
@@ -61,7 +61,7 @@ Below is a high-level overview of the main parts of the application.
 
 | Location | Description |
 | --- | --- |
-| src/ProfileExplorerUI | The application UI, implemented using WPF. |
+| src/ProfileExplorerUI | The main project and application UI, implemented using WPF. |
 | src/ProfileExplorerCore | The UI-independent part that defines the intermediate representation (IR), parsing functions, Graphviz and Tree Sitter support, various data structures, algorithms and utilities. |
 | src/ProfileExplorerUITests | Unit tests for the ProfileExplorerUI project. |
 | src/ProfileExplorerCoreTests | Unit tests for the ProfileExplorerCore project. |
@@ -80,6 +80,12 @@ The following projects are build from source, as either x64 or native arm64 bina
 | src/external/graphviz | [Graphviz](https://gitlab.com/graphviz/graphviz) graph visualization tools, submodule. |
 | src/external/tree-sitter | [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) parser generator, with support for C/C++, C# and Rust, submodules. |
 | src/external/TreeListView | [TreeListView](https://github.com/hazzik/TreeListView), WPF tree list view control. |
+
+### History
+
+The application started as a tool for helping compiler developers interact with and better understand a compiler's [intermediate representation (IR)](https://en.wikipedia.org/wiki/Intermediate_representation). After adding simple support for viewing profile traces, it gradually gained more profiling features and primarily became a profile viewer.  
+
+Some of the more unique features, such as parsing assembly code into an internal IR, which allows for an interactive assembly text view and the display of control-flow graphs, result from the tool's initial compiler focus.
 
 ## Contributing
 
