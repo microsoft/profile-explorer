@@ -47,9 +47,10 @@ public class SyntaxFileInfo {
 
 public partial class App : Application {
 #if DEBUG
+  // For use with "mkdocs serve".
   private const string HelpLocation = @"http://127.0.0.1:8000";
 #else
-    private const string HelpLocation = @"https://microsoft.github.io/profile-explorer";
+  private const string HelpLocation = @"https://microsoft.github.io/profile-explorer/site";
 #endif
 
   public const string AutoUpdateInfox64 = @"https://microsoft.github.io/profile-explorer/autoupdater.xml";
