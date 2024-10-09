@@ -1,6 +1,6 @@
 #### Overview
 
-The summary view displays all modules (binaries) and functions that have profile data in the trace, and makes it easy to identify the functions where most time spent, the application hotspots.
+The summary view displays all modules (binaries) and functions that have profile data in the trace, making it easy to identify the functions where most time is spent — otherwise known as application hotspots.
 
 [![Profiling UI screenshot](img/summary-panel_1233x417.png)](img/summary-panel_1233x417.png){:target="_blank"}
 
@@ -20,7 +20,7 @@ By default the *All* entry is active and the function list displays all function
 
 ##### Functions list
 
-The function list has an entry for each function with profile data. An entry has the demangled (undecorated) function name, module and self (exclusive) execution time and total (inclusive) execution time. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
+The function list has an entry for each function with profile data. An entry has the demangled (undecorated) function name, module and self (exclusive) execution time, and total (inclusive) execution time. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
 
 The list is filtered based on the active module. The displayed columns and style can be customized in the Summary options.
 
@@ -87,9 +87,9 @@ The current function list can be exported and saved into multiple formats, with 
 - Markdown table (*.md)  
   [![Profiling UI screenshot](img/summary-export-markdown_1003x172.png)](img/summary-export-markdown_1003x172.png){:target="_blank"}
 
-The *Export* menu in the toolbar also has an option to copy to clipboard the current function list as a HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  
+The *Export* menu in the toolbar also has an option to copy to the clipboard the current function list as an HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  
 
-The Ctrl+C keyboard shortcut copies to clipboard only the selected functions as a HTML/Markdown table.
+The Ctrl+C keyboard shortcut copies to the clipboard only the selected functions as a HTML/Markdown table.
 
 #### View options
 
@@ -103,6 +103,7 @@ The tabs below describe each page of the options panel:
     [![Profiling UI screenshot](img/summary-options-general_577x398.png){: style="width:400px"}](img/summary-options-general_577x398.png){:target="_blank"}  
 
 #### More documentation in progress
+
 - Context menu
 - Marking functions
 - Options

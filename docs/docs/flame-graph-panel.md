@@ -128,8 +128,6 @@ The Details panel shows extended information about the selected node(s) in the F
 
 The top shows the *Total* (inclusive) execution time and *Self* (exclusive) execution time values for the selected node (function instance). The right side shows the index of the chosen instance, among all instances, with the slowest instance having the lowest index. Use the left/right arrow buttons to switch to the previous/next function instance.  
 
-The information displayed in the tabs below is for the selected function instance only; the Info tab displays statistics for all instances.
-
 ???+ note
     Functions in the lists have a right-click context menu with options to open the Assembly view, preview popup, and select the function in the other views.  
 
@@ -137,6 +135,8 @@ The information displayed in the tabs below is for the selected function instanc
     *Hovering* with the mouse over a function opens a preview popup with the function's assembly.    
     
     When multiple functions are selected, the application status bar displays the sum of their execution time as a percentage and value.
+
+The information displayed in the tabs below is for the selected function instance only, except the *Info* tab which displays statistics for all instances instead.  
 
 === "Info"
     [![Profiling UI screenshot](img/details-panel-info_565x786.png){: style="width:380px"}](img/details-panel-info_565x786.png){:target="_blank"}  

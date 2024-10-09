@@ -5,9 +5,9 @@
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
-		<AssemblyVersion>1.0.1</AssemblyVersion>
-		<FileVersion>1.0.1</FileVersion>
-		<Version>1.0.0.3</Version>
+		<AssemblyVersion>1.1.0</AssemblyVersion>
+		<FileVersion>1.1.0</FileVersion>
+		<Version>1.1.0</Version>
 		<Authors></Authors>
 		<Company>Microsoft Corporation</Company>
 		<Product>Profile Explorer</Product>
@@ -158,8 +158,8 @@
 		<PackageReference Include="Google.Protobuf" Version="3.28.2" />
 		<PackageReference Include="Grpc" Version="2.46.6" />
 		<PackageReference Include="Grpc.Core" Version="2.46.6" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.65.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.66.0">
+		<PackageReference Include="Grpc.Core.Api" Version="2.66.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.67.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -177,13 +177,13 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
 		<PackageReference Include="protobuf-net" Version="3.2.30" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
-		<PackageReference Include="System.Text.Json" Version="8.0.4" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.67" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -15,6 +15,22 @@
           "SubTopics": null
         },
         {
+          "Title": "Video Demos",
+          "URL": "demos.html",
+          "SubTopics": null
+        },
+        {
+          "Title": "About",
+          "URL": "about.html",
+          "SubTopics": null
+        }
+      ]
+    },
+    {
+      "Title": "Trace loading and recording",
+      "URL": "",
+      "SubTopics": [
+        {
           "Title": "Loading a trace",
           "URL": "trace-loading.html",
           "SubTopics": null
@@ -24,11 +40,6 @@
           "URL": "trace-recording.html",
           "SubTopics": null
         },
-        {
-          "Title": "Video Demos",
-          "URL": "demos.html",
-          "SubTopics": null
-        }
       ]
     },
     {

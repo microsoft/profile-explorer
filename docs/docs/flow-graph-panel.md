@@ -1,14 +1,35 @@
 #### Overview
 
-The Flow Graph view displays the [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) of the function in the active assembly view, with basic blocks annotated with profiling information.
+The Flow Graph view displays the [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) of the function in the active assembly view, with [basic blocks](https://en.wikipedia.org/wiki/Basic_block) annotated with profiling information.  
+
+
+The function CFG makes it easier to see the structure of a function and control-flow created by jumps, branches and loops.  
 
 [![Profiling UI screenshot](img/flow-graph-view_501x693.png){: style="width:320px"}](img/flow-graph-view_501x693.png){:target="_blank"}
 
-The function CFG makes it easier to see the structure of a function, loops. Blocks and arrows color-coded, ex default colors for loops, exit blocks TODO
+Each basic block is represented by a rectangle, with the block number as the label. An edge between two blocks means the source and destination block are connected either through a jump/branch or fall-through code.  
 
-Example img with selection sync on block click.
+Color coding of both blocks and edges is used to help identify control flow. The used colors can be customized in the [Flow Graph options](#view-options).
+
+Block border colors coding (default colors):  
+
+- blue: blocks ends with a branch instruction.
+- green: block is the target of a loop back-edge (it's a loop header).
+- red: block ends with a return instruction (it's a function exit),
+
+Edge color coding (default colors):  
+
+- blue: target block is a branch target (branch in the source block jumps to it).
+- green: loop back-edge, target block is a loop header (start of a  loop).
+- red: target block is a function exit block.
+- dotted: target block is the [immediate dominator](https://en.wikipedia.org/wiki/Dominator_(graph_theory)) of the source block.
+
+When a block is selected, the block and its instructions are also selected in the *Assembly* view, like in the example below where B5 is selected. Notice that B5 is a single-block, nested loop, while B4 is the loop header block of a larger loop including B5.  
 
 [![Profiling UI screenshot](img/flow-graph-select_1277x370.png)](img/flow-graph-select_1277x370.png){:target="_blank"} 
+
+
+#### Profiling annotations
 
 #### View interaction
 

@@ -1,12 +1,15 @@
 site_name: Profile Explorer
 use_directory_urls: false
 nav:
+  - Introduction: intro.md
   - Getting started:
-    - Introduction: intro.md
     - Profiling UI overview: profiling-ui.md
+    - Video Demos: demos.md
+    - About: about.md
+  - Trace loading and recording:
     - Loading a trace: trace-loading.md
     - Recording a trace: trace-recording.md
-    - Video Demos: demos.md
+    - Trace overview report: trace-overview.md
   - Trace profile views:
     - Summary view: summary-panel.md
     - Flame Graph view: flame-graph-panel.md
@@ -19,12 +22,12 @@ nav:
     - Flow Graph view: flow-graph-panel.md
   - Additional functionality:
     - Function/module marking: marking.md
-    - Trace overview report: trace-overview.md
     - Preview popups: workspaces.md
     - Working with multiple functions: workspaces.md
     - Viewing function instances: function-instances.md
     - Workspaces: workspaces.md
     - Application options: options.md
+    - Rust support: options.md
 theme:
   name: 'material'
   font:
