@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Changelog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .version {
+            font-weight: bold;
+            font-size: large;
+            margin-top: 20px;
+        }
+        .changes {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Changelog</h2>
+	<div class="version">
+        Version 1.0.9 - 08/07/2024
+    </div>
+    <div>
+		<p>Main additions and improvements</p>
+		<ul>
+          <li>Downloading of binaries and PDBs from the new Cloud Symweb is now supported, being the default private symbol server.</li>
+		  <li>Significant speedup of large trace loading by multi-threading the rest of the processing pipeline. This also applies to filtering based on threads/time range using the Timeline panel.</li>
+          <li>General speedup of loading and switching functions in Assembly view and Source file panel by tuning profile processing and UI, reducing GC pressure, more caching, etc.</li>
+        </ul>
+		<p>Bug fixes and other improvements</p>
+		<ul>
+			<li>Fix for very slow trace loading seen with certain traces.</li>
+			<li>Fixed total time computation for recursive functions displayed in Functions/Modules tab of Details panel.</li>
+			<li>Fixed selection of functions in the Flame graph from other panels (done through right-click context menu).</li>
+			<li>Fix initial jump to hottest line in preview popup and color marking on scroll bar.</li>
+			<li>Respect C++ demangling settings from the Summary panel options.</li>
+			<li>Multiple other smaller bug fixes, UI tweaks and polish.</li>
+			<li>Redesigned Start page to include a list of previous profiling sessions.</li>
+			<li>Simplified function/module marking settings by having them into one place under "Profile Marking" in the Settings window and the new wrench icon in the main app menu.</li>
+			<li>Removed Modules/Functions buttons from the Summary/Flame Graph/Call Tree panels since they were redundant with the ones in the main app menu.</li>
+			<li>Option to disable animations in the UI (current applies to the Flame graph panel). If the app runs through a Remote Desktop connection this is enabled automatically.</li>
+			<li>Option to limit number of CPU cores used during trace loading and other profiling UI tasks, by default 75% of logical cores are used.</li>
+		</ul>
+	</div>
+	<div class="version">
+        Version 1.0.8 - 06/14/2024
+    </div>
+    <div>
+		<ul>
+          <li>Multiple bug fixes, general stability improvement and more UI polishing.</li>
+		  <li>Added a symbol cache system to save the result of processing PDB files. This significantly speeds up future loading of traces using the same PDB, especially for apps with large PDBs like Edge (5.7 GB): 1 min 13 sec for first trace load to 14 sec afterwards</li>
+          <li>Speed up of initial trace loading with large PDBs by optimizing DIA access and other tuning. For an Edge trace, loading time drops to 1 min 13 sec from the previous 2 min 8 sec.</li>
+          <li>Much quicker opening and switching of function assembly view and source file with large PDBs.</li>
+          <li>Improved UI for managing symbol paths in the Load Profile window: list entries are path auto-complete boxes, option to select path using an open file dialog.</li>
+		</ul>
+	</div>
+    <div class="version">
+        Version 1.0.7 - 05/22/2024
+    </div>
+    <div>
+        <p>Main additions and improvements</p>
+		<ul>
+		<li>Filtering by instance and thread in assembly view, source code and preview popup.</li>
+		<li>Combined source code + assembly sections in Source File panel.</li>
+		<li>Source code parsing and statement profile time marking (loops, if/else, switch)</li>
+		<li>Inlinees (inlined functions) summary menu in assembly view.</li>
+		<li>Function and Module marking, synchronized between panels, saved between sessions.</li>
+		<li>Profile Overview with predefined categories like "Memory allocation".</li>
+		<li>Threads section and Categories tab in Flame Graph Details panel.</li>
+		<li>Open function by double-clicking call target name in assembly view and preview popup.</li>
+		<li>Back/next history buttons in assembly view and preview popup.</li>
+		<li>Copy and Exporting as HTML/Markdown in all profiling panels.<br /><br /></li>
+		</ul>
+		<p>Bug fixes, performance, and other improvements</p>
+		<ul>
+		<li>Support for circular ETW traces, often collected by WPR and telemetry.</li>
+		<li>Trace loading speedup for large ETL files (up to 3x), faster symbol loading.</li>
+		<li>Lots of bug fixes (general app stability, UI polish, Flame Graph text clarity, removing flickering in assembly view).</li>
+		<li>Faster assembly/source code switching, timeline selection, inter-panel synchronizing, reduced UI delays.</li>
+		<li>Rust support, .NET profiling when starting a new app with JIT assembly capture.</li>
+		<li>GraphViz binaries are included, required for viewing Flow Graphs.</li>
+		<li>Saving of width and order of list view columns in profiling panels.</li>
+		<li>Wildcard search in Summary, Call Tree, and Flame Graph panels.</li>
+		<li>Whole app UI scaling between 50% and 200%, with 5% increments.</li>
+		<li>Horizontal scrolling with touchpad in all list views and Flame Graph.</li>
+		<li>Improved tooltips for assembly view and preview popup.</li>
+		</ul>
+    </div>
+    <!-- Add more versions here -->
+</body>
+</html>
