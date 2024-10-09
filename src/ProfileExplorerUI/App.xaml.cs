@@ -139,21 +139,11 @@ public partial class App : Application {
   }
 
   public static string GetHelpIndexFilePath() {
-    if (HelpLocation.StartsWith("https://")) {
-      return $"{HelpLocation}/{HelpIndexFile}";
-    }
-
-    string appDir = ApplicationDirectory;
-    return Path.Combine(appDir, HelpLocation, HelpIndexFile);
+    return $"{HelpLocation}/{HelpIndexFile}";
   }
 
   public static string GetHelpFilePath(string relativeURL) {
-    if (HelpLocation.StartsWith("https://")) {
-      return $"{HelpLocation}/{relativeURL}";
-    }
-
-    string appDir = ApplicationDirectory;
-    return Path.Combine(appDir, HelpLocation, relativeURL);
+    return $"{HelpLocation}/{relativeURL}";
   }
 
   public static string GetRemarksDefinitionFilePath(string compilerIRName) {

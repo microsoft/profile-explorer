@@ -1,3 +1,6 @@
+@echo off
+setlocal
+
 set _BUILD_TARGET="src\ProfileExplorerUI\ProfileExplorerUI.csproj"
 set _FRAMEWORK_PATH=net8.0-windows
 set _PROFILER_PATH="src\ManagedProfiler"
@@ -5,8 +8,8 @@ set _EXTERNALS_PATH="src\external"
 set _RESOURCES_PATH="..\..\resources"
 
 if "%1"=="" (
-    echo Usage: build.bat [debug|release]
-    exit /b 1
+    echo "Usage: build.bat [debug|release]"
+	echo "Defaulting to Release mode..."
 )
 
 set _CONFIG=%1

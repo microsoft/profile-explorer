@@ -253,7 +253,7 @@
       <Grid Grid.Row="0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="43" />
+          <ColumnDefinition Width="45" />
         </Grid.ColumnDefinitions>
         <ToolBarTray
           Name="FunctionToolbarTray"
@@ -1198,7 +1198,7 @@
           Grid.Row="0">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="43" />
+            <ColumnDefinition Width="45" />
           </Grid.ColumnDefinitions>
 
           <ToolBarTray

@@ -19,6 +19,7 @@ using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
+using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorer.UI.Query;
@@ -2409,6 +2410,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     public bool Execute(QueryData data) {
       return true;
     }
+  }
+
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(ToolPanelKind.Other, Session);
   }
 }
 

@@ -6,7 +6,7 @@ nav:
     - Profiling UI overview: profiling-ui.md
     - Loading a trace: trace-loading.md
     - Recording a trace: trace-recording.md
-    - Demos: demos.md
+    - Video Demos: demos.md
   - Trace profile views:
     - Summary view: summary-panel.md
     - Flame Graph view: flame-graph-panel.md

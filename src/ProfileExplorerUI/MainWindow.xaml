@@ -1893,7 +1893,6 @@
         x:Name="UpdateButton"
         VerticalAlignment="Center"
         Background="#FFAFEABF"
-        BorderBrush="Transparent"
         Click="UpdateButton_Click"
         FontSize="11"
         FontWeight="Medium"

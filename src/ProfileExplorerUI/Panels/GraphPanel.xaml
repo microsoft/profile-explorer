@@ -45,6 +45,11 @@
       CommandTarget="{Binding ElementName=GraphHost}"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="R"
+      Command="local:GraphCommand.GraphResetWidth"
+      CommandTarget="{Binding ElementName=GraphHost}"
+      Modifiers="Ctrl" />
+    <KeyBinding
       Key="A"
       Command="local:GraphCommand.GraphFitAll"
       CommandTarget="{Binding ElementName=GraphHost}"
@@ -87,11 +92,15 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <DockPanel
+    <Grid
       x:Name="ToolbarHost"
       Grid.Row="0"
       HorizontalAlignment="Stretch"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="70" />
+      </Grid.ColumnDefinitions>
       <ToolBarTray
         Height="28"
         HorizontalAlignment="Stretch"
@@ -107,7 +116,7 @@
           <Button
             Command="local:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Zoom the graph view to 100% (Ctrl+0)">
+            ToolTip="Zoom the graph view to 100% (Ctrl+0/Ctrl+R)">
             <StackPanel Orientation="Horizontal">
               <Image
                 Source="{StaticResource ResetWidthIcon}"
@@ -121,7 +130,7 @@
             Margin="4,0,0,0"
             Command="local:GraphCommand.GraphZoomOut"
             CommandTarget="{Binding ElementName=GraphHost}"
-            ToolTip="Zoom Out (Ctrol+_">
+            ToolTip="Zoom Out (Ctrl+_">
             <Image
               Width="15"
               Height="15"
@@ -198,15 +207,16 @@
       </ToolBarTray>
 
       <local:PanelToolbarTray
+        Grid.Column="1"
         BindMenuItemSelected="PanelToolbarTray_BindMenuItemSelected"
         BindMenuOpen="PanelToolbarTray_BindMenuOpen"
-        DockPanel.Dock="Right"
         DuplicateClicked="PanelToolbarTray_DuplicateClicked"
         HasDuplicateButton="False"
-        HasHelpButton="False"
+        HasHelpButton="True"
         PinnedChanged="PanelToolbarTray_PinnedChanged"
+        HelpClicked="PanelToolbarTray_OnHelpClicked"
         SettingsClicked="PanelToolbarTray_SettingsClicked" />
-    </DockPanel>
+    </Grid>
 
     <local:ScrollViewerClickable
       x:Name="GraphHost"

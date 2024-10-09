@@ -30,6 +30,7 @@ public enum CallTreeListItemKind {
 //? TODO: Replace all with RelayCommand pattern.
 public static class CallTreeCommand {
   public static readonly RoutedCommand ExpandHottestCallPath = new("ExpandHottestCallPath", typeof(FrameworkElement));
+  public static readonly RoutedCommand ExpandCallPath = new("ExpandCallPath", typeof(FrameworkElement));
   public static readonly RoutedCommand CollapseCallPath = new("CollapseCallPath", typeof(FrameworkElement));
   public static readonly RoutedCommand SelectFunction = new("SelectFunction", typeof(FrameworkElement));
   public static readonly RoutedCommand OpenFunction = new("OpenFunction", typeof(FrameworkElement));
@@ -883,7 +884,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     node.IsExpanded = false;
   }
 
-  private void ExpandHottestCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private void ExpandCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
       // Expand hottest path starting with the node.
       ExpandHottestFunctionPath(node);
@@ -892,6 +893,11 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       // Expand hottest path in the tree.
       ExpandHottestFunctionPath();
     }
+  }
+
+  private void ExpandHottestCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {
+    // Expand hottest path in the tree.
+    ExpandHottestFunctionPath();
   }
 
   private void CollapseCallPathExecuted(object sender, ExecutedRoutedEventArgs e) {

@@ -15,6 +15,7 @@ using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
+using ProfileExplorer.UI.Panels;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -1048,6 +1049,10 @@ public partial class GraphPanel : ToolPanelControl {
     public int NestedLoops { get; set; }
     public int PredecessorCount { get; set; }
     public int SuccessorCount { get; set; }
+  }
+
+  private async void PanelToolbarTray_OnHelpClicked(object sender, EventArgs e) {
+    await HelpPanel.DisplayPanelHelp(PanelKind, Session);
   }
 }
 

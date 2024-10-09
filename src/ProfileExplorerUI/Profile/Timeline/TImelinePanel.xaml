@@ -37,6 +37,31 @@
       CommandTarget="{Binding ElementName=ActivityView}"
       Modifiers="Ctrl" />
     <KeyBinding
+      Key="D0"
+      Command="ProfileExplorerUi:GraphCommand.GraphResetWidth"
+      CommandTarget="{Binding ElementName=ActivityView}"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Key="OemPlus"
+      Command="ProfileExplorerUi:GraphCommand.GraphZoomIn"
+      CommandTarget="{Binding ElementName=ActivityView}"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Key="Add"
+      Command="ProfileExplorerUi:GraphCommand.GraphZoomIn"
+      CommandTarget="{Binding ElementName=ActivityView}"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Key="OemMinus"
+      Command="ProfileExplorerUi:GraphCommand.GraphZoomOut"
+      CommandTarget="{Binding ElementName=ActivityView}"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Key="Subtract"
+      Command="ProfileExplorerUi:GraphCommand.GraphZoomOut"
+      CommandTarget="{Binding ElementName=ActivityView}"
+      Modifiers="Ctrl" />
+    <KeyBinding
       Key="F3"
       Command="local:CallTreeCommand.PreviousSearchResult"
       Modifiers="Shift" />
@@ -58,7 +83,7 @@
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="50" />
+        <ColumnDefinition Width="45" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
         Grid.Column="0"
@@ -94,7 +119,7 @@
           <Button
             Command="ProfileExplorerUi:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=ActivityView}"
-            ToolTip="Zoom the timeline view to 100% (Ctrl+R)">
+            ToolTip="Zoom the timeline view to 100% (Ctrl+R/Ctrl+0)">
             <StackPanel Orientation="Horizontal">
               <Image
                 Source="{StaticResource ResetWidthIcon}"

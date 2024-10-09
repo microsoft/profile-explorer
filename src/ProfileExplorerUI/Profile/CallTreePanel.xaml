@@ -15,6 +15,9 @@
       Command="local:CallTreeCommand.ExpandHottestCallPath"
       Executed="ExpandHottestCallPathExecuted" />
     <CommandBinding
+      Command="local:CallTreeCommand.ExpandCallPath"
+      Executed="ExpandCallPathExecuted" />
+    <CommandBinding
       Command="local:CallTreeCommand.CollapseCallPath"
       Executed="CollapseCallPathExecuted" />
     <CommandBinding
@@ -58,7 +61,7 @@
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="75" />
+        <ColumnDefinition Width="45" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
         Grid.Column="0"
@@ -93,7 +96,7 @@
           <Button
             Command="local:CallTreeCommand.CollapseNodes"
             CommandTarget="{Binding ElementName=CallTreeList}"
-            ToolTip="Reset call tree to initial state (Ctrl+R)"
+            ToolTip="Reset call tree to initial state (Ctrl+R/Ctrl+0)"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
               <Image
@@ -104,13 +107,13 @@
                 Text="Reset" />
             </StackPanel>
           </Button>
-          <Separator />
+          <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
           <Button
             Command="local:CallTreeCommand.ExpandHottestCallPath"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"
-            ToolTip="Expand hottest call path"
+            ToolTip="Expand hottest call path (Ctrl+H)"
             Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <Image
               Source="{StaticResource HotFlameIcon}"
@@ -515,7 +518,7 @@
           <Separator />
 
           <MenuItem
-            Command="local:CallTreeCommand.ExpandHottestCallPath"
+            Command="local:CallTreeCommand.ExpandCallPath"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Expand Hottest Call Path"
@@ -669,8 +672,12 @@
 
   <ProfileExplorerUi:ToolPanelControl.InputBindings>
     <KeyBinding
-      Key="OemPlus"
+      Key="H"
       Command="local:CallTreeCommand.ExpandHottestCallPath"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Key="OemPlus"
+      Command="local:CallTreeCommand.ExpandCallPath"
       Modifiers="Ctrl" />
     <KeyBinding
       Key="OemMinus"
@@ -703,6 +710,10 @@
       Command="local:CallTreeCommand.NextSearchResult" />
     <KeyBinding
       Key="R"
+      Command="local:CallTreeCommand.CollapseNodes"
+      Modifiers="Ctrl" />
+    <KeyBinding
+      Key="D0"
       Command="local:CallTreeCommand.CollapseNodes"
       Modifiers="Ctrl" />
     <KeyBinding

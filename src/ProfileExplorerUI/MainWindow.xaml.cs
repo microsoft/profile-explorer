@@ -464,7 +464,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
   }
 
   private void CheckForUpdatesOnStartup() {
-    DelayedAction.StartNew(TimeSpan.FromSeconds(5), () => {
+    DelayedAction.StartNew(TimeSpan.FromSeconds(1), () => {
       Dispatcher.BeginInvoke(new Action(() => {
         CheckForUpdate();
       }));

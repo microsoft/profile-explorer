@@ -617,6 +617,7 @@
           HasDuplicateButton="False"
           HasHelpButton="True"
           HasPinButton="False"
+          HelpClicked="PanelToolbarTray_OnHelpClicked"
           SettingsClicked="PanelToolbarTray_SettingsClicked" />
       </Grid>
 
@@ -839,6 +840,7 @@
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
                         <Image
+                          Height="15"
                           Source="{StaticResource FilterIcon}"
                           Style="{StaticResource DisabledImageStyle}" />
                         <TextBlock

@@ -22,7 +22,7 @@
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="48" />
+        <ColumnDefinition Width="45" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
         Grid.Column="0"
@@ -275,6 +275,7 @@
         HasDuplicateButton="False"
         HasHelpButton="True"
         HasPinButton="False"
+        HelpClicked="PanelToolbarTray_OnHelpClicked"
         SettingsClicked="PanelToolbarTray_OnSettingsClicked" />
     </Grid>
 
