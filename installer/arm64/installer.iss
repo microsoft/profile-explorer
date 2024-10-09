@@ -21,7 +21,7 @@ SolidCompression=yes
 OutputDir=userdocs:ProfileExplorer
 ChangesAssociations = yes
 ChangesEnvironment = yes
-OutputBaseFilename=profile_explorer_installer_{#APP_VERSION}
+OutputBaseFilename=profile_explorer_installer_{#APP_VERSION}_arm64
 
 [Registry]
 Root: HKCR; Subkey: "{#MyAppName}";                     ValueData: "Program {#MyAppName}";  Flags: uninsdeletekey;   ValueType: string;  ValueName: ""
