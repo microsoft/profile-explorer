@@ -69,6 +69,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#overview" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -319,7 +324,7 @@
         
   
   <span class="md-ellipsis">
-    Demos
+    Video Demos
   </span>
   
 
@@ -578,6 +583,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Flow Graph view
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="flow-graph-panel.html" class="md-nav__link md-nav__link--active">
         
   
@@ -587,6 +603,50 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      View interaction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      View options
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -809,6 +869,41 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      View interaction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      View options
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -824,11 +919,81 @@
 
   <h1>Flow Graph view</h1>
 
-<p><a href="img/flow-graph-view_501x693.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-view_501x693.png" style="width:320px" /></a></p>
+<h4 id="overview">Overview</h4>
 <p>The Flow Graph view displays the <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> of the function in the active assembly view, with basic blocks annotated with profiling information.</p>
+<p><a href="img/flow-graph-view_501x693.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-view_501x693.png" style="width:320px" /></a></p>
 <p>The function CFG makes it easier to see the structure of a function, loops. Blocks and arrows color-coded, ex default colors for loops, exit blocks TODO</p>
 <p>Example img with selection sync on block click.</p>
 <p><a href="img/flow-graph-select_1277x370.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-select_1277x370.png" /></a> </p>
+<h4 id="view-interaction">View interaction</h4>
+<details class="abstract" open="open">
+<summary>Toolbar</summary>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="" src="img/flame-graph-toolbar-sync.png" /></td>
+<td>If enabled, selecting a function also selects it in the other profiling views.</td>
+</tr>
+</tbody>
+</table>
+</details>
+<details class="abstract" open="open">
+<summary>Mouse shortcuts</summary>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hover</td>
+<td>Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.</td>
+</tr>
+</tbody>
+</table>
+</details>
+<details class="abstract" open="open">
+<summary>Keyboard shortcuts</summary>
+<table>
+<thead>
+<tr>
+<th>Keys</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Return</td>
+<td>Opens the Assembly view of the selected function in the active tab.</td>
+</tr>
+</tbody>
+</table>
+</details>
+<details class="abstract" open="open">
+<summary>Right-click context menu</summary>
+<p><a href="img/flow-graph-context-menu_383x548.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-context-menu_383x548.png" style="width:380px" /></a>  </p>
+</details>
+<h4 id="view-options">View options</h4>
+<p><em>Click</em> on the <em>Gears</em> icon in the top-right part of the view displays the options panel (alternatively, use the <em>Flow Graph</em> tab in the application <em>Settings</em> window.).  </p>
+<p>The tabs below describe each page of the options panel:  </p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">General</label><label for="__tabbed_1_2">Appearance</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><a href="img/flow-graph-options-general_558x423.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-options-general_558x423.png" style="width:400px" /></a>  </p>
+</div>
+<div class="tabbed-block">
+<p><a href="img/flow-graph-options-appearance_527x594.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-options-appearance_527x594.png" style="width:400px" /></a></p>
+</div>
+</div>
+</div>
 <ul>
 <li>basic blocks coded by color</li>
 <li>edges color coding, red for exit block, green loop</li>

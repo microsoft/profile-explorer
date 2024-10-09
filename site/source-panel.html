@@ -326,7 +326,7 @@
         
   
   <span class="md-ellipsis">
-    Demos
+    Video Demos
   </span>
   
 
@@ -640,6 +640,15 @@
   
     <nav class="md-nav" aria-label="Source code view">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selection-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selection sync
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#profiling-annotations" class="md-nav__link">
@@ -1065,6 +1074,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#selection-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selection sync
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#profiling-annotations" class="md-nav__link">
     <span class="md-ellipsis">
       Profiling annotations
@@ -1255,6 +1273,11 @@
 <li>source line text.</li>
 <li>profiling data columns, such as the execution time percentage and value.</li>
 </ul>
+<h5 id="selection-sync">Selection sync</h5>
+<p>When a source line is selected, if <em>Sync</em> is enabled in the toolbar, the associated instructions are also selected in the <em>Assembly</em> view.  </p>
+<p>In the example below, the start of the loop on line 21 is selected, with the instructions forming the loop header selected in the Assembly view; not visible in the screenshot are the selected instructions corresponding to the loop back-edge.</p>
+<p><a href="img/source-selection-sync_934x400.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-selection-sync_934x400.png" /></a></p>
+<p>Vice versa, selecting an instruction in the Assembly view also selects the corresponding source line.</p>
 <h5 id="profiling-annotations">Profiling annotations</h5>
 <p>Similar to the Assembly view, execution time is displayed and annotated on several parts of the source lines and columns using text, colors and flame icons:</p>
 <ul>
@@ -1266,7 +1289,9 @@
 <details class="note" open="open">
 <summary>Note</summary>
 <p>When loading a source file, by default, the slowest source line is selected and brought into view (this can be configured in the Source File options). </p>
-<p>To jump at any time to the slowest source line, <em>click</em> the red <em>Flame</em> icon from the toolbar or the <em>Ctrl+H</em> keyboard shortcut.</p>
+<p>To jump at any time to the slowest source line, <em>click</em> the <img alt="" src="img/flame-icon.png" /> icon from the toolbar or the <em>Ctrl+H</em> keyboard shortcut.  </p>
+<p>When multiple source lines are selected, the application status bar displays the sum of their execution time as a percentage and value.<br />
+<a href="img/source-selection_983x255.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-selection_983x255.png" /></a></p>
 </details>
 <h5 id="assembly-code-sections">Assembly code sections</h5>
 <p>If enabled, each source line is followed by a section with the assembly instructions generated for it, based on the debug info file. By default, the sections are collapsed and can be expanded by pressing the + button on the left of the source lines. Each line of assembly has the same kind of profiling annotations as the source lines.</p>
@@ -1295,19 +1320,19 @@
 <p>Displays a menu with the slowest source lines, sorted by execution time in decreasing order. Even if assembly sections are enabled, instructions are not included.    </p>
 <ul>
 <li><em>Click</em> on a menu entry to select and bring the source line into view.  </li>
-<li>The red <em>Flame</em> icon jumps to the slowest source line in the function.  </li>
-<li>The +/- buttons jump to the next/previous slowest source line in the sequence.</li>
+<li><em>Click</em> the <img alt="" src="img/flame-icon.png" /> icon to jump to the slowest source line in the function.  </li>
+<li><em>Click</em> the +/- buttons to jump to the next/previous slowest source line in the sequence.</li>
 </ul>
 <p><a href="img/source-profile_920x251.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-profile_920x251.png" style="width:550px" /></a>  </p>
 <h5 id="outline">Outline</h5>
 <p>Displays a menu that summarizes  the nested statements and their execution time.<br />
 See the <a href="#source-code-outline">Source code outline</a> section above for documentation.</p>
 <h5 id="instances">Instances</h5>
-<p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the <em>Assembly view</em> feature.<br />
-See the <a href="assembly-view.html#instances">Profiling toolbar: Instances</a> section in the <em>Assembly view</em> page for details.</p>
+<p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the <em>Assembly view</em> feature.  </p>
+<p>See the <a href="assembly-view.html#instances">Profiling toolbar: Instances</a> section in the <em>Assembly view</em> page for details.</p>
 <h5 id="threads">Threads</h5>
-<p>The Threads menu displays the threads IDs and their execution time percentage and value, similar to the <em>Assembly view</em> feature.<br />
-See the <a href="assembly-view.html#threads">Profiling toolbar: Threads</a> section in the <em>Assembly view</em> page for details.</p>
+<p>The Threads menu displays the threads IDs and their execution time percentage and value, similar to the <em>Assembly view</em> feature.  </p>
+<p>See the <a href="assembly-view.html#threads">Profiling toolbar: Threads</a> section in the <em>Assembly view</em> page for details.</p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
 <summary>Toolbar</summary>
@@ -1371,7 +1396,7 @@ See the <a href="assembly-view.html#threads">Profiling toolbar: Threads</a> sect
 <p>The Export menu in the toolbar also has an option to copy to clipboard the function's source code as a HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  </p>
 <p>The Ctrl+C keyboard shortcut copies to clipboard only the selected source lines as a HTML/Markdown table.</p>
 <h4 id="view-options">View options</h4>
-<p><em>Click</em> on the <em>Gears</em> icon in the top-right part of the view displays the options panel (alternatively, use the <em>Souce File</em> tab in the application <em>Settings</em> window.).  </p>
+<p><em>Click</em> on the <em>Gears</em> icon in the top-right part of the view displays the options panel (alternatively, use the <em>Source File</em> tab in the application <em>Settings</em> window.).  </p>
 <p>The tabs below describe each page of the options panel:  </p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">General</label><label for="__tabbed_1_2">Source Files</label><label for="__tabbed_1_3">Profiling</label></div>
 <div class="tabbed-content">

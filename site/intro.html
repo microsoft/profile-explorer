@@ -69,6 +69,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#overview" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -238,6 +243,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="intro.html" class="md-nav__link md-nav__link--active">
         
   
@@ -247,6 +263,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Download
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic updates
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation tips
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -327,7 +396,7 @@
         
   
   <span class="md-ellipsis">
-    Demos
+    Video Demos
   </span>
   
 
@@ -809,6 +878,50 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Download
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic updates
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation tips
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -824,19 +937,27 @@
 
   <h1>Introduction</h1>
 
+<h4 id="overview">Overview</h4>
+<p>Profile Explorer is a tool for viewing CPU profiling traces collected through the <a href="(https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-)">Event Tracing for Windows (ETW)</a> infrastructure. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views and panels, such as a hot function list, flame graph, call tree, timeline, assembly code view, and source file view.  </p>
+<p>The application offers some unique features based on the binary analysis it performs and the IDE-like UI, such as easy navigation through disassembly, improved mapping to source lines, displaying the function control-flow graph, viewing of multiple functions at the same time, marking, searching, filtering and much more.  </p>
+<h4 id="download">Download</h4>
+<p>Installers for the latest version:<br />
+- <a href="https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_x64.exe">x64 installer</a><br />
+- <a href="https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_arm64.exe">ARM64 installer</a></p>
+<p>Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (no emulation), otherwise use the x64 installer. Note that the x64 app can open traces taken on ARM64 machines and vice versa.  </p>
+<p>The installers for previous versions can be downloaded from the <a href="https://github.com/microsoft/profile-explorer/releases">Releases</a> page.  </p>
+<h4 id="automatic-updates">Automatic updates</h4>
+<p>The app has a built-in auto-update feature that will notify you when a new version is released and offer to download and install it.</p>
+<p><img alt="" src="img/update-ckeck.png" style="width:400px" /></p>
+<h4 id="documentation-tips">Documentation tips</h4>
+<p>Most app views have a <em>question mark</em> button in the upper-right corner.<br />
+<em>Click</em> it to view the panel's documentation page in the app's built-in <em>Help</em> panel.  </p>
+<p>Click on an image to enlarge it. Depending on where the documentation is viewed:  </p>
 <ul>
-<li>What's the app</li>
-<li>Advantages, how it ocmpares to others</li>
-<li>Features</li>
-<li>Download location (github release)</li>
-<li>Auto-update</li>
+<li>the image is opened in a new tab if viewed in a browser.</li>
+<li>the image is opened in a preview popup if viewed from the app's built-in <em>Help</em> panel.<br />
+  To close the preview popup, click again on the image (either in the preview popup or in the page) or press the Escape key.</li>
 </ul>
-<details class="note" open="open">
-<summary>Note</summary>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla et euismod
-nulla. Curabitur feugiat, tortor non consequat finibus, justo purus auctor
-massa, nec semper lorem quam in massa.</p>
-</details>
 
 
 
