@@ -1,22 +1,50 @@
-#### Overview
-
-Profile Explorer is a tool for viewing CPU profiling traces collected through the [Event Tracing for Windows (ETW)]((https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-)) infrastructure. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views and panels, such as a hot function list, flame graph, call tree, timeline, assembly code view, and source file view.  
-
-The application offers some unique features based on the binary analysis it performs and the IDE-like UI, such as easy navigation through disassembly, improved mapping to source lines, displaying the function control-flow graph, viewing of multiple functions at the same time, marking, searching, filtering and much more.  
-
-#### Download
-
-Installers for the latest version can be downloaded here:  
-- [x64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_x64.exe)  
-- [ARM64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_arm64.exe)  
-
-Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (not emulated), otherwise use the x64 installer. The installers for previous versions can be downloaded from the [GitHub Releases](https://github.com/microsoft/profile-explorer/releases) page.  
-
-#### Automatic updates
-
-The app has a built-in auto-update feature that will notify you when a new version is released and offer to install it.
 
 #### Getting started
 
-- [Profiling UI overview](profiling-ui.md)
-- [Loading a trace](profiling-ui.md)
+- [About](about.md): provides an introduction to the application.
+- [Profiling UI overview](profiling-ui.md): provides an overview of the main profiling views.  
+- [Video Demos](demos.md): has several screen recording videos presenting the UI and features.  
+
+##### Trace loading and recording
+
+- [Loading a trace](trace-loading.md)  
+- [Recording a trace](trace-recording.md)  
+- [Trace overview report](trace-overview.md)  
+
+##### Profiling views
+
+Trace profiling views:  
+
+- [Summary view](summary-panel.md)  
+- [Flame Graph view](flame-graph-panel.md)  
+- [Timeline view](timeline-panel.md)  
+- [Call Tree view](call-tree-panel.md)  
+- [Caller/Callee view](caller-panel.md)  
+
+Function profiling views (focus on an individual function):  
+
+- [Assembly view](assembly-view.md)  
+- [Source File view](source-panel.md)  
+- [Flow Graph view](flow-graph-panel.md)  
+
+???+ note
+    The documentation is currently being worked on.  
+    Several pages need to be completed or are currently missing (the *Additional functionality* section).
+
+#### Documentation tips
+
+Most app views have a *question mark* button in the upper-right corner.  
+*Click* it to view the panel's documentation page in the app's built-in *Help* panel.  
+
+**Images**
+
+Click on an image to enlarge it. Depending on where the documentation is viewed:  
+
+- the image is opened in a new tab if viewed in a browser.
+- the image is opened in a preview popup if viewed from the app's built-in *Help* panel.  
+To close the preview popup, click again on the image (either in the preview popup or in the page) or press the Escape key.
+
+**Videos**
+
+Click on a video's full-screen button in the bottom-right corner to enlarge it.  
+To restore to default size, click again on the full-screen button or press the Escape key.

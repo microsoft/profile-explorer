@@ -46,11 +46,16 @@ public class SyntaxFileInfo {
 }
 
 public partial class App : Application {
-  public const string AutoUpdateInfox64 = @"\\ntperformance\Public\benjaming\ProfileExplorer\x64\autoupdater.xml";
-  public const string AutoUpdateInfoArm64 = @"\\ntperformance\Public\benjaming\ProfileExplorer\arm64\autoupdater.xml";
+#if DEBUG
+  private const string HelpLocation = @"http://127.0.0.1:8000";
+#else
+    private const string HelpLocation = @"https://microsoft.github.io/profile-explorer";
+#endif
+
+  public const string AutoUpdateInfox64 = @"https://microsoft.github.io/profile-explorer/autoupdater.xml";
+  public const string AutoUpdateInfoArm64 = @"https://microsoft.github.io/profile-explorer/autoupdater_arm64.xml";
   private const string SettingsPath = @"Microsoft\ProfileExplorer";
   private const string SettingsFile = "ProfileExplorer.settings";
-  private const string HelpLocation = @"PLACEHOLDER";
   private const string HelpIndexFile = @"index.json";
   private const string LicenseFile = "NOTICE.md";
   private const string WorkspacesDirectory = "workspaces";
@@ -72,7 +77,7 @@ public partial class App : Application {
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
   public static ISession Session;
-  private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
+  private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;
   public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
 
@@ -214,8 +219,8 @@ public partial class App : Application {
   }
 
   public static List<SyntaxFileInfo> GetSyntaxHighlightingFiles(string compilerIRName, bool internalFiles = false) {
-    if (!internalFiles && cachedSyntaxHighlightinFiles_ != null) {
-      return cachedSyntaxHighlightinFiles_;
+    if (!internalFiles && cachedSyntaxHighlightingFiles_ != null) {
+      return cachedSyntaxHighlightingFiles_;
     }
 
     var list = new List<SyntaxFileInfo>();
@@ -236,14 +241,14 @@ public partial class App : Application {
     }
 
     if (!internalFiles) {
-      cachedSyntaxHighlightinFiles_ = list;
+      cachedSyntaxHighlightingFiles_ = list;
     }
 
     return list;
   }
 
   public static List<SyntaxFileInfo> ReloadSyntaxHighlightingFiles(string compilerIRName) {
-    cachedSyntaxHighlightinFiles_ = null;
+    cachedSyntaxHighlightingFiles_ = null;
     return GetSyntaxHighlightingFiles(compilerIRName);
   }
 
