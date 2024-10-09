@@ -1,4 +1,4 @@
-# Profile Explorer Overview
+## Profile Explorer
 
 Profile Explorer is a tool for viewing CPU profiling traces collected through the [Event Tracing for Windows (ETW)](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-) infrastructure. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views and panels, such as a hot function list, flame graph, call tree, timeline, assembly code view, and source file view.  
 
@@ -10,9 +10,9 @@ The application can be viewed as a companion to [Windows Performance Analyzer (W
 #### Assembly, Source File and Flow Graph views of a function:
 <img width="886" alt="image" src="https://github.com/user-attachments/assets/dac21739-49ba-4274-9d12-e0a1b4937bdf">
 
-## ⬇️ Download
+### ⬇️ Download
 
-Installers for latest version:
+Installers for the latest version:
 - [x64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_x64.exe)
 - [ARM64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_arm64.exe)
 
@@ -21,7 +21,7 @@ Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includ
 The app also has a built-in auto-update feature that will notify you when a new version is released and offer to download and install it.  
 The installers for previous versions can be downloaded from the [Releases](https://github.com/microsoft/profile-explorer/releases) page.  
 
-## 📖 Documentation
+### 📖 Documentation
 
 The documentation pages are available here:  
 #### [https://microsoft.github.io/profile-explorer](https://microsoft.github.io/profile-explorer)
@@ -29,7 +29,7 @@ The documentation pages are available here:
 The app also has a built-in *Help panel* that can display the same documentation.  
 Most views have a *question mark* icon in the upper-right corner that opens the *Help panel* on the view's documentation page. 
 
-## 🛠️ Building
+### 🛠️ Building
 
 To build the application and its external dependencies, ensure the following build tools are installed on a Windows 11 machine:  
 - recent Visual Studio 2022 with the following workflows:
@@ -51,7 +51,7 @@ The output directory with *ProfileExplorer.exe* will be found at:
 
 After the initial build, open the solution file ```src\ProfileExplorer.sln``` and use the *ProfileExplorerUI* project as the build and startup target.
 
-## 📦 Publishing and creating the installer
+### 📦 Publishing and creating the installer
 
 To publish the application and create an installer, from a command-line window run:  
 - ```installer\x64\prepare.cmd``` for an x64 build.  
@@ -64,7 +64,7 @@ This will build the main project as a self-contained application, build the exte
 
 Currently [InnoSetup](https://jrsoftware.org/isdl.php) is used to create the installer and it must be already installed on the machine and *iscc.exe* found on *PATH*.
 
-## 📑 Project structure
+### 📑 Project structure
 
 Below is a high-level overview of the main parts of the application.
 
@@ -94,7 +94,7 @@ The application started as a tool for helping compiler developers interact with 
 
 Some of the more unique features, such as parsing assembly code into an internal IR, which allows for an interactive assembly text view and the display of control-flow graphs, result from the tool's initial compiler focus.
 
-## Contributing
+### Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
@@ -108,7 +108,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-## Trademarks
+### Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
 trademarks or logos is subject to and must follow 
