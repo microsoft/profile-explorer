@@ -1,4 +1,6 @@
-Branch for GitHub pages documentation website.
+Branch for GitHub pages documentation website.  
+
+[https://microsoft.github.io/profile-explorer](https://microsoft.github.io/profile-explorer)
 
 # Contributing
 
