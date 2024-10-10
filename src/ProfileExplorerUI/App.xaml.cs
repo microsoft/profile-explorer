@@ -49,8 +49,10 @@ public partial class App : Application {
 #if DEBUG
   // For use with "mkdocs serve".
   private const string HelpLocation = @"http://127.0.0.1:8000";
+  private const string DocumentationLocation = @"http://127.0.0.1:8000";
 #else
   private const string HelpLocation = @"https://microsoft.github.io/profile-explorer/site";
+  private const string DocumentationLocation = @"https://microsoft.github.io/profile-explorer";
 #endif
 
   public const string AutoUpdateInfox64 = @"https://microsoft.github.io/profile-explorer/autoupdater.xml";
@@ -73,7 +75,6 @@ public partial class App : Application {
   private const string SyntaxFileExtension = @"xshd";
   private const string FunctionTaskScriptsDirectory = "scripts";
   private const string FunctionTaskScriptSearchPattern = @"*.cs";
-  private const string DocumentationLocation = @"PLACEHOLDER";
   public static bool IsFirstRun;
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
@@ -387,7 +388,7 @@ public partial class App : Application {
   }
 
   public static void OpenDocumentation() {
-    if (!Utils.OpenExternalFile(DocumentationLocation)) {
+    if (!Utils.OpenURL(DocumentationLocation)) {
       MessageBox.Show("Failed to open documentation page", "Profile Explorer", MessageBoxButton.OK,
                       MessageBoxImage.Error);
     }

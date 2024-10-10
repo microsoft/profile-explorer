@@ -431,8 +431,8 @@ public static class Utils {
     return path;
   }
 
-  public static bool OpenExternalFile(string path) {
-    if (!File.Exists(path)) {
+  public static bool OpenExternalFile(string path, bool checkFileExists = true) {
+    if (checkFileExists && !File.Exists(path)) {
       return false;
     }
 
@@ -448,6 +448,10 @@ public static class Utils {
       Trace.TraceError($"Failed to open file: {path}, exception {ex.Message}");
       return false;
     }
+  }
+
+  public static bool OpenURL(string path) {
+    return OpenExternalFile(path, false);
   }
 
   public static bool ExecuteTool(string path, string args, CancelableTask cancelableTask = null,
