@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="demos.html">
+        <link rel="prev" href="intro.html">
       
       
-        <link rel="next" href="trace-loading.html">
+        <link rel="next" href="profiling-ui.html">
       
       
       <link rel="icon" href="assets/images/favicon.png">
@@ -60,10 +60,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="white">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -116,7 +118,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -255,48 +283,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="profiling-ui.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Profiling UI overview
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="demos.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Video Demos
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -372,6 +358,48 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profiling-ui.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling UI overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="demos.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Video Demos
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1007,7 +1035,7 @@
   <h1>About</h1>
 
 <h4 id="overview">Overview</h4>
-<p>Profile Explorer is a tool for viewing CPU profiling traces collected through the <a href="(https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-)">Event Tracing for Windows (ETW)</a> infrastructure on machines with x64 and ARM64 CPUs. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views and panels, such as a hot function list, flame graph, call tree, timeline, assembly code view, and source file view.  </p>
+<p>Profile Explorer is a tool for viewing CPU profiling traces collected through the <a href="(https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-)">Event Tracing for Windows (ETW)</a> infrastructure on machines with x64 and ARM64 CPUs. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views, such as a hot functions, flame graph, call tree, timeline, assembly code view, and source file view.  </p>
 <p>The app offers some unique features based on the binary analysis it performs and the IDE-like UI, such as easy navigation through disassembly, improved mapping to source lines, displaying the function <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph</a>, viewing of multiple functions at the same time, marking, searching, filtering and much more.  </p>
 <p>One of the app's key advantages is its performance. It offers fast trace loading and near-instant UI interaction, even for very large traces (over 10 GB ETL files). Most profile processing steps and algorithms are multi-threaded and don't block the UI.</p>
 <h4 id="automatic-updates">Automatic updates</h4>
@@ -1017,8 +1045,8 @@
 <h4 id="download">Download</h4>
 <p>Installers for the latest version:  </p>
 <ul>
-<li><a href="https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_x64.exe">x64 installer</a>  </li>
-<li><a href="https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_arm64.exe">ARM64 installer</a></li>
+<li><a href="https://github.com/microsoft/profile-explorer/releases/latest/download/profile_explorer_installer_x64.exe">x64 installer</a>  </li>
+<li><a href="https://github.com/microsoft/profile-explorer/releases/latest/download/profile_explorer_installer_arm64.exe">ARM64 installer</a></li>
 </ul>
 <p>Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (no emulation), otherwise use the x64 installer. Note that the x64 app can open traces recorded on ARM64 machines and vice versa.  </p>
 <p>The installers for previous versions can be downloaded from the <a href="https://github.com/microsoft/profile-explorer/releases">Releases</a> page.  </p>
@@ -1057,7 +1085,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="demos.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Video Demos">
+          <a href="intro.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Introduction">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1067,20 +1095,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Video Demos
+                Introduction
               </div>
             </div>
           </a>
         
         
           
-          <a href="trace-loading.html" class="md-footer__link md-footer__link--next" aria-label="Next: Loading a trace">
+          <a href="profiling-ui.html" class="md-footer__link md-footer__link--next" aria-label="Next: Profiling UI overview">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Loading a trace
+                Profiling UI overview
               </div>
             </div>
             <div class="md-footer__button md-icon">

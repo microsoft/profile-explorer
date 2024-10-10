@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <item>
   <version>1.1.0</version>
-  <url>https://github.com/microsoft/profile-explore/releases/download/tag1/setup.exe</url>
+  <url>https://github.com/microsoft/profile-explorer/releases/download/v1.1.0/profile_explorer_installer_x64.exe</url>
   <changelog>https://microsoft.github.io/profile-explorer/changelog.html</changelog>
   <mandatory>false</mandatory>
 </item>

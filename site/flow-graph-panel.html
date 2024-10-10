@@ -58,10 +58,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="white">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -114,7 +116,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -256,6 +284,27 @@
   
   
     <li class="md-nav__item">
+      <a href="about.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="profiling-ui.html" class="md-nav__link">
         
   
@@ -282,27 +331,6 @@
   
   <span class="md-ellipsis">
     Video Demos
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="about.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    About
   </span>
   
 
@@ -709,6 +737,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#color-coding" class="md-nav__link">
+    <span class="md-ellipsis">
+      Color coding
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selection-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selection sync
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -733,6 +785,15 @@
   <a href="#view-options" class="md-nav__link">
     <span class="md-ellipsis">
       View options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation in progress
     </span>
   </a>
   
@@ -976,6 +1037,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#color-coding" class="md-nav__link">
+    <span class="md-ellipsis">
+      Color coding
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selection-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selection sync
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1005,6 +1090,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#documentation-in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation in progress
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1023,11 +1117,17 @@
   <h1>Flow Graph view</h1>
 
 <h4 id="overview">Overview</h4>
-<p>The Flow Graph view displays the <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> of the function in the active assembly view, with <a href="https://en.wikipedia.org/wiki/Basic_block">basic blocks</a> annotated with profiling information.  </p>
-<p>The function CFG makes it easier to see the structure of a function and control-flow created by jumps, branches and loops.  </p>
+<p>The Flow Graph view displays the <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> of the function viewed in the active assembly view.  </p>
+<p>The function CFG makes it easier to see the structure of a function and control-flow created by jumps, branches and loops. The slowest <a href="https://en.wikipedia.org/wiki/Basic_block">basic blocks</a> are annotated with profiling information.  </p>
 <p><a href="img/flow-graph-view_501x693.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-view_501x693.png" style="width:320px" /></a></p>
+<p>The view has two parts:  </p>
+<ul>
+<li>a main toolbar at the top, with general action buttons.</li>
+<li>an interactive CFG area, supporting zooming and panning.</li>
+</ul>
 <p>Each basic block is represented by a rectangle, with the block number as the label. An edge between two blocks means the source and destination block are connected either through a jump/branch or fall-through code.  </p>
-<p>Color coding of both blocks and edges is used to help identify control flow. The used colors can be customized in the <a href="#view-options">Flow Graph options</a>.</p>
+<h5 id="color-coding">Color coding</h5>
+<p>Different colors of the blocks and edges are used to help identify control flow. The used colors can be customized in the <a href="#view-options">Flow Graph options</a>.</p>
 <p>Block border colors coding (default colors):  </p>
 <ul>
 <li>blue: blocks ends with a branch instruction.</li>
@@ -1041,9 +1141,12 @@
 <li>red: target block is a function exit block.</li>
 <li>dotted: target block is the <a href="https://en.wikipedia.org/wiki/Dominator_(graph_theory)">immediate dominator</a> of the source block.</li>
 </ul>
-<p>When a block is selected, the block and its instructions are also selected in the <em>Assembly</em> view, like in the example below where B5 is selected. Notice that B5 is a single-block, nested loop, while B4 is the loop header block of a larger loop including B5.  </p>
+<h5 id="selection-sync">Selection sync</h5>
+<p>When a block is selected, the corresponding instructions are also selected in the <em>Assembly</em> view, like in the example below where B5 is selected. Notice that B5 is a single-block, nested loop, while B4 is the loop header block of a larger loop including B5.  </p>
 <p><a href="img/flow-graph-select_1277x370.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-select_1277x370.png" /></a> </p>
 <h4 id="profiling-annotations">Profiling annotations</h4>
+<p>Blocks with a significant execution time are marked by using bold text for the block number and changing their background color (same color coding as in the <em>Assembly view</em>).  </p>
+<p>A label is displayed underneath with the block's execution time percentage, relative to the function's total execution time.</p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
 <summary>Toolbar</summary>
@@ -1056,8 +1159,28 @@
 </thead>
 <tbody>
 <tr>
-<td><img alt="" src="img/flame-graph-toolbar-sync.png" /></td>
-<td>If enabled, selecting a function also selects it in the other profiling views.</td>
+<td><img alt="" src="img/flame-graph-toolbar-reset.png" /></td>
+<td>Resets the view to it's original state.</td>
+</tr>
+<tr>
+<td><img alt="" src="img/flame-graph-toolbar-minus.png" /></td>
+<td>Zooms out the view around the center point.</td>
+</tr>
+<tr>
+<td><img alt="" src="img/flame-graph-toolbar-plus.png" /></td>
+<td>Zooms in the view around the center point.</td>
+</tr>
+<tr>
+<td><img alt="" src="img/flow-graph-toolbar-width.png" /></td>
+<td>Resizes the view so that the width of the graph matches the available horizontal area.</td>
+</tr>
+<tr>
+<td><img alt="" src="img/flow-graph-toolbar-all.png" /></td>
+<td>Resizes the view so that the entire graph is visible.</td>
+</tr>
+<tr>
+<td><img alt="" src="img/flow-graph-toolbar-clear.png" /></td>
+<td>Displays a menu with options for clearing marker for the selected block or all blocks.</td>
 </tr>
 </tbody>
 </table>
@@ -1074,7 +1197,27 @@
 <tbody>
 <tr>
 <td>Hover</td>
-<td>Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.</td>
+<td>Hovering over a block displays a preview popup with the corresponding instructions from the <em>Assembly</em> view.</td>
+</tr>
+<tr>
+<td>Click</td>
+<td>Selects a block and also selects the corresponding instructions the <em>Assembly</em> view (can be configured in the <a href="#view-options">Flow Graph options</a>)</td>
+</tr>
+<tr>
+<td>Right-click</td>
+<td>Shows the context menu for the selected block.</td>
+</tr>
+<tr>
+<td>Click+Drag</td>
+<td>Clicking on and dragging an empty part of the view moves the view in the direction of the mouse.</td>
+</tr>
+<tr>
+<td>Scroll wheel</td>
+<td>Scrolls the view vertically if graph is larger than the view.</td>
+</tr>
+<tr>
+<td>Ctrl+Scroll wheel</td>
+<td>Zooms in or out the view around the mouse pointer position.</td>
 </tr>
 </tbody>
 </table>
@@ -1090,8 +1233,28 @@
 </thead>
 <tbody>
 <tr>
-<td>Return</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Ctrl+=</td>
+<td>Zooms in the view around the center point.</td>
+</tr>
+<tr>
+<td>Ctrl+-</td>
+<td>Zooms out the view around the center point.</td>
+</tr>
+<tr>
+<td>Ctrl+0<br>Ctrl+R</td>
+<td>Resets the view to the initial state.</td>
+</tr>
+<tr>
+<td>Ctrl+W</td>
+<td>Resizes the view so that the width of the graph matches the available horizontal area.</td>
+</tr>
+<tr>
+<td>Ctrl+A</td>
+<td>Resizes the view so that the entire graph is visible.</td>
+</tr>
+<tr>
+<td>Arrow keys</td>
+<td>Scrolls the view in the horizontal and vertical directions if the flame graph is larger than the view.</td>
 </tr>
 </tbody>
 </table>
@@ -1113,12 +1276,9 @@
 </div>
 </div>
 </div>
+<h4 id="documentation-in-progress">Documentation in progress</h4>
 <ul>
-<li>basic blocks coded by color</li>
-<li>edges color coding, red for exit block, green loop</li>
-<li>click on node selects block in assembly view, on ASM selects block</li>
-<li>profiling info annotates hot blocks (label below) and color</li>
-<li>mouse and keyboard shorcuts for zoom, pan</li>
+<li>View options</li>
 </ul>
 
 
