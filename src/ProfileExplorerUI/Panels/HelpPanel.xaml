@@ -102,7 +102,7 @@
           <Separator />
           <Button
             Click="ExternalButton_Click"
-            ToolTip="Open help in external browser">
+            ToolTip="Open documentation page in external browser">
             <Image
               Width="16"
               Height="16"

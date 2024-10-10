@@ -60,15 +60,21 @@ public partial class HelpPanel : ToolPanelControl {
 
   public HelpPanel() {
     loadingTopic_ = new SemaphoreSlim(1);
-
     InitializeComponent();
   }
 
   public override ToolPanelKind PanelKind => ToolPanelKind.Help;
 
   public override async void OnActivatePanel() {
-    base.OnActivatePanel();
+    await Initialize();
+  }
 
+  public override async void OnShowPanel() {
+    await Initialize();
+  }
+
+  private async Task Initialize() {
+    base.OnActivatePanel();
     await loadingTopic_.WaitAsync();
 
     if (currentTopic_ == null) {
