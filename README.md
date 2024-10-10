@@ -15,8 +15,8 @@ One of the app's key advantages is its performance. It loads traces fast and off
 ### ⬇️ Download
 
 Installers for the latest version:
-- [x64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_x64.exe)
-- [ARM64 installer](https://github.com/microsoft/profile-explore/releases/latest/download/profile_explorer_installer_arm64.exe)
+- [x64 installer](https://github.com/microsoft/profile-explorer/releases/latest/download/profile_explorer_installer_x64.exe)
+- [ARM64 installer](https://github.com/microsoft/profile-explorer/releases/latest/download/profile_explorer_installer_arm64.exe)
 
 Use the ARM64 installer if you have a machine with an ARM64 CPU, since it includes a native build of the app (no emulation), otherwise use the x64 installer. Note that the x64 app can open traces taken on ARM64 machines and vice versa.  
 
