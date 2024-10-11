@@ -38,7 +38,7 @@ By default, the nodes are color-coded based on the module names to which the fun
 
 ##### Navigating the Flame graph
 
-A double-click on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  
+A *double-click* on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  
 
 [![Profiling UI screenshot](img/flame-graph-expand_944x428.png)](img/flame-graph-expand_944x428.png){:target="_blank"}
 
@@ -55,7 +55,7 @@ It can be helpful to view only a subregion of the Flame graph. By changing the r
 
 To change the root node, from the right-click context menu, select *Set Function as Root* (alternatively, use the *Alt+Double-click* shortcut). After the switch, the toolbar displays the name of the current root node. Setting a new root node can be repeated in the new view.
 
-To remove the root node and view the entire Flame graph, click the *X* button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.
+To remove the root node and view the entire Flame graph, *click* the *X* button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.
 
 [![Profiling UI screenshot](img/flame-graph-root_946x435.png)](img/flame-graph-root_946x435.png){:target="_blank"}
 

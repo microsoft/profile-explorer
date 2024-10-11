@@ -10,14 +10,16 @@ Once the trace file is selected in the *Open File dialog*, the **Load profile tr
 
 [![Load profile window screenshot](img/load-trace_1332x738.png)](img/load-trace_1332x738.png){:target="_blank"}
 
-From the list, select the process you want to analyze and press the **Load Profile** button (alternatively, use double-click or the Return key). The selected process is loaded from the trace file, any required binary and symbol files are downloaded and the profiling data is analyzed. Once loading is completed, the window closes and the profiling views are populated, as described in [Profiling UI overview](profiling-ui.md).
+From the list, select the process you want to analyze and press the **Load Profile** button (alternatively, *double-click* or press the *Return* key).  
+
+The selected process is loaded from the trace file, any required binary and symbol files are downloaded and the profiling data is analyzed. Once loading is completed, the window closes and the profiling views are populated, as described in [Profiling UI overview](profiling-ui.md).
 
 ???+ note
     If the trace fails to load, the *Profiling Trace Report* windows is automatically opened. The *Modules tab* lists the modules referenced by the trace and indicates whether the binary and debug info symbols could be found and loaded. See the [Profiling Trace report](trace-overview.md) page for more details.
 
 #### Loading a previously opened trace
 
-Previously opened traces are saved as sessions. Recent sessions can be quickly opened again for the same process using either the *Start page* or the session list on the left of the *Load profile trace* window (use double-click or the Return key).
+Previously opened traces are saved as sessions. Recent sessions can be quickly opened again for the same process using either the *Start page* or the session list on the left of the *Load profile trace* window (*double-click* an entry or press the *Return* key).
 
 [![Start page screenshot](img/start-page_825x459.png)](img/start-page_825x459.png){:target="_blank"}
 

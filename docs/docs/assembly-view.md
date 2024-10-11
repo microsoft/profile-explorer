@@ -49,7 +49,7 @@ When a function is inlined, the compiler may keep extra details about the functi
 
 For example, if a function contains a call chain like "foo() -> bar()", and both calls are inlined, the final instructions will indicate that they come from "bar", which was inlined into "foo", and then "foo" was inlined into the function.
 
-*Hovering* over the inlined function shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this information to the clipboard, first click the inlined function, then press *Ctrl+C*.
+*Hovering* over the inlined function shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this information to the clipboard, first *click* the inlined function, then press *Ctrl+C*.
 
 [![Profiling UI screenshot](img/assembly-inlinees_926x222.png){: style="width:500px"}](img/assembly-inlinees_926x222.png){:target="_blank"}
 
@@ -163,7 +163,7 @@ In the example above, most of the execution time (46.79%) is taken by instructio
 
 By default, the Assembly view displays the function profile accumulated across all instances of the function (see the [Flame Graph view](flame-graph-panel.md) documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  
 
-The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then it's the caller, going up the call tree. Hover over an entry to display a tooltip with the complete call path.
+The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then its caller, and so on going up the call tree until the paths reach a common node. *Hover* over an entry to display a tooltip with the complete call path up to the entry point node.  
 
 [![Profiling UI screenshot](img/assembly-instances_1027x182.png)](img/assembly-instances_1027x182.png){:target="_blank"}  
 

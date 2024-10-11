@@ -42,7 +42,7 @@ Each individual thread entry has the following values and buttons:
   
     [![Profiling UI screenshot](img/timeline-select_879x239.png)](img/timeline-select_879x239.png){:target="_blank"}
 
-- To select a time range for a single thread, *click and drag* over the desired range in the specific thread graph. To include another thread in the same time range, from the thread action menu, click *Include thread* or use the ![](img/timeline-eye-button.png) icon.  
+- To select a time range for a single thread, *click and drag* over the desired range in the specific thread graph. To include another thread in the same time range, from the thread action menu, **click* *Include thread* or use the ![](img/timeline-eye-button.png) icon.  
     
     [![Profiling UI screenshot](img/timeline-select-single_879x199.png)](img/timeline-select-single_879x199.png){:target="_blank"}
 
@@ -55,7 +55,7 @@ The entire profile can be filtered so that only specific threads and time ranges
 
 ##### Filtering based on a time range
 
-Select the desired time range, then *double-click* the selection (alternatively, right-click the selection and click "Filter to Time Range*). If a single thread is selected, a filter that displays only the selected thread and excludes all others is also added.  
+Select the desired time range, then *double-click* the selection (alternatively, *right-click* the selection and *click* "Filter to Time Range*). If a single thread is selected, a filter that displays only the selected thread and excludes all others is also added.  
 
 [![Profiling UI screenshot](img/timeline-filter-time_878x320.png)](img/timeline-filter-time_878x320.png){:target="_blank"}
     
@@ -66,10 +66,10 @@ There are multiple ways to filter based on one or multiple threads, optionally c
 [![Profiling UI screenshot](img/timeline-thread-menu_480x317.png){: style="width:350px"}](img/timeline-thread-menu_480x317.png){:target="_blank"}
 
 - to include a single thread and exclude all others, *double-click* the thread ID or *click* *Filter to Thread* from the thread action menu.
-- to include another thread, click the ![](img/timeline-eye-button-disabled.png) icon or *click* *Include Thread*.
+- to include another thread, *click* the ![](img/timeline-eye-button-disabled.png) icon or *click* *Include Thread*.
 - to include all threads with the same name and exclude all others, *click* *Filter to Same Name Threads*.
 - to include all threads with the same name, *click* *Filter to Same Name Threads*.
-- to exclude a thread, click the ![](img/timeline-eye-button.png) icon or *click* *Exclude Thread*.
+- to exclude a thread, *click* the ![](img/timeline-eye-button.png) icon or *click* *Exclude Thread*.
 - to exclude all threads with the same name, *click* *Exclude Same Name Threads*.
 
 Example of a filter including a single thread (58540) and a time range of ~2 sec. Excluded threads and time ranges are displayed using faded colors. Use the X buttons next to *Time* and *Threads* in the toolbar to remove the filter.
