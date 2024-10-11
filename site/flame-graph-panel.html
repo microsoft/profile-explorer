@@ -1183,7 +1183,7 @@ In the example above, the <em>main</em> function is considered the process entry
 <p>When the called function nodes are too small to be visible in the view, they are collapsed under a placeholder node rendered with a hatch pattern. Placeholder nodes are expanded into individual nodes when zooming in the view.  </p>
 </details>
 <h5 id="navigating-the-flame-graph">Navigating the Flame graph</h5>
-<p>A double-click on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  </p>
+<p>A <em>double-click</em> on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  </p>
 <p><a href="img/flame-graph-expand_944x428.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand_944x428.png" /></a></p>
 <p>Expanding a node can be repeated to go deeper down the call path. The <em>Back</em> button in the toolbar (or <em>Backspace</em> key/<em>Back</em> mouse button) undoes the operation and returns the view to its previous state.  </p>
 <p><a href="img/flame-graph-expand2_947x456.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand2_947x456.png" /></a></p>
@@ -1194,7 +1194,7 @@ In the example above, the <em>main</em> function is considered the process entry
 <h5 id="changing-the-root-node">Changing the root node</h5>
 <p>It can be helpful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.</p>
 <p>To change the root node, from the right-click context menu, select <em>Set Function as Root</em> (alternatively, use the <em>Alt+Double-click</em> shortcut). After the switch, the toolbar displays the name of the current root node. Setting a new root node can be repeated in the new view.</p>
-<p>To remove the root node and view the entire Flame graph, click the <em>X</em> button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.</p>
+<p>To remove the root node and view the entire Flame graph, <em>click</em> the <em>X</em> button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.</p>
 <p><a href="img/flame-graph-root_946x435.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-root_946x435.png" /></a></p>
 <h4 id="searching-functions">Searching functions</h4>
 <p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
