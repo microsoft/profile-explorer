@@ -90,6 +90,18 @@ The following projects are build from source, as either x64 or native arm64 bina
 | src/external/tree-sitter | [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) parser generator, with support for C/C++, C# and Rust, submodules. |
 | src/external/TreeListView | [TreeListView](https://github.com/hazzik/TreeListView), WPF tree list view control. |
 
+### 📐Profiling architecture
+
+<img src="https://github.com/user-attachments/assets/77e00a73-4810-4155-b656-a356fff8ba3b" width=70% height=70%>  
+
+- Profiling UI compoments are independent from the profiling trace source.  
+- Loading the trace produces a set of profile samples and associated call stacks – building blocks for the call tree, flame graph, function list, assembly view.  
+- Debuging info (PDB) files are downloaded in parallel, source line info read on-demand per function.  
+- Binary disassembly done on-demand per function.  
+- Initial trace processing and subsequent filtering is multi-threaded.  
+- UI updates are mostly async and multi-threaded.  
+- Opening binaries without a profiling trace is supported.  
+
 ### History
 
 The application started as a tool for helping compiler developers interact with and better understand a compiler's [intermediate representation (IR)](https://en.wikipedia.org/wiki/Intermediate_representation). After adding simple support for viewing profile traces, it gradually gained more profiling features and primarily became a profile viewer.  
@@ -98,10 +110,7 @@ Some of the more unique features, such as parsing assembly code into an internal
 
 ### Video demo
 
-
 https://github.com/user-attachments/assets/d9a281d3-dc92-4cbe-a3e5-80c4588676a2
-
-
 
 ### Contributing
 
