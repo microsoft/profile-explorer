@@ -15,7 +15,7 @@
         <link rel="next" href="timeline-panel.html">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="img/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.35">
     
     
@@ -65,7 +65,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,8 +92,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="Profile Explorer" class="md-header__button md-logo" aria-label="Profile Explorer" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="img/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -123,7 +122,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
@@ -213,8 +212,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="." title="Profile Explorer" class="md-nav__button md-logo" aria-label="Profile Explorer" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="img/logo.png" alt="logo">
 
     </a>
     Profile Explorer
@@ -1160,7 +1158,7 @@
 <p>Nodes are sorted in the horizontal direction based on decreasing time relative to their parent node, while the ordering in the vertical direction forms a stack trace (a path in the call tree). The function taking the most time in the application is then found in the leftmost, bottom part of the Flame graph.</p>
 <p><img alt="Flame graph diagram" src="img/flame-graph.png" style="width:320px" /><br />
 In the example above, the <em>main</em> function is considered the process entry point, calling <em>foo</em> and <em>bar</em>, with <em>foo</em> taking 60% of the time and <em>bar</em> 40%. Function <em>foo</em> spends a part of its total (inclusive) time in the calls to <em>baz</em> and <em>etc1</em>, while the rest is self (exclusive) time, meaning instructions part of <em>foo</em> which are not calls to other functions.  </p>
-<p>Note that there are two instances of the function <em>baz</em> with different execution time, each with a unique path to it in the call tree starting from <em>main</em> (all other functions have a single instance). You can see the time of each instance by <em>hovering</em> with the mouse over it or in the <em>Details panel</em> after it's selected.</p>
+<p>Note that there are two instances of the function <em>baz</em> with different execution times, each with a unique path to it in the call tree starting from <em>main</em> (all other functions have a single instance). You can see the time of each instance by <em>hovering</em> with the mouse over it or in the <em>Details panel</em> after it's selected.</p>
 <p>The following links provide an introduction to the flame graph visualization concept, its history, and how it's being used across the industry for performance investigations.  </p>
 <ul>
 <li><a href="https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html">CPU Flame Graphs (brendangregg.com)</a></li>
@@ -1185,8 +1183,8 @@ In the example above, the <em>main</em> function is considered the process entry
 <p>When the called function nodes are too small to be visible in the view, they are collapsed under a placeholder node rendered with a hatch pattern. Placeholder nodes are expanded into individual nodes when zooming in the view.  </p>
 </details>
 <h5 id="navigating-the-flame-graph">Navigating the Flame graph</h5>
-<p>A double-click on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.<br />
-<a href="img/flame-graph-expand_944x428.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand_944x428.png" /></a></p>
+<p>A double-click on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  </p>
+<p><a href="img/flame-graph-expand_944x428.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand_944x428.png" /></a></p>
 <p>Expanding a node can be repeated to go deeper down the call path. The <em>Back</em> button in the toolbar (or <em>Backspace</em> key/<em>Back</em> mouse button) undoes the operation and returns the view to its previous state.  </p>
 <p><a href="img/flame-graph-expand2_947x456.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand2_947x456.png" /></a></p>
 <details class="note" open="open">
@@ -1194,12 +1192,12 @@ In the example above, the <em>main</em> function is considered the process entry
 <p>In the screenshot above, the nodes starting with <em>ntoskrnl.exe!KiPageFault</em> use a different style to mark code executing in kernel mode. The user mode and kernel mode call stacks are automatically combined.</p>
 </details>
 <h5 id="changing-the-root-node">Changing the root node</h5>
-<p>It can be useful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed and execution time percentages are computed relative to the new root starting at 100%.</p>
+<p>It can be helpful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.</p>
 <p>To change the root node, from the right-click context menu, select <em>Set Function as Root</em> (alternatively, use the <em>Alt+Double-click</em> shortcut). After the switch, the toolbar displays the name of the current root node. Setting a new root node can be repeated in the new view.</p>
 <p>To remove the root node and view the entire Flame graph, click the <em>X</em> button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.</p>
 <p><a href="img/flame-graph-root_946x435.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-root_946x435.png" /></a></p>
 <h4 id="searching-functions">Searching functions</h4>
-<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked and the <em>up/down</em> buttons showing on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
+<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
 <p><a href="img/flame-graph-search_1078x286.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-search_1078x286.png" /></a></p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">

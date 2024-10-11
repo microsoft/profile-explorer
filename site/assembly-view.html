@@ -15,7 +15,7 @@
         <link rel="next" href="source-panel.html">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="img/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.35">
     
     
@@ -65,7 +65,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,8 +92,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="Profile Explorer" class="md-header__button md-logo" aria-label="Profile Explorer" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="img/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -123,7 +122,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
@@ -213,8 +212,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="." title="Profile Explorer" class="md-nav__button md-logo" aria-label="Profile Explorer" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="img/logo.png" alt="logo">
 
     </a>
     Profile Explorer
@@ -1420,14 +1418,14 @@
 <p><em>Click</em> on an instruction selects and brings into view its corresponding source line in the <em>Source File</em> view and its basic block in the <em>Flow Graph</em> view.  </p>
 </details>
 <h5 id="inlinees">Inlinees</h5>
-<p>During function inlining, the compiler may preserve additional details about the function code being inlined so that the origin of an instruction can be saved into the debug info file. If available, the inlinees (inlined functions) are appended after the source line number, separated by the | letter.  </p>
-<p>For example, if the function contains a call chain like <em>foo() -&gt; bar()</em>, with both calls being inlined, the final instructions will record the fact that they originate from <em>bar</em>, which got inlined into <em>foo</em>, then <em>foo</em> inlined into the function.</p>
-<p><em>Hovering</em> over the inlinee shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this info to clipboard, first <em>click</em> the inlinee, then press <em>Ctrl+C</em>:  </p>
+<p>When a function is inlined, the compiler may keep extra details about the function code that is being inlined so that the original location of an instruction can be saved into the debug info file. If available, the inlined functions are added after the source line number, separated by the "|" letter.</p>
+<p>For example, if a function contains a call chain like "foo() -&gt; bar()", and both calls are inlined, the final instructions will indicate that they come from "bar", which was inlined into "foo", and then "foo" was inlined into the function.</p>
+<p><em>Hovering</em> over the inlined function shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this information to the clipboard, first click the inlined function, then press <em>Ctrl+C</em>.</p>
 <p><a href="img/assembly-inlinees_926x222.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-inlinees_926x222.png" style="width:500px" /></a></p>
 <h5 id="basic-blocks">Basic blocks</h5>
 <p>The assembly is parsed and analyzed to recover the function's <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a>, identifying <a href="https://en.wikipedia.org/wiki/Basic_block">basic blocks</a> and loops. This information is used to split the assembly text into basic blocks and to display the Flow Graph view.</p>
 <p>The example below shows a subset of a function's basic blocks, with the corresponding control-flow graph part from the <em>Flow Graph</em> view. The basic blocks B3-B6 are marked on the left side as folding sections that can be collapsed/expanded with a <em>click</em> on the -/+ buttons.</p>
-<p>Notice how B5 is recognized for being a loop (the last instruction in the block jumps to the start of the block). The Flow Graph view uses a green arrow to mark loops - B4 is also the start block of a larger loop.</p>
+<p>Notice how B5 is recognized as forming a loop (the last instruction in the block jumps to the start of the block). The Flow Graph view uses a green arrow to mark loops - B4 is also the start block of a larger loop.</p>
 <p><a href="img/assembly-flow-graph_579x600.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-flow-graph_579x600.png" style="width:500px" /></a>  </p>
 <details class="note" open="open">
 <summary>Note</summary>
@@ -1458,8 +1456,8 @@
 <h5 id="call-targets">Call targets</h5>
 <p>Combining the parsed assembly and profiling information, call instructions are marked with their target(s) and have an arrow icon placed before the call opcode:  </p>
 <ul>
-<li>for direct calls (target is an function name/address), a black arrow is used.</li>
-<li>for indirect or virtual function calls (target is a register or memory operand), a green arrow is used.</li>
+<li>A black arrow icon is used for direct calls (target is a function name/address).</li>
+<li>A green arrow icon is used for indirect or virtual function calls (target is a register or memory operand).</li>
 </ul>
 <p><em>Hovering</em> with the mouse over the arrow displays a list of target functions with details about their execution time. For example, the indirect call below at runtime has the <em>std::_Random_device</em> function as the only target:  </p>
 <p><a href="img/assembly-call-target_691x172.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-call-target_691x172.png" style="width:500px" /></a> </p>
@@ -1474,17 +1472,17 @@
 <li><em>Shift+Double-Click</em> (or Shift+Return) opens the called function in a new tab.  </li>
 <li><em>Alt+Return</em> shows a preview popup with the called function's assembly. Press the <em>Escape</em> key to close the popup.  </li>
 <li><em>Hovering</em> with the mouse over the function name also shows the preview popup.</li>
-<li>Use the shortcuts from the <em>Opened function history</em> section below to go back to the caller.</li>
+<li>Use the shortcuts from the <em>Opened function history</em> section below to return to the caller.</li>
 </ul>
 <p><a href="img/assembly-call-hover_922x278.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-call-hover_922x278.png" /></a>  </p>
 <h5 id="opened-functions-history">Opened functions history</h5>
-<p>When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. This is especially useful when navigating to a called function by double-clicking its name in the assembly, since it makes it easy to back to the caller.  </p>
+<p>When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. The history is especially useful when navigating to a called function by double-clicking its name in the assembly since it makes it easy to get back to the caller.  </p>
 <ul>
 <li>
 <p><em>Click</em> the <em>Back</em> button in the toolbar to navigate back to the previous function in the sequence (or press the <em>Backspace</em> key or the optional <em>Back</em> button on the mouse). The back button also has a menu that lists the previous functions.  </p>
 </li>
 <li>
-<p><em>Click</em> the &gt; button in the toolbar to navigate to the next function in the sequence (or press the optional <em>Forward</em> button on the mouse).  </p>
+<p><em>Click</em> the &gt; button in the toolbar to navigate to the following function in the sequence (or press the optional <em>Forward</em> button on the mouse).  </p>
 </li>
 </ul>
 <p><a href="img/assembly-back-menu_608x154.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-back-menu_608x154.png" style="width:450px" /></a>  </p>
@@ -1503,25 +1501,25 @@
 <em>Click</em> on a menu entry to select and bring the start of the block into view.</p>
 <p><a href="img/assembly-blocks_560x439.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-blocks_560x439.png" style="width:400px" /></a>  </p>
 <h5 id="inlinees_1">Inlinees</h5>
-<p>Displays a menu with the inlinees (inlined functions) that directly contribute slow instructions, sorted by the execution time of all instructions originating from a particular inlinee in decreasing order.  </p>
+<p>Displays a menu with the inlinees (inlined functions) that directly contribute to slow instructions, sorted by the execution time of all instructions originating from a particular inlinee in decreasing order.  </p>
 <p><a href="img/assembly-inlinees_1303x459.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-inlinees_1303x459.png" /></a>  </p>
 <p><em>Click</em> on a menu entry to select all instruction associated with the inlinee and brings the first one into view.  </p>
 <p>In the example above, most of the execution time (46.79%) is taken by instructions originating in the <em>std::<em>Rng_from</em>...</em> inlinee, while only 3.60% of execution time is from non-inlined instructions.</p>
 <h5 id="instances">Instances</h5>
-<p>By default the Assembly view displays the function profile accumulated across all instances the function (see the <a href="flame-graph-panel.html">Flame Graph view</a> documentation for more details about instances). Filtering the function profile based on an instance makes it possible to better understand when certain parts of the function dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  </p>
-<p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then it's caller, going up the call tree. Hover over an entry to display a tooltip with the complete call path.</p>
+<p>By default, the Assembly view displays the function profile accumulated across all instances of the function (see the <a href="flame-graph-panel.html">Flame Graph view</a> documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  </p>
+<p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then it's the caller, going up the call tree. Hover over an entry to display a tooltip with the complete call path.</p>
 <p><a href="img/assembly-instances_1027x182.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-instances_1027x182.png" /></a>  </p>
 <p><em>Click</em> on a menu entry to filter the profile data to include only the selected instance, updating the execution time and all profiling annotations for instructions and basic blocks.  </p>
 <p>The menu entries are checkboxes which allows selecting multiple instances to be included.<br />
 Use the <em>All Instances</em> entry or uncheck all instances to view the entire function profile again.</p>
 <h5 id="threads">Threads</h5>
-<p>By default the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  </p>
-<p>The menu entries are checkboxes which allows selecting multiple threads to be included.<br />
+<p>By default, the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  </p>
+<p>The menu entries are checkboxes that allow multiple instances to be selected and included.  
 Use the <em>All Threads</em> entry or uncheck all instances to view the entire function profile again.</p>
 <p><a href="img/assembly-threads_560x214.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-threads_560x214.png" style="width:350px" /></a>  </p>
 <details class="note" open="open">
 <summary>Note</summary>
-<p><em>Hovering</em> with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and if filtering is used, the name of the instances and threads included in the view. </p>
+<p><em>Hovering</em> with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and, if filtering is used, the name of the instances and threads included in the view. </p>
 </details>
 <h5 id="export">Export</h5>
 <p>See the <a href="#exporting">Exporting</a> documentation section below.</p>

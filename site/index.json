@@ -39,11 +39,6 @@
           "Title": "Recording a trace",
           "URL": "trace-recording.html",
           "SubTopics": null
-        },
-		{
-          "Title": "Profiling Trace report",
-          "URL": "trace-overview.html",
-          "SubTopics": null
         }
       ]
     },

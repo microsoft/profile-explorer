@@ -15,7 +15,7 @@
         <link rel="next" href="caller-panel.html">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="img/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.35">
     
     
@@ -65,7 +65,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,8 +92,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="Profile Explorer" class="md-header__button md-logo" aria-label="Profile Explorer" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="img/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -123,7 +122,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
@@ -213,8 +212,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="." title="Profile Explorer" class="md-nav__button md-logo" aria-label="Profile Explorer" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="img/logo.png" alt="logo">
 
     </a>
     Profile Explorer
@@ -1071,8 +1069,8 @@
   <h1>Call Tree view</h1>
 
 <h4 id="overview">Overview</h4>
-<p>The Call Tree view displays the tree derived from combining the call stacks associated with all profile samples in the trace, with each node representing a unique instance of a function. The node's children represents the callees (called functions) and the parent the caller function.  </p>
-<p><em>Total (inclusive) execution time</em> is computed by accumulating the time of all samples that have the instance in the call stack.<br />
+<p>The Call Tree view displays the tree derived from combining the call stacks associated with all profile samples in the trace, with each node representing a unique instance of a function. The node's children represent the callees (called functions), and the parent is the caller function.  </p>
+<p><em>Total (inclusive) execution time</em> is computed by accumulating the time of all samples with the instance in the call stack.<br />
 <em>Self (exclusive) execution time</em> is computed by subtracting the time spent in children nodes from the total execution time.</p>
 <p><a href="img/call-tree-view_1081x540.png" target="_blank"><img alt="Profiling UI screenshot" src="img/call-tree-view_1081x540.png" style="width:700px" /></a></p>
 <p>The view has two parts:  </p>
@@ -1087,7 +1085,7 @@
 <p>The columns in all list views can be resized and reorder. The new layout is saved across sessions when closing the application.</p>
 </details>
 <h4 id="searching-functions">Searching functions</h4>
-<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked and the <em>up/down</em> buttons showing on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
+<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
 <p><a href="img/call-tree-search_1077x402.png" target="_blank"><img alt="Profiling UI screenshot" src="img/call-tree-search_1077x402.png" style="width:700px" /></a></p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
