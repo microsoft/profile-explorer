@@ -493,7 +493,7 @@
         
   
   <span class="md-ellipsis">
-    Trace overview report
+    Profiling Trace report
   </span>
   
 
@@ -1017,22 +1017,42 @@
   <h1>Profiling UI overview</h1>
 
 <h4 id="trace-views">Trace views</h4>
-<p>Once a trace is loaded, the Summary, Flame Graph, and Timeline views provide a high-level overview of the profiled application's slowest parts. These views allow you to identify the functions where most time is spent and when they execute.</p>
+<p>Once a trace is loaded, the <em>Summary</em>, <em>Flame Graph</em>, and <em>Timeline</em> views provide a high-level overview of the profiled application's slowest parts. These views allow you to identify the functions where most time is spent and when they execute.</p>
 <p><a href="img/profiling-ui_1998x1377.png" target="_blank"><img alt="Profiling UI screenshot" src="img/profiling-ui-labels.png" /></a></p>
 <ul>
-<li><a href="summary-panel.html">Summary view</a>: displays all the functions with profiling data, which are sorted by default based on their exclusive (self) duration. The left side of the panel lists the modules (binaries) with profiling data, sorted based on the total time used by the functions part of the module.</li>
-<li><a href="flame-graph-panel.html">Flame Graph view</a>: displays an interacitve flame graph view of the call tree. The right side of the panel shows detailed information about the selected node(s).</li>
-<li><a href="timeline-panel.html">Timeline view</a>: displays the thread activity during the entire duration of the trace and allows filtering of the displayed profiling data to specific threads and time ranges.</li>
-<li><a href="call-tree-panel.html">Call Tree view</a>: displays nested call tree view showing the function call sequence for the entire trace.</li>
-<li><a href="caller-panel.html">Caller/Callee view</a>: displays for the function selected in the Summary view the list of callers (functions calling the selected one) and callees (functions called by the selected one).</li>
+<li>
+<p><a href="summary-panel.html">Summary view</a>: displays all the functions with profiling data, which are sorted by default based on their exclusive (self) duration.</p>
+<p>The left side of the panel lists the modules (binaries) with profiling data, sorted based on the total time used by the functions part of the module.  </p>
+</li>
+<li>
+<p><a href="flame-graph-panel.html">Flame Graph view</a>: displays an interacitve flame graph view of the call tree. The right side of the panel shows detailed information about the selected node(s).  </p>
+</li>
+<li>
+<p><a href="timeline-panel.html">Timeline view</a>: displays the thread activity during the entire duration of the trace and allows filtering of the displayed profiling data to specific threads and time ranges.  </p>
+</li>
+<li>
+<p><a href="call-tree-panel.html">Call Tree view</a>: displays nested call tree view showing the function call sequence for the entire trace.  </p>
+</li>
+<li>
+<p><a href="caller-panel.html">Caller/Callee view</a>: displays for the function selected in the Summary view the list of callers (functions calling the selected one) and callees (functions called by the selected one).  </p>
+</li>
 </ul>
 <h4 id="single-function-views">Single function views</h4>
-<p>Open a function to display the Assembly, Source file, and Flow graph views and see which parts take the most time (a double-click or the Return key in any of the views opens the function's Assembly view).</p>
+<p>Open a function to display the <em>Assembly</em>, <em>Source File</em>, and <em>Flow Graph</em> views and see which parts take the most time (a <em>double-click</em> or the <em>Return</em> key in any of the views opens the function's <em>Assembly</em> view).</p>
 <p><a href="img/profiling-ui2_1998x1377.png" target="_blank"><img alt="Profiling UI screenshot" src="img/profiling-ui2-labels.png" /></a></p>
 <ul>
-<li><a href="assembly-view.html">Assembly view</a>: displays the function's assembly code, where each instruction is annotated with the corresponding source line number and inlining information. The right side shows the time percentage (relative to the function's time) and time taken by each instruction. The slowest instructions are marked with colors and flame icons. Clicking on an instruction selects its corresponding source line in the Source File view.</li>
-<li><a href="source-panel.html">Source File view</a>: displays the function's source file and, optionally, the assembly code generated for each line. The right side shows the time percentage (relative to the function's time) and time taken by each line. The slowest lines are marked with colors and flame icons. Clicking on a line selects the corresponding instructions in the Assembly view.</li>
-<li><a href="source-panel.html">Flow Graph view</a>: displays the function's <a href="https://en.wikipedia.org/wiki/Control-flow_graph" target="_blank">control-flow graph</a>, constructed by analyzing the assembly code and forming basic blocks (a sequence of instructions that starts with jump targets and ends with jumps or branch instructions). The slowest blocks are marked with colors and labeled with the time percentage (relative to the function's time). Blocks forming a loop are marked with a green arrow.</li>
+<li>
+<p><a href="assembly-view.html">Assembly view</a>: displays the function's assembly code, where each instruction is annotated with the corresponding source line number and inlining information.  </p>
+<p>The right side shows the time percentage (relative to the function's time) and time taken by each instruction. The slowest instructions are marked with colors and flame icons. Clicking on an instruction selects its corresponding source line in the Source File view.  </p>
+</li>
+<li>
+<p><a href="source-panel.html">Source File view</a>: displays the function's source file and, optionally, the assembly code generated for each line.  </p>
+<p>The right side shows the time percentage (relative to the function's time) and time taken by each line. The slowest lines are marked with colors and flame icons. Clicking on a line selects the corresponding instructions in the Assembly view.  </p>
+</li>
+<li>
+<p><a href="source-panel.html">Flow Graph view</a>: displays the function's <a href="https://en.wikipedia.org/wiki/Control-flow_graph" target="_blank">control-flow graph</a>, constructed by analyzing the assembly code and forming basic blocks (a sequence of instructions that starts with jump targets and ends with jumps or branch instructions).  </p>
+<p>The slowest blocks are marked with colors and labeled with the time percentage (relative to the function's time). Blocks forming a loop are marked with a green arrow.  </p>
+</li>
 </ul>
 
 

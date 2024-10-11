@@ -10,6 +10,11 @@
       "URL": "",
       "SubTopics": [
         {
+          "Title": "About",
+          "URL": "about.html",
+          "SubTopics": null
+        },
+        {
           "Title": "Profiling UI overview",
           "URL": "profiling-ui.html",
           "SubTopics": null
@@ -17,11 +22,6 @@
         {
           "Title": "Video Demos",
           "URL": "demos.html",
-          "SubTopics": null
-        },
-        {
-          "Title": "About",
-          "URL": "about.html",
           "SubTopics": null
         }
       ]
@@ -38,6 +38,11 @@
         {
           "Title": "Recording a trace",
           "URL": "trace-recording.html",
+          "SubTopics": null
+        },
+		{
+          "Title": "Profiling Trace report",
+          "URL": "trace-overview.html",
           "SubTopics": null
         }
       ]
