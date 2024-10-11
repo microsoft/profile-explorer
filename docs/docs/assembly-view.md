@@ -45,11 +45,11 @@ The debug info files usually contain a mapping between the source line numbers a
     
 ##### Inlinees
 
-During function inlining, the compiler may preserve additional details about the function code being inlined so that the origin of an instruction can be saved into the debug info file. If available, the inlinees (inlined functions) are appended after the source line number, separated by the | letter.  
+When a function is inlined, the compiler may keep extra details about the function code that is being inlined so that the original location of an instruction can be saved into the debug info file. If available, the inlined functions are added after the source line number, separated by the "|" letter.
 
-For example, if the function contains a call chain like *foo() -> bar()*, with both calls being inlined, the final instructions will record the fact that they originate from *bar*, which got inlined into *foo*, then *foo* inlined into the function.
+For example, if a function contains a call chain like "foo() -> bar()", and both calls are inlined, the final instructions will indicate that they come from "bar", which was inlined into "foo", and then "foo" was inlined into the function.
 
-*Hovering* over the inlinee shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this info to clipboard, first *click* the inlinee, then press *Ctrl+C*:  
+*Hovering* over the inlined function shows a tooltip with the call path (stack trace) of the functions inlined at that point. To copy this information to the clipboard, first click the inlined function, then press *Ctrl+C*.
 
 [![Profiling UI screenshot](img/assembly-inlinees_926x222.png){: style="width:500px"}](img/assembly-inlinees_926x222.png){:target="_blank"}
 
@@ -59,7 +59,7 @@ The assembly is parsed and analyzed to recover the function's [control-flow grap
 
 The example below shows a subset of a function's basic blocks, with the corresponding control-flow graph part from the *Flow Graph* view. The basic blocks B3-B6 are marked on the left side as folding sections that can be collapsed/expanded with a *click* on the -/+ buttons.
 
-Notice how B5 is recognized for being a loop (the last instruction in the block jumps to the start of the block). The Flow Graph view uses a green arrow to mark loops - B4 is also the start block of a larger loop.
+Notice how B5 is recognized as forming a loop (the last instruction in the block jumps to the start of the block). The Flow Graph view uses a green arrow to mark loops - B4 is also the start block of a larger loop.
 
 [![Profiling UI screenshot](img/assembly-flow-graph_579x600.png){: style="width:500px"}](img/assembly-flow-graph_579x600.png){:target="_blank"}  
 
@@ -96,8 +96,8 @@ To jump at any time to the slowest instruction, *click* the red ![](img/flame-ic
 
 Combining the parsed assembly and profiling information, call instructions are marked with their target(s) and have an arrow icon placed before the call opcode:  
 
-- for direct calls (target is an function name/address), a black arrow is used.
-- for indirect or virtual function calls (target is a register or memory operand), a green arrow is used.
+- A black arrow icon is used for direct calls (target is a function name/address).
+- A green arrow icon is used for indirect or virtual function calls (target is a register or memory operand).
 
 *Hovering* with the mouse over the arrow displays a list of target functions with details about their execution time. For example, the indirect call below at runtime has the *std::_Random_device* function as the only target:  
 
@@ -114,17 +114,17 @@ Combining the parsed assembly and profiling information, call instructions are m
 - *Shift+Double-Click* (or Shift+Return) opens the called function in a new tab.  
 - *Alt+Return* shows a preview popup with the called function's assembly. Press the *Escape* key to close the popup.  
 - *Hovering* with the mouse over the function name also shows the preview popup.
-- Use the shortcuts from the *Opened function history* section below to go back to the caller.
+- Use the shortcuts from the *Opened function history* section below to return to the caller.
 
 [![Profiling UI screenshot](img/assembly-call-hover_922x278.png)](img/assembly-call-hover_922x278.png){:target="_blank"}  
 
 ##### Opened functions history
 
-When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. This is especially useful when navigating to a called function by double-clicking its name in the assembly, since it makes it easy to back to the caller.  
+When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. The history is especially useful when navigating to a called function by double-clicking its name in the assembly since it makes it easy to get back to the caller.  
 
 - *Click* the *Back* button in the toolbar to navigate back to the previous function in the sequence (or press the *Backspace* key or the optional *Back* button on the mouse). The back button also has a menu that lists the previous functions.  
 
-- *Click* the > button in the toolbar to navigate to the next function in the sequence (or press the optional *Forward* button on the mouse).  
+- *Click* the > button in the toolbar to navigate to the following function in the sequence (or press the optional *Forward* button on the mouse).  
 
 [![Profiling UI screenshot](img/assembly-back-menu_608x154.png){: style="width:450px"}](img/assembly-back-menu_608x154.png){:target="_blank"}  
 
@@ -151,7 +151,7 @@ Displays a menu with the slowest blocks, sorted by execution time in decreasing 
 
 ##### Inlinees
 
-Displays a menu with the inlinees (inlined functions) that directly contribute slow instructions, sorted by the execution time of all instructions originating from a particular inlinee in decreasing order.  
+Displays a menu with the inlinees (inlined functions) that directly contribute to slow instructions, sorted by the execution time of all instructions originating from a particular inlinee in decreasing order.  
 
 [![Profiling UI screenshot](img/assembly-inlinees_1303x459.png)](img/assembly-inlinees_1303x459.png){:target="_blank"}  
 
@@ -161,9 +161,9 @@ In the example above, most of the execution time (46.79%) is taken by instructio
 
 ##### Instances
 
-By default the Assembly view displays the function profile accumulated across all instances the function (see the [Flame Graph view](flame-graph-panel.md) documentation for more details about instances). Filtering the function profile based on an instance makes it possible to better understand when certain parts of the function dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  
+By default, the Assembly view displays the function profile accumulated across all instances of the function (see the [Flame Graph view](flame-graph-panel.md) documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  
 
-The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then it's caller, going up the call tree. Hover over an entry to display a tooltip with the complete call path.
+The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then it's the caller, going up the call tree. Hover over an entry to display a tooltip with the complete call path.
 
 [![Profiling UI screenshot](img/assembly-instances_1027x182.png)](img/assembly-instances_1027x182.png){:target="_blank"}  
 
@@ -174,15 +174,15 @@ Use the *All Instances* entry or uncheck all instances to view the entire functi
 
 ##### Threads
 
-By default the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  
+By default, the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  
 
-The menu entries are checkboxes which allows selecting multiple threads to be included.  
+The menu entries are checkboxes that allow multiple instances to be selected and included.  
 Use the *All Threads* entry or uncheck all instances to view the entire function profile again.
 
 [![Profiling UI screenshot](img/assembly-threads_560x214.png){: style="width:350px"}](img/assembly-threads_560x214.png){:target="_blank"}  
 
 ???+ note
-    *Hovering* with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and if filtering is used, the name of the instances and threads included in the view. 
+    *Hovering* with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and, if filtering is used, the name of the instances and threads included in the view. 
 
 ##### Export
 

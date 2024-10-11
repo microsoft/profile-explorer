@@ -8,13 +8,13 @@ The view has three parts:
 
 - a toolbar at the top, with action buttons and the *Search* input box.
 - the Modules panel on the left side. Its visibility can be toggled using the *Modules* button in the toolbar.
-- the list of functions from either the entire trace or filtered to display only the functions part of a single module. By default the list is sorted by self (exclusive) time in descending order.
+- the list of functions from either the entire trace or filtered to display only the functions part of a single module. By default, the list is sorted by self (exclusive) time in descending order.
 
 ##### Modules list
 
 The modules list has an entry for each module with profile data and starts with an *All* entry representing all modules combined. Each entry has the module name, execution time percentage relative to the entire trace and execution time value. Modules are sorted by their execution time in descending order.
 
-By default the *All* entry is active and the function list displays all functions with profile data in the trace.  
+By default, the *All* entry is active and the function list displays all functions with profile data in the trace.  
 
 *Double-click* a module (or use the Return key) to display only its functions. Selecting a module while the *All* entry is active selects its functions in the list.
 

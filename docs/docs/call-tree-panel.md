@@ -1,8 +1,8 @@
 #### Overview
 
-The Call Tree view displays the tree derived from combining the call stacks associated with all profile samples in the trace, with each node representing a unique instance of a function. The node's children represents the callees (called functions) and the parent the caller function.  
+The Call Tree view displays the tree derived from combining the call stacks associated with all profile samples in the trace, with each node representing a unique instance of a function. The node's children represent the callees (called functions), and the parent is the caller function.  
 
-*Total (inclusive) execution time* is computed by accumulating the time of all samples that have the instance in the call stack.  
+*Total (inclusive) execution time* is computed by accumulating the time of all samples with the instance in the call stack.  
 *Self (exclusive) execution time* is computed by subtracting the time spent in children nodes from the total execution time.
 
 [![Profiling UI screenshot](img/call-tree-view_1081x540.png){: style="width:700px"}](img/call-tree-view_1081x540.png){:target="_blank"}
@@ -21,7 +21,7 @@ A function node has the demangled (undecorated) function name, optionally prepen
 
 #### Searching functions
 
-Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked and the *up/down* buttons showing on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.
+Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the *up/down* buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.
 
 [![Profiling UI screenshot](img/call-tree-search_1077x402.png){: style="width:700px"}](img/call-tree-search_1077x402.png){:target="_blank"}
 

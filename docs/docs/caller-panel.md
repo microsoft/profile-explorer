@@ -16,7 +16,7 @@ A function node has the demangled (undecorated) function name, optionally prepen
 ???+ note
     The columns in all list views can be resized and reorder. The new layout is saved across sessions when closing the application.
 
-By default all function instances are displayed combined, with the lists of callers and callees merged and execution time summed up. To display individual instances instead, disable *Combine* in the toolbar.
+By default, all function instances are displayed combined, with the lists of callers and callees merged and execution time summed up. To display individual instances instead, disable *Combine* in the toolbar.
 
 [![Profiling UI screenshot](img/call-tree-instances_1005x311.png){: style="width:700px"}](img/call-tree-instances_1005x311.png){:target="_blank"}
 

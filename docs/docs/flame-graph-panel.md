@@ -6,7 +6,7 @@
     ![Flame graph diagram](img/flame-graph.png){: style="width:320px"}  
     In the example above, the *main* function is considered the process entry point, calling *foo* and *bar*, with *foo* taking 60% of the time and *bar* 40%. Function *foo* spends a part of its total (inclusive) time in the calls to *baz* and *etc1*, while the rest is self (exclusive) time, meaning instructions part of *foo* which are not calls to other functions.  
 
-    Note that there are two instances of the function *baz* with different execution time, each with a unique path to it in the call tree starting from *main* (all other functions have a single instance). You can see the time of each instance by *hovering* with the mouse over it or in the *Details panel* after it's selected.
+    Note that there are two instances of the function *baz* with different execution times, each with a unique path to it in the call tree starting from *main* (all other functions have a single instance). You can see the time of each instance by *hovering* with the mouse over it or in the *Details panel* after it's selected.
 
     The following links provide an introduction to the flame graph visualization concept, its history, and how it's being used across the industry for performance investigations.  
 
@@ -17,7 +17,7 @@
 
 The Flame graph view is the main means of identifying the parts of the application where most time is spent. 
 
-[![Profiling UI screenshot](img/flame-graph-panel.png)](img/flame-graph-panel.png){:target="_blank"}
+[![Profiling UI screenshot](img/flame-graph-panel_1435x557.png)](img/flame-graph-panel_1435x557.png){:target="_blank"}
 
 The view has three parts:
 
@@ -39,6 +39,7 @@ By default, the nodes are color-coded based on the module names to which the fun
 ##### Navigating the Flame graph
 
 A double-click on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  
+
 [![Profiling UI screenshot](img/flame-graph-expand_944x428.png)](img/flame-graph-expand_944x428.png){:target="_blank"}
 
 Expanding a node can be repeated to go deeper down the call path. The *Back* button in the toolbar (or *Backspace* key/*Back* mouse button) undoes the operation and returns the view to its previous state.  
@@ -50,7 +51,7 @@ Expanding a node can be repeated to go deeper down the call path. The *Back* but
 
 ##### Changing the root node
 
-It can be useful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed and execution time percentages are computed relative to the new root starting at 100%.
+It can be helpful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.
 
 To change the root node, from the right-click context menu, select *Set Function as Root* (alternatively, use the *Alt+Double-click* shortcut). After the switch, the toolbar displays the name of the current root node. Setting a new root node can be repeated in the new view.
 
@@ -60,7 +61,7 @@ To remove the root node and view the entire Flame graph, click the *X* button ne
 
 #### Searching functions
 
-Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked and the *up/down* buttons showing on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.
+Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the *up/down* buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.
 
 [![Profiling UI screenshot](img/flame-graph-search_1078x286.png)](img/flame-graph-search_1078x286.png){:target="_blank"}
 
@@ -93,8 +94,8 @@ Use the *search input box* in the toolbar to search for functions with a specifi
     | Back | If the mouse has an optional *Back* button, this undoes the previous action, such as expanding a node (double-click) or changing the root node. An alternative is pressing the *Backspace* key or the *Back* button in the toolbar.|
     | Right-click | Shows the context menu for the selected nodes. |
     | Click+Drag | If the flame graph is larger than the view, clicking on and dragging an empty part of the view moves the view in the direction of the mouse. |
-    | Scroll wheel | Scrolls the view vertically if the flame graph is larger than the view |
-    | Shift+Scroll wheel | Scrolls the view horizontally if the flame graph is larger than the view |
+    | Scroll wheel | Scrolls the view vertically if the flame graph is larger than the view. |
+    | Shift+Scroll wheel | Scrolls the view horizontally if the flame graph is larger than the view. |
     | Ctrl+Scroll wheel | Zooms in or out the view around the mouse pointer position. |
     | Click+Scroll wheel | Zooms in or out the view around the mouse pointer position. |
 

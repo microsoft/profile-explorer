@@ -1,16 +1,5 @@
-#### App UI overview, loading and navigating a trace
+#### UI overview, loading and navigating a trace
 
 <video controls>
-<source src="video/profiler-ui.mp4" type="video/mp4">
+<source src="https://github.com/user-attachments/assets/0e0aca13-3fbf-4bf3-8983-b95ad019f853" type="video/mp4">
 </video>
-
-
-#### Additional, advanced app functionality
-
-<video controls>
-<source src="video/advanced-functionality.mp4" type="video/mp4">
-</video>
-
-???+ note
-    The demo videos above use an older version of the app.  
-    New demo videos using the latest version are currently being worked on. 

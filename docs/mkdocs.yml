@@ -3,13 +3,13 @@ use_directory_urls: false
 nav:
   - Introduction: intro.md
   - Getting started:
+    - About: about.md
     - Profiling UI overview: profiling-ui.md
     - Video Demos: demos.md
-    - About: about.md
   - Trace loading and recording:
     - Loading a trace: trace-loading.md
     - Recording a trace: trace-recording.md
-    - Trace overview report: trace-overview.md
+    - Profiling Trace report: trace-overview.md
   - Trace profile views:
     - Summary view: summary-panel.md
     - Flame Graph view: flame-graph-panel.md
@@ -29,13 +29,26 @@ nav:
     - Application options: options.md
     - Rust support: options.md
 theme:
+  logo: img/logo.png
+  favicon: img/favicon.png
   name: 'material'
   font:
     text: Roboto
     code: Roboto Mono
-  palette:
-    primary: 'blue'
-    accent: 'white'
+  palette: 
+    # Palette toggle for light mode
+    - scheme: default
+      primary: blue
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     - navigation.expand
     - navigation.instant

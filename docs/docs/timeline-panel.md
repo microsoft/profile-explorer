@@ -2,7 +2,7 @@
 
 The Timeline view displays the application's activity for the entire trace duration, with each thread having a histogram showing the CPU usage based on the number of profile samples collected over time.  
 
-This view is helpful for identifying the threads and time ranges that had CPU activity (or lack of it due to locks and I/O) and also has features for filtering the entire profile data to consider only specific threads and time ranges.  
+This view helps identify the threads and time ranges with CPU activity (or lack thereof due to locks and I/O). It also has features for filtering the entire profile data to consider only specific threads and time ranges.  
 
 [![Profiling UI screenshot](img/timeline-view_1028x418.png)](img/timeline-view_1028x418.png){:target="_blank"}
 
@@ -12,13 +12,13 @@ The view has three parts:
 - a graph showing the activity of the entire application, with the activity across all threads combined.
 - for each thread, a graph showing the thread's activity. The thread list is sorted by the execution time in descending order.
 
-The *All Threads* entry displays on top the trace duration range, split into time units. The maximum number of *CPU cores* used by the application is displayed on the left. Individual threads use, at most, one core.  
+The *All Threads* entry displays the trace duration range on top, split into time units. The maximum number of CPU cores the application uses is displayed on the left. Individual threads use, at most, one core.  
 
 Each individual thread entry has the following values and buttons:
 
 [![Profiling UI screenshot](img/timeline-threads_599x159.png){: style="width:500px"}](img/timeline-threads_599x159.png){:target="_blank"}
 
-- thread visibility button indicating if the samples from the thread is included in the profile data or not. *Click* to toggle between included ![](img/timeline-eye-button.png) or excluded state ![](img/timeline-eye-button-disabled.png).
+- thread visibility button indicating if the samples from the thread are included in the profile data or not. *Click* to toggle between included ![](img/timeline-eye-button.png) or excluded state ![](img/timeline-eye-button-disabled.png).
 - thread context menu button ![](img/timeline-menu-button.png) that shows thread filtering actions.
 - the thread ID number.
 - the thread execution time as a sum of the duration of all samples that ran on the thread.
@@ -55,13 +55,13 @@ The entire profile can be filtered so that only specific threads and time ranges
 
 ##### Filtering based on a time range
 
-Select the desired time range, then *double-click* the selection (alternatively, right-click the selection and click "Filter to Time Range*). If the selection is performed for a single thread, a thread filter that displays only the selected thread and excludes all others is also added.  
+Select the desired time range, then *double-click* the selection (alternatively, right-click the selection and click "Filter to Time Range*). If a single thread is selected, a filter that displays only the selected thread and excludes all others is also added.  
 
 [![Profiling UI screenshot](img/timeline-filter-time_878x320.png)](img/timeline-filter-time_878x320.png){:target="_blank"}
     
 ##### Filtering based on a thread
 
-There are multiple way to filter based on one or multiple threads, optionally combined with a time range filter.  
+There are multiple ways to filter based on one or multiple threads, optionally combined with a time range filter.  
 
 [![Profiling UI screenshot](img/timeline-thread-menu_480x317.png){: style="width:350px"}](img/timeline-thread-menu_480x317.png){:target="_blank"}
 

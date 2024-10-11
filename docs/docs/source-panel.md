@@ -1,6 +1,6 @@
 #### Overview
 
-The Source File view displays the function's source code in the active assembly view. When a function is opened in the Assembly view, using the debug info file, its corresponding source file is identified, downloaded if needed, and loaded in the view, with source lines annotated with profiling information.  
+The Source File view displays the source code of the function viewed in the active assembly view. When a function is opened in the Assembly view, using the debug info file, its corresponding source file is identified, downloaded if needed, and loaded in the view, with source lines annotated with profiling information.  
 
 [![Profiling UI screenshot](img/source-view_1000x503.png)](img/source-view_1000x503.png){:target="_blank"}
 
@@ -125,7 +125,7 @@ Use the *Outline* button from the profiling toolbar displays to display a menu s
 
 *Click* on a menu entry to jump to the statement start. *Hovering* with the mouse over a menu entry highlights the source lines part of the statement.
 
-The example blow shows the outline of a function having three nested loops, with if/else statements in the last level loop.
+The example below shows the outline of a function having three nested loops, with if/else statements in the last level loop.
 
 [![Profiling UI screenshot](img/source-outline_953_289.png)](img/source-outline_953_289.png){:target="_blank"}
 
