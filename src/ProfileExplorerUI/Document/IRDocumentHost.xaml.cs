@@ -1327,7 +1327,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await LoadProfile(false);
     }
 
-    // Apply the same filter in the source file panel.
+    // Apply the same filter in the Source File view.
     await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
 
     TitlePrefix = ProfilingUtils.CreateProfileFilterTitle(profileFilter_, session_);
@@ -1900,27 +1900,27 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(QueryMenuItem);
-    QueryMenuItem.Items.Clear();
-
-    // Append the available queries.
-    var queries = Session.CompilerInfo.BuiltinQueries;
-
-    foreach (var query in queries) {
-      var item = new MenuItem {
-        Header = query.Name,
-        ToolTip = query.Description,
-        Tag = query
-      };
-
-      item.Click += QueryMenuItem_Click;
-      QueryMenuItem.Items.Add(item);
-    }
-
-    // Add back the default menu items.
-    DocumentUtils.RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
-  }
+  // private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+  //   var defaultItems = DocumentUtils.SaveDefaultMenuItems(QueryMenuItem);
+  //   QueryMenuItem.Items.Clear();
+  //
+  //   // Append the available queries.
+  //   var queries = Session.CompilerInfo.BuiltinQueries;
+  //
+  //   foreach (var query in queries) {
+  //     var item = new MenuItem {
+  //       Header = query.Name,
+  //       ToolTip = query.Description,
+  //       Tag = query
+  //     };
+  //
+  //     item.Click += QueryMenuItem_Click;
+  //     QueryMenuItem.Items.Add(item);
+  //   }
+  //
+  //   // Add back the default menu items.
+  //   DocumentUtils.RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
+  // }
 
   private void QueryMenuItem_Click(object sender, RoutedEventArgs e) {
     var menuItem = (MenuItem)sender;
@@ -2010,43 +2010,43 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(TaskMenuItem);
-    TaskMenuItem.Items.Clear();
+  // private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+  //   var defaultItems = DocumentUtils.SaveDefaultMenuItems(TaskMenuItem);
+  //   TaskMenuItem.Items.Clear();
+  //
+  //   foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
+  //     AddFunctionTaskDefinitionMenuItem(action);
+  //   }
+  //
+  //   // Since first loading the scripts takes 1-2 sec,
+  //   // temporarily add a menu entry to show initially in the menu.
+  //   var item = new MenuItem {
+  //     Header = "Loading scripts...",
+  //     IsEnabled = false
+  //   };
+  //
+  //   TaskMenuItem.Items.Add(item);
+  //
+  //   var scriptTasks = await Task.Run(() => Session.CompilerInfo.ScriptFunctionTasks);
+  //
+  //   foreach (var action in scriptTasks) {
+  //     AddFunctionTaskDefinitionMenuItem(action);
+  //   }
+  //
+  //   DocumentUtils.RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
+  //   TaskMenuItem.Items.Remove(item);
+  // }
 
-    foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
-      AddFunctionTaskDefinitionMenuItem(action);
-    }
-
-    // Since first loading the scripts takes 1-2 sec,
-    // temporarily add a menu entry to show initially in the menu.
-    var item = new MenuItem {
-      Header = "Loading scripts...",
-      IsEnabled = false
-    };
-
-    TaskMenuItem.Items.Add(item);
-
-    var scriptTasks = await Task.Run(() => Session.CompilerInfo.ScriptFunctionTasks);
-
-    foreach (var action in scriptTasks) {
-      AddFunctionTaskDefinitionMenuItem(action);
-    }
-
-    DocumentUtils.RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
-    TaskMenuItem.Items.Remove(item);
-  }
-
-  private void AddFunctionTaskDefinitionMenuItem(FunctionTaskDefinition action) {
-    var item = new MenuItem {
-      Header = action.TaskInfo.Name,
-      ToolTip = action.TaskInfo.Description,
-      Tag = action
-    };
-
-    item.Click += TaskActionMenuItem_Click;
-    TaskMenuItem.Items.Add(item);
-  }
+  // private void AddFunctionTaskDefinitionMenuItem(FunctionTaskDefinition action) {
+  //   var item = new MenuItem {
+  //     Header = action.TaskInfo.Name,
+  //     ToolTip = action.TaskInfo.Description,
+  //     Tag = action
+  //   };
+  //
+  //   item.Click += TaskActionMenuItem_Click;
+  //   TaskMenuItem.Items.Add(item);
+  // }
 
   private async void TaskActionMenuItem_Click(object sender, RoutedEventArgs e) {
     var menuItem = (MenuItem)sender;

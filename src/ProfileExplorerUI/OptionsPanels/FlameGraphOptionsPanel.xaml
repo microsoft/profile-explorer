@@ -20,19 +20,19 @@
         <StackPanel Margin="4,4,4,4">
           <CheckBox
             Margin="0,2,0,2"
-            Content="Show function details panel"
+            Content="Show Function Details panel"
             IsChecked="{Binding ShowDetailsPanel, Mode=TwoWay}"
-            ToolTip="Show the function details panel on the right-hand side" />
+            ToolTip="Show the Function Details panel on the right-hand side" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Sync function in other profiling panels"
+            Content="Sync function in other profiling views"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="Sync function displayed in other profiling views with selection" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Sync Source File panel with selection"
+            Content="Sync Source File view with selection"
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
-            ToolTip="Sync file displayed in the Source File panel with selection" />
+            ToolTip="Sync file displayed in the Source File view with selection" />
 
           <Separator
             Margin="0,4,0,4"
@@ -483,7 +483,7 @@
       </TabItem>
       <TabItem
         x:Name="DetailsPanel"
-        Header="Details Panel"
+        Header="Function Details panel"
         Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox

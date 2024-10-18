@@ -51,11 +51,11 @@
             SelectedIndex="0"
             SelectionChanged="FilterComboBox_SelectionChanged">
             <ComboBoxItem
-              Content="Document Notes"
-              Tag="Document" />
+              Content="Trace Notes"
+              Tag="Trace" />
             <ComboBoxItem
-              Content="Section Notes"
-              Tag="Section" />
+              Content="Function Notes"
+              Tag="Function" />
           </ComboBox>
 
           <ToggleButton
@@ -66,17 +66,16 @@
               Height="16"
               Source="{StaticResource WordWrapIcon}" />
           </ToggleButton>
-          <Separator />
-
-          <ToggleButton
-            IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
-            ToolTip="Search output text (Ctrl+F)">
-            <Image
-              Width="16"
-              Height="16"
-              Source="{StaticResource SearchIcon}" />
-          </ToggleButton>
-
+          <!-- <Separator /> -->
+          <!-- -->
+          <!-- <ToggleButton -->
+          <!--   IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}" -->
+          <!--   ToolTip="Search output text (Ctrl+F)"> -->
+          <!--   <Image -->
+          <!--     Width="16" -->
+          <!--     Height="16" -->
+          <!--     Source="{StaticResource SearchIcon}" /> -->
+          <!-- </ToggleButton> -->
         </ToolBar>
       </ToolBarTray>
 

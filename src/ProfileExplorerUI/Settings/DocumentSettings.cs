@@ -17,7 +17,7 @@ public class DocumentSettings : TextViewSettingsBase {
   public bool HighlightSourceDefinition { get; set; }
   [ProtoMember(5)][OptionValue(true)]
   public bool HighlightDestinationUses { get; set; }
-  [ProtoMember(6)][OptionValue(true)]
+  [ProtoMember(6)][OptionValue(false)]
   public bool HighlightInstructionOperands { get; set; }
   [ProtoMember(7)][OptionValue(true)]
   public bool ShowInfoOnHover { get; set; }

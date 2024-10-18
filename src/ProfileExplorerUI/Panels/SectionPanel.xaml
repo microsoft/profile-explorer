@@ -296,7 +296,7 @@
               Padding="0,0,2,0"
               BorderThickness="0"
               IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
-              ToolTip="Sync function displayed in other profiling panels with selection"
+              ToolTip="Sync function displayed in other profiling views with selection"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -317,7 +317,7 @@
               Padding="0,0,2,0"
               BorderThickness="0"
               IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
-              ToolTip="Sync Source File panel with selection"
+              ToolTip="Sync Source File view with selection"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -1097,7 +1097,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Call Tree"
-                ToolTip="Select the function instance in the Call Tree panel"
+                ToolTip="Select the function instance in the Call Tree view"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Icon>
                   <Image
@@ -1111,7 +1111,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Flame Graph"
-                ToolTip="Select the function instance in the Flame Graph panel"
+                ToolTip="Select the function instance in the Flame Graph view"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Icon>
                   <Image
@@ -1125,7 +1125,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Timeline"
-                ToolTip="Select the function instance in the Timeline panel"
+                ToolTip="Select the function instance in the Timeline view"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Icon>
                   <Image

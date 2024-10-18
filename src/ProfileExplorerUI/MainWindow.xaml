@@ -247,25 +247,25 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem
-              Command="local:AppCommand.OpenBaseDiffDocuments"
-              Header="_Compare Base/Diff Files"
-              InputGestureText="F12">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource BookIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem
-              Command="local:AppCommand.OpenDiffDocument"
-              Header="Open _Diff File"
-              InputGestureText="Ctrl+F12" />
-            <MenuItem
-              Command="local:AppCommand.CloseDiffDocument"
-              Header="Close Diff File" />
-            <Separator />
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.OpenBaseDiffDocuments" -->
+            <!--   Header="_Compare Base/Diff Files" -->
+            <!--   InputGestureText="F12"> -->
+            <!--   <MenuItem.Icon> -->
+            <!--     <Image -->
+            <!--       Width="16" -->
+            <!--       Height="16" -->
+            <!--       Source="{StaticResource BookIcon}" /> -->
+            <!--   </MenuItem.Icon> -->
+            <!-- </MenuItem> -->
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.OpenDiffDocument" -->
+            <!--   Header="Open _Diff File" -->
+            <!--   InputGestureText="Ctrl+F12" /> -->
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.CloseDiffDocument" -->
+            <!--   Header="Close Diff File" /> -->
+            <!-- <Separator /> -->
 
             <MenuItem
               Command="local:AppCommand.OpenDebug"
@@ -371,85 +371,75 @@
 
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Summary Panel"
+              Header="Summary View"
               Tag="Section" />
             <!-- <MenuItem -->
             <!--   Click="ShowPanelMenu_Click" -->
-            <!--   Header="Pass Output Panel" -->
+            <!--   Header="Pass Output View" -->
             <!--   Tag="PassOutput" /> -->
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Definition Panel"
+              Header="Definition View"
               Tag="Definition" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="References Panel"
+              Header="References View"
               Tag="References" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Bookmarks Panel"
+              Header="Bookmarks View"
               Tag="Bookmarks" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Source File Panel"
+              Header="Source File View"
               Tag="Source" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Search Results Panel"
+              Header="Search Results View"
               Tag="SearchResults" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Notes Panel"
+              Header="Notes View"
               Tag="Notes" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Scripting Panel"
-              Tag="Scripting" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Developer Panel"
+              Header="Developer View"
               Tag="Developer" />
             <Separator />
 
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Flow Graph Panel"
+              Header="Flow Graph View"
               Tag="FlowGraph" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Dominator Tree Panel"
+              Header="Dominator Tree View"
               Tag="DominatorTree" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Post-Dominator Tree Panel"
+              Header="Post-Dominator Tree View"
               Tag="PostDominatorTree" />
             <MenuItem
-              Header="Control Dependence Graph Panel"
-              IsEnabled="False" />
-            <MenuItem
-              Header="Loop Graph Panel"
-              IsEnabled="False" />
-            <MenuItem
-              Header="Expression Graph Panel"
+              Header="Expression Graph View"
               IsEnabled="True"
               Tag="ExpressionGraph" />
             <Separator />
 
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Call Tree Panel"
+              Header="Call Tree View"
               Tag="CallTree" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Caller/Callee Panel"
+              Header="Caller/Callee View"
               Tag="CallerCallee" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Flame Graph Panel"
+              Header="Flame Graph View"
               Tag="FlameGraph" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Timeline Panel"
+              Header="Timeline View"
               Tag="Timeline" />
           </MenuItem>
 
@@ -478,7 +468,7 @@
 
             <MenuItem
               Command="local:AppCommand.ViewProfileReport"
-              Header="Profiling report">
+              Header="Profile Report">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -490,7 +480,7 @@
 
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Summary Panel"
+              Header="Summary View"
               Tag="Section">
               <MenuItem.Icon>
                 <Image
@@ -501,7 +491,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Timeline Panel"
+              Header="Timeline View"
               Tag="Timeline">
               <MenuItem.Icon>
                 <Image
@@ -512,7 +502,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Flame Graph Panel"
+              Header="Flame Graph View"
               Tag="FlameGraph">
               <MenuItem.Icon>
                 <Image
@@ -523,7 +513,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Call Tree Panel"
+              Header="Call Tree View"
               Tag="CallTree">
               <MenuItem.Icon>
                 <Image
@@ -534,7 +524,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Caller/Callee Panel"
+              Header="Caller/Callee View"
               Tag="CallerCallee">
               <MenuItem.Icon>
                 <Image
@@ -595,7 +585,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Help Panel"
+              Header="Help View"
               Tag="Help">
               <MenuItem.Icon>
                 <Image
@@ -1332,7 +1322,7 @@
           BorderBrush="{x:Null}"
           Click="HelpButton_Click"
           FontSize="11"
-          ToolTip="Open Help Panel">
+          ToolTip="Open Help View">
           <StackPanel Orientation="Horizontal">
             <Image
               Width="16"
@@ -1719,7 +1709,7 @@
         VerticalAlignment="Center"
         FontSize="11"
         Text="Workspace"
-        ToolTip="A workspace is a snapshot of a panel layout configuration" />
+        ToolTip="A workspace is a snapshot of a view layout configuration" />
       <ComboBox
         x:Name="WorkspaceCombobox"
         Width="120"

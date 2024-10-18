@@ -384,7 +384,7 @@
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Call Tree"
-            ToolTip="Select the function instance in the Call Tree panel"
+            ToolTip="Select the function instance in the Call Tree view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image
@@ -397,7 +397,7 @@
             Command="{Binding SelectFunctionFlameGraphCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Flame Graph"
-            ToolTip="Select the function instance in the Flame Graph panel"
+            ToolTip="Select the function instance in the Flame Graph view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image
@@ -410,7 +410,7 @@
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Timeline"
-            ToolTip="Select the function instance in the Timeline panel"
+            ToolTip="Select the function instance in the Timeline view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image

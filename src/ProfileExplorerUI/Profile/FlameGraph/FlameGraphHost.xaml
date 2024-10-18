@@ -265,7 +265,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Summary"
             IsEnabled="{Binding EnableSingleNodeActions}"
-            ToolTip="Select the function in the Summary panel">
+            ToolTip="Select the function in the Summary view">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -278,7 +278,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Call Tree"
             IsEnabled="{Binding EnableSingleNodeActions}"
-            ToolTip="Select the function instance in the Call Tree panel">
+            ToolTip="Select the function instance in the Call Tree view">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -291,7 +291,7 @@
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Timeline"
             IsEnabled="{Binding EnableSingleNodeActions}"
-            ToolTip="Select the function instance in the Timeline panel">
+            ToolTip="Select the function instance in the Timeline view">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -302,7 +302,7 @@
           <MenuItem
             Header="Mark in Timeline"
             IsEnabled="{Binding EnableSingleNodeActions}"
-            ToolTip="Mark the function instance in the Timeline panel">
+            ToolTip="Mark the function instance's samples in the Timeline view">
             <MenuItem>
               <MenuItem.Header>
                 <ProfileExplorerUi:ColorSelector ColorSelectedCommand="{Binding MarkTimelineCommand}" />

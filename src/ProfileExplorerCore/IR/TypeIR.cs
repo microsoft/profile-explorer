@@ -166,15 +166,15 @@ public sealed class TypeIR {
       case TypeKind.Array:
         return "<TODO:array>";
       case TypeKind.Struct:
-        return "<TODO:array>";
+        return "<TODO:struct>";
       case TypeKind.Pointer:
-        return "<TODO:array>";
+        return "<TODO:ptr>";
       case TypeKind.Void:
         return "void";
       case TypeKind.Bool:
         return "bool";
       case TypeKind.Unknown:
-        return "unknown";
+        return "unk";
     }
 
     return "<unexpected>";

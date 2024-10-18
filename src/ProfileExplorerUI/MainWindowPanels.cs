@@ -170,7 +170,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(NotesPanel, NotesPanelHost);
     // RegisterPanel(PassOutputPanel, PassOutputHost);
     RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
-    RegisterPanel(ScriptingPanel, ScriptingPanelHost);
+    // RegisterPanel(ScriptingPanel, ScriptingPanelHost);
     RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
     RegisterPanel(CallTreePanel, CallTreePanelHost);
     RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
@@ -1201,12 +1201,12 @@ public partial class MainWindow : Window, ISession {
               RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
               break;
             }
-            case ToolPanelKind.Scripting: {
-              ScriptingPanel = (ScriptingPanel)panel;
-              ScriptingPanelHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(ScriptingPanel, ScriptingPanelHost);
-              break;
-            }
+            // case ToolPanelKind.Scripting: {
+            //   ScriptingPanel = (ScriptingPanel)panel;
+            //   ScriptingPanelHost = (LayoutAnchorable)args.Model;
+            //   RegisterPanel(ScriptingPanel, ScriptingPanelHost);
+            //   break;
+            // }
             case ToolPanelKind.Help: {
               HelpPanel = (HelpPanel)panel;
               HelpPanelHost = (LayoutAnchorable)args.Model;

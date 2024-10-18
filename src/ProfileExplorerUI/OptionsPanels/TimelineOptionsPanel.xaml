@@ -13,9 +13,9 @@
     <StackPanel Margin="4,4,4,4">
       <CheckBox
         Margin="0,2,0,2"
-        Content="Mark functions in other profiling panels"
+        Content="Mark functions in other profiling views"
         IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-        ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
+        ToolTip="Mark the functions covered by the selected time range in the other profiling views" />
       <CheckBox
         x:Name="ShowCallStackPopupCheckbox"
         Margin="0,2,0,2"
@@ -75,7 +75,7 @@
         Margin="0,4,0,2"
         Content="Use colors based on thread name"
         IsChecked="{Binding UseThreadColors, Mode=TwoWay}"
-        ToolTip="Mark the functions covered by the selected time range in the other profiling panels" />
+        ToolTip="Mark the functions covered by the selected time range in the other profiling views" />
       <CheckBox
         Margin="0,4,0,0"
         Content="Group threads by name"

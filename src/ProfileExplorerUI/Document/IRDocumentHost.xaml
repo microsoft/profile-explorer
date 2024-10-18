@@ -528,54 +528,54 @@
             </Menu>
             <Separator />
 
-            <Menu
-              VerticalAlignment="Center"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-              <MenuItem
-                x:Name="TaskMenuItem"
-                Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Header="Tasks"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="TaskMenuItem_SubmenuOpened">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Margin="-2,0,-2,0"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Source="{StaticResource TasklistIcon}"
-                    Style="{StaticResource DisabledImageStyle}" />
-                </MenuItem.Icon>
-                <Separator />
-                <MenuItem Header="Edit Task Definitions" />
-              </MenuItem>
-              <MenuItem
-                x:Name="QueryMenuItem"
-                Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Header="Queries"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="QueryMenuItem_SubmenuOpened">
-                <MenuItem.Icon>
-                  <Image
-                    Width="18"
-                    Height="18"
-                    Margin="-2,0,-2,0"
-                    HorizontalAlignment="Center"
-                    Source="{StaticResource QueryIcon}"
-                    Style="{StaticResource DisabledImageStyle}" />
-                </MenuItem.Icon>
-                <Separator />
-                <MenuItem
-                  Click="CloseAllQueryPanelsMenuItem_Click"
-                  Header="Close All Query Panels" />
-              </MenuItem>
-            </Menu>
-            <Separator />
+            <!-- <Menu -->
+            <!--   VerticalAlignment="Center" -->
+            <!--   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"> -->
+            <!--   <MenuItem -->
+            <!--     x:Name="TaskMenuItem" -->
+            <!--     Padding="0,0,0,0" -->
+            <!--     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     Header="Tasks" -->
+            <!--     OverridesDefaultStyle="True" -->
+            <!--     SubmenuOpened="TaskMenuItem_SubmenuOpened"> -->
+            <!--     <MenuItem.Icon> -->
+            <!--       <Image -->
+            <!--         Width="16" -->
+            <!--         Height="16" -->
+            <!--         Margin="-2,0,-2,0" -->
+            <!--         HorizontalAlignment="Center" -->
+            <!--         VerticalAlignment="Center" -->
+            <!--         Source="{StaticResource TasklistIcon}" -->
+            <!--         Style="{StaticResource DisabledImageStyle}" /> -->
+            <!--     </MenuItem.Icon> -->
+            <!--     <Separator /> -->
+            <!--     <MenuItem Header="Edit Task Definitions" /> -->
+            <!--   </MenuItem> -->
+            <!--   <MenuItem -->
+            <!--     x:Name="QueryMenuItem" -->
+            <!--     Padding="0,0,0,0" -->
+            <!--     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     Header="Queries" -->
+            <!--     OverridesDefaultStyle="True" -->
+            <!--     SubmenuOpened="QueryMenuItem_SubmenuOpened"> -->
+            <!--     <MenuItem.Icon> -->
+            <!--       <Image -->
+            <!--         Width="18" -->
+            <!--         Height="18" -->
+            <!--         Margin="-2,0,-2,0" -->
+            <!--         HorizontalAlignment="Center" -->
+            <!--         Source="{StaticResource QueryIcon}" -->
+            <!--         Style="{StaticResource DisabledImageStyle}" /> -->
+            <!--     </MenuItem.Icon> -->
+            <!--     <Separator /> -->
+            <!--     <MenuItem -->
+            <!--       Click="CloseAllQueryPanelsMenuItem_Click" -->
+            <!--       Header="Close All Query Panels" /> -->
+            <!--   </MenuItem> -->
+            <!-- </Menu> -->
+            <!-- <Separator /> -->
 
             <ToggleButton
               Width="20"
