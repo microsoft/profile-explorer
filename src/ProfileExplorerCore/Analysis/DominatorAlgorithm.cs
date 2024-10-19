@@ -43,21 +43,49 @@ public class DominatorAlgorithm {
     function_ = function;
     options_ = options;
     bool usePostDominators = options.HasFlag(DominatorAlgorithmOptions.PostDominators);
+    List<BlockIR> patchedBlocks = null;
 
     if (usePostDominators) {
       nextBlocks_ = block => block.Successors;
-      treeStartBlock_ = function.ExitBlock;
+
+      // With multiple function exit blocks, create one fake exit block
+      // that acts as the single exit and change each exit block
+      // to have it as a successor.
+      var exitBlocks = new List<BlockIR>();
+
+      foreach (var block in function.Blocks) {
+        if (block.IsReturnBlock) {
+          exitBlocks.Add(block);
+        }
+      }
+
+      if (exitBlocks.Count == 1) {
+        treeStartBlock_ = exitBlocks[0];
+      }
+      else {
+        patchedBlocks = new List<BlockIR>();
+        var mergedExitBlock = new BlockIR(IRElementId.FromLong(0), function.BlockCount, function);
+        mergedExitBlock.Number = function.BlockCount;
+        treeStartBlock_ = mergedExitBlock;
+
+        foreach (var exitBlock in exitBlocks) {
+          mergedExitBlock.Predecessors.Add(exitBlock);
+          exitBlock.Successors.Add(mergedExitBlock);
+          patchedBlocks.Add(exitBlock); // To remove fake successor later.
+        }
+      }
     }
     else {
+      // It is assumed there is a single entry block.
       nextBlocks_ = block => block.Predecessors;
       treeStartBlock_ = function.EntryBlock;
     }
 
-    // Build a list of the blocks  in postorder.
+    // Build a list of the blocks in postorder.
     blockOrdering_ = new CFGBlockOrdering(function);
     postorderList_ = blockOrdering_.PostorderList;
 
-    // For post-dominators, the blicks are walked in reverse-postorder.
+    // For post-dominators, the blocks are walked in reverse-postorder.
     if (usePostDominators) {
       postorderList_.Reverse();
     }
@@ -86,6 +114,13 @@ public class DominatorAlgorithm {
 
     if (options.HasFlag(DominatorAlgorithmOptions.BuildTree)) {
       BuildTree(treeStartBlock_);
+    }
+
+    // Remove the fake successor merged exit block from the patched blocks.
+    if (usePostDominators && patchedBlocks != null) {
+      foreach (var block in patchedBlocks) {
+        block.Predecessors.RemoveAt(block.Predecessors.Count - 1);
+      }
     }
   }
 

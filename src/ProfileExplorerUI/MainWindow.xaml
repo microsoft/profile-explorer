@@ -415,10 +415,10 @@
               Click="ShowPanelMenu_Click"
               Header="Dominator Tree View"
               Tag="DominatorTree" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Post-Dominator Tree View"
-              Tag="PostDominatorTree" />
+            <!-- <MenuItem -->
+            <!--   Click="ShowPanelMenu_Click" -->
+            <!--   Header="Post-Dominator Tree View" -->
+            <!--   Tag="PostDominatorTree" /> -->
             <MenuItem
               Header="Expression Graph View"
               IsEnabled="True"

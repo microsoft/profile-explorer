@@ -296,7 +296,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;
-    SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+    SearchPanel.NavigateToPreviousResult += SearchPanel_NavigateToPreviousResult;
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
@@ -1037,7 +1037,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(searchResult_.Results[e.CurrentResult], Colors.LightSkyBlue);
   }
 
-  private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
+  private void SearchPanel_NavigateToPreviousResult(object sender, SearchInfo e) {
     TextView.JumpToSearchResult(searchResult_.Results[e.CurrentResult], Colors.LightSkyBlue);
   }
 

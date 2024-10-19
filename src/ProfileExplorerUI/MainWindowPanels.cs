@@ -161,7 +161,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(SectionPanel, SectionPanelHost);
     RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);
     RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
-    RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
+    // RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
     RegisterPanel(DefinitionPanel, DefinitionPanelHost);
     RegisterPanel(DeveloperPanel, DeveloperPanelHost);
     RegisterPanel(SourceFilePanel, SourceFilePanelHost);
@@ -1147,12 +1147,12 @@ public partial class MainWindow : Window, ISession {
               RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
               break;
             }
-            case ToolPanelKind.PostDominatorTree: {
-              PostDominatorTreePanel = (PostDominatorTreePanel)panel;
-              PostDominatorTreePanelHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
-              break;
-            }
+            // case ToolPanelKind.PostDominatorTree: {
+            //   PostDominatorTreePanel = (PostDominatorTreePanel)panel;
+            //   PostDominatorTreePanelHost = (LayoutAnchorable)args.Model;
+            //   RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
+            //   break;
+            // }
             case ToolPanelKind.ExpressionGraph: {
               ExpressionGraphPanel = (ExpressionGraphPanel)panel;
               ExpressionGraphPanelHost = (LayoutAnchorable)args.Model;
