@@ -642,7 +642,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void TextViewOnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
-    if (!Utils.IsControlModifierActive()) {
+    if (Utils.IsControlModifierActive()) {
       return;
     }
 

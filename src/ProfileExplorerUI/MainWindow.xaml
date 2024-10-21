@@ -302,23 +302,23 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem
-              Command="local:AppCommand.SaveDocument"
-              Header="_Save Session"
-              InputGestureText="Ctrl+S"
-              IsEnabled="False">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource SaveIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem
-              Command="local:AppCommand.SaveAsDocument"
-              Header="Save Session _As..."
-              InputGestureText="Ctrl+Shift+S"
-              IsEnabled="False" />
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.SaveDocument" -->
+            <!--   Header="_Save Session" -->
+            <!--   InputGestureText="Ctrl+S" -->
+            <!--   IsEnabled="False"> -->
+            <!--   <MenuItem.Icon> -->
+            <!--     <Image -->
+            <!--       Width="16" -->
+            <!--       Height="16" -->
+            <!--       Source="{StaticResource SaveIcon}" /> -->
+            <!--   </MenuItem.Icon> -->
+            <!-- </MenuItem> -->
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.SaveAsDocument" -->
+            <!--   Header="Save Session _As..." -->
+            <!--   InputGestureText="Ctrl+Shift+S" -->
+            <!--   IsEnabled="False" /> -->
             <MenuItem
               Command="local:AppCommand.CloseDocument"
               Header="Close Session"
@@ -372,7 +372,63 @@
             <MenuItem
               Click="ShowPanelMenu_Click"
               Header="Summary View"
-              Tag="Section" />
+              Tag="Section">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource SummaryIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Timeline View"
+              Tag="Timeline">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource TimelineIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Flame Graph View"
+              Tag="FlameGraph">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource FlameGraphIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Call Tree View"
+              Tag="CallTree">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource TreeIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Caller/Callee View"
+              Tag="CallerCallee">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource FlowChartIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Source File View"
+              Tag="Source" />
             <!-- <MenuItem -->
             <!--   Click="ShowPanelMenu_Click" -->
             <!--   Header="Pass Output View" -->
@@ -389,10 +445,6 @@
               Click="ShowPanelMenu_Click"
               Header="Bookmarks View"
               Tag="Bookmarks" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Source File View"
-              Tag="Source" />
             <MenuItem
               Click="ShowPanelMenu_Click"
               Header="Search Results View"
@@ -423,24 +475,6 @@
               Header="Expression Graph View"
               IsEnabled="True"
               Tag="ExpressionGraph" />
-            <Separator />
-
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Call Tree View"
-              Tag="CallTree" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Caller/Callee View"
-              Tag="CallerCallee" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Flame Graph View"
-              Tag="FlameGraph" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Timeline View"
-              Tag="Timeline" />
           </MenuItem>
 
           <MenuItem Header="Profiling">

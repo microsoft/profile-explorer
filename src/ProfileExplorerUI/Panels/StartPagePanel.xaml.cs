@@ -118,6 +118,10 @@ public partial class StartPagePanel : UserControl {
     ClearRecentDocuments?.Invoke(this, null);
   }
 
+  private void ClearSessionsButton_Click(object sender, RoutedEventArgs e) {
+    ClearRecentProfileSessions?.Invoke(this, null);
+  }
+
   private void ClearDiffButton_Click(object sender, RoutedEventArgs e) {
     ClearRecentDiffDocuments?.Invoke(this, null);
   }

@@ -972,8 +972,36 @@
                 Header="Copy Mangled Function Name"
                 InputGestureText="Ctrl+Alt+C"
                 ToolTip="Copy the mangled function name to the clipboard (C++)" />
-
               <Separator />
+
+              <MenuItem
+                Command="local:Command.CopyFunctionText"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Copy Function Assembly Code"
+                ToolTip="Copies the assembly code of the selected function to the clipboard">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.SaveFunctionText"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Save Function Assembly Code"
+                ToolTip="Save the assembly code of the selected function to a file">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource SaveIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <Separator/>
+
               <MenuItem
                 Header="Mark Module"
                 ToolTip="Mark all functions belonging to this module (saved)">
@@ -1048,33 +1076,6 @@
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />
-
-              <MenuItem
-                Command="local:Command.CopyFunctionText"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Function Text"
-                ToolTip="Copies the text (IR) of all sections for the selected function to the clipboard">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource ClipboardIcon}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem
-                Command="local:Command.SaveFunctionText"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Save Function Text"
-                ToolTip="Save the text (IR) of all sections for the selected function to a file">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource SaveIcon}" />
-                </MenuItem.Icon>
-              </MenuItem>
               <MenuItem
                 Command="local:Command.OpenDocumentInNewInstance"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"

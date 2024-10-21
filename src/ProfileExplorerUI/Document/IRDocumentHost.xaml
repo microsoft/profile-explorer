@@ -1076,7 +1076,8 @@
                   Command="local:DocumentHostCommand.SearchSymbol"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Search Symbol"
-                  InputGestureText="Ctrl+F">
+                  InputGestureText="Ctrl+Shift+F"
+                  ToolTip="Search the selected symbol text">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -1088,8 +1089,8 @@
                 <MenuItem
                   Command="local:DocumentHostCommand.SearchSymbolAllSections"
                   CommandTarget="{Binding ElementName=TextView}"
-                  Header="Search Symbol in All Sections"
-                  InputGestureText="Ctrl+Shift+F" />
+                  Header="Search Symbol in Search Results"
+                  ToolTip="Search the selected symbol text and show results in the Search Results view"/>
                 <Separator />
 
                 <MenuItem

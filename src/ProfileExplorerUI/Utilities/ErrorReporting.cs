@@ -10,8 +10,7 @@ namespace ProfileExplorer.UI;
 public static class ErrorReporting {
   public static string CreateStackTraceDump(string stackTrace) {
     var time = DateTime.Now;
-    string fileName = $"ProfileExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.trace";
-
+    string fileName = $"ProfileExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.log";
     string folderPath =
       Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ProfileExplorer");
     string path = Path.Combine(folderPath, fileName);
@@ -23,9 +22,10 @@ public static class ErrorReporting {
   public static string CreateSectionDump() {
     var time = DateTime.Now;
     string fileName = $"ProfileExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.ir";
-
-    string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                               fileName);
+    string folderPath =
+      Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ProfileExplorer");
+    string path = Path.Combine(folderPath, fileName);
+    Directory.CreateDirectory(folderPath);
 
     var window = Application.Current.MainWindow as MainWindow;
     var builder = new StringBuilder();

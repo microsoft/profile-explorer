@@ -159,7 +159,7 @@
                     Margin="2,0,2,0"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
-                    Click="ClearButton_Click"
+                    Click="ClearSessionsButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Clear list of recent profile sessions">
                     <Image Source="{StaticResource RemoveIcon}" />

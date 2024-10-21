@@ -438,6 +438,7 @@ public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
 
     tooltipOverlay_ = elementOverlay;
     hoverTooltip_ ??= new ToolTip();
+    hoverTooltip_.Closed += (sender, args) => hoverTooltip_ = null;
 
     // Showing the tooltip from the Dispatcher somehow prevents
     // it from temporarily showing in the top-left screen corner

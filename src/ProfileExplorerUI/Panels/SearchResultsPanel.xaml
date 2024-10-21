@@ -157,17 +157,16 @@
       VirtualizingStackPanel.VirtualizationMode="Recycling">
       <ListView.View>
         <GridView>
-
-          <GridViewColumn
-            Width="300"
-            DisplayMemberBinding="{Binding SectionName}"
-            Header="Section">
-            <GridViewColumn.HeaderContainerStyle>
-              <Style TargetType="{x:Type GridViewColumnHeader}">
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
-              </Style>
-            </GridViewColumn.HeaderContainerStyle>
-          </GridViewColumn>
+          <!-- <GridViewColumn -->
+          <!--   Width="300" -->
+          <!--   DisplayMemberBinding="{Binding SectionName}" -->
+          <!--   Header="Section"> -->
+          <!--   <GridViewColumn.HeaderContainerStyle> -->
+          <!--     <Style TargetType="{x:Type GridViewColumnHeader}"> -->
+          <!--       <Setter Property="HorizontalContentAlignment" Value="Left" /> -->
+          <!--     </Style> -->
+          <!--   </GridViewColumn.HeaderContainerStyle> -->
+          <!-- </GridViewColumn> -->
 
           <GridViewColumn
             Width="40"
