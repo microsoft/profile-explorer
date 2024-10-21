@@ -890,7 +890,7 @@
                 Command="local:Command.Open"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open"
+                Header="Open Function"
                 InputGestureText="Return"
                 ToolTip="Open the assembly view, replacing the active tab">
                 <MenuItem.Icon>
@@ -904,8 +904,8 @@
                 Command="local:Command.OpenInNewTab"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open in New Tab"
-                InputGestureText="Shift+Return"
+                Header="Open Function in New Tab"
+                InputGestureText="Ctrl+Return"
                 ToolTip="Open the assembly view in a new tab">
                 <MenuItem.Icon>
                   <Image
@@ -918,7 +918,7 @@
                 Command="local:Command.OpenLeft"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open in Left Tab"
+                Header="Open Function in Left Tab"
                 InputGestureText="Ctrl+Shift+Left"
                 ToolTip="Open the assembly view in a new tab docked left">
                 <MenuItem.Icon>
@@ -1092,7 +1092,7 @@
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
               <Separator
-                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
               <MenuItem
                 Command="{Binding SelectFunctionCallTreeCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1536,7 +1536,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=SectionList}"
                 Header="Open in New Tab"
-                InputGestureText="Shift+Return">
+                InputGestureText="Ctrl+Return">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -1682,7 +1682,7 @@
               Command="local:Command.OpenInNewTab"
               CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=SectionList}"
-              Modifiers="Shift" />
+              Modifiers="Ctrl" />
             <KeyBinding
               Key="T"
               Command="local:Command.ToggleTag"

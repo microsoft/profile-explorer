@@ -1442,9 +1442,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
         if (Utils.IsAltModifierActive()) {
           PreviewDefinitionExecuted(this, null);
         }
-        else if (Utils.IsControlModifierActive()) {
-          GoToDefinitionSkipCopiesExecuted(this, null);
-        }
         else {
           if (GetSelectedElement() is var element &&
               TryOpenFunctionCallTarget(element)) {
@@ -2234,8 +2231,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private void GoToDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (GetSelectedElement() is var element) {
-      GoToElementDefinition(element);
-      MirrorAction(DocumentActionKind.GoToDefinition, element);
+      if (!TryOpenFunctionCallTarget(element)) {
+        GoToElementDefinition(element);
+        MirrorAction(DocumentActionKind.GoToDefinition, element);
+      }
     }
   }
 
@@ -2247,8 +2246,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private void GoToDefinitionSkipCopiesExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (GetSelectedElement() is var element) {
-      GoToElementDefinition(element, true);
-      MirrorAction(DocumentActionKind.GoToDefinition, element);
+      if (!TryOpenFunctionCallTarget(element)) {
+        GoToElementDefinition(element, true);
+        MirrorAction(DocumentActionKind.GoToDefinition, element);
+      }
     }
   }
 
@@ -2259,7 +2260,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     while (defInstr != null) {
       var sourceOp = Session.CompilerInfo.IR.SkipCopyInstruction(defInstr);
 
-      if (sourceOp != null) {
+      if (sourceOp != null && sourceOp != defInstr) {
         op = sourceOp;
         defInstr = sourceOp.ParentInstruction;
       }

@@ -313,7 +313,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     historyManager_.ClearNextStates(); // Reset forward history.
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab :
       OpenSectionKind.ReplaceCurrent;
     await Session.OpenProfileFunction(targetFunc, mode,
                                       targetFilter, this);
@@ -1184,8 +1184,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
 
     // Add the columns to the View menu.
-    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, async () => {
-      await UpdateProfilingColumns();
+    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, () => {
+      // TODO: Force non-async run to ensure no events from SetViewMenuItemEvents
+      // are set yet, can cause an infinite update loop. Find a better way.
+      Utils.RunSync(UpdateProfilingColumns);
     });
 
     SetViewMenuItemEvents();

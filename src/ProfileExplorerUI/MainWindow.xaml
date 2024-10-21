@@ -429,6 +429,23 @@
               Click="ShowPanelMenu_Click"
               Header="Source File View"
               Tag="Source" />
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Flow Graph View"
+              Tag="FlowGraph" />
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Dominator Tree View"
+              Tag="DominatorTree" />
+            <!-- <MenuItem -->
+            <!--   Click="ShowPanelMenu_Click" -->
+            <!--   Header="Post-Dominator Tree View" -->
+            <!--   Tag="PostDominatorTree" /> -->
+            <MenuItem
+              Header="Expression Graph View"
+              IsEnabled="True"
+              Tag="ExpressionGraph" />
+            <Separator/>
             <!-- <MenuItem -->
             <!--   Click="ShowPanelMenu_Click" -->
             <!--   Header="Pass Output View" -->
@@ -458,23 +475,6 @@
               Header="Developer View"
               Tag="Developer" />
             <Separator />
-
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Flow Graph View"
-              Tag="FlowGraph" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Dominator Tree View"
-              Tag="DominatorTree" />
-            <!-- <MenuItem -->
-            <!--   Click="ShowPanelMenu_Click" -->
-            <!--   Header="Post-Dominator Tree View" -->
-            <!--   Tag="PostDominatorTree" /> -->
-            <MenuItem
-              Header="Expression Graph View"
-              IsEnabled="True"
-              Tag="ExpressionGraph" />
           </MenuItem>
 
           <MenuItem Header="Profiling">

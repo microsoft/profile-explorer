@@ -254,11 +254,11 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     }
   });
   public RelayCommand<object> OpenFunctionCommand => new(async obj => {
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(obj, mode);
   });
   public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
-    await OpenFunction(obj, OpenSectionKind.NewTabDockRight);
+    await OpenFunction(obj, OpenSectionKind.NewTab);
   });
   public RelayCommand<object> MarkModuleCommand => new(async obj => {
     if (obj is SelectedColorEventArgs e) {
@@ -822,7 +822,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
   }
 
   private async void OpenButton_OnClick(object sender, RoutedEventArgs e) {
-    await Session.OpenProfileFunction(instancesNode_.CallTreeNode, OpenSectionKind.NewTabDockRight);
+    await Session.OpenProfileFunction(instancesNode_.CallTreeNode, OpenSectionKind.NewTab);
   }
 
   private void MarkModuleButton_OnClick(object sender, RoutedEventArgs e) {

@@ -163,7 +163,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
-      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode, mode, filter);
     }
   });
@@ -171,7 +171,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     if (GraphViewer.SelectedNode is {HasFunction: true}) {
       var filter = new ProfileSampleFilter(GraphViewer.SelectedNode.CallTreeNode);
       await Session.OpenProfileFunction(GraphViewer.SelectedNode.CallTreeNode,
-                                        OpenSectionKind.NewTabDockRight, filter);
+                                        OpenSectionKind.NewTab, filter);
     }
   });
 
@@ -621,9 +621,15 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
-    if (e.ChangedButton == MouseButton.XButton1) {
+    if (e.ChangedButton == MouseButton.Middle &&
+        e.ButtonState == MouseButtonState.Pressed) {
+      await EnlargeNode(GraphViewer.SelectedNode);
       e.Handled = true;
+    }
+    if (e.ChangedButton == MouseButton.XButton1 &&
+        e.ButtonState == MouseButtonState.Pressed) {
       await RestorePreviousState();
+      e.Handled = true;
     }
   }
 
@@ -636,21 +642,19 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     var pointedNode = GraphViewer.FindPointedNode(point);
 
     if (pointedNode != null) {
-      if (Utils.IsControlModifierActive()) {
-        await OpenFunction(pointedNode);
-      }
-      else {
-        await EnlargeNode(pointedNode);
-      }
+      await HandleOpenFunctionAction(pointedNode);
+      e.Handled = true;
     }
     else {
       double zoomPointX = e.GetPosition(GraphViewer).X;
 
       if (Utils.IsShiftModifierActive()) {
         ZoomOut(zoomPointX, false);
+        e.Handled = true;
       }
       else {
         ZoomIn(zoomPointX, false);
+        e.Handled = true;
       }
     }
   }
@@ -661,7 +665,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
     if (node is {HasFunction: true} && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      var openMode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }
   }
@@ -877,20 +881,14 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     switch (e.Key) {
       case Key.Return: {
         if (GraphViewer.SelectedNode != null) {
-          if (Utils.IsControlModifierActive()) {
-            await OpenFunction(GraphViewer.SelectedNode);
-            e.Handled = true;
-          }
-          else if (Utils.IsAltModifierActive()) {
-            PreviewFunctionCommand.Execute(GraphViewer.SelectedNode);
-            e.Handled = true;
-          }
-          else {
-            await EnlargeNode(GraphViewer.SelectedNode);
-            e.Handled = true;
-          }
+          await HandleOpenFunctionAction(GraphViewer.SelectedNode);
+          e.Handled = true;
         }
-
+        break;
+      }
+      case Key.Space: {
+        await EnlargeNode(GraphViewer.SelectedNode);
+        e.Handled = true;
         break;
       }
       case Key.Left: {
@@ -961,6 +959,29 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
 
     if (e.Handled) {
       HidePreviewPopup();
+    }
+  }
+
+  private async Task HandleOpenFunctionAction(FlameGraphNode node) {
+    if (Utils.IsAltModifierActive()) {
+      if (Utils.IsShiftModifierActive()) {
+        // Ctrl+Shift+action => preview function instance.
+        PreviewFunctionInstanceCommand.Execute(node);
+      }
+      else {
+        // Ctrl+Shift+action => preview function.
+        PreviewFunctionCommand.Execute(node);
+      }
+    }
+    else {
+      // action => open function.
+      // Shift+action => open function instance.
+      if (Utils.IsShiftModifierActive()) {
+        OpenInstanceInNewTabCommand.Execute(node);
+      }
+      else {
+        await OpenFunction(node);
+      }
     }
   }
 
@@ -1147,7 +1168,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   }
 
   private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
-    await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTabDockRight);
+    await OpenFunction(GraphViewer.SelectedNode, OpenSectionKind.NewTab);
   }
 
   private async void ChangeRootNodeExecuted(object sender, ExecutedRoutedEventArgs e) {

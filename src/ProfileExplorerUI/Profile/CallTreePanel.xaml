@@ -453,7 +453,7 @@
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Open Function"
-            InputGestureText="Ctrl+Return"
+            InputGestureText="Return/Double-Click"
             ToolTip="Open the function assembly view">
             <MenuItem.Icon>
               <Image
@@ -467,7 +467,7 @@
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=CallTreeList}"
             Header="Open Function in New Tab"
-            InputGestureText="Ctrl+Shift+Return"
+            InputGestureText="Ctrl+Return"
             ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
               <Image
@@ -494,6 +494,7 @@
               Command="{Binding OpenInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance"
+              InputGestureText="Shift+Return"
               ToolTip="Open the function assembly view for only this instance of the function">
               <MenuItem.Icon>
                 <Image
@@ -506,7 +507,8 @@
               Command="{Binding OpenInstanceInNewTabCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance in New Tab"
-              ToolTip="Open the function assembly view in a new tab">
+              InputGestureText="Ctrl+Shift+Return"
+              ToolTip="Open the function assembly view for only this instance of the function in a new tab">
               <MenuItem.Icon>
                 <Image
                   Width="16"

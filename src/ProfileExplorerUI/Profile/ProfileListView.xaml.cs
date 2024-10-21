@@ -165,11 +165,11 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
   public RelayCommand<object> OpenFunctionCommand => new(async obj => {
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
   });
   public RelayCommand<object> OpenFunctionInNewTabCommand => new(async obj => {
-    await OpenFunction(OpenSectionKind.NewTabDockRight);
+    await OpenFunction(OpenSectionKind.NewTab);
   });
   public RelayCommand<object> PreviewFunctionInstanceCommand => new(async obj => {
     if (ItemList.SelectedItem is ProfileListViewItem item && item.CallTreeNode != null) {
@@ -179,11 +179,11 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   });
   public RelayCommand<object> OpenInstanceCommand => new(async obj => {
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
     await OpenFunction(mode);
   });
   public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
-    await OpenFunctionInstance(OpenSectionKind.NewTabDockRight);
+    await OpenFunctionInstance(OpenSectionKind.NewTab);
   });
   public RelayCommand<object> SelectFunctionSummaryCommand => new(async obj => {
     await SelectFunctionInPanel(ToolPanelKind.Section);
@@ -611,6 +611,14 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   }
 
   private void ItemList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+    var node = ((ListViewItem)sender).Content as ProfileListViewItem;
+
+    if (node?.CallTreeNode != null) {
+      NodeDoubleClick?.Invoke(this, node.CallTreeNode);
+    }
+  }
+
+  private void ItemList_PreviewKeyDown(object sender, KeyEventArgs e) {
     var node = ((ListViewItem)sender).Content as ProfileListViewItem;
 
     if (node?.CallTreeNode != null) {

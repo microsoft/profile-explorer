@@ -105,7 +105,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
     };
 
     FunctionListView.NodeDoubleClick += async (sender, treeNode) => {
-      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(treeNode, mode);
     };
 

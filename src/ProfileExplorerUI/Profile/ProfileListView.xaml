@@ -198,6 +198,9 @@
           <EventSetter
             Event="MouseDoubleClick"
             Handler="ItemList_MouseDoubleClick" />
+          <EventSetter
+            Event="PreviewKeyDown"
+            Handler="ItemList_PreviewKeyDown" />
           <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
@@ -232,7 +235,7 @@
             Command="{Binding OpenFunctionCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
-            InputGestureText="Ctrl+Return"
+            InputGestureText="Return/Double-Click"
             ToolTip="Open the function assembly view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
@@ -246,7 +249,7 @@
             Command="{Binding OpenFunctionInNewTabCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
-            InputGestureText="Ctrl+Shift+Return"
+            InputGestureText="Ctrl+Return"
             ToolTip="Open the function assembly view in a new tab"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
@@ -276,6 +279,7 @@
               Command="{Binding OpenInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance"
+              InputGestureText="Shift+Return"
               ToolTip="Open the function assembly view for only this instance of the function">
               <MenuItem.Icon>
                 <Image
@@ -288,7 +292,8 @@
               Command="{Binding OpenInstanceInNewTabCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance in New Tab"
-              ToolTip="Open the function assembly view in a new tab">
+              InputGestureText="Ctrl+Shift+Return"
+              ToolTip="Open the function assembly view for only this instance of the function in a new tab">
               <MenuItem.Icon>
                 <Image
                   Width="16"

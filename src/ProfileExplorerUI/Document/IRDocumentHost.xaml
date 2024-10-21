@@ -1027,7 +1027,8 @@
                   Command="local:DocumentCommand.GoToDefinition"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Go To Definition"
-                  InputGestureText="Return">
+                  InputGestureText="Return/Double-Click"
+                  ToolTip="Jump to operand definition or open call target function in current view">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -1036,19 +1037,18 @@
                       Style="{StaticResource DisabledImageStyle}" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.GoToDefinitionSkipCopies"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Go To Definition (Skip Copies)"
-                  InputGestureText="Ctrl+Return">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource GotoDefinitionIconSkipIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                  </MenuItem.Icon>
-                </MenuItem>
+                <!-- <MenuItem -->
+                <!--   Command="local:DocumentCommand.GoToDefinitionSkipCopies" -->
+                <!--   CommandTarget="{Binding ElementName=TextView}" -->
+                <!--   Header="Go To Definition (Skip Copies)"> -->
+                <!--   <MenuItem.Icon> -->
+                <!--     <Image -->
+                <!--       Width="16" -->
+                <!--       Height="16" -->
+                <!--       Source="{StaticResource GotoDefinitionIconSkipIcon}" -->
+                <!--       Style="{StaticResource DisabledImageStyle}" /> -->
+                <!--   </MenuItem.Icon> -->
+                <!-- </MenuItem> -->
                 <Separator />
 
                 <MenuItem

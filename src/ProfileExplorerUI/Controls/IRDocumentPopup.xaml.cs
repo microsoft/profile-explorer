@@ -367,7 +367,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private async void OpenButton_Click(object sender, RoutedEventArgs e) {
-    var args = new OpenSectionEventArgs(ProfileTextView.TextView.Section, OpenSectionKind.NewTabDockRight);
+    var args = new OpenSectionEventArgs(ProfileTextView.TextView.Section, OpenSectionKind.NewTab);
 
     //? TODO: BeginInvoke prevents the "Dispatcher suspended" assert that happens
     // with profiling, when Source panel shows the open dialog.

@@ -70,7 +70,7 @@
             Command="local:CallTreeCommand.OpenFunction"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
-            InputGestureText="Ctrl+Return"
+            InputGestureText="Return/Double-Click"
             IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Open the function assembly view">
             <MenuItem.Icon>
@@ -84,7 +84,7 @@
             Command="local:CallTreeCommand.OpenFunctionInNewTab"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
-            InputGestureText="Ctrl+Shift+Return"
+            InputGestureText="Ctrl+Return"
             IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Open the function assembly view in a new tab">
             <MenuItem.Icon>
@@ -115,6 +115,7 @@
               Command="{Binding OpenInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance"
+              InputGestureText="Shift+Return"
               IsEnabled="{Binding EnableSingleNodeActions}"
               ToolTip="Open the function assembly view for only this instance of the function">
               <MenuItem.Icon>
@@ -128,8 +129,9 @@
               Command="{Binding OpenInstanceInNewTabCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance in New Tab"
+              InputGestureText="Ctrl+Shift+Return"
               IsEnabled="{Binding EnableSingleNodeActions}"
-              ToolTip="Open the function assembly view in a new tab">
+              ToolTip="Open the function assembly view for only this instance of the function in a new tab">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -144,7 +146,7 @@
             Command="local:CallTreeCommand.EnlargeNode"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Focus on Function"
-            InputGestureText="Return, Double-click"
+            InputGestureText="Space/Middle-click"
             IsEnabled="{Binding EnableSingleNodeActions}"
             ToolTip="Enlarge the function in the view">
             <MenuItem.Icon>
@@ -158,9 +160,9 @@
             Command="local:CallTreeCommand.ChangeRootNode"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Set Function as Root"
-            InputGestureText="Alt+Double-click"
+              InputGestureText="Alt+Double-Click"
             IsEnabled="{Binding EnableSingleNodeActions}"
-            ToolTip="Restrict the view to the function and its callees">
+            ToolTip="Restrict the view to the function instance and its callees">
             <MenuItem.Icon>
               <Image
                 Width="16"

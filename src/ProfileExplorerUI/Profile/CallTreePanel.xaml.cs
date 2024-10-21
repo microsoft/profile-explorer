@@ -255,7 +255,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public RelayCommand<object> OpenInstanceCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
       if (node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
-        var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+        var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
         await OpenFunctionInstance(item, mode);
       }
     }
@@ -263,7 +263,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   public RelayCommand<object> OpenInstanceInNewTabCommand => new(async obj => {
     if (CallTreeList.SelectedItem is TreeNode node) {
       if (node.Tag is CallTreeListItem {HasCallTreeNode: true} item) {
-        await OpenFunctionInstance(item, OpenSectionKind.NewTabDockRight);
+        await OpenFunctionInstance(item, OpenSectionKind.NewTab);
       }
     }
   });
@@ -714,7 +714,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     if (kind == CallTreeListItemKind.CalleeNode) {
       //? TODO: This is still not quite right, the selected nodes
-      //? shoud be found on a path that has the current stack frame as a prefix in theirs.
+      //? should be found on a path that has the current stack frame as a prefix in theirs.
       //? actualParentNode is just the last in that list
       node = GetChildCallTreeNode(node, actualParentNode.CallTreeNode, callTree_);
       nodeEx.CallTreeNode = node;
@@ -829,8 +829,8 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     var item = ((ListViewItem)sender).Content as CallTreeListItem;
 
     if (item != null) {
-      if (Utils.IsControlModifierActive()) {
-        var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      if (!Utils.IsAltModifierActive()) {
+        var openMode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
         await OpenFunction(item, openMode);
       }
       else {
@@ -921,7 +921,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var item = node.Tag as CallTreeListItem;
-      var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await OpenFunction(item, mode);
     }
   }
@@ -929,7 +929,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
     if (CallTreeList.SelectedItem is TreeNode node) {
       var item = node.Tag as CallTreeListItem;
-      await OpenFunction(item, OpenSectionKind.NewTabDockRight);
+      await OpenFunction(item, OpenSectionKind.NewTab);
     }
   }
 
