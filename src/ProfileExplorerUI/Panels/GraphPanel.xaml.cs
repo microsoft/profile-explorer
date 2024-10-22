@@ -55,7 +55,6 @@ public partial class GraphPanel : ToolPanelControl {
   private const double ZoomAdjustment = 0.05;
   private const double HorizontalViewMargin = 50;
   private const double VerticalViewMargin = 100;
-  private readonly object lockObject_;
   private bool delayFitSize_;
   private bool delayRestoreState_;
   private bool dragging_;
@@ -65,7 +64,7 @@ public partial class GraphPanel : ToolPanelControl {
   private OptionsPanelHostPopup optionsPanelPopup_;
   private GraphNode hoveredNode_;
   private bool ignoreNextHover_;
-  private CancelableTask loadTask_;
+  private CancelableTaskInstance loadTask_;
   private IRDocumentPopup previewPopup_;
   private GraphQueryInfo queryInfo_;
   private bool queryPanelVisible_;
@@ -74,7 +73,6 @@ public partial class GraphPanel : ToolPanelControl {
 
   public GraphPanel() {
     InitializeComponent();
-    lockObject_ = new object();
     GraphViewer.HostPanel = this;
     GraphViewer.MaxZoomLevel = MaxZoomLevel;
     SetupEvents();
@@ -168,7 +166,7 @@ public partial class GraphPanel : ToolPanelControl {
     Document = document;
   }
 
-  public CancelableTask OnGenerateGraphStart(IRTextSection section) {
+  public async Task<CancelableTask> OnGenerateGraphStart(IRTextSection section) {
     var animation = new DoubleAnimation(0.25, TimeSpan.FromSeconds(0.5));
     animation.BeginTime = TimeSpan.FromSeconds(1);
     GraphViewer.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
@@ -178,7 +176,7 @@ public partial class GraphPanel : ToolPanelControl {
     animation2.BeginTime = TimeSpan.FromSeconds(2);
     LongOperationView.BeginAnimation(OpacityProperty, animation2, HandoffBehavior.SnapshotAndReplace);
 
-    return CreateGraphLoadTask();
+    return await CreateGraphLoadTask();
   }
 
   public void OnGenerateGraphDone(CancelableTask task, bool failed = false) {
@@ -280,52 +278,12 @@ public partial class GraphPanel : ToolPanelControl {
                     RenderSize.Height);
   }
 
-  private CancelableTask CreateGraphLoadTask() {
-    lock (lockObject_) {
-      if (loadTask_ != null) {
-        // Cancel running task without blocking.
-        CancelGraphLoadTask();
-      }
-
-      loadTask_ = new CancelableTask();
-      Session.SessionState.RegisterCancelableTask(loadTask_);
-      return loadTask_;
-    }
-  }
-
-  private void CancelGraphLoadTask() {
-    lock (lockObject_) {
-      if (loadTask_ == null) {
-        return;
-      }
-
-      var canceledTask = loadTask_;
-      loadTask_ = null;
-
-      // Cancel the task and wait for it to complete without blocking.
-      canceledTask.Cancel();
-      Session.SessionState.UnregisterCancelableTask(canceledTask);
-
-      Task.Run(() => {
-        canceledTask.WaitToComplete();
-        canceledTask.Dispose();
-      });
-    }
+  private async Task<CancelableTask> CreateGraphLoadTask() {
+    return await loadTask_.CancelCurrentAndCreateTaskAsync();
   }
 
   private void CompleteGraphLoadTask(CancelableTask task) {
-    lock (lockObject_) {
-      if (task != loadTask_) {
-        return; // A canceled task, ignore it.
-      }
-
-      if (loadTask_ != null) {
-        Session.SessionState.UnregisterCancelableTask(loadTask_);
-        loadTask_.Complete();
-        loadTask_.Dispose();
-        loadTask_ = null;
-      }
-    }
+    loadTask_.CompleteTask();
   }
 
   private void AddCommand(RoutedCommand command, ExecutedRoutedEventHandler handler) {
@@ -837,10 +795,8 @@ public partial class GraphPanel : ToolPanelControl {
     Utils.PatchToolbarStyle(sender as ToolBar);
   }
 
-  private void CancelButton_Click(object sender, RoutedEventArgs e) {
-    lock (lockObject_) {
-      loadTask_?.Cancel();
-    }
+  private async void CancelButton_Click(object sender, RoutedEventArgs e) {
+    await loadTask_.CancelTaskAndWaitAsync();
   }
 
   private void QueryPanel_MouseEnter(object sender, MouseEventArgs e) {
@@ -913,6 +869,12 @@ public partial class GraphPanel : ToolPanelControl {
     else {
       Dispatcher.BeginInvoke(() => LoadSavedState(), DispatcherPriority.Render);
     }
+  }
+
+  public override void OnSessionStart() {
+    base.OnSessionStart();
+    loadTask_ = new CancelableTaskInstance(false, Session.SessionState.RegisterCancelableTask,
+                                           Session.SessionState.UnregisterCancelableTask);
   }
 
   public override void OnSessionEnd() {
