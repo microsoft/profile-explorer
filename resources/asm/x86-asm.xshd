@@ -141,6 +141,7 @@
 			<Word>clac</Word>
 			<Word>clc</Word>
 			<Word>cld</Word>
+			<Word>cldemote</Word>
 			<Word>clflush</Word>
 			<Word>clflushopt</Word>
 			<Word>cli</Word>
@@ -174,6 +175,9 @@
 			<Word>cmovo</Word>
 			<Word>cmovp</Word>
 			<Word>cmovpe</Word>
+			<Word>cmovpo</Word>
+			<Word>cmovs</Word>
+			<Word>cmovz</Word>
 			<Word>cmp</Word>
 			<Word>cmppd</Word>
 			<Word>vcmppd</Word>
@@ -184,6 +188,7 @@
 			<Word>cmpsw</Word>
 			<Word>cmpsd</Word>
 			<Word>cmpsq</Word>
+			<Word>cmpsd</Word>
 			<Word>vcmpsd</Word>
 			<Word>cmpss</Word>
 			<Word>vcmpss</Word>
@@ -253,8 +258,43 @@
 			<Word>vdppd</Word>
 			<Word>dpps</Word>
 			<Word>vdpps</Word>
+			<Word>eaccept</Word>
+			<Word>eacceptcopy</Word>
+			<Word>eadd</Word>
+			<Word>eaug</Word>
+			<Word>eblock</Word>
+			<Word>ecreate</Word>
+			<Word>edbgrd</Word>
+			<Word>edbgwr</Word>
+			<Word>edecvirtchild</Word>
+			<Word>eenter</Word>
+			<Word>eexit</Word>
+			<Word>eextend</Word>
+			<Word>egetkey</Word>
+			<Word>eincvirtchild</Word>
+			<Word>einit</Word>
+			<Word>eldb</Word>
+			<Word>eldu</Word>
+			<Word>eldbc</Word>
 			<Word>emms</Word>
+			<Word>emodpe</Word>
+			<Word>emodpr</Word>
+			<Word>emodt</Word>
+			<Word>encls</Word>
+			<Word>enclu</Word>
+			<Word>enclv</Word>
+			<Word>enqcmd</Word>
+			<Word>enqcmds</Word>
 			<Word>enter</Word>
+			<Word>epa</Word>
+			<Word>erdinfo</Word>
+			<Word>eremove</Word>
+			<Word>ereport</Word>
+			<Word>eresume</Word>
+			<Word>esetcontext</Word>
+			<Word>etrack</Word>
+			<Word>etrackc</Word>
+			<Word>ewb</Word>
 			<Word>extractps</Word>
 			<Word>vextractps</Word>
 			<Word>f2xm1</Word>
@@ -353,6 +393,18 @@
 			<Word>fxtract</Word>
 			<Word>fyl2x</Word>
 			<Word>fyl2xp1</Word>
+			<Word>exitac</Word>
+			<Word>parameters</Word>
+			<Word>senter</Word>
+			<Word>sexit</Word>
+			<Word>smctrl</Word>
+			<Word>wakeup</Word>
+			<Word>gf2p8affineinvqb</Word>
+			<Word>vgf2p8affineinvqb</Word>
+			<Word>gf2p8affineqb</Word>
+			<Word>vgf2p8affineqb</Word>
+			<Word>gf2p8mulb</Word>
+			<Word>vgf2p8mulb</Word>
 			<Word>haddpd</Word>
 			<Word>vhaddpd</Word>
 			<Word>haddps</Word>
@@ -372,8 +424,10 @@
 			<Word>insd</Word>
 			<Word>insertps</Word>
 			<Word>vinsertps</Word>
+			<Word>int3</Word>
 			<Word>int</Word>
 			<Word>into</Word>
+			<Word>int1</Word>
 			<Word>invd</Word>
 			<Word>invlpg</Word>
 			<Word>invpcid</Word>
@@ -517,7 +571,6 @@
 			<Word>vminss</Word>
 			<Word>monitor</Word>
 			<Word>mov</Word>
-			<Word>movabs</Word>
 			<Word>movapd</Word>
 			<Word>vmovapd</Word>
 			<Word>movaps</Word>
@@ -529,6 +582,8 @@
 			<Word>vmovq</Word>
 			<Word>movddup</Word>
 			<Word>vmovddup</Word>
+			<Word>movdir64b</Word>
+			<Word>movdiri</Word>
 			<Word>movdq2q</Word>
 			<Word>movdqa</Word>
 			<Word>vmovdqa</Word>
@@ -566,12 +621,15 @@
 			<Word>movntps</Word>
 			<Word>vmovntps</Word>
 			<Word>movntq</Word>
+			<Word>movq</Word>
+			<Word>vmovq</Word>
 			<Word>movq2dq</Word>
 			<Word>movs</Word>
 			<Word>movsb</Word>
 			<Word>movsw</Word>
 			<Word>movsd</Word>
 			<Word>movsq</Word>
+			<Word>movsd</Word>
 			<Word>vmovsd</Word>
 			<Word>movshdup</Word>
 			<Word>vmovshdup</Word>
@@ -618,6 +676,7 @@
 			<Word>vpabsb</Word>
 			<Word>vpabsw</Word>
 			<Word>vpabsd</Word>
+			<Word>vpabsq</Word>
 			<Word>packsswb</Word>
 			<Word>packssdw</Word>
 			<Word>vpacksswb</Word>
@@ -687,6 +746,7 @@
 			<Word>vpcmpistri</Word>
 			<Word>pcmpistrm</Word>
 			<Word>vpcmpistrm</Word>
+			<Word>pconfig</Word>
 			<Word>pdep</Word>
 			<Word>pext</Word>
 			<Word>pextrb</Word>
@@ -729,6 +789,7 @@
 			<Word>vpmaxsb</Word>
 			<Word>vpmaxsw</Word>
 			<Word>vpmaxsd</Word>
+			<Word>vpmaxsq</Word>
 			<Word>pmaxub</Word>
 			<Word>pmaxuw</Word>
 			<Word>vpmaxub</Word>
@@ -862,9 +923,6 @@
 			<Word>psubusw</Word>
 			<Word>vpsubusb</Word>
 			<Word>vpsubusw</Word>
-			<Word>ptest</Word>
-			<Word>vptest</Word>
-			<Word>ptwrite</Word>
 			<Word>punpckhbw</Word>
 			<Word>punpckhwd</Word>
 			<Word>punpckhdq</Word>
@@ -909,6 +967,15 @@
 			<Word>rdseed</Word>
 			<Word>rdtsc</Word>
 			<Word>rdtscp</Word>
+			<Word>rep_ins</Word>
+			<Word>rep_movs</Word>
+			<Word>rep_outs</Word>
+			<Word>rep_lods</Word>
+			<Word>rep_stos</Word>
+			<Word>repe_cmps</Word>
+			<Word>repe_scas</Word>
+			<Word>repne_cmps</Word>
+			<Word>repne_scas</Word>
 			<Word>ret</Word>
 			<Word>rorx</Word>
 			<Word>roundpd</Word>
@@ -958,6 +1025,16 @@
 			<Word>setnge</Word>
 			<Word>setnl</Word>
 			<Word>setnle</Word>
+			<Word>setno</Word>
+			<Word>setnp</Word>
+			<Word>setns</Word>
+			<Word>setnz</Word>
+			<Word>seto</Word>
+			<Word>setp</Word>
+			<Word>setpe</Word>
+			<Word>setpo</Word>
+			<Word>sets</Word>
+			<Word>setz</Word>
 			<Word>sfence</Word>
 			<Word>sgdt</Word>
 			<Word>sha1msg1</Word>
@@ -1011,14 +1088,17 @@
 			<Word>sysexit</Word>
 			<Word>sysret</Word>
 			<Word>test</Word>
+			<Word>tpause</Word>
 			<Word>tzcnt</Word>
 			<Word>ucomisd</Word>
 			<Word>vucomisd</Word>
 			<Word>ucomiss</Word>
 			<Word>vucomiss</Word>
-			<Word>ud0</Word>
+			<Word>ud01</Word>
 			<Word>ud1</Word>
 			<Word>ud2</Word>
+			<Word>umonitor</Word>
+			<Word>umwait</Word>
 			<Word>unpckhpd</Word>
 			<Word>vunpckhpd</Word>
 			<Word>unpckhps</Word>
@@ -1027,6 +1107,14 @@
 			<Word>vunpcklpd</Word>
 			<Word>unpcklps</Word>
 			<Word>vunpcklps</Word>
+			<Word>v4fmaddps</Word>
+			<Word>v4fnmaddps</Word>
+			<Word>v4fmaddss</Word>
+			<Word>v4fnmaddss</Word>
+			<Word>vaesdec</Word>
+			<Word>vaesdeclast</Word>
+			<Word>vaesenc</Word>
+			<Word>vaesenclast</Word>
 			<Word>valignd</Word>
 			<Word>valignq</Word>
 			<Word>vblendmpd</Word>
@@ -1037,8 +1125,12 @@
 			<Word>vbroadcastf32x2</Word>
 			<Word>vbroadcastf32x4</Word>
 			<Word>vbroadcastf64x2</Word>
+			<Word>vbroadcastf32x8</Word>
+			<Word>vbroadcastf64x4</Word>
 			<Word>vcompresspd</Word>
 			<Word>vcompressps</Word>
+			<Word>vcvtne2ps2bf16</Word>
+			<Word>vcvtneps2bf16</Word>
 			<Word>vcvtpd2qq</Word>
 			<Word>vcvtpd2udq</Word>
 			<Word>vcvtpd2uqq</Word>
@@ -1066,6 +1158,7 @@
 			<Word>vcvtusi2sd</Word>
 			<Word>vcvtusi2ss</Word>
 			<Word>vdbpsadbw</Word>
+			<Word>vdpbf16ps</Word>
 			<Word>verr</Word>
 			<Word>verw</Word>
 			<Word>vexp2pd</Word>
@@ -1074,9 +1167,13 @@
 			<Word>vexpandps</Word>
 			<Word>vextractf128</Word>
 			<Word>vextractf32x4</Word>
+			<Word>vextractf64x2</Word>
+			<Word>vextractf32x8</Word>
 			<Word>vextractf64x4</Word>
 			<Word>vextracti128</Word>
 			<Word>vextracti32x4</Word>
+			<Word>vextracti64x2</Word>
+			<Word>vextracti32x8</Word>
 			<Word>vextracti64x4</Word>
 			<Word>vfixupimmpd</Word>
 			<Word>vfixupimmps</Word>
@@ -1149,6 +1246,8 @@
 			<Word>vgatherdpd</Word>
 			<Word>vgatherqpd</Word>
 			<Word>vgatherdps</Word>
+			<Word>vgatherdpd</Word>
+			<Word>vgatherdps</Word>
 			<Word>vgatherqps</Word>
 			<Word>vgatherpf0dps</Word>
 			<Word>vgatherpf0qps</Word>
@@ -1158,6 +1257,8 @@
 			<Word>vgatherpf1qps</Word>
 			<Word>vgatherpf1dpd</Word>
 			<Word>vgatherpf1qpd</Word>
+			<Word>vgatherqps</Word>
+			<Word>vgatherqpd</Word>
 			<Word>vgetexppd</Word>
 			<Word>vgetexpps</Word>
 			<Word>vgetexpsd</Word>
@@ -1167,9 +1268,21 @@
 			<Word>vgetmantsd</Word>
 			<Word>vgetmantss</Word>
 			<Word>vinsertf128</Word>
+			<Word>vinsertf32x4</Word>
+			<Word>vinsertf64x2</Word>
+			<Word>vinsertf32x8</Word>
+			<Word>vinsertf64x4</Word>
 			<Word>vinserti128</Word>
+			<Word>vinserti32x4</Word>
+			<Word>vinserti64x2</Word>
+			<Word>vinserti32x8</Word>
+			<Word>vinserti64x4</Word>
 			<Word>vmaskmovps</Word>
 			<Word>vmaskmovpd</Word>
+			<Word>vp2intersectd</Word>
+			<Word>vp2intersectq</Word>
+			<Word>vp4dpwssd</Word>
+			<Word>vp4dpwssds</Word>
 			<Word>vpblendd</Word>
 			<Word>vpblendmb</Word>
 			<Word>vpblendmw</Word>
@@ -1185,8 +1298,13 @@
 			<Word>vbroadcasti64x2</Word>
 			<Word>vbroadcasti32x8</Word>
 			<Word>vbroadcasti64x4</Word>
+			<Word>vpbroadcastb</Word>
+			<Word>vpbroadcastw</Word>
+			<Word>vpbroadcastd</Word>
+			<Word>vpbroadcastq</Word>
 			<Word>vpbroadcastmb2q</Word>
 			<Word>vpbroadcastmw2d</Word>
+			<Word>vpclmulqdq</Word>
 			<Word>vpcmpb</Word>
 			<Word>vpcmpub</Word>
 			<Word>vpcmpd</Word>
@@ -1195,14 +1313,22 @@
 			<Word>vpcmpuq</Word>
 			<Word>vpcmpw</Word>
 			<Word>vpcmpuw</Word>
+			<Word>vpcompressb</Word>
+			<Word>vpcompressw</Word>
 			<Word>vpcompressd</Word>
 			<Word>vpcompressq</Word>
 			<Word>vpconflictd</Word>
 			<Word>vpconflictq</Word>
+			<Word>vpdpbusd</Word>
+			<Word>vpdpbusds</Word>
+			<Word>vpdpwssd</Word>
+			<Word>vpdpwssds</Word>
 			<Word>vperm2f128</Word>
 			<Word>vperm2i128</Word>
+			<Word>vpermb</Word>
 			<Word>vpermd</Word>
 			<Word>vpermw</Word>
+			<Word>vpermi2b</Word>
 			<Word>vpermi2w</Word>
 			<Word>vpermi2d</Word>
 			<Word>vpermi2q</Word>
@@ -1213,19 +1339,28 @@
 			<Word>vpermpd</Word>
 			<Word>vpermps</Word>
 			<Word>vpermq</Word>
+			<Word>vpermt2b</Word>
 			<Word>vpermt2w</Word>
 			<Word>vpermt2d</Word>
 			<Word>vpermt2q</Word>
 			<Word>vpermt2ps</Word>
 			<Word>vpermt2pd</Word>
+			<Word>vpexpandb</Word>
+			<Word>vpexpandw</Word>
 			<Word>vpexpandd</Word>
 			<Word>vpexpandq</Word>
 			<Word>vpgatherdd</Word>
 			<Word>vpgatherdq</Word>
+			<Word>vpgatherdd</Word>
+			<Word>vpgatherqd</Word>
+			<Word>vpgatherdq</Word>
+			<Word>vpgatherqq</Word>
 			<Word>vpgatherqd</Word>
 			<Word>vpgatherqq</Word>
 			<Word>vplzcntd</Word>
 			<Word>vplzcntq</Word>
+			<Word>vpmadd52huq</Word>
+			<Word>vpmadd52luq</Word>
 			<Word>vpmaskmovd</Word>
 			<Word>vpmaskmovq</Word>
 			<Word>vpmovb2m</Word>
@@ -1254,6 +1389,11 @@
 			<Word>vpmovwb</Word>
 			<Word>vpmovswb</Word>
 			<Word>vpmovuswb</Word>
+			<Word>vpmultishiftqb</Word>
+			<Word>vpopcntb</Word>
+			<Word>vpopcntw</Word>
+			<Word>vpopcntd</Word>
+			<Word>vpopcntq</Word>
 			<Word>vprolvd</Word>
 			<Word>vprold</Word>
 			<Word>vprolvq</Word>
@@ -1266,6 +1406,19 @@
 			<Word>vpscatterdq</Word>
 			<Word>vpscatterqd</Word>
 			<Word>vpscatterqq</Word>
+			<Word>vpshldw</Word>
+			<Word>vpshldd</Word>
+			<Word>vpshldq</Word>
+			<Word>vpshldvw</Word>
+			<Word>vpshldvd</Word>
+			<Word>vpshldvq</Word>
+			<Word>vpshrdw</Word>
+			<Word>vpshrdd</Word>
+			<Word>vpshrdq</Word>
+			<Word>vpshrdvw</Word>
+			<Word>vpshrdvd</Word>
+			<Word>vpshrdvq</Word>
+			<Word>vpshufbitqmb</Word>
 			<Word>vpsllvd</Word>
 			<Word>vpsllvq</Word>
 			<Word>vpsllvw</Word>
@@ -1340,6 +1493,7 @@
 			<Word>wait</Word>
 			<Word>fwait</Word>
 			<Word>wbinvd</Word>
+			<Word>wbnoinvd</Word>
 			<Word>wrfsbase</Word>
 			<Word>wrgsbase</Word>
 			<Word>wrmsr</Word>
@@ -1372,9 +1526,6 @@
 			<Word>xsaves</Word>
 			<Word>xsaves64</Word>
 			<Word>xsetbv</Word>
-			<Word>xtest</Word>
-			<Word>incsspq</Word>
-			<Word>rdsspq</Word>
 			<Word>xtest</Word>
         </Keywords>
 

@@ -56,21 +56,21 @@ public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
         return instr.Sources[0];
       }
       case IRMode.ARM64: {
-        if (!(instr.Opcode is ARMOpcode)) {
+        if (!(instr.Opcode is ARM64Opcode)) {
           return null;
         }
 
-        switch (instr.OpcodeAs<ARMOpcode>()) {
-          case ARMOpcode.CBZ:
-          case ARMOpcode.CBNZ: {
+        switch (instr.OpcodeAs<ARM64Opcode>()) {
+          case ARM64Opcode.CBZ:
+          case ARM64Opcode.CBNZ: {
             if (instr.Sources.Count == 2) {
               return instr.Sources[1];
             }
 
             break;
           }
-          case ARMOpcode.TBZ:
-          case ARMOpcode.TBNZ: {
+          case ARM64Opcode.TBZ:
+          case ARM64Opcode.TBNZ: {
             if (instr.Sources.Count == 3) {
               return instr.Sources[2];
             }
@@ -151,7 +151,7 @@ public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
         return instr.OpcodeAs<x86Opcode>() == x86Opcode.NOP;
       }
       case IRMode.ARM64: {
-        return instr.OpcodeAs<ARMOpcode>() == ARMOpcode.NOP;
+        return instr.OpcodeAs<ARM64Opcode>() == ARM64Opcode.NOP;
       }
     }
 
