@@ -182,6 +182,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   private bool hasCustomLineNumbers_;
   private List<IVisualLineTransformer> registerdTransformers_;
   private List<HoverPreview> registeredHoverPreviews_;
+  private CancelableTaskInstance markerBarUpdateTask_;
+  private ReaderWriterLockSlim markerBarUpdateLock_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -203,6 +205,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
     registerdTransformers_ = new List<IVisualLineTransformer>();
     registeredHoverPreviews_ = new List<HoverPreview>();
+    markerBarUpdateTask_ = new CancelableTaskInstance(true);
+    markerBarUpdateLock_ = new ReaderWriterLockSlim();
 
     SetupProperties();
     SetupStableRenderers();
@@ -1412,12 +1416,15 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     updateSuspended_ = true;
     disableCaretEvent_ = true;
     overlayRenderer_.SuspendUpdate();
+    markerBarUpdateTask_.CancelTask();
+    markerBarUpdateLock_.EnterWriteLock();
   }
 
   public void ResumeUpdate() {
     updateSuspended_ = false;
     disableCaretEvent_ = false;
     overlayRenderer_.ResumeUpdate();
+    markerBarUpdateLock_.ExitWriteLock();
     UpdateHighlighting();
   }
 
@@ -2007,6 +2014,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   private void ResetRenderers() {
+    markerBarUpdateTask_.CancelTask();
     bookmarks_?.Clear();
     hoverHighlighter_?.Clear();
     selectedHighlighter_?.Clear();
@@ -3310,7 +3318,17 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     int startY = arrowButtonHeight;
 
     // Delay the update to ensure the markerMargin has layout updated.
+    // Since the code runs later on the UI thread, it can end up interleaved
+    // with code that changes the OverlayRenderer data structs. used by the
+    // PopulateMarker* functions, abort the update in that case.
+    var updateTask = markerBarUpdateTask_.CancelCurrentAndCreateTask();
+
     Dispatcher.BeginInvoke(() => {
+      if (updateTask.IsCanceled) {
+        return;
+      }
+
+      markerBarUpdateLock_.EnterWriteLock();
       double width = markerMargin_.ActualWidth;
       double height = markerMargin_.ActualHeight;
       double availableHeight = height - arrowButtonHeight * 2;
@@ -3334,6 +3352,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       markerMargingElements_.Sort((a, b) => (int)(a.Visual.Top - b.Visual.Top));
       SaveHighlighterVersion(highlighterVersion_);
       RenderMarkerBar();
+
+      markerBarUpdateLock_.ExitWriteLock();
+      updateTask.Complete();
     }, DispatcherPriority.Background);
   }
 
