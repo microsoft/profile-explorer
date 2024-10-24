@@ -493,7 +493,6 @@
               Click="ShowPanelMenu_Click"
               Header="Developer View"
               Tag="Developer" />
-            <Separator />
           </MenuItem>
 
           <MenuItem Header="Profiling">
@@ -918,7 +917,7 @@
                     Padding="0,0,0,0"
                     OverridesDefaultStyle="True"
                     SubmenuOpened="CategoriesMenu_OnSubmenuOpened"
-                    ToolTip="Overview of time distribution based on function categories">
+                    ToolTip="Overview of the profile trace time distribution grouped by function categories">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
                         <Image
@@ -1597,14 +1596,14 @@
                   <local:DefinitionPanel x:Name="DefinitionPanel" />
                 </avalonDock:LayoutAnchorable>
 
-                <avalonDock:LayoutAnchorable
-                  x:Name="ScriptingPanelHost"
-                  Title="Scripting"
-                  ContentId="Scripting"
-                  IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                  <local:ScriptingPanel x:Name="ScriptingPanel" />
-                </avalonDock:LayoutAnchorable>
+                <!-- <avalonDock:LayoutAnchorable -->
+                <!--   x:Name="ScriptingPanelHost" -->
+                <!--   Title="Scripting" -->
+                <!--   ContentId="Scripting" -->
+                <!--   IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                <!--   IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                <!--   <local:ScriptingPanel x:Name="ScriptingPanel" /> -->
+                <!-- </avalonDock:LayoutAnchorable> -->
 
                 <avalonDock:LayoutAnchorable
                   x:Name="DeveloperPanelHost"

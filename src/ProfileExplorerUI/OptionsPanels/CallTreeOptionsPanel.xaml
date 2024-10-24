@@ -56,7 +56,7 @@
             Margin="0,2,0,2"
             Content="Show function details on hover"
             IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
-            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
+            ToolTip="On mouse hover over a function, show a popup with details.&#x0a;If pinned, the popup expands into a Function Details panel popup" />
           <StackPanel
             Margin="20,2,0,2"
             IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"

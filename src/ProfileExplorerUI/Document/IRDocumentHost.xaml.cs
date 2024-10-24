@@ -2341,18 +2341,34 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.ExportToExcelFile(TextView, DocumentExporting.ExportFunctionAsExcelFile);
   }
 
   private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.ExportToHtmlFile(TextView, DocumentExporting.ExportFunctionAsHtmlFile);
   }
 
   private async void ExportFunctionProfileMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.ExportToMarkdownFile(TextView, DocumentExporting.ExportFunctionAsMarkdownFile);
   }
 
   private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.CopySelectedLinesAsHtml(TextView);
   }
 

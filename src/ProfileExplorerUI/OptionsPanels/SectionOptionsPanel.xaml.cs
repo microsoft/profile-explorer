@@ -31,12 +31,12 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   }
 
   private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 }

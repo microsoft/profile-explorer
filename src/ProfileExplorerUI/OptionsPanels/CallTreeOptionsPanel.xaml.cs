@@ -22,12 +22,12 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
   }
 
   private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 }

@@ -301,7 +301,6 @@
 
         <ListView
           x:Name="FunctionList"
-          Grid.Column="2"
           Panel.ZIndex="2"
           local:GridViewColumnVisibility.Enabled="True"
           Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"

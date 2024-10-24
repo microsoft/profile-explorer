@@ -206,7 +206,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     registerdTransformers_ = new List<IVisualLineTransformer>();
     registeredHoverPreviews_ = new List<HoverPreview>();
     markerBarUpdateTask_ = new CancelableTaskInstance(true);
-    markerBarUpdateLock_ = new ReaderWriterLockSlim();
+    markerBarUpdateLock_ = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
     SetupProperties();
     SetupStableRenderers();
@@ -4189,6 +4189,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     }
 
     margin_.InvalidateVisual();
+  }
+
+  public void Redraw() {
+    UpdateHighlighting();
+    UpdateMargin();
   }
 
   private class MarkerMarginVersionInfo {

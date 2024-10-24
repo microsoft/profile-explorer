@@ -286,7 +286,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
               TextChanged="FunctionFilter_OnTextChanged"
-              ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
+              ToolTip="Filter function list based based on a substring (Ctrl+F).&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
               <TextBox.InputBindings>
                 <KeyBinding
                   Key="Escape"

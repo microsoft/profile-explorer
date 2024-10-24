@@ -7,7 +7,7 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class CallTreeNodeSettings : SettingsBase {
-  public static readonly int DefaultPreviewPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
+  public static readonly int DefaultPreviewPopupDuration = (int)HoverPreview.ExtraLongHoverDurationMs;
 
   public CallTreeNodeSettings() {
     Reset();

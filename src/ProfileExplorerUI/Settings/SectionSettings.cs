@@ -7,7 +7,7 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class SectionSettings : SettingsBase {
-  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
+  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDurationMs;
 
   public SectionSettings() {
     Reset();

@@ -8,7 +8,7 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class TimelineSettings : SettingsBase {
-  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
+  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDurationMs;
 
   public TimelineSettings() {
     Reset();

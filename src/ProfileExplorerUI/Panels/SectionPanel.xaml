@@ -434,7 +434,7 @@
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 TextChanged="FunctionFilter_TextChanged"
-                ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
+                ToolTip="Filter function list based based on a substring (Ctrl+F).&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
                 <TextBox.InputBindings>
                   <KeyBinding
                     Key="Escape"
@@ -542,7 +542,7 @@
                           VerticalAlignment="Top"
                           MouseDown="ModuleWarningImage_MouseUp"
                           Source="{StaticResource WarningIconColor}"
-                          ToolTip="Debug info file not found&#x0a;Click for details"
+                          ToolTip="Debug info file not found.&#x0a;Click for details"
                           Visibility="{Binding DebugFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <Image
                           Width="16"
@@ -551,7 +551,7 @@
                           VerticalAlignment="Top"
                           MouseDown="ModuleWarningImage_MouseUp"
                           Source="{StaticResource WarningIconColor}"
-                          ToolTip="Binary file not found&#x0a;Click for details"
+                          ToolTip="Binary file not found.&#x0a;Click for details"
                           Visibility="{Binding BinaryFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
                       </Grid>
                       <Border

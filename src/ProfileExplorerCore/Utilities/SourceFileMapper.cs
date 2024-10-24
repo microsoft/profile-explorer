@@ -8,13 +8,11 @@ namespace ProfileExplorer.Core;
 
 public class SourceFileMapper {
   private readonly Dictionary<string, string> map_;
-  private readonly HashSet<string> missingFilesSet_;
   private readonly object lockObject_ = new();
 
   public SourceFileMapper(Dictionary<string, string> map = null) {
     map_ = map;
     map_ ??= new Dictionary<string, string>();
-    missingFilesSet_ = new HashSet<string>();
   }
 
   public Dictionary<string, string> SourceMap => map_;
@@ -29,10 +27,6 @@ public class SourceFileMapper {
         return result;
       }
 
-      if (missingFilesSet_.Contains(sourceFile)) {
-        return null;
-      }
-
       if (lookup == null) {
         return null;
       }
@@ -42,11 +36,6 @@ public class SourceFileMapper {
       if (result != null) {
         UpdateMap(sourceFile, result);
       }
-      else {
-        // Remember that the file couldn't be found so next time
-        // it won't ask again for the same one.
-        missingFilesSet_.Add(sourceFile);
-      }
 
       return result;
     }
@@ -55,19 +44,6 @@ public class SourceFileMapper {
   public void Reset() {
     lock (lockObject_) {
       map_.Clear();
-      missingFilesSet_.Clear();
-    }
-  }
-
-  public void ResetMissingFiles() {
-    lock (lockObject_) {
-      missingFilesSet_.Clear();
-    }
-  }
-
-  public void ResetMissingFile(string filePath) {
-    lock (lockObject_) {
-      missingFilesSet_.Remove(filePath);
     }
   }
 

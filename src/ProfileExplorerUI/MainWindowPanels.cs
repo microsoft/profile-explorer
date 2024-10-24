@@ -1400,9 +1400,9 @@ public partial class MainWindow : Window, ISession {
       case ToolPanelKind.Notes: {
         return NotesPanelHost;
       }
-      case ToolPanelKind.Scripting: {
-        return ScriptingPanelHost;
-      }
+      // case ToolPanelKind.Scripting: {
+      //   return ScriptingPanelHost;
+      // }
       case ToolPanelKind.Developer: {
         return DeveloperPanelHost;
       }
