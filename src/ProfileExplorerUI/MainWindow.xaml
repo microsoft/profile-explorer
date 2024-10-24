@@ -136,6 +136,18 @@
       Command="local:AppCommand.ViewProfileReport"
       Executed="ViewProfileReportExecuted"
       PreviewCanExecute="CanExecuteProfileCommand" />
+
+    <CommandBinding
+      CanExecute="CanExecuteAlways"
+      Command="local:AppCommand.OpenHelpPage"
+      PreviewCanExecute="CanExecuteAlways"
+      PreviewExecuted="OpenHelpPageExecuted" />
+
+    <CommandBinding
+      CanExecute="CanExecuteAlways"
+      Command="local:AppCommand.OpenHelpPanel"
+      PreviewCanExecute="CanExecuteAlways"
+      PreviewExecuted="OpenHelpPanelExecuted" />
   </Window.CommandBindings>
 
   <Window.InputBindings>
@@ -196,6 +208,13 @@
     <KeyBinding
       Key="F10"
       Command="local:AppCommand.SwapDiffDocuments" />
+    <KeyBinding
+      Key="F1"
+      Command="local:AppCommand.OpenHelpPage"/>
+    <KeyBinding
+      Key="F1"
+      Command="local:AppCommand.OpenHelpPanel"
+      Modifiers="Ctrl" />
   </Window.InputBindings>
 
   <Grid x:Name="MainGrid">
@@ -608,8 +627,9 @@
 
           <MenuItem Header="Help">
             <MenuItem
-              Click="OpenDocsMenu_Click"
-              Header="User Guide">
+              Command="local:AppCommand.OpenHelpPage"
+              Header="User Guide"
+              InputGestureText="F1">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -618,8 +638,9 @@
               </MenuItem.Icon>
             </MenuItem>
             <MenuItem
-              Click="ShowPanelMenu_Click"
+              Command="local:AppCommand.OpenHelpPanel"
               Header="Help View"
+              InputGestureText="Ctrl+F1"
               Tag="Help">
               <MenuItem.Icon>
                 <Image

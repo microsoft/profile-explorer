@@ -219,17 +219,22 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task ReloadSettings() {
+    // Reload UI settings.
     OnPropertyChanged(nameof(WindowScaling));
+
+    // Reload compiler provider settings.
     await CompilerInfo.ReloadSettings();
 
     if (!IsSessionStarted) {
       return;
     }
 
+    // Reload settings for all open documents views.
     foreach (var docHostInfo in sessionState_.DocumentHosts) {
       await docHostInfo.DocumentHost.ReloadSettings();
     }
 
+    // Reload settings for all panels.
     await ForEachPanelAsync(async (panel) => await panel.OnReloadSettings());
     await HandleNewDiffSettings(App.Settings.DiffSettings, false, true);
   }

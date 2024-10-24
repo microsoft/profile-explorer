@@ -56,6 +56,8 @@ public static class AppCommand {
   public static readonly RoutedUICommand RecordProfile = new("Untitled", "RecordProfile", typeof(Window));
   public static readonly RoutedUICommand ViewProfileReport = new("Untitled", "ViewProfileReport", typeof(Window));
   public static readonly RoutedUICommand ShowProfileCallGraph = new("Untitled", "ShowProfileCallGraph", typeof(Window));
+  public static readonly RoutedUICommand OpenHelpPage = new("Untitled", "OpenHelpPage", typeof(Window));
+  public static readonly RoutedUICommand OpenHelpPanel = new("Untitled", "OpenHelpPanel", typeof(Window));
 }
 
 public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
@@ -924,8 +926,12 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     optionsWindow.ShowDialog();
   }
 
-  private void OpenDocsMenu_Click(object sender, RoutedEventArgs e) {
+  private void OpenHelpPageExecuted(object sender, ExecutedRoutedEventArgs e) {
     App.OpenDocumentation();
+  }
+
+  private async void OpenHelpPanelExecuted(object sender, ExecutedRoutedEventArgs e) {
+    await ShowPanel(ToolPanelKind.Help);
   }
 
   private void AboutMenu_Click(object sender, RoutedEventArgs e) {
