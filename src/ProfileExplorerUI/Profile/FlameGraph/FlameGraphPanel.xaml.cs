@@ -499,16 +499,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
     await ReloadSettings();
   }
 
-  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.ModuleColors.Clear();
-    await ReloadSettings();
-  }
-
-  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.FunctionColors.Clear();
-    await ReloadSettings();
-  }
-
   private async Task ReloadSettings() {
     GraphHost.SettingsUpdated(settings_);
     UpdateMarkingUI();

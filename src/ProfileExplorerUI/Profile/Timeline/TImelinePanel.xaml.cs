@@ -803,7 +803,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ZoomOut(double zoomPointX) {
-    AdjustZoom(-ZoomAmount * ActivityViewZoomRatio, zoomPointX, true, ZoomAnimationDuration);
+    AdjustZoom(-ZoomAmount * (ActivityViewZoomRatio * 0.5), zoomPointX, true, ZoomAnimationDuration);
   }
 
   private void AdjustMaxWidth(double amount) {

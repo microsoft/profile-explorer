@@ -538,6 +538,12 @@ public static class DocumentExporting {
   public static async Task CopySelectedLinesAsHtml(IRDocument textView) {
     int startLine = textView.TextArea.Selection.StartPosition.Line - 1;
     int endLine = textView.TextArea.Selection.EndPosition.Line - 1;
+
+    // If no line is selected, copy the current line.
+    if (startLine == -1 && endLine == -1) {
+      startLine = endLine = textView.TextArea.Caret.Line - 1;
+    }
+
     await CopyLinesAsHtml(textView, startLine, endLine);
   }
 
@@ -822,6 +828,12 @@ public static class DocumentExporting {
                                                          Func<int, int> fromOriginalLineMapper) {
     int startLine = textView.TextArea.Selection.StartPosition.Line;
     int endLine = textView.TextArea.Selection.EndPosition.Line;
+
+    // If no line is selected, copy the current line.
+    if (startLine == 0 && endLine == 0) {
+      startLine = endLine = textView.TextArea.Caret.Line;
+    }
+
     await CopySourceLinesAsHtml(textView, startLine, endLine, toOriginalLineMapper, fromOriginalLineMapper);
   }
 

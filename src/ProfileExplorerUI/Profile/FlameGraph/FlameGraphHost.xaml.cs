@@ -623,11 +623,19 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
     if (e.ChangedButton == MouseButton.Middle &&
         e.ButtonState == MouseButtonState.Pressed) {
+      // Select the node under the mouse cursor first, then expand.
+      var point = e.GetPosition(GraphViewer);
+      var node = GraphViewer.FindPointedNode(point);
+
+      if (node != null && node != GraphViewer.SelectedNode) {
+        SelectNode(node, false, false);
+      }
+
       await EnlargeNode(GraphViewer.SelectedNode);
       e.Handled = true;
     }
-    if (e.ChangedButton == MouseButton.XButton1 &&
-        e.ButtonState == MouseButtonState.Pressed) {
+    else if (e.ChangedButton == MouseButton.XButton1 &&
+             e.ButtonState == MouseButtonState.Pressed) {
       await RestorePreviousState();
       e.Handled = true;
     }
@@ -719,6 +727,10 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
   private async Task EnlargeNode(FlameGraphNode node, bool saveState = true,
                                  double verticalOffset = double.NaN,
                                  double horizontalOffset = double.NaN) {
+    if (node == null) {
+      return;
+    }
+
     if (Utils.IsAltModifierActive()) {
       await ChangeRootNode(node);
       return;
@@ -884,6 +896,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
           await HandleOpenFunctionAction(GraphViewer.SelectedNode);
           e.Handled = true;
         }
+
         break;
       }
       case Key.Space: {
@@ -1125,7 +1138,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
       zoomPointX = bounds.Left + bounds.Width / 2;
     }
 
-    AdjustZoom(-ZoomAmount * GraphZoomRatio, zoomPointX, UseAnimations, ZoomAnimationDuration);
+    AdjustZoom(-ZoomAmount * (GraphZoomRatio * 0.5), zoomPointX, UseAnimations, ZoomAnimationDuration);
   }
 
   private void GraphHost_OnScrollChanged(object sender, ScrollChangedEventArgs e) {
