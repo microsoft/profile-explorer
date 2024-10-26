@@ -183,7 +183,18 @@
           </GridViewColumn>
 
           <GridViewColumn
-            Width="380"
+            Width="150"
+            DisplayMemberBinding="{Binding FunctionName}"
+            Header="#">
+            <GridViewColumn.HeaderContainerStyle>
+              <Style TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+              </Style>
+            </GridViewColumn.HeaderContainerStyle>
+          </GridViewColumn>
+
+          <GridViewColumn
+            Width="350"
             Header="Search result">
             <GridViewColumn.HeaderContainerStyle>
               <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -224,8 +235,8 @@
             Command="local:SearchResultsCommand.OpenInNewTab"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=ResultList}"
-            Header="Open Section in New Tab"
-            InputGestureText="Shift+Return">
+            Header="Open Function in New Tab"
+            InputGestureText="Ctrl+Return">
             <MenuItem.Icon>
               <Image
                 Width="16"
@@ -238,7 +249,7 @@
             Command="local:SearchResultsCommand.OpenLeft"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=ResultList}"
-            Header="Open Section in Left Tab"
+            Header="Open Function in Left Tab"
             InputGestureText="Ctrl+Left">
             <MenuItem.Icon>
               <Image
@@ -251,7 +262,7 @@
             Command="local:SearchResultsCommand.OpenRight"
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
             CommandTarget="{Binding ElementName=ResultList}"
-            Header="Open Section in Right Tab"
+            Header="Open Function in Right Tab"
             InputGestureText="Ctrl+Right">
             <MenuItem.Icon>
               <Image
@@ -274,7 +285,7 @@
           Command="local:SearchResultsCommand.OpenInNewTab"
           CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
           CommandTarget="{Binding ElementName=ResultList}"
-          Modifiers="Shift" />
+          Modifiers="Ctrl" />
       </ListView.InputBindings>
     </ListView>
   </Grid>

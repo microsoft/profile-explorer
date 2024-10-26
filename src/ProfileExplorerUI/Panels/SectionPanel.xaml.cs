@@ -509,8 +509,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     functionExtMap_ = new Dictionary<IRTextFunction, IRTextFunctionEx>();
     annotatedSections_ = new HashSet<IRTextSectionEx>();
     IsFunctionListVisible = true;
-    IsSectionListVisible = true;
-    ShowSections = true;
+    IsSectionListVisible = false;
+    ShowSections = false;
     SectionCountColumnVisible = true;
     SyncDiffedDocuments = true;
     MainGrid.DataContext = this;

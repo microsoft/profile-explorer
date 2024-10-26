@@ -48,21 +48,6 @@
           BorderThickness="0,0,0,1"
           DockPanel.Dock="Right">
           <Grid>
-            <StackPanel
-              Margin="4,4,4,4"
-              Orientation="Horizontal">
-              <CheckBox
-                VerticalAlignment="Center"
-                Content="Search all functions"
-                IsChecked="{Binding Path=SearchAllFunctions}"
-                ToolTip="Search over all functions part of the opened document" />
-              <CheckBox
-                Margin="8,0,0,0"
-                VerticalAlignment="Center"
-                Content="Include pass output"
-                IsChecked="{Binding Path=SearchPassOutput}"
-                ToolTip="Search over the additional text associated with sections" />
-            </StackPanel>
             <Button
               x:Name="PinPanelButton"
               Grid.Row="0"

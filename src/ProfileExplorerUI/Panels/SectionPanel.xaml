@@ -732,6 +732,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+                        ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding Settings.AppendTimeToSelfColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                       <ContentControl
                         HorizontalAlignment="Stretch"
@@ -768,6 +769,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
+                        ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding Settings.AppendTimeToTotalColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                       <ContentControl
                         HorizontalAlignment="Stretch"
@@ -932,7 +934,7 @@
                 Command="local:Command.OpenRight"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open in Right Tab"
+                Header="Open Function in Right Tab"
                 InputGestureText="Ctrl+Shift+Right"
                 ToolTip="Open the assembly view in a new tab docked right">
                 <MenuItem.Icon>
@@ -1719,12 +1721,12 @@
       Key="Left"
       Command="local:Command.OpenLeft"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl+Shift" />
+      Modifiers="Ctrl" />
     <KeyBinding
       Key="Right"
       Command="local:Command.OpenRight"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl+Shift" />
+      Modifiers="Ctrl" />
     <KeyBinding
       Key="Return"
       Command="local:Command.DiffWithOtherDocument"

@@ -332,7 +332,7 @@
             VerticalAlignment="Center"
             Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
             TextTrimming="CharacterEllipsis"
-            ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}" />
+            ToolTip="{Binding Percentage, Converter={StaticResource PercentageConverter}}" />
         </Grid>
       </Border>
     </Grid>
@@ -379,7 +379,7 @@
             VerticalAlignment="Center"
             Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
             TextTrimming="CharacterEllipsis"
-            ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+            ToolTip="{Binding ExclusivePercentage, Converter={StaticResource PercentageConverter}}" />
         </Grid>
       </Border>
     </Grid>
@@ -427,7 +427,7 @@
             VerticalAlignment="Center"
             Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
             TextTrimming="CharacterEllipsis"
-            ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}" />
+            ToolTip="{Binding ExclusivePercentage, Converter={StaticResource PercentageConverter}}" />
         </Grid>
       </Border>
     </Grid>
@@ -440,7 +440,8 @@
         HorizontalAlignment="Left"
         VerticalAlignment="Center"
         FontWeight="Medium"
-        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
+        Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
+        ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}">
         <TextBlock.Style>
           <Style TargetType="{x:Type TextBlock}">
             <Style.Triggers>
@@ -515,7 +516,8 @@
               HorizontalAlignment="Left"
               VerticalAlignment="Center"
               Foreground="Black"
-              Text="{Binding Path=ExclusivePercentage, Converter={StaticResource ExclusivePercentageConverter}}">
+              Text="{Binding Path=ExclusivePercentage, Converter={StaticResource ExclusivePercentageConverter}}"
+              ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}">
               <TextBlock.Style>
                 <Style TargetType="{x:Type TextBlock}">
                   <Style.Triggers>
