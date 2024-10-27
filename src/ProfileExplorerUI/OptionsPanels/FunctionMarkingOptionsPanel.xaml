@@ -17,7 +17,7 @@
         Margin="0,2,0,2"
         Content="Pick function color based on module"
         IsChecked="{Binding UseAutoModuleColors, Mode=TwoWay}"
-        ToolTip="Automatically pick a function color based on the module name" />
+        ToolTip="Automatically pick a function color based on the module name.&#x0a;If disabled, the Flame Graph view will use the color palettes defined in the options" />
       <StackPanel
         Margin="0,2,0,0"
         IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked}"
@@ -46,7 +46,7 @@
         Margin="0,4,0,2"
         Content="Mark functions based on module name"
         IsChecked="{Binding UseModuleColors, Mode=TwoWay}"
-        ToolTip="Use a different color for specified modules" />
+        ToolTip="Use a different color for the specified modules" />
       <Grid
         Margin="0,0,0,0"
         IsEnabled="{Binding ElementName=ModuleCheckBox, Path=IsChecked}">
@@ -227,7 +227,7 @@
         Margin="0,4,0,2"
         Content="Mark functions based on function name"
         IsChecked="{Binding UseFunctionColors, Mode=TwoWay}"
-        ToolTip="Use a different color for specified functions" />
+        ToolTip="Use a different color for the specified functions" />
       <Grid
         Margin="0,0,0,0"
         IsEnabled="{Binding ElementName=FunctionCheckBox, Path=IsChecked}">
@@ -345,7 +345,7 @@
             Padding="2"
             HorizontalContentAlignment="Left"
             Click="FunctionAdd_Click"
-            ToolTip="Add new module to the list">
+            ToolTip="Add new function to the list">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -363,7 +363,7 @@
             Padding="2"
             HorizontalContentAlignment="Left"
             Click="FunctionRemove_Click"
-            ToolTip="Remove module from the list">
+            ToolTip="Remove function from the list">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -381,7 +381,7 @@
             Padding="2"
             HorizontalContentAlignment="Left"
             Click="ClearFunction_Click"
-            ToolTip="Remove all modules from the list">
+            ToolTip="Remove all functions from the list">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -517,7 +517,7 @@
             Padding="2"
             HorizontalContentAlignment="Left"
             Click="MarkingRemove_Click"
-            ToolTip="Remove marking set from the list">
+            ToolTip="Remove selected marking set from the list">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"

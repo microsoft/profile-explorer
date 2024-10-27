@@ -296,7 +296,7 @@
               Padding="0,0,2,0"
               BorderThickness="0"
               IsChecked="{Binding Path=SyncSelection, Mode=TwoWay}"
-              ToolTip="Sync function displayed in other profiling panels with selection"
+              ToolTip="Sync function displayed in other profiling views with selection"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -317,7 +317,7 @@
               Padding="0,0,2,0"
               BorderThickness="0"
               IsChecked="{Binding Path=SyncSourceFile, Mode=TwoWay}"
-              ToolTip="Sync Source File panel with selection"
+              ToolTip="Sync Source File view with selection"
               Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -434,7 +434,7 @@
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 TextChanged="FunctionFilter_TextChanged"
-                ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
+                ToolTip="Filter function list based based on a substring (Ctrl+F).&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
                 <TextBox.InputBindings>
                   <KeyBinding
                     Key="Escape"
@@ -542,7 +542,7 @@
                           VerticalAlignment="Top"
                           MouseDown="ModuleWarningImage_MouseUp"
                           Source="{StaticResource WarningIconColor}"
-                          ToolTip="Debug info file not found&#x0a;Click for details"
+                          ToolTip="Debug info file not found.&#x0a;Click for details"
                           Visibility="{Binding DebugFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <Image
                           Width="16"
@@ -551,7 +551,7 @@
                           VerticalAlignment="Top"
                           MouseDown="ModuleWarningImage_MouseUp"
                           Source="{StaticResource WarningIconColor}"
-                          ToolTip="Binary file not found&#x0a;Click for details"
+                          ToolTip="Binary file not found.&#x0a;Click for details"
                           Visibility="{Binding BinaryFileMissing, Converter={StaticResource BoolToVisibilityConverter}}" />
                       </Grid>
                       <Border
@@ -732,6 +732,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}"
+                        ToolTip="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding Settings.AppendTimeToSelfColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                       <ContentControl
                         HorizontalAlignment="Stretch"
@@ -768,6 +769,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}"
+                        ToolTip="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
                         Visibility="{Binding Settings.AppendTimeToTotalColumn, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:SectionPanel}}, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                       <ContentControl
                         HorizontalAlignment="Stretch"
@@ -890,7 +892,7 @@
                 Command="local:Command.Open"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open"
+                Header="Open Function"
                 InputGestureText="Return"
                 ToolTip="Open the assembly view, replacing the active tab">
                 <MenuItem.Icon>
@@ -904,8 +906,8 @@
                 Command="local:Command.OpenInNewTab"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open in New Tab"
-                InputGestureText="Shift+Return"
+                Header="Open Function in New Tab"
+                InputGestureText="Ctrl+Return"
                 ToolTip="Open the assembly view in a new tab">
                 <MenuItem.Icon>
                   <Image
@@ -918,7 +920,7 @@
                 Command="local:Command.OpenLeft"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open in Left Tab"
+                Header="Open Function in Left Tab"
                 InputGestureText="Ctrl+Shift+Left"
                 ToolTip="Open the assembly view in a new tab docked left">
                 <MenuItem.Icon>
@@ -932,7 +934,7 @@
                 Command="local:Command.OpenRight"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Open in Right Tab"
+                Header="Open Function in Right Tab"
                 InputGestureText="Ctrl+Shift+Right"
                 ToolTip="Open the assembly view in a new tab docked right">
                 <MenuItem.Icon>
@@ -972,8 +974,36 @@
                 Header="Copy Mangled Function Name"
                 InputGestureText="Ctrl+Alt+C"
                 ToolTip="Copy the mangled function name to the clipboard (C++)" />
-
               <Separator />
+
+              <MenuItem
+                Command="local:Command.CopyFunctionText"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Copy Function Assembly Code"
+                ToolTip="Copies the assembly code of the selected function to the clipboard">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource ClipboardIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <MenuItem
+                Command="local:Command.SaveFunctionText"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                CommandTarget="{Binding ElementName=FunctionList}"
+                Header="Save Function Assembly Code"
+                ToolTip="Save the assembly code of the selected function to a file">
+                <MenuItem.Icon>
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource SaveIcon}" />
+                </MenuItem.Icon>
+              </MenuItem>
+              <Separator/>
+
               <MenuItem
                 Header="Mark Module"
                 ToolTip="Mark all functions belonging to this module (saved)">
@@ -1048,33 +1078,6 @@
                 </MenuItem.Icon>
               </MenuItem>
               <Separator />
-
-              <MenuItem
-                Command="local:Command.CopyFunctionText"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Copy Function Text"
-                ToolTip="Copies the text (IR) of all sections for the selected function to the clipboard">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource ClipboardIcon}" />
-                </MenuItem.Icon>
-              </MenuItem>
-              <MenuItem
-                Command="local:Command.SaveFunctionText"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                CommandTarget="{Binding ElementName=FunctionList}"
-                Header="Save Function Text"
-                ToolTip="Save the text (IR) of all sections for the selected function to a file">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Source="{StaticResource SaveIcon}" />
-                </MenuItem.Icon>
-              </MenuItem>
               <MenuItem
                 Command="local:Command.OpenDocumentInNewInstance"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -1091,13 +1094,13 @@
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
               <Separator
-                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                Visibility="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
               <MenuItem
                 Command="{Binding SelectFunctionCallTreeCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Call Tree"
-                ToolTip="Select the function instance in the Call Tree panel"
+                ToolTip="Select the function instance in the Call Tree view"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Icon>
                   <Image
@@ -1111,7 +1114,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Flame Graph"
-                ToolTip="Select the function instance in the Flame Graph panel"
+                ToolTip="Select the function instance in the Flame Graph view"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Icon>
                   <Image
@@ -1125,7 +1128,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=FunctionList}"
                 Header="Select in Timeline"
-                ToolTip="Select the function instance in the Timeline panel"
+                ToolTip="Select the function instance in the Timeline view"
                 Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <MenuItem.Icon>
                   <Image
@@ -1535,7 +1538,7 @@
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                 CommandTarget="{Binding ElementName=SectionList}"
                 Header="Open in New Tab"
-                InputGestureText="Shift+Return">
+                InputGestureText="Ctrl+Return">
                 <MenuItem.Icon>
                   <Image
                     Width="16"
@@ -1681,7 +1684,7 @@
               Command="local:Command.OpenInNewTab"
               CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
               CommandTarget="{Binding ElementName=SectionList}"
-              Modifiers="Shift" />
+              Modifiers="Ctrl" />
             <KeyBinding
               Key="T"
               Command="local:Command.ToggleTag"
@@ -1718,12 +1721,12 @@
       Key="Left"
       Command="local:Command.OpenLeft"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl+Shift" />
+      Modifiers="Ctrl" />
     <KeyBinding
       Key="Right"
       Command="local:Command.OpenRight"
       CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
-      Modifiers="Ctrl+Shift" />
+      Modifiers="Ctrl" />
     <KeyBinding
       Key="Return"
       Command="local:Command.DiffWithOtherDocument"

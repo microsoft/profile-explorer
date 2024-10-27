@@ -224,6 +224,11 @@ public partial class SectionPanelPair : ToolPanelControl {
     DiffPanel.OnSessionEnd();
   }
 
+  public override async Task OnReloadSettings() {
+    MainPanel.OnReloadSettings();
+    DiffPanel.OnReloadSettings();
+  }
+
   public void EnterBinaryDisplayMode() {
     // Update UI for viewing a binary, similar to profiling mode.
     MainPanel.EnterBinaryDisplayMode();

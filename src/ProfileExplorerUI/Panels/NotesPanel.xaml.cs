@@ -54,8 +54,8 @@ public partial class NotesPanel : ToolPanelControl {
     OnSessionSave();
 
     showSectionText_ = kindString switch {
-      "Document" => false,
-      "Section"  => true,
+      "Trace"    => false,
+      "Function" => true,
       _          => showSectionText_
     };
 

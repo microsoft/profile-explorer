@@ -92,7 +92,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Click="OpenSyntaxStyleButton_Click"
               DockPanel.Dock="Right"
-              ToolTip="Open the directory with the IR sytax highlighting files">
+              ToolTip="Open the directory with the IR syntax highlighting files">
               <Image Source="{StaticResource FolderIcon}" />
             </Button>
 
@@ -105,7 +105,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Click="ReloadSyntaxStyleButton_Click"
               DockPanel.Dock="Right"
-              ToolTip="Reload all IR sytax highlighting files">
+              ToolTip="Reload all IR syntax highlighting files">
               <Image Source="{StaticResource ReloadIcon}" />
             </Button>
 
@@ -296,7 +296,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Click="StyleButton_Click"
               DockPanel.Dock="Right"
-              ToolTip="Use custom document colors style">
+              ToolTip="Use a custom document colors style">
               <Image Source="{StaticResource StyleIcon}" />
               <Button.ContextMenu>
                 <ContextMenu x:Name="StyleContextMenu">
@@ -547,7 +547,7 @@
             ToolTip="Append the associated list of inlined functions (inlinees) based on the debug info file" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Underline call instruction targets"
+            Content="Use links for call instruction targets"
             IsChecked="{Binding Path=MarkCallTargets, Mode=TwoWay}"
             ToolTip="Underline the names of the called functions whose code is available.&#x0a;Double-click opens the target function in the current view." />
           <TextBlock

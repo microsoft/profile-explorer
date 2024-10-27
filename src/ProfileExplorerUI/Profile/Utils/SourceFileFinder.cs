@@ -86,7 +86,7 @@ public class SourceFileFinder {
     else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
       string filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => {
         if (disableOpenDialog_) {
-          return null;
+          return null; // Open File dialog disabled for current session.
         }
 
         return Utils.ShowOpenFileDialog(
@@ -101,9 +101,8 @@ public class SourceFileFinder {
         var result = Utils.ShowYesNoCancelMessageBox("""
                                                      Continue asking for the location of this source file?
 
-                                                     Press Cancel to stop showing the Open File dialog during the current session for source files that cannot be found.
+                                                     Press Cancel to stop showing the Open File dialog during the current session for all source files that cannot be found.
                                                      """, null);
-
         if (result == MessageBoxResult.No ||
             result == MessageBoxResult.Cancel) {
           if (!disabledSourceMappings_.Contains(sourceInfo.FilePath)) {
@@ -148,13 +147,11 @@ public class SourceFileFinder {
 
   public void ResetDisabledMappings() {
     disabledSourceMappings_.Clear();
-    sourceFileMapper_.ResetMissingFiles();
     disableOpenDialog_ = false;
   }
 
   public void ResetDisabledMappings(string filePath) {
     disabledSourceMappings_.Remove(filePath);
-    sourceFileMapper_.ResetMissingFile(filePath);
     disableOpenDialog_ = false;
   }
 

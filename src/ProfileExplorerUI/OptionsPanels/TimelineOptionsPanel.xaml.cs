@@ -15,12 +15,12 @@ public partial class TimelineOptionsPanel : OptionsPanelBase {
   }
 
   private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 }

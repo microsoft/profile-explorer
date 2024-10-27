@@ -161,7 +161,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(SectionPanel, SectionPanelHost);
     RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);
     RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
-    RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
+    // RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
     RegisterPanel(DefinitionPanel, DefinitionPanelHost);
     RegisterPanel(DeveloperPanel, DeveloperPanelHost);
     RegisterPanel(SourceFilePanel, SourceFilePanelHost);
@@ -170,7 +170,7 @@ public partial class MainWindow : Window, ISession {
     RegisterPanel(NotesPanel, NotesPanelHost);
     // RegisterPanel(PassOutputPanel, PassOutputHost);
     RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
-    RegisterPanel(ScriptingPanel, ScriptingPanelHost);
+    // RegisterPanel(ScriptingPanel, ScriptingPanelHost);
     RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
     RegisterPanel(CallTreePanel, CallTreePanelHost);
     RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
@@ -1147,12 +1147,12 @@ public partial class MainWindow : Window, ISession {
               RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
               break;
             }
-            case ToolPanelKind.PostDominatorTree: {
-              PostDominatorTreePanel = (PostDominatorTreePanel)panel;
-              PostDominatorTreePanelHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
-              break;
-            }
+            // case ToolPanelKind.PostDominatorTree: {
+            //   PostDominatorTreePanel = (PostDominatorTreePanel)panel;
+            //   PostDominatorTreePanelHost = (LayoutAnchorable)args.Model;
+            //   RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
+            //   break;
+            // }
             case ToolPanelKind.ExpressionGraph: {
               ExpressionGraphPanel = (ExpressionGraphPanel)panel;
               ExpressionGraphPanelHost = (LayoutAnchorable)args.Model;
@@ -1201,12 +1201,12 @@ public partial class MainWindow : Window, ISession {
               RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
               break;
             }
-            case ToolPanelKind.Scripting: {
-              ScriptingPanel = (ScriptingPanel)panel;
-              ScriptingPanelHost = (LayoutAnchorable)args.Model;
-              RegisterPanel(ScriptingPanel, ScriptingPanelHost);
-              break;
-            }
+            // case ToolPanelKind.Scripting: {
+            //   ScriptingPanel = (ScriptingPanel)panel;
+            //   ScriptingPanelHost = (LayoutAnchorable)args.Model;
+            //   RegisterPanel(ScriptingPanel, ScriptingPanelHost);
+            //   break;
+            // }
             case ToolPanelKind.Help: {
               HelpPanel = (HelpPanel)panel;
               HelpPanelHost = (LayoutAnchorable)args.Model;
@@ -1400,9 +1400,9 @@ public partial class MainWindow : Window, ISession {
       case ToolPanelKind.Notes: {
         return NotesPanelHost;
       }
-      case ToolPanelKind.Scripting: {
-        return ScriptingPanelHost;
-      }
+      // case ToolPanelKind.Scripting: {
+      //   return ScriptingPanelHost;
+      // }
       case ToolPanelKind.Developer: {
         return DeveloperPanelHost;
       }

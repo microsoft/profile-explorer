@@ -62,6 +62,7 @@ public class SearchResultInfo {
   public TextSearchResult Result { get; set; }
   public IRTextSection Section { get; set; }
   public ISession Session { get; set; }
+  public string FunctionName => Section.ParentFunction.FormatFunctionName(Session);
 
   public TextBlock Preview {
     get {
@@ -223,9 +224,9 @@ public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChang
   }
 
   private async Task JumpToSearchResult(SearchResultInfo result) {
-    //? TODO: If the document is in the middle of switching a section
-    //? from the previous jump, wait for it to complete, otherwise
-    //? the document text can get out of sync and assert.
+    // If the document is in the middle of switching a section
+    // from the previous jump, wait for it to complete, otherwise
+    // the document text can get out of sync and assert.
     using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
     var documentHost = Session.FindAssociatedDocumentHost(this);
 

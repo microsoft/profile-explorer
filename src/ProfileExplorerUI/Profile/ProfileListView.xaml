@@ -198,6 +198,9 @@
           <EventSetter
             Event="MouseDoubleClick"
             Handler="ItemList_MouseDoubleClick" />
+          <EventSetter
+            Event="PreviewKeyDown"
+            Handler="ItemList_PreviewKeyDown" />
           <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
           <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
@@ -232,7 +235,7 @@
             Command="{Binding OpenFunctionCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function"
-            InputGestureText="Ctrl+Return"
+            InputGestureText="Return/Double-Click"
             ToolTip="Open the function assembly view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
@@ -246,7 +249,7 @@
             Command="{Binding OpenFunctionInNewTabCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Open Function in New Tab"
-            InputGestureText="Ctrl+Shift+Return"
+            InputGestureText="Ctrl+Return"
             ToolTip="Open the function assembly view in a new tab"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
@@ -276,6 +279,7 @@
               Command="{Binding OpenInstanceCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance"
+              InputGestureText="Shift+Return"
               ToolTip="Open the function assembly view for only this instance of the function">
               <MenuItem.Icon>
                 <Image
@@ -288,7 +292,8 @@
               Command="{Binding OpenInstanceInNewTabCommand}"
               CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
               Header="Open Function Instance in New Tab"
-              ToolTip="Open the function assembly view in a new tab">
+              InputGestureText="Ctrl+Shift+Return"
+              ToolTip="Open the function assembly view for only this instance of the function in a new tab">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -384,7 +389,7 @@
             Command="{Binding SelectFunctionCallTreeCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Call Tree"
-            ToolTip="Select the function instance in the Call Tree panel"
+            ToolTip="Select the function instance in the Call Tree view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image
@@ -397,7 +402,7 @@
             Command="{Binding SelectFunctionFlameGraphCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Flame Graph"
-            ToolTip="Select the function instance in the Flame Graph panel"
+            ToolTip="Select the function instance in the Flame Graph view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image
@@ -410,7 +415,7 @@
             Command="{Binding SelectFunctionTimelineCommand}"
             CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
             Header="Select in Timeline"
-            ToolTip="Select the function instance in the Timeline panel"
+            ToolTip="Select the function instance in the Timeline view"
             Visibility="{Binding IsCategoriesList, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
             <MenuItem.Icon>
               <Image

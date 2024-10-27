@@ -296,7 +296,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     SectionPanel.OpenSection += SectionPanel_OpenSection;
     SearchPanel.SearchChanged += SearchPanel_SearchChanged;
-    SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+    SearchPanel.NavigateToPreviousResult += SearchPanel_NavigateToPreviousResult;
     SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
     SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
     ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
@@ -313,7 +313,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     historyManager_.ClearNextStates(); // Reset forward history.
-    var mode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab :
+    var mode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab :
       OpenSectionKind.ReplaceCurrent;
     await Session.OpenProfileFunction(targetFunc, mode,
                                       targetFilter, this);
@@ -642,7 +642,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void TextViewOnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
-    if (!Utils.IsControlModifierActive()) {
+    if (Utils.IsControlModifierActive()) {
       return;
     }
 
@@ -1037,7 +1037,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.JumpToSearchResult(searchResult_.Results[e.CurrentResult], Colors.LightSkyBlue);
   }
 
-  private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
+  private void SearchPanel_NavigateToPreviousResult(object sender, SearchInfo e) {
     TextView.JumpToSearchResult(searchResult_.Results[e.CurrentResult], Colors.LightSkyBlue);
   }
 
@@ -1184,8 +1184,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
 
     // Add the columns to the View menu.
-    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, async () => {
-      await UpdateProfilingColumns();
+    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, () => {
+      // TODO: Force non-async run to ensure no events from SetViewMenuItemEvents
+      // are set yet, can cause an infinite update loop. Find a better way.
+      Utils.RunSync(UpdateProfilingColumns);
     });
 
     SetViewMenuItemEvents();
@@ -1327,7 +1329,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       await LoadProfile(false);
     }
 
-    // Apply the same filter in the source file panel.
+    // Apply the same filter in the Source File view.
     await Session.OpenProfileSourceFile(Section.ParentFunction, profileFilter_);
 
     TitlePrefix = ProfilingUtils.CreateProfileFilterTitle(profileFilter_, session_);
@@ -1900,27 +1902,27 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(QueryMenuItem);
-    QueryMenuItem.Items.Clear();
-
-    // Append the available queries.
-    var queries = Session.CompilerInfo.BuiltinQueries;
-
-    foreach (var query in queries) {
-      var item = new MenuItem {
-        Header = query.Name,
-        ToolTip = query.Description,
-        Tag = query
-      };
-
-      item.Click += QueryMenuItem_Click;
-      QueryMenuItem.Items.Add(item);
-    }
-
-    // Add back the default menu items.
-    DocumentUtils.RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
-  }
+  // private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+  //   var defaultItems = DocumentUtils.SaveDefaultMenuItems(QueryMenuItem);
+  //   QueryMenuItem.Items.Clear();
+  //
+  //   // Append the available queries.
+  //   var queries = Session.CompilerInfo.BuiltinQueries;
+  //
+  //   foreach (var query in queries) {
+  //     var item = new MenuItem {
+  //       Header = query.Name,
+  //       ToolTip = query.Description,
+  //       Tag = query
+  //     };
+  //
+  //     item.Click += QueryMenuItem_Click;
+  //     QueryMenuItem.Items.Add(item);
+  //   }
+  //
+  //   // Add back the default menu items.
+  //   DocumentUtils.RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
+  // }
 
   private void QueryMenuItem_Click(object sender, RoutedEventArgs e) {
     var menuItem = (MenuItem)sender;
@@ -2010,43 +2012,43 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-    var defaultItems = DocumentUtils.SaveDefaultMenuItems(TaskMenuItem);
-    TaskMenuItem.Items.Clear();
+  // private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+  //   var defaultItems = DocumentUtils.SaveDefaultMenuItems(TaskMenuItem);
+  //   TaskMenuItem.Items.Clear();
+  //
+  //   foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
+  //     AddFunctionTaskDefinitionMenuItem(action);
+  //   }
+  //
+  //   // Since first loading the scripts takes 1-2 sec,
+  //   // temporarily add a menu entry to show initially in the menu.
+  //   var item = new MenuItem {
+  //     Header = "Loading scripts...",
+  //     IsEnabled = false
+  //   };
+  //
+  //   TaskMenuItem.Items.Add(item);
+  //
+  //   var scriptTasks = await Task.Run(() => Session.CompilerInfo.ScriptFunctionTasks);
+  //
+  //   foreach (var action in scriptTasks) {
+  //     AddFunctionTaskDefinitionMenuItem(action);
+  //   }
+  //
+  //   DocumentUtils.RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
+  //   TaskMenuItem.Items.Remove(item);
+  // }
 
-    foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
-      AddFunctionTaskDefinitionMenuItem(action);
-    }
-
-    // Since first loading the scripts takes 1-2 sec,
-    // temporarily add a menu entry to show initially in the menu.
-    var item = new MenuItem {
-      Header = "Loading scripts...",
-      IsEnabled = false
-    };
-
-    TaskMenuItem.Items.Add(item);
-
-    var scriptTasks = await Task.Run(() => Session.CompilerInfo.ScriptFunctionTasks);
-
-    foreach (var action in scriptTasks) {
-      AddFunctionTaskDefinitionMenuItem(action);
-    }
-
-    DocumentUtils.RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
-    TaskMenuItem.Items.Remove(item);
-  }
-
-  private void AddFunctionTaskDefinitionMenuItem(FunctionTaskDefinition action) {
-    var item = new MenuItem {
-      Header = action.TaskInfo.Name,
-      ToolTip = action.TaskInfo.Description,
-      Tag = action
-    };
-
-    item.Click += TaskActionMenuItem_Click;
-    TaskMenuItem.Items.Add(item);
-  }
+  // private void AddFunctionTaskDefinitionMenuItem(FunctionTaskDefinition action) {
+  //   var item = new MenuItem {
+  //     Header = action.TaskInfo.Name,
+  //     ToolTip = action.TaskInfo.Description,
+  //     Tag = action
+  //   };
+  //
+  //   item.Click += TaskActionMenuItem_Click;
+  //   TaskMenuItem.Items.Add(item);
+  // }
 
   private async void TaskActionMenuItem_Click(object sender, RoutedEventArgs e) {
     var menuItem = (MenuItem)sender;
@@ -2339,18 +2341,34 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.ExportToExcelFile(TextView, DocumentExporting.ExportFunctionAsExcelFile);
   }
 
   private async void ExportFunctionProfileHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.ExportToHtmlFile(TextView, DocumentExporting.ExportFunctionAsHtmlFile);
   }
 
   private async void ExportFunctionProfileMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.ExportToMarkdownFile(TextView, DocumentExporting.ExportFunctionAsMarkdownFile);
   }
 
   private async void CopySelectedLinesAsHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the function failed to load.
+    }
+
     await DocumentExporting.CopySelectedLinesAsHtml(TextView);
   }
 

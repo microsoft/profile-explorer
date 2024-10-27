@@ -182,6 +182,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   private bool hasCustomLineNumbers_;
   private List<IVisualLineTransformer> registerdTransformers_;
   private List<HoverPreview> registeredHoverPreviews_;
+  private CancelableTaskInstance markerBarUpdateTask_;
+  private ReaderWriterLockSlim markerBarUpdateLock_;
 
   public IRDocument() {
     // Setup element tracking data structures.
@@ -203,6 +205,8 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
     registerdTransformers_ = new List<IVisualLineTransformer>();
     registeredHoverPreviews_ = new List<HoverPreview>();
+    markerBarUpdateTask_ = new CancelableTaskInstance(true);
+    markerBarUpdateLock_ = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
     SetupProperties();
     SetupStableRenderers();
@@ -1412,12 +1416,15 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     updateSuspended_ = true;
     disableCaretEvent_ = true;
     overlayRenderer_.SuspendUpdate();
+    markerBarUpdateTask_.CancelTask();
+    markerBarUpdateLock_.EnterWriteLock();
   }
 
   public void ResumeUpdate() {
     updateSuspended_ = false;
     disableCaretEvent_ = false;
     overlayRenderer_.ResumeUpdate();
+    markerBarUpdateLock_.ExitWriteLock();
     UpdateHighlighting();
   }
 
@@ -1441,9 +1448,6 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       case Key.Return: {
         if (Utils.IsAltModifierActive()) {
           PreviewDefinitionExecuted(this, null);
-        }
-        else if (Utils.IsControlModifierActive()) {
-          GoToDefinitionSkipCopiesExecuted(this, null);
         }
         else {
           if (GetSelectedElement() is var element &&
@@ -2010,6 +2014,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
   }
 
   private void ResetRenderers() {
+    markerBarUpdateTask_.CancelTask();
     bookmarks_?.Clear();
     hoverHighlighter_?.Clear();
     selectedHighlighter_?.Clear();
@@ -2234,8 +2239,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private void GoToDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (GetSelectedElement() is var element) {
-      GoToElementDefinition(element);
-      MirrorAction(DocumentActionKind.GoToDefinition, element);
+      if (!TryOpenFunctionCallTarget(element)) {
+        GoToElementDefinition(element);
+        MirrorAction(DocumentActionKind.GoToDefinition, element);
+      }
     }
   }
 
@@ -2247,8 +2254,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private void GoToDefinitionSkipCopiesExecuted(object sender, ExecutedRoutedEventArgs e) {
     if (GetSelectedElement() is var element) {
-      GoToElementDefinition(element, true);
-      MirrorAction(DocumentActionKind.GoToDefinition, element);
+      if (!TryOpenFunctionCallTarget(element)) {
+        GoToElementDefinition(element, true);
+        MirrorAction(DocumentActionKind.GoToDefinition, element);
+      }
     }
   }
 
@@ -2259,7 +2268,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     while (defInstr != null) {
       var sourceOp = Session.CompilerInfo.IR.SkipCopyInstruction(defInstr);
 
-      if (sourceOp != null) {
+      if (sourceOp != null && sourceOp != defInstr) {
         op = sourceOp;
         defInstr = sourceOp.ParentInstruction;
       }
@@ -3309,7 +3318,17 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     int startY = arrowButtonHeight;
 
     // Delay the update to ensure the markerMargin has layout updated.
+    // Since the code runs later on the UI thread, it can end up interleaved
+    // with code that changes the OverlayRenderer data structs. used by the
+    // PopulateMarker* functions, abort the update in that case.
+    var updateTask = markerBarUpdateTask_.CancelCurrentAndCreateTask();
+
     Dispatcher.BeginInvoke(() => {
+      if (updateTask.IsCanceled) {
+        return;
+      }
+
+      markerBarUpdateLock_.EnterWriteLock();
       double width = markerMargin_.ActualWidth;
       double height = markerMargin_.ActualHeight;
       double availableHeight = height - arrowButtonHeight * 2;
@@ -3333,6 +3352,9 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
       markerMargingElements_.Sort((a, b) => (int)(a.Visual.Top - b.Visual.Top));
       SaveHighlighterVersion(highlighterVersion_);
       RenderMarkerBar();
+
+      markerBarUpdateLock_.ExitWriteLock();
+      updateTask.Complete();
     }, DispatcherPriority.Background);
   }
 
@@ -4167,6 +4189,11 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     }
 
     margin_.InvalidateVisual();
+  }
+
+  public void Redraw() {
+    UpdateHighlighting();
+    UpdateMargin();
   }
 
   private class MarkerMarginVersionInfo {

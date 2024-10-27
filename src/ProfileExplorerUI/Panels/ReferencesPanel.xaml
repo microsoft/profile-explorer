@@ -20,7 +20,7 @@
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="75" />
+        <ColumnDefinition Width="50" />
       </Grid.ColumnDefinitions>
       <ToolBarTray
         Grid.Column="0"

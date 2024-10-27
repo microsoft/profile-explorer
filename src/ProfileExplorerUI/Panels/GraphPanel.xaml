@@ -74,16 +74,16 @@
       Command="local:GraphCommand.MarkSuccessors"
       CommandTarget="{Binding ElementName=GraphHost}"
       Modifiers="Ctrl" />
-    <KeyBinding
-      Key="L"
-      Command="local:GraphCommand.MarkLoop"
-      CommandTarget="{Binding ElementName=GraphHost}"
-      Modifiers="Ctrl" />
-    <KeyBinding
-      Key="L"
-      Command="local:GraphCommand.MarkLoopNest"
-      CommandTarget="{Binding ElementName=GraphHost}"
-      Modifiers="Shift+Ctrl" />
+    <!-- <KeyBinding -->
+    <!--   Key="L" -->
+    <!--   Command="local:GraphCommand.MarkLoop" -->
+    <!--   CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--   Modifiers="Ctrl" /> -->
+    <!-- <KeyBinding -->
+    <!--   Key="L" -->
+    <!--   Command="local:GraphCommand.MarkLoopNest" -->
+    <!--   CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--   Modifiers="Shift+Ctrl" /> -->
   </local:ToolPanelControl.InputBindings>
 
   <Grid>

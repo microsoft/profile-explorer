@@ -219,17 +219,22 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task ReloadSettings() {
+    // Reload UI settings.
     OnPropertyChanged(nameof(WindowScaling));
+
+    // Reload compiler provider settings.
     await CompilerInfo.ReloadSettings();
 
     if (!IsSessionStarted) {
       return;
     }
 
+    // Reload settings for all open documents views.
     foreach (var docHostInfo in sessionState_.DocumentHosts) {
       await docHostInfo.DocumentHost.ReloadSettings();
     }
 
+    // Reload settings for all panels.
     await ForEachPanelAsync(async (panel) => await panel.OnReloadSettings());
     await HandleNewDiffSettings(App.Settings.DiffSettings, false, true);
   }
@@ -445,7 +450,7 @@ public partial class MainWindow : Window, ISession {
       return; // Function failed to load, ignore.
     }
 
-    var loadTask = graphPanel.OnGenerateGraphStart(section);
+    using var loadTask = await graphPanel.OnGenerateGraphStart(section);
     var functionGraph = await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
 
     if (functionGraph != null) {
@@ -1419,13 +1424,14 @@ public partial class MainWindow : Window, ISession {
     otherDocHost.TextView.SetCaretAtOffset(caretOffset);
   }
 
-  private void TextView_ActionPerformed(object sender, DocumentAction e) {
+  private async void TextView_ActionPerformed(object sender, DocumentAction e) {
     var document = sender as IRDocument;
     Debug.Assert(document != null);
 
     if (e.ActionKind == DocumentActionKind.ShowExpressionGraph) {
       var section = document.Section;
-      var loadTask = ExpressionGraphPanel.OnGenerateGraphStart(section);
+      using var loadTask = await ExpressionGraphPanel.OnGenerateGraphStart(section);
+
       var graphLayout = GetGraphLayoutCache(GraphKind.ExpressionGraph);
       var options = App.Settings.ExpressionGraphSettings.GetGraphPrinterOptions();
       options.IR = CompilerInfo.IR;

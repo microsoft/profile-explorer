@@ -54,12 +54,12 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   }
 
   private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    settings_.NodePopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    settings_.NodePopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    settings_.NodePopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    settings_.NodePopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 
@@ -70,12 +70,12 @@ public partial class FlameGraphOptionsPanel : OptionsPanelBase {
   }
 
   private void ShortDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.HoverDuration.Milliseconds;
+    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongDetailsPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.LongHoverDuration.Milliseconds;
+    ((CallTreeNodeSettings)DetailsPanel.DataContext).PreviewPopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 

@@ -106,7 +106,7 @@
         Padding="2"
         HorizontalContentAlignment="Left"
         Click="SaveButton_OnClick"
-        ToolTip="Save current panel configuration as a new workspace">
+        ToolTip="Save current view configuration as a new workspace">
         <StackPanel Orientation="Horizontal">
           <Image
             Width="16"

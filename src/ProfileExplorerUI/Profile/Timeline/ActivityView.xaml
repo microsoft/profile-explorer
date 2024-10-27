@@ -13,7 +13,7 @@
         Command="{Binding FilterTimeRangeCommand}"
         CommandTarget="{Binding Path=PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
         Header="Filter to Time Range"
-        InputGestureText="Double-click"
+        InputGestureText="Double-Click"
         ToolTip="Only display activity in the selected time range"
         Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
         <MenuItem.Icon>

@@ -74,6 +74,29 @@ public class CancelableTaskInstance : IDisposable {
     }
   }
 
+  public CancelableTask CancelCurrentAndCreateTask() {
+    CancelableTask task = null;
+
+    lock (lockObject_) {
+      task = taskInstance_;
+    }
+
+    if (task != null) {
+      CancelTask(task);
+    }
+
+    lock (lockObject_) {
+      // Check that nothing else changed the current task
+      // before replacing it.
+      if (taskInstance_ == task) {
+        taskInstance_ = new CancelableTask(completeOnCancel_);
+        registerAction_?.Invoke(taskInstance_);
+      }
+
+      return taskInstance_;
+    }
+  }
+
   public async Task<CancelableTask> WaitAndCreateTaskAsync() {
     CancelableTask task = null;
 
@@ -120,12 +143,15 @@ public class CancelableTaskInstance : IDisposable {
 
       var canceledTask = taskInstance_;
       taskInstance_ = null;
-
-      // Cancel the task and wait for it to complete without blocking.
-      canceledTask.Cancel();
-      canceledTask.WaitToComplete();
-      unregisterAction_?.Invoke(canceledTask);
+      CancelTask(canceledTask);
     }
+  }
+
+  private void CancelTask(CancelableTask canceledTask) {
+    // Cancel the task and wait for it to complete.
+    canceledTask.Cancel();
+    canceledTask.WaitToComplete();
+    unregisterAction_?.Invoke(canceledTask);
   }
 
   public async Task CancelTaskAndWaitAsync() {

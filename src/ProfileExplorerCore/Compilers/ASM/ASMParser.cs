@@ -628,7 +628,7 @@ public sealed class ASMParser : ParserBase {
 
     if (NextTokenIs(TokenKind.Dot) && irInfo_.Mode == IRMode.ARM64) {
       // Some disassemblers for ARM64 print branch opcodes
-      // like b.eq b.le instead of beq ble and so on.
+      // like b.eq, b.le instead of beq, ble.
       SkipToken(); // Skip b
       SkipToken(); // Skip .
 
@@ -647,7 +647,7 @@ public sealed class ASMParser : ParserBase {
         break;
       }
       case IRMode.ARM64: {
-        if (ARMOpcodes.GetOpcodeInfo(instr.OpcodeText, out var info)) {
+        if (ARM64Opcodes.GetOpcodeInfo(instr.OpcodeText, out var info)) {
           instr.Opcode = info.Opcode;
           instr.Kind = info.Kind;
         }

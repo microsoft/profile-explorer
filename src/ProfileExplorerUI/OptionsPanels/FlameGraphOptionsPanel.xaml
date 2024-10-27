@@ -20,19 +20,19 @@
         <StackPanel Margin="4,4,4,4">
           <CheckBox
             Margin="0,2,0,2"
-            Content="Show function details panel"
+            Content="Show Function Details panel"
             IsChecked="{Binding ShowDetailsPanel, Mode=TwoWay}"
-            ToolTip="Show the function details panel on the right-hand side" />
+            ToolTip="Show the Function Details panel on the right-hand side" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Sync function in other profiling panels"
+            Content="Sync function in other profiling views"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="Sync function displayed in other profiling views with selection" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Sync Source File panel with selection"
+            Content="Sync Source File view with selection"
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
-            ToolTip="Sync file displayed in the Source File panel with selection" />
+            ToolTip="Sync file displayed in the Source File view with selection" />
 
           <Separator
             Margin="0,4,0,4"
@@ -60,7 +60,7 @@
             Margin="0,2,0,2"
             Content="Show function details on hover"
             IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
-            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
+            ToolTip="On mouse hover over a function, show a popup with details.&#x0a;If pinned, the popup expands into a Function Details panel popup" />
           <StackPanel
             Margin="20,2,0,2"
             IsEnabled="{Binding ElementName=ShowCallStackPopupCheckbox, Path=IsChecked}"
@@ -116,17 +116,20 @@
           <CheckBox
             Margin="0,2,0,2"
             Content="Use compact mode"
+            ToolTip="Use a smaller font size for the Flame Graph nodes"
             IsChecked="{Binding UseCompactMode, Mode=TwoWay}" />
           <CheckBox
             x:Name="KernelCheckBox"
             Margin="0,4,0,2"
             Content="Use different color palette for kernel code"
+            ToolTip="Use the color palette specified below for code executing in kernel mode context"
             IsChecked="{Binding UseKernelColorPalette, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
           <CheckBox
             x:Name="ManagedCheckBox"
             Margin="0,2,0,2"
             Content="Use different color palette for managed (.NET) code"
+            ToolTip="Use the color palette specified below for code executing in managed (.NET) context"
             IsChecked="{Binding UseManagedColorPalette, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
           <StackPanel
@@ -483,24 +486,24 @@
       </TabItem>
       <TabItem
         x:Name="DetailsPanel"
-        Header="Details Panel"
+        Header="Function Details panel"
         Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
             Margin="0,2,0,2"
             Content="Auto-expand Instance Statistics section"
             IsChecked="{Binding ExpandInstances, Mode=TwoWay}"
-            ToolTip="Instances section expanded by default" />
+            ToolTip="Instances section expanded by default when selecting a function" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Auto-expand Histogram section"
             IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
-            ToolTip="Histogram section expanded by default" />
+            ToolTip="Histogram section expanded by default when selecting a function" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Auto-expand Threads section"
             IsChecked="{Binding ExpandThreads, Mode=TwoWay}"
-            ToolTip="Threads list section expanded by default" />
+            ToolTip="Threads list section expanded by default when selecting a function" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Alternate list view background color"
@@ -571,7 +574,7 @@
             Margin="0,4,0,2"
             Content="Show function preview on hover"
             IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
-            ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
+            ToolTip="On mouse hover over a function, show a popup with details.&#x0a;If pinned, the popup expands into a Function Details panel popup" />
 
           <StackPanel Margin="20,2,0,0">
             <StackPanel

@@ -528,54 +528,54 @@
             </Menu>
             <Separator />
 
-            <Menu
-              VerticalAlignment="Center"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-              <MenuItem
-                x:Name="TaskMenuItem"
-                Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Header="Tasks"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="TaskMenuItem_SubmenuOpened">
-                <MenuItem.Icon>
-                  <Image
-                    Width="16"
-                    Height="16"
-                    Margin="-2,0,-2,0"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Source="{StaticResource TasklistIcon}"
-                    Style="{StaticResource DisabledImageStyle}" />
-                </MenuItem.Icon>
-                <Separator />
-                <MenuItem Header="Edit Task Definitions" />
-              </MenuItem>
-              <MenuItem
-                x:Name="QueryMenuItem"
-                Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Header="Queries"
-                OverridesDefaultStyle="True"
-                SubmenuOpened="QueryMenuItem_SubmenuOpened">
-                <MenuItem.Icon>
-                  <Image
-                    Width="18"
-                    Height="18"
-                    Margin="-2,0,-2,0"
-                    HorizontalAlignment="Center"
-                    Source="{StaticResource QueryIcon}"
-                    Style="{StaticResource DisabledImageStyle}" />
-                </MenuItem.Icon>
-                <Separator />
-                <MenuItem
-                  Click="CloseAllQueryPanelsMenuItem_Click"
-                  Header="Close All Query Panels" />
-              </MenuItem>
-            </Menu>
-            <Separator />
+            <!-- <Menu -->
+            <!--   VerticalAlignment="Center" -->
+            <!--   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"> -->
+            <!--   <MenuItem -->
+            <!--     x:Name="TaskMenuItem" -->
+            <!--     Padding="0,0,0,0" -->
+            <!--     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     Header="Tasks" -->
+            <!--     OverridesDefaultStyle="True" -->
+            <!--     SubmenuOpened="TaskMenuItem_SubmenuOpened"> -->
+            <!--     <MenuItem.Icon> -->
+            <!--       <Image -->
+            <!--         Width="16" -->
+            <!--         Height="16" -->
+            <!--         Margin="-2,0,-2,0" -->
+            <!--         HorizontalAlignment="Center" -->
+            <!--         VerticalAlignment="Center" -->
+            <!--         Source="{StaticResource TasklistIcon}" -->
+            <!--         Style="{StaticResource DisabledImageStyle}" /> -->
+            <!--     </MenuItem.Icon> -->
+            <!--     <Separator /> -->
+            <!--     <MenuItem Header="Edit Task Definitions" /> -->
+            <!--   </MenuItem> -->
+            <!--   <MenuItem -->
+            <!--     x:Name="QueryMenuItem" -->
+            <!--     Padding="0,0,0,0" -->
+            <!--     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     Header="Queries" -->
+            <!--     OverridesDefaultStyle="True" -->
+            <!--     SubmenuOpened="QueryMenuItem_SubmenuOpened"> -->
+            <!--     <MenuItem.Icon> -->
+            <!--       <Image -->
+            <!--         Width="18" -->
+            <!--         Height="18" -->
+            <!--         Margin="-2,0,-2,0" -->
+            <!--         HorizontalAlignment="Center" -->
+            <!--         Source="{StaticResource QueryIcon}" -->
+            <!--         Style="{StaticResource DisabledImageStyle}" /> -->
+            <!--     </MenuItem.Icon> -->
+            <!--     <Separator /> -->
+            <!--     <MenuItem -->
+            <!--       Click="CloseAllQueryPanelsMenuItem_Click" -->
+            <!--       Header="Close All Query Panels" /> -->
+            <!--   </MenuItem> -->
+            <!-- </Menu> -->
+            <!-- <Separator /> -->
 
             <ToggleButton
               Width="20"
@@ -1027,7 +1027,8 @@
                   Command="local:DocumentCommand.GoToDefinition"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Go To Definition"
-                  InputGestureText="Return">
+                  InputGestureText="Return/Double-Click"
+                  ToolTip="Jump to operand definition or open call target function in current view">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -1036,19 +1037,18 @@
                       Style="{StaticResource DisabledImageStyle}" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.GoToDefinitionSkipCopies"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Go To Definition (Skip Copies)"
-                  InputGestureText="Ctrl+Return">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource GotoDefinitionIconSkipIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                  </MenuItem.Icon>
-                </MenuItem>
+                <!-- <MenuItem -->
+                <!--   Command="local:DocumentCommand.GoToDefinitionSkipCopies" -->
+                <!--   CommandTarget="{Binding ElementName=TextView}" -->
+                <!--   Header="Go To Definition (Skip Copies)"> -->
+                <!--   <MenuItem.Icon> -->
+                <!--     <Image -->
+                <!--       Width="16" -->
+                <!--       Height="16" -->
+                <!--       Source="{StaticResource GotoDefinitionIconSkipIcon}" -->
+                <!--       Style="{StaticResource DisabledImageStyle}" /> -->
+                <!--   </MenuItem.Icon> -->
+                <!-- </MenuItem> -->
                 <Separator />
 
                 <MenuItem
@@ -1076,7 +1076,8 @@
                   Command="local:DocumentHostCommand.SearchSymbol"
                   CommandTarget="{Binding ElementName=TextView}"
                   Header="Search Symbol"
-                  InputGestureText="Ctrl+F">
+                  InputGestureText="Ctrl+Shift+F"
+                  ToolTip="Search the selected symbol text">
                   <MenuItem.Icon>
                     <Image
                       Width="16"
@@ -1088,8 +1089,8 @@
                 <MenuItem
                   Command="local:DocumentHostCommand.SearchSymbolAllSections"
                   CommandTarget="{Binding ElementName=TextView}"
-                  Header="Search Symbol in All Sections"
-                  InputGestureText="Ctrl+Shift+F" />
+                  Header="Search Symbol in Search Results"
+                  ToolTip="Search the selected symbol text and show results in the Search Results view"/>
                 <Separator />
 
                 <MenuItem

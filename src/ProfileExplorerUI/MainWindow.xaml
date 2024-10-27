@@ -136,6 +136,18 @@
       Command="local:AppCommand.ViewProfileReport"
       Executed="ViewProfileReportExecuted"
       PreviewCanExecute="CanExecuteProfileCommand" />
+
+    <CommandBinding
+      CanExecute="CanExecuteAlways"
+      Command="local:AppCommand.OpenHelpPage"
+      PreviewCanExecute="CanExecuteAlways"
+      PreviewExecuted="OpenHelpPageExecuted" />
+
+    <CommandBinding
+      CanExecute="CanExecuteAlways"
+      Command="local:AppCommand.OpenHelpPanel"
+      PreviewCanExecute="CanExecuteAlways"
+      PreviewExecuted="OpenHelpPanelExecuted" />
   </Window.CommandBindings>
 
   <Window.InputBindings>
@@ -196,6 +208,13 @@
     <KeyBinding
       Key="F10"
       Command="local:AppCommand.SwapDiffDocuments" />
+    <KeyBinding
+      Key="F1"
+      Command="local:AppCommand.OpenHelpPage"/>
+    <KeyBinding
+      Key="F1"
+      Command="local:AppCommand.OpenHelpPanel"
+      Modifiers="Ctrl" />
   </Window.InputBindings>
 
   <Grid x:Name="MainGrid">
@@ -247,25 +266,25 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem
-              Command="local:AppCommand.OpenBaseDiffDocuments"
-              Header="_Compare Base/Diff Files"
-              InputGestureText="F12">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource BookIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem
-              Command="local:AppCommand.OpenDiffDocument"
-              Header="Open _Diff File"
-              InputGestureText="Ctrl+F12" />
-            <MenuItem
-              Command="local:AppCommand.CloseDiffDocument"
-              Header="Close Diff File" />
-            <Separator />
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.OpenBaseDiffDocuments" -->
+            <!--   Header="_Compare Base/Diff Files" -->
+            <!--   InputGestureText="F12"> -->
+            <!--   <MenuItem.Icon> -->
+            <!--     <Image -->
+            <!--       Width="16" -->
+            <!--       Height="16" -->
+            <!--       Source="{StaticResource BookIcon}" /> -->
+            <!--   </MenuItem.Icon> -->
+            <!-- </MenuItem> -->
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.OpenDiffDocument" -->
+            <!--   Header="Open _Diff File" -->
+            <!--   InputGestureText="Ctrl+F12" /> -->
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.CloseDiffDocument" -->
+            <!--   Header="Close Diff File" /> -->
+            <!-- <Separator /> -->
 
             <MenuItem
               Command="local:AppCommand.OpenDebug"
@@ -302,23 +321,23 @@
             </MenuItem>
             <Separator />
 
-            <MenuItem
-              Command="local:AppCommand.SaveDocument"
-              Header="_Save Session"
-              InputGestureText="Ctrl+S"
-              IsEnabled="False">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource SaveIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem
-              Command="local:AppCommand.SaveAsDocument"
-              Header="Save Session _As..."
-              InputGestureText="Ctrl+Shift+S"
-              IsEnabled="False" />
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.SaveDocument" -->
+            <!--   Header="_Save Session" -->
+            <!--   InputGestureText="Ctrl+S" -->
+            <!--   IsEnabled="False"> -->
+            <!--   <MenuItem.Icon> -->
+            <!--     <Image -->
+            <!--       Width="16" -->
+            <!--       Height="16" -->
+            <!--       Source="{StaticResource SaveIcon}" /> -->
+            <!--   </MenuItem.Icon> -->
+            <!-- </MenuItem> -->
+            <!-- <MenuItem -->
+            <!--   Command="local:AppCommand.SaveAsDocument" -->
+            <!--   Header="Save Session _As..." -->
+            <!--   InputGestureText="Ctrl+Shift+S" -->
+            <!--   IsEnabled="False" /> -->
             <MenuItem
               Command="local:AppCommand.CloseDocument"
               Header="Close Session"
@@ -371,86 +390,109 @@
 
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Summary Panel"
-              Tag="Section" />
-            <!-- <MenuItem -->
-            <!--   Click="ShowPanelMenu_Click" -->
-            <!--   Header="Pass Output Panel" -->
-            <!--   Tag="PassOutput" /> -->
+              Header="Summary View"
+              Tag="Section">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource SummaryIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Definition Panel"
-              Tag="Definition" />
+              Header="Timeline View"
+              Tag="Timeline">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource TimelineIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="References Panel"
-              Tag="References" />
+              Header="Flame Graph View"
+              Tag="FlameGraph">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource FlameGraphIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Bookmarks Panel"
-              Tag="Bookmarks" />
+              Header="Call Tree View"
+              Tag="CallTree">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource TreeIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Source File Panel"
+              Header="Caller/Callee View"
+              Tag="CallerCallee">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource FlowChartIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Source File View"
               Tag="Source" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Search Results Panel"
-              Tag="SearchResults" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Notes Panel"
-              Tag="Notes" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Scripting Panel"
-              Tag="Scripting" />
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Developer Panel"
-              Tag="Developer" />
-            <Separator />
-
-            <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Flow Graph Panel"
+              Header="Flow Graph View"
               Tag="FlowGraph" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Dominator Tree Panel"
+              Header="Dominator Tree View"
               Tag="DominatorTree" />
+            <!-- <MenuItem -->
+            <!--   Click="ShowPanelMenu_Click" -->
+            <!--   Header="Post-Dominator Tree View" -->
+            <!--   Tag="PostDominatorTree" /> -->
             <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Post-Dominator Tree Panel"
-              Tag="PostDominatorTree" />
-            <MenuItem
-              Header="Control Dependence Graph Panel"
-              IsEnabled="False" />
-            <MenuItem
-              Header="Loop Graph Panel"
-              IsEnabled="False" />
-            <MenuItem
-              Header="Expression Graph Panel"
+              Header="Expression Graph View"
               IsEnabled="True"
               Tag="ExpressionGraph" />
-            <Separator />
-
+            <Separator/>
+            <!-- <MenuItem -->
+            <!--   Click="ShowPanelMenu_Click" -->
+            <!--   Header="Pass Output View" -->
+            <!--   Tag="PassOutput" /> -->
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Call Tree Panel"
-              Tag="CallTree" />
+              Header="Definition View"
+              Tag="Definition" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Caller/Callee Panel"
-              Tag="CallerCallee" />
+              Header="References View"
+              Tag="References" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Flame Graph Panel"
-              Tag="FlameGraph" />
+              Header="Bookmarks View"
+              Tag="Bookmarks" />
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Timeline Panel"
-              Tag="Timeline" />
+              Header="Search Results View"
+              Tag="SearchResults" />
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Notes View"
+              Tag="Notes" />
+            <MenuItem
+              Click="ShowPanelMenu_Click"
+              Header="Developer View"
+              Tag="Developer" />
           </MenuItem>
 
           <MenuItem Header="Profiling">
@@ -478,7 +520,7 @@
 
             <MenuItem
               Command="local:AppCommand.ViewProfileReport"
-              Header="Profiling report">
+              Header="Profile Report">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -490,7 +532,7 @@
 
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Summary Panel"
+              Header="Summary View"
               Tag="Section">
               <MenuItem.Icon>
                 <Image
@@ -501,7 +543,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Timeline Panel"
+              Header="Timeline View"
               Tag="Timeline">
               <MenuItem.Icon>
                 <Image
@@ -512,7 +554,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Flame Graph Panel"
+              Header="Flame Graph View"
               Tag="FlameGraph">
               <MenuItem.Icon>
                 <Image
@@ -523,7 +565,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Call Tree Panel"
+              Header="Call Tree View"
               Tag="CallTree">
               <MenuItem.Icon>
                 <Image
@@ -534,7 +576,7 @@
             </MenuItem>
             <MenuItem
               Click="ShowPanelMenu_Click"
-              Header="Caller/Callee Panel"
+              Header="Caller/Callee View"
               Tag="CallerCallee">
               <MenuItem.Icon>
                 <Image
@@ -584,8 +626,9 @@
 
           <MenuItem Header="Help">
             <MenuItem
-              Click="OpenDocsMenu_Click"
-              Header="User Guide">
+              Command="local:AppCommand.OpenHelpPage"
+              Header="User Guide"
+              InputGestureText="F1">
               <MenuItem.Icon>
                 <Image
                   Width="16"
@@ -594,8 +637,9 @@
               </MenuItem.Icon>
             </MenuItem>
             <MenuItem
-              Click="ShowPanelMenu_Click"
-              Header="Help Panel"
+              Command="local:AppCommand.OpenHelpPanel"
+              Header="Help View"
+              InputGestureText="Ctrl+F1"
               Tag="Help">
               <MenuItem.Icon>
                 <Image
@@ -873,7 +917,7 @@
                     Padding="0,0,0,0"
                     OverridesDefaultStyle="True"
                     SubmenuOpened="CategoriesMenu_OnSubmenuOpened"
-                    ToolTip="Overview of time distribution based on function categories">
+                    ToolTip="Overview of the profile trace time distribution grouped by function categories">
                     <MenuItem.Header>
                       <StackPanel Orientation="Horizontal">
                         <Image
@@ -1332,7 +1376,7 @@
           BorderBrush="{x:Null}"
           Click="HelpButton_Click"
           FontSize="11"
-          ToolTip="Open Help Panel">
+          ToolTip="Open Help View">
           <StackPanel Orientation="Horizontal">
             <Image
               Width="16"
@@ -1552,14 +1596,14 @@
                   <local:DefinitionPanel x:Name="DefinitionPanel" />
                 </avalonDock:LayoutAnchorable>
 
-                <avalonDock:LayoutAnchorable
-                  x:Name="ScriptingPanelHost"
-                  Title="Scripting"
-                  ContentId="Scripting"
-                  IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                  <local:ScriptingPanel x:Name="ScriptingPanel" />
-                </avalonDock:LayoutAnchorable>
+                <!-- <avalonDock:LayoutAnchorable -->
+                <!--   x:Name="ScriptingPanelHost" -->
+                <!--   Title="Scripting" -->
+                <!--   ContentId="Scripting" -->
+                <!--   IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                <!--   IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                <!--   <local:ScriptingPanel x:Name="ScriptingPanel" /> -->
+                <!-- </avalonDock:LayoutAnchorable> -->
 
                 <avalonDock:LayoutAnchorable
                   x:Name="DeveloperPanelHost"
@@ -1719,7 +1763,7 @@
         VerticalAlignment="Center"
         FontSize="11"
         Text="Workspace"
-        ToolTip="A workspace is a snapshot of a panel layout configuration" />
+        ToolTip="A workspace is a snapshot of a view layout configuration" />
       <ComboBox
         x:Name="WorkspaceCombobox"
         Width="120"

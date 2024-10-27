@@ -165,20 +165,20 @@
             ToolTip="Show the list of modules (binaries) on the left-hand side" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Sync function in other profiling panels"
+            Content="Sync function in other profiling views"
             IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            ToolTip="Sync function displayed in other profiling panels with selection" />
+            ToolTip="Sync function displayed in other profiling views with selection" />
           <CheckBox
             Margin="0,2,0,2"
-            Content="Sync Source File panel with selection"
+            Content="Sync Source File view with selection"
             IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
-            ToolTip="Sync file displayed in the Source File panel with selection" />
-          <CheckBox
-            Margin="0,2,0,2"
-            Content="Append module name before function"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
-            IsEnabled="False"
-            ToolTip="NYI: Show the module name in front of the function name" />
+            ToolTip="Sync file displayed in the Source File view with selection" />
+          <!-- <CheckBox -->
+          <!--   Margin="0,2,0,2" -->
+          <!--   Content="Append module name before function" -->
+          <!--   IsChecked="{Binding SyncSelection, Mode=TwoWay}" -->
+          <!--   IsEnabled="False" -->
+          <!--   ToolTip="NYI: Show the module name in front of the function name" /> -->
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Margin="0,2,0,2"
@@ -255,91 +255,91 @@
             IsChecked="{Binding AppendTimeToSelfColumn, Mode=TwoWay}" />
         </StackPanel>
       </TabItem>
-      <TabItem
-        x:Name="SectonsPanel"
-        Header="Sections"
-        Style="{StaticResource TabControlStyle}">
-        <StackPanel Margin="4,4,4,4">
-          <TextBlock
-            FontWeight="Medium"
-            Text="Section List" />
-          <StackPanel Orientation="Horizontal">
-            <CheckBox
-              Margin="0,4,20,2"
-              Content="Use semantic colorization of section names"
-              IsChecked="{Binding ColorizeSectionNames, Mode=TwoWay}" />
-            <Button
-              Name="EditButton"
-              Width="20"
-              Height="20"
-              VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="EditButton_Click"
-              ToolTip="Edit section style definition file (JSON format)">
-              <Image Source="{StaticResource EditIcon}" />
-            </Button>
-
-            <Button
-              Name="ReloadButton"
-              Width="20"
-              Height="20"
-              VerticalAlignment="Top"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="ReloadButton_Click"
-              ToolTip="Reload the session style definitions">
-              <Image Source="{StaticResource ReloadIcon}" />
-            </Button>
-          </StackPanel>
-
-          <CheckBox
-            Name="IndentationCheckbox"
-            Margin="0,2,0,2"
-            Content="Use indentation for nested section names"
-            IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
-            ToolTip="Show section names indentend based on the parent/child relationship" />
-          <StackPanel
-            Margin="20,2,0,2"
-            Orientation="Horizontal">
-            <TextBlock
-              VerticalAlignment="Center"
-              Text="Indentation amount" />
-            <xctk:IntegerUpDown
-              Margin="4,0,0,0"
-              IsEnabled="{Binding ElementName=IndentationCheckbox, Path=IsChecked}"
-              Maximum="16"
-              Minimum="1"
-              ParsingNumberStyle="Number"
-              ShowButtonSpinner="True"
-              ToolTip="Number of whitespace letters to use for each level of indentation"
-              Value="{Binding Path=IndentationAmount, Mode=TwoWay}" />
-          </StackPanel>
-          <CheckBox
-            Margin="0,2,0,2"
-            Content="Show section group separators"
-            IsChecked="{Binding ShowSectionSeparators, Mode=TwoWay}"
-            ToolTip="Show before/after section separator lines for groups of sections" />
-
-
-          <CheckBox
-            x:Name="IdenticalToPreviousCheckbox"
-            Margin="0,2,0,2"
-            Content="Mark sections identical to previous"
-            IsChecked="{Binding MarkSectionsIdenticalToPrevious, Mode=TwoWay}"
-            ToolTip="Identify sequences of sections with no changes in the IR compared to previous one" />
-          <CheckBox
-            Margin="20,2,0,2"
-            Content="Lower text opacity for identical sections"
-            IsChecked="{Binding LowerIdenticalToPreviousOpacity, Mode=TwoWay}"
-            IsEnabled="{Binding ElementName=IdenticalToPreviousCheckbox, Path=IsChecked}"
-            ToolTip="Make the section name semi-transparent if it's identical to the previous one" />
-          <CheckBox
-            Margin="0,4,0,2"
-            Content="Mark sections with annotations"
-            IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}"
-            ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />
-
-        </StackPanel>
-      </TabItem>
+      <!-- <TabItem -->
+      <!--   x:Name="SectionsPanel" -->
+      <!--   Header="Sections" -->
+      <!--   Style="{StaticResource TabControlStyle}"> -->
+      <!--   <StackPanel Margin="4,4,4,4"> -->
+      <!--     <TextBlock -->
+      <!--       FontWeight="Medium" -->
+      <!--       Text="Section List" /> -->
+      <!--     <StackPanel Orientation="Horizontal"> -->
+      <!--       <CheckBox -->
+      <!--         Margin="0,4,20,2" -->
+      <!--         Content="Use semantic colorization of section names" -->
+      <!--         IsChecked="{Binding ColorizeSectionNames, Mode=TwoWay}" /> -->
+      <!--       <Button -->
+      <!--         Name="EditButton" -->
+      <!--         Width="20" -->
+      <!--         Height="20" -->
+      <!--         VerticalAlignment="Top" -->
+      <!--         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+      <!--         Click="EditButton_Click" -->
+      <!--         ToolTip="Edit section style definition file (JSON format)"> -->
+      <!--         <Image Source="{StaticResource EditIcon}" /> -->
+      <!--       </Button> -->
+      <!-- -->
+      <!--       <Button -->
+      <!--         Name="ReloadButton" -->
+      <!--         Width="20" -->
+      <!--         Height="20" -->
+      <!--         VerticalAlignment="Top" -->
+      <!--         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+      <!--         Click="ReloadButton_Click" -->
+      <!--         ToolTip="Reload the session style definitions"> -->
+      <!--         <Image Source="{StaticResource ReloadIcon}" /> -->
+      <!--       </Button> -->
+      <!--     </StackPanel> -->
+      <!-- -->
+      <!--     <CheckBox -->
+      <!--       Name="IndentationCheckbox" -->
+      <!--       Margin="0,2,0,2" -->
+      <!--       Content="Use indentation for nested section names" -->
+      <!--       IsChecked="{Binding UseNameIndentation, Mode=TwoWay}" -->
+      <!--       ToolTip="Show section names indentend based on the parent/child relationship" /> -->
+      <!--     <StackPanel -->
+      <!--       Margin="20,2,0,2" -->
+      <!--       Orientation="Horizontal"> -->
+      <!--       <TextBlock -->
+      <!--         VerticalAlignment="Center" -->
+      <!--         Text="Indentation amount" /> -->
+      <!--       <xctk:IntegerUpDown -->
+      <!--         Margin="4,0,0,0" -->
+      <!--         IsEnabled="{Binding ElementName=IndentationCheckbox, Path=IsChecked}" -->
+      <!--         Maximum="16" -->
+      <!--         Minimum="1" -->
+      <!--         ParsingNumberStyle="Number" -->
+      <!--         ShowButtonSpinner="True" -->
+      <!--         ToolTip="Number of whitespace letters to use for each level of indentation" -->
+      <!--         Value="{Binding Path=IndentationAmount, Mode=TwoWay}" /> -->
+      <!--     </StackPanel> -->
+      <!--     <CheckBox -->
+      <!--       Margin="0,2,0,2" -->
+      <!--       Content="Show section group separators" -->
+      <!--       IsChecked="{Binding ShowSectionSeparators, Mode=TwoWay}" -->
+      <!--       ToolTip="Show before/after section separator lines for groups of sections" /> -->
+      <!-- -->
+      <!-- -->
+      <!--     <CheckBox -->
+      <!--       x:Name="IdenticalToPreviousCheckbox" -->
+      <!--       Margin="0,2,0,2" -->
+      <!--       Content="Mark sections identical to previous" -->
+      <!--       IsChecked="{Binding MarkSectionsIdenticalToPrevious, Mode=TwoWay}" -->
+      <!--       ToolTip="Identify sequences of sections with no changes in the IR compared to previous one" /> -->
+      <!--     <CheckBox -->
+      <!--       Margin="20,2,0,2" -->
+      <!--       Content="Lower text opacity for identical sections" -->
+      <!--       IsChecked="{Binding LowerIdenticalToPreviousOpacity, Mode=TwoWay}" -->
+      <!--       IsEnabled="{Binding ElementName=IdenticalToPreviousCheckbox, Path=IsChecked}" -->
+      <!--       ToolTip="Make the section name semi-transparent if it's identical to the previous one" /> -->
+      <!--     <CheckBox -->
+      <!--       Margin="0,4,0,2" -->
+      <!--       Content="Mark sections with annotations" -->
+      <!--       IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}" -->
+      <!--       ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" /> -->
+      <!-- -->
+      <!--   </StackPanel> -->
+      <!-- </TabItem> -->
     </TabControl>
   </Grid>
 </local:OptionsPanelBase>

@@ -731,7 +731,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   private async void ActivityView_SelectedTimeRange(object sender, SampleTimeRangeInfo range) {
     Trace.WriteLine(
       $"Selected {range.StartTime} / {range.EndTime}, range {range.StartSampleIndex}-{range.EndSampleIndex}");
-
+    HidePreviewPopup();
     var view = sender as ActivityView;
 
     if (view.IsSingleThreadView) {
@@ -764,6 +764,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ActivityView_SelectingTimeRange(object sender, SampleTimeRangeInfo range) {
+    HidePreviewPopup();
     var view = sender as ActivityView;
 
     if (view.IsSingleThreadView) {
@@ -781,14 +782,6 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
           threadView.ActivityHost.SelectTimeRange(range);
         }
       }
-    }
-  }
-
-  private async Task OpenFunction(ProfileCallTreeNode node) {
-    if (node is {HasFunction: true} && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
-      var args = new OpenSectionEventArgs(node.Function.Sections[0], openMode);
-      await Session.SwitchDocumentSectionAsync(args);
     }
   }
 
@@ -810,7 +803,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
   }
 
   private void ZoomOut(double zoomPointX) {
-    AdjustZoom(-ZoomAmount * ActivityViewZoomRatio, zoomPointX, true, ZoomAnimationDuration);
+    AdjustZoom(-ZoomAmount * (ActivityViewZoomRatio * 0.5), zoomPointX, true, ZoomAnimationDuration);
   }
 
   private void AdjustMaxWidth(double amount) {

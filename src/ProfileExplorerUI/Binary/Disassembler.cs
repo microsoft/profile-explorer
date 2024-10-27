@@ -307,7 +307,7 @@ public class Disassembler : IDisposable {
       }
       case Machine.Arm:
       case Machine.Arm64: {
-        if (ARMOpcodes.GetOpcodeInfo(instr.MnemonicString, out var info)) {
+        if (ARM64Opcodes.GetOpcodeInfo(instr.MnemonicString, out var info)) {
           isJump = info.Kind == InstructionKind.Goto;
           return info.Kind == InstructionKind.Call || isJump;
         }

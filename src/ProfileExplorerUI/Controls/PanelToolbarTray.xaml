@@ -32,7 +32,7 @@
       Checked="PinButton_Checked"
       Focusable="False"
       ToolBar.OverflowMode="Never"
-      ToolTip="Pin panel content (don't sync with document)"
+      ToolTip="Pin view content (don't sync with Assembly view)"
       Unchecked="PinButton_Unchecked">
       <Image
         Source="{StaticResource PinIcon}"
@@ -47,7 +47,7 @@
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Focusable="False"
       ToolBar.OverflowMode="Never"
-      ToolTip="Duplicate panel">
+      ToolTip="Duplicate View">
       <MenuItem
         Margin="0,0,0,0"
         Padding="0,0,0,0"
@@ -65,13 +65,13 @@
         <MenuItem
           x:Name="DuplicateMenu"
           Click="DuplicateMenu_Click"
-          Header="Duplicate Panel"
-          ToolTip="Duplicate panel and dock it together with original" />
+          Header="Duplicate View"
+          ToolTip="Duplicate view and dock it together with original" />
         <MenuItem
           x:Name="DuplicateLeftMenu"
           Click="DuplicateLeftMenu_Click"
-          Header="Duplicate Panel - Dock Left"
-          ToolTip="Duplicate panel and dock on the left">
+          Header="Duplicate View - Dock Left"
+          ToolTip="Duplicate view and dock on the left">
           <MenuItem.Icon>
             <Image
               Width="16"
@@ -82,8 +82,8 @@
         <MenuItem
           x:Name="DuplicateRightMenu"
           Click="DuplicateRightMenu_Click"
-          Header="Duplicate Panel - Dock Right"
-          ToolTip="Duplicate panel and dock on the right">
+          Header="Duplicate View - Dock Right"
+          ToolTip="Duplicate view and dock on the right">
           <MenuItem.Icon>
             <Image
               Width="16"
@@ -94,8 +94,8 @@
         <MenuItem
           x:Name="DuplicateFloatingMenu"
           Click="DuplicateFloatingMenu_Click"
-          Header="Duplicate Panel - Undocked"
-          ToolTip="Duplicate panel and undock it">
+          Header="Duplicate View - Undocked"
+          ToolTip="Duplicate view and undock it">
           <MenuItem.Icon>
             <Image
               Width="16"
@@ -117,7 +117,7 @@
       Focusable="False"
       PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
       ToolBar.OverflowMode="Never"
-      ToolTip="Show panel documentation">
+      ToolTip="Show view documentation">
       <Image
         Width="18"
         Height="18"
@@ -137,7 +137,7 @@
       Focusable="False"
       PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
       ToolBar.OverflowMode="Never"
-      ToolTip="Show panel settings">
+      ToolTip="Show view settings">
       <Image
         Source="{StaticResource SettingsIcon}"
         Style="{StaticResource DisabledImageStyle}" />

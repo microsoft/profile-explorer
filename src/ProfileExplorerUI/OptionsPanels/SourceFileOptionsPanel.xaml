@@ -48,7 +48,7 @@
             Content="Replace only insignificant column values"
             IsChecked="{Binding Path=ReplaceInsignificantSourceStatements, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
-            ToolTip="Show annotations in the profiling columns only if replacing insignificant values&#x0a;If not replaced, annotation is displayed in document left margin" />
+            ToolTip="Show annotations in the profiling columns only if replacing insignificant values.&#x0a;If not replaced, annotation is displayed in document left margin" />
 
           <CheckBox
             Margin="20,2,0,2"
@@ -59,14 +59,14 @@
 
           <CheckBox
             Margin="0,4,0,2"
-            Content="Sync selected line with assembly document"
+            Content="Sync selected line with Assembly view"
             IsChecked="{Binding Path=SyncLineWithDocument, Mode=TwoWay}"
-            ToolTip="Sync the corresponding lines with the selection in the assembly document" />
+            ToolTip="Sync the corresponding lines with the selection in the Assembly view" />
           <CheckBox
             Margin="0,2,0,0"
-            Content="Sync inlinee with assembly document"
+            Content="Sync inlinee with Assembly view"
             IsChecked="{Binding Path=SyncInlineeWithDocument, Mode=TwoWay}"
-            ToolTip="Display the deepest inlined function for the selection in the assembly document" />
+            ToolTip="Display the deepest inlined function for the selection in the Assembly view" />
 
           <Separator
             Margin="0,4,0,4"
@@ -82,9 +82,9 @@
           <CheckBox
             x:Name="SyncWithDocumentCheckBox"
             Margin="0,2,0,4"
-            Content="Sync style with assembly document"
+            Content="Sync style with Assembly view"
             IsChecked="{Binding Path=SyncStyleWithDocument, Mode=TwoWay}"
-            ToolTip="Use the same font and text size as the associated assembly document" />
+            ToolTip="Use the same font and text size as the associated Assembly view" />
           <StackPanel
             Margin="0,2,0,2"
             IsEnabled="{Binding ElementName=SyncWithDocumentCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}"

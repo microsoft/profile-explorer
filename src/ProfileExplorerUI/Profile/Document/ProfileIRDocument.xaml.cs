@@ -153,7 +153,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
           JumpToHottestProfiledElement(true);
         }
 
-        TextView.ResumeUpdate();
+        TextView.Redraw();
       }
     };
   }
@@ -1598,6 +1598,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportSourceExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the source file/function failed to load.
+    }
+
     if (isSourceFileDocument_) {
       await DocumentExporting.ExportSourceToExcelFile(TextView, MapToOriginalSourceLineNumber,
                                                       MapFromOriginalSourceLineNumber);
@@ -1608,6 +1612,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportSourceHtmlExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the source file/function failed to load.
+    }
+
     if (isSourceFileDocument_) {
       await DocumentExporting.ExportSourceToHtmlFile(TextView, MapToOriginalSourceLineNumber,
                                                      MapFromOriginalSourceLineNumber);
@@ -1618,6 +1626,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   private async void ExportSourceMarkdownExecuted(object sender, ExecutedRoutedEventArgs e) {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the source file/function failed to load.
+    }
+
     if (isSourceFileDocument_) {
       await DocumentExporting.ExportSourceToMarkdownFile(TextView, MapToOriginalSourceLineNumber,
                                                          MapFromOriginalSourceLineNumber);
@@ -1632,6 +1644,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task CopySelectedLinesAsHtml() {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the source file/function failed to load.
+    }
+
     if (isSourceFileDocument_) {
       await DocumentExporting.CopySelectedSourceLinesAsHtml(TextView, MapToOriginalSourceLineNumber,
                                                             MapFromOriginalSourceLineNumber);
@@ -1642,6 +1658,10 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
   }
 
   public async Task CopyAllLinesAsHtml() {
+    if (!TextView.IsLoaded) {
+      return; // Happens when the source file/function failed to load.
+    }
+
     if (isSourceFileDocument_) {
       await DocumentExporting.CopyAllSourceLinesAsHtml(TextView, MapToOriginalSourceLineNumber,
                                                        MapFromOriginalSourceLineNumber);

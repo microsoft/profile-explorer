@@ -25,9 +25,9 @@ public class PreviewPopupSettings : SettingsBase {
   public bool UseSmallerFontSize { get; set; }
   [ProtoMember(6)][OptionValue(false)]
   public bool ShowSourcePreviewPopup { get; set; }
-  [ProtoMember(7)][OptionValue(650)]
+  [ProtoMember(7)][OptionValue(550)]
   public double PopupWidth { get; set; }
-  [ProtoMember(8)][OptionValue(450)]
+  [ProtoMember(8)][OptionValue(400)]
   public double PopupHeight { get; set; }
   [ProtoMember(9)][OptionValue(false)]
   public bool IsElementPopup { get; set; }

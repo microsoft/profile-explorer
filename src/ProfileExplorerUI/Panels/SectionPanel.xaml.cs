@@ -509,8 +509,8 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     functionExtMap_ = new Dictionary<IRTextFunction, IRTextFunctionEx>();
     annotatedSections_ = new HashSet<IRTextSectionEx>();
     IsFunctionListVisible = true;
-    IsSectionListVisible = true;
-    ShowSections = true;
+    IsSectionListVisible = false;
+    ShowSections = false;
     SectionCountColumnVisible = true;
     SyncDiffedDocuments = true;
     MainGrid.DataContext = this;
@@ -1388,10 +1388,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     foreach (var section in currentFunction_.Sections) {
+#if DEBUG
       if (!sectionExtMap_.ContainsKey(section)) {
         Utils.WaitForDebugger();
       }
-
+#endif
       var sectionEx = sectionExtMap_[section];
       sectionEx = new IRTextSectionEx(section, sectionEx.Index);
       sectionEx.Name = CompilerInfo.NameProvider.GetSectionName(section, false);
@@ -1983,13 +1984,17 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   private void SetupSectionExtensions(IRTextSummary summary) {
     foreach (var func in summary.Functions) {
-      int index = 0;
+      CreateSectionExtensions(func);
+    }
+  }
 
-      foreach (var section in func.Sections) {
-        if (!sectionExtMap_.ContainsKey(section)) {
-          var sectionEx = new IRTextSectionEx(section, index++);
-          sectionExtMap_[section] = sectionEx;
-        }
+  private void CreateSectionExtensions(IRTextFunction func) {
+    int index = 0;
+
+    foreach (var section in func.Sections) {
+      if (!sectionExtMap_.ContainsKey(section)) {
+        var sectionEx = new IRTextSectionEx(section, index++);
+        sectionExtMap_[section] = sectionEx;
       }
     }
   }
@@ -3087,6 +3092,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   }
 
   public IRTextSectionEx GetSectionExtension(IRTextSection section) {
+    if (sectionExtMap_.TryGetValue(section, out var secitonEx)) {
+      return secitonEx;
+    }
+
+    CreateSectionExtensions(section.ParentFunction);
     return sectionExtMap_[section];
   }
 

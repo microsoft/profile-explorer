@@ -182,7 +182,7 @@
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncSelection, Mode=TwoWay}"
-            ToolTip="Sync function displayed in other profiling panels with selection">
+            ToolTip="Sync function displayed in other profiling views with selection">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -201,7 +201,7 @@
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.SyncSourceFile, Mode=TwoWay}"
-            ToolTip="Sync Source File panel with selection">
+            ToolTip="Sync Source File view with selection">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -227,7 +227,7 @@
             Margin="0,0,0,0"
             Padding="0,0,2,0"
             IsChecked="{Binding Path=Settings.ShowDetailsPanel, Mode=TwoWay}"
-            ToolTip="Show the function details panel on the right-hand side">
+            ToolTip="Show the Function Details panel on the right-hand side">
             <StackPanel Orientation="Horizontal">
               <Image
                 Width="16"
@@ -286,7 +286,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
               TextChanged="FunctionFilter_OnTextChanged"
-              ToolTip="Filter function list based based on a substring (Ctrl+F)&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
+              ToolTip="Filter function list based based on a substring (Ctrl+F).&#x0a;Wildcards * in the name are supported, e.g. prefix*foo*">
               <TextBox.InputBindings>
                 <KeyBinding
                   Key="Escape"

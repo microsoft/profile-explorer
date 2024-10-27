@@ -25,11 +25,7 @@ public partial class DocumentSearchPanel : DraggablePopup {
     Initialize(position, width, height, referenceElement);
     PanelResizeGrip.ResizedControl = this;
 
-    data_ = new DocumentSearchInfo {
-      SearchAllFunctions = true,
-      SearchPassOutput = true
-    };
-
+    data_ = new DocumentSearchInfo();
     DataContext = data_;
     session_ = session;
     document_ = document;
@@ -114,7 +110,7 @@ public partial class DocumentSearchPanel : DraggablePopup {
 
     var docInfo = document_;
     var searcherOptions = new SectionTextSearcherOptions {
-      SearchBeforeOutput = data_.SearchPassOutput,
+      SearchBeforeOutput = false,
       KeepSectionText = false, // Reduces memory usage for large files.
       UseRawSectionText = true // Speeds up reading large sections.
     };
@@ -144,26 +140,6 @@ public partial class DocumentSearchPanel : DraggablePopup {
     return results;
   }
 
-  private void Button_Click(object sender, RoutedEventArgs e) {
-    var docInfo = document_;
-    var list = new List<IRTextSection>();
-
-    foreach (var func in docInfo.Summary.Functions) {
-      list.AddRange(func.Sections);
-    }
-
-    int total = 0;
-    var start = Stopwatch.StartNew();
-
-    foreach (var section in list) {
-      string text = docInfo.Loader.GetRawSectionText(section);
-      byte[] hash = CompressionUtils.CreateSHA256(text);
-      total += hash.Length;
-    }
-
-    MessageBox.Show($"Done in {start.ElapsedMilliseconds}");
-  }
-
   private void DetachPanel() {
     if (IsDetached) {
       return;
@@ -184,8 +160,6 @@ public partial class DocumentSearchPanel : DraggablePopup {
 
   private class DocumentSearchInfo : INotifyPropertyChanged {
     private bool panelDetached_;
-    public bool SearchAllFunctions { get; set; }
-    public bool SearchPassOutput { get; set; }
     public int FunctionCount { get; set; }
     public int SectionCount { get; set; }
     public int InstanceCount { get; set; }

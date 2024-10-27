@@ -12,7 +12,11 @@ namespace ProfileExplorer.UI;
 public abstract class HoverPreview : IDisposable {
   public static readonly TimeSpan HoverDuration = TimeSpan.FromMilliseconds(200);
   public static readonly TimeSpan LongHoverDuration = TimeSpan.FromMilliseconds(1000);
-  public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(2500);
+  public static readonly TimeSpan ExtraLongHoverDuration = TimeSpan.FromMilliseconds(2000);
+  public static readonly int HoverDurationMs = (int)HoverDuration.TotalMilliseconds;
+  public static readonly int LongHoverDurationMs = (int)LongHoverDuration.TotalMilliseconds;
+  public static readonly int ExtraLongHoverDurationMs = (int)ExtraLongHoverDuration.TotalMilliseconds;
+
   private UIElement control_;
   private MouseHoverLogic hover_;
   protected UIElement previewPopup_;

@@ -378,9 +378,19 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async void ExternalButton_Click(object sender, RoutedEventArgs e) {
     try {
-      if (await DownloadHelpIndex()) {
+      string helpURL = null;
+
+      if (currentTopic_ != null) {
+        // Open current topic if loaded.
+        helpURL = App.GetHelpFilePath(currentTopic_.URL);
+      }
+      else if (await DownloadHelpIndex()) {
+        helpURL = App.GetHelpFilePath(helpIndex_.HomeTopic.URL);
+      }
+
+      if (!string.IsNullOrEmpty(helpURL)) {
         var psi = new ProcessStartInfo() {
-          FileName = App.GetHelpFilePath(helpIndex_.HomeTopic.URL),
+          FileName = helpURL,
           UseShellExecute = true
         };
         Process.Start(psi);

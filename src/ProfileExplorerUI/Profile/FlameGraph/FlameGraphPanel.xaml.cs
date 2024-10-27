@@ -349,7 +349,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async Task OpenFunction(ProfileCallTreeNode node) {
     if (node is {HasFunction: true} && node.Function.HasSections) {
-      var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
+      var openMode = Utils.IsControlModifierActive() ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent;
       await Session.OpenProfileFunction(node, openMode);
     }
   }
@@ -496,16 +496,6 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   private async void ToggleButton_Click(object sender, RoutedEventArgs e) {
     // Force an update for toolbar buttons.
-    await ReloadSettings();
-  }
-
-  private async void ClearModulesButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.ModuleColors.Clear();
-    await ReloadSettings();
-  }
-
-  private async void ClearFunctionsButton_Click(object sender, RoutedEventArgs e) {
-    MarkingSettings.FunctionColors.Clear();
     await ReloadSettings();
   }
 

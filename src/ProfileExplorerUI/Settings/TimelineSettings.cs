@@ -8,15 +8,7 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class TimelineSettings : SettingsBase {
-  //? TODO: Options for
-  //? - grouping by thread name
-  //? - custom colors for thread names
-  //? - auto-pick colors by name + select palette
-  //? - show backtrace preview on hover
-  //?    - max depth
-  //?    - hover time
-  //?    - same settings in SectionPanel
-  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDuration.TotalMilliseconds;
+  public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDurationMs;
 
   public TimelineSettings() {
     Reset();
