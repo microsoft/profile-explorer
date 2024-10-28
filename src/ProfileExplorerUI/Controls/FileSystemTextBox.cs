@@ -19,9 +19,9 @@ public class FileSystemTextBox : AutoCompleteBox {
 
   private void FileSystemTextBox_Populating(object sender, PopulatingEventArgs e) {
     var box = sender as FileSystemTextBox;
-    string text = box.Text;
 
     try {
+      string text = box.Text;
       string dirname = Path.GetDirectoryName(text);
 
       if (dirname != null && Directory.Exists(dirname)) {

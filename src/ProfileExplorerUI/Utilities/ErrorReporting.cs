@@ -2,8 +2,10 @@
 // Licensed under the MIT license.
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
+using Microsoft.Win32;
 
 namespace ProfileExplorer.UI;
 
@@ -74,11 +76,17 @@ public static class ErrorReporting {
       string stackTrace = exception.StackTrace;
 
       if (exception.InnerException != null) {
-        stackTrace += $"\n\nInner exception: {exception.InnerException.StackTrace}";
+        stackTrace += $"\n----------------------------\n";
+        stackTrace += $"\nInner exception:";
+        stackTrace += $"\n    Message: {exception.InnerException.Message}";
+        stackTrace += $"\n    Stack trace: {exception.InnerException.StackTrace}";
       }
 
       // Report exception to telemetry service.
       string trace = $"Message: {exception.Message}\nStack trace:\n{stackTrace}";
+      trace += $"\n----------------------------\n";
+      trace += $"\n{GetEnvironmentVersionInfo()}";
+
       string stackTracePath = CreateStackTraceDump(trace);
       string sectionPath = CreateSectionDump();
 
@@ -108,6 +116,21 @@ public static class ErrorReporting {
     }
 
     Environment.Exit(-1);
+  }
+
+  private static string GetEnvironmentVersionInfo() {
+    string buildNumber = "unknown";
+
+    try {
+      RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+      buildNumber = registryKey.GetValue("UBR").ToString();
+    }
+    catch { }
+
+    var version = Environment.OSVersion.Version;
+    var trace = $"Windows version: {version.Major}.{version.Minor} (Build {version.Build}.{buildNumber})";
+    trace += $"\n.NET version: {RuntimeEnvironment.GetSystemVersion()}";
+    return trace;
   }
 
   public static void SaveOpenSections() {
