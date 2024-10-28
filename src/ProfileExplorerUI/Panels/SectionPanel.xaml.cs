@@ -2367,7 +2367,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
 
     optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, SectionSettings>(
-      Settings.Clone(), SectionList, Session,
+      Settings.Clone(), FunctionList, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(Settings)) {
           await HandleNewSettings(newSettings, commit);
