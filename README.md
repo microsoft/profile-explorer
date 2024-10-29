@@ -1,4 +1,7 @@
 ## Profile Explorer
+[![Static Badge](https://img.shields.io/badge/Download-x64-orange)](https://github.com/microsoft/profile-explorer/releases/latest/download/profile_explorer_installer_x64.exe)
+[![Static Badge](https://img.shields.io/badge/Download-ARM64-orange)](https://github.com/microsoft/profile-explorer/releases/latest/download/profile_explorer_installer_arm64.exe)
+[![Static Badge](https://img.shields.io/badge/Documentation-blue)](https://microsoft.github.io/profile-explorer/)
 
 Profile Explorer is a tool for viewing CPU profiling traces collected through the [Event Tracing for Windows (ETW)](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-) infrastructure on machines with x64 and ARM64 CPUs. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views, such as a hot function list, flame graph, call tree, timeline, assembly code view, and source file view.  
 
@@ -26,7 +29,7 @@ The installers for previous versions can be downloaded from the [Releases](https
 ### 📖 Documentation
 
 The documentation pages are available here:  
-#### [https://microsoft.github.io/profile-explorer](https://microsoft.github.io/profile-explorer)
+#### [https://microsoft.github.io/profile-explorer](https://microsoft.github.io/profile-explorer/)
 
 The app also has a built-in *Help panel* that can display the same documentation.  
 Most views have a *question mark* icon in the upper-right corner that opens the *Help panel* on the view's documentation page. 
@@ -90,7 +93,7 @@ The following projects are build from source, as either x64 or native arm64 bina
 | src/external/tree-sitter | [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) parser generator, with support for C/C++, C# and Rust, submodules. |
 | src/external/TreeListView | [TreeListView](https://github.com/hazzik/TreeListView), WPF tree list view control. |
 
-### 📐Profiling architecture
+### Profiling architecture
 
 <img src="https://github.com/user-attachments/assets/77e00a73-4810-4155-b656-a356fff8ba3b" width=70% height=70%>  
 
@@ -106,7 +109,7 @@ The following projects are build from source, as either x64 or native arm64 bina
 
 The application started as a tool for helping compiler developers interact with and better understand a compiler's [intermediate representation (IR)](https://en.wikipedia.org/wiki/Intermediate_representation). After adding simple support for viewing profile traces, it gradually gained more profiling features and primarily became a profile viewer.  
 
-Some of the more unique features, such as parsing assembly code into an internal IR, which allows for an interactive assembly code view and the display of control-flow graphs, result from the tool's initial compiler focus.
+The tool's initial focus on compilers has led to some distinctive features, such as the ability to parse assembly code into an internal IR. This enables an interactive view of assembly code and the visualization of control-flow graphs, for example.
 
 ### Video demo
 
