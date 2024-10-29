@@ -835,74 +835,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -940,7 +898,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -961,7 +919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1085,7 +1043,7 @@
 <p>The columns in all list views can be resized and reorder. The new layout is saved across sessions when closing the application.</p>
 </details>
 <h4 id="searching-functions">Searching functions</h4>
-<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
+<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the <em>Escape</em> key to reset the search or the X button next to the input box.</p>
 <p><a href="img/call-tree-search_1077x402.png" target="_blank"><img alt="Profiling UI screenshot" src="img/call-tree-search_1077x402.png" style="width:700px" /></a></p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
@@ -1112,7 +1070,7 @@
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-source.png" /></td>
-<td>If enabled, selecting a node also displays the associated function in the Source file view, with the source lines annotated with profiling data.</td>
+<td>If enabled, selecting a node also displays the associated function in the <em>Source File</em> view, with the source lines annotated with profiling data.</td>
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-module.png" /></td>
@@ -1137,19 +1095,27 @@
 <tbody>
 <tr>
 <td>Hover</td>
-<td>Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times, similar to the Flame Graph view.</td>
+<td>Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times. <em>Clicking</em> the <em>Pin button</em> or dragging the popup expands it into a panel equivalent to the <em>Details panel</em>. Multiple such panels can be kept open at the same time.</td>
 </tr>
 <tr>
 <td>Click</td>
-<td>Selects the function. If <em>Sync</em> is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the Source file view if <em>Source</em> is enabled in the toolbar.</td>
+<td>Selects a function. If <em>Sync</em> is enabled in the toolbar, the function is also selected in the other panels. Displays the associated function in the <em>Source File</em> view if <em>Source</em> is enabled in the toolbar.</td>
+</tr>
+<tr>
+<td>Double-click</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
 </tr>
 <tr>
 <td>Ctrl+Double-click</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
+</tr>
+<tr>
+<td>Shift+Double-click</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Ctrl+Shift+Double-click</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Right-click</td>
@@ -1169,16 +1135,28 @@
 </thead>
 <tbody>
 <tr>
-<td>Ctrl+Return</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Space</td>
+<td>Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly.</td>
 </tr>
 <tr>
-<td>Ctrl+Shift+Return</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
+</tr>
+<tr>
+<td>Ctrl+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
 </tr>
 <tr>
 <td>Alt+Return</td>
 <td>Opens a preview popup with the assembly of the selected function. Press the <em>Escape</em> key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time.</td>
+</tr>
+<tr>
+<td>Shift+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab, with profile data filtered to include only the selected instance.</td>
+</tr>
+<tr>
+<td>Ctrl+Shift+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Alt+Shift+Return</td>

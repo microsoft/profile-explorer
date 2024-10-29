@@ -826,74 +826,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -931,7 +889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -952,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1092,7 +1050,7 @@
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-source.png" /></td>
-<td>If enabled, selecting a node also displays the associated function in the Source file view, with the source lines annotated with profiling data.</td>
+<td>If enabled, selecting a node also displays the associated function in the <em>Source File</em> view, with the source lines annotated with profiling data.</td>
 </tr>
 <tr>
 <td><img alt="" src="img/call-tree-toolbar-combine.png" /></td>
@@ -1121,23 +1079,23 @@
 <tbody>
 <tr>
 <td>Hover</td>
-<td>Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times, similar to the Flame Graph view.</td>
-</tr>
-<tr>
-<td>Click</td>
-<td>Selects the function. If <em>Sync</em> is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the Source file view if <em>Source</em> is enabled in the toolbar.</td>
+<td>Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times, similar to the <em>Flame Graph</em> view.</td>
 </tr>
 <tr>
 <td>Double-click</td>
-<td>Switches the view to display the selected function instead.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
 </tr>
 <tr>
 <td>Ctrl+Double-click</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
+</tr>
+<tr>
+<td>Shift+Double-click</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Ctrl+Shift+Double-click</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Right-click</td>
@@ -1145,7 +1103,7 @@
 </tr>
 <tr>
 <td>Back</td>
-<td>If the mouse has an optional <em>Back</em> button, navigates back to the previous viewed function in the view.</td>
+<td>If the mouse has a <em>Back</em> button, navigates back to the previous viewed function in the view.</td>
 </tr>
 </tbody>
 </table>
@@ -1162,19 +1120,23 @@
 <tbody>
 <tr>
 <td>Return</td>
-<td>Switches the view to display the selected function instead.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
 </tr>
 <tr>
 <td>Ctrl+Return</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
-</tr>
-<tr>
-<td>Ctrl+Shift+Return</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
 </tr>
 <tr>
 <td>Alt+Return</td>
 <td>Opens a preview popup with the assembly of the selected function. Press the <em>Escape</em> key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time.</td>
+</tr>
+<tr>
+<td>Shift+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab, with profile data filtered to include only the selected instance.</td>
+</tr>
+<tr>
+<td>Ctrl+Shift+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Alt+Shift+Return</td>

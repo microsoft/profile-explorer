@@ -979,74 +979,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -1084,7 +1042,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1105,7 +1063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1357,7 +1315,7 @@
   <h1>Source File view</h1>
 
 <h4 id="overview">Overview</h4>
-<p>The Source File view displays the source code of the function viewed in the active assembly view. When a function is opened in the Assembly view, using the debug info file, its corresponding source file is identified, downloaded if needed, and loaded in the view, with source lines annotated with profiling information.  </p>
+<p>The Source File view displays the source code of the function viewed in the active <em>Assembly</em><em> view. When a function is opened in the </em><em>Assembly</em> view, using the debug info file, its corresponding source file is identified, downloaded if needed, and loaded in the view, with source lines annotated with profiling information.  </p>
 <p><a href="img/source-view_1000x503.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-view_1000x503.png" /></a></p>
 <h5 id="finding-source-files">Finding source files</h5>
 <p>Locating the source file to load is done with the help of the debug info file, which usually records the file path associated with each function. In some cases, additional information is available to locate and download source files from remote locations and <a href="https://learn.microsoft.com/en-us/windows/win32/debug/source-server-and-source-indexing">Source Servers</a>.</p>
@@ -1386,7 +1344,7 @@
 <p><code>C:\build\src\other\nested\subdir\file.cpp</code> found as<br />
 <code>D:\local\project\src\other\nested\subdir\file.cpp</code></p>
 <h4 id="source-code-view">Source code view</h4>
-<p>The view is similar to the Assembly view, having four parts:  </p>
+<p>The view is similar to the <em>Assembly</em> view, having four parts:  </p>
 <ul>
 <li>a main toolbar at the top, with general action buttons.</li>
 <li>a secondary toolbar underneath with profiling-specific info and action buttons.</li>
@@ -1404,11 +1362,11 @@
 </ul>
 <h5 id="selection-sync">Selection sync</h5>
 <p>When a source line is selected, if <em>Sync</em> is enabled in the toolbar, the associated instructions are also selected in the <em>Assembly</em> view.  </p>
-<p>In the example below, the start of the loop on line 21 is selected, with the instructions forming the loop header selected in the Assembly view; the selected instructions corresponding to the loop back-edge are not visible in the screenshot.</p>
+<p>In the example below, the start of the loop on line 21 is selected, with the instructions forming the loop header selected in the <em>Assembly</em> view; the selected instructions corresponding to the loop back-edge are not visible in the screenshot.</p>
 <p><a href="img/source-selection-sync_934x400.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-selection-sync_934x400.png" /></a></p>
-<p>Vice versa, selecting an instruction in the Assembly view also selects the corresponding source line.</p>
+<p>Vice versa, selecting an instruction in the <em>Assembly</em> view also selects the corresponding source line.</p>
 <h5 id="profiling-annotations">Profiling annotations</h5>
-<p>Similar to the Assembly view, execution time is displayed and annotated on several parts of the source lines and columns using text, colors, and flame icons:</p>
+<p>Similar to the <em>Assembly</em> view, execution time is displayed and annotated on several parts of the source lines and columns using text, colors, and flame icons:</p>
 <ul>
 <li>the <em>Time (%)</em> column displays the source line's execution time percentage relative to the total function execution time. The column style can be changed in the <a href="#view-options">Source File options</a>.</li>
 <li>the <em>Time (ms)</em> column displays the source files's execution time value. The time unit and column style can be changed in the <a href="#view-options">Source File options</a>.</li>
@@ -1423,7 +1381,7 @@
 <a href="img/source-selection_983x255.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-selection_983x255.png" /></a></p>
 </details>
 <h5 id="assembly-code-sections">Assembly code sections</h5>
-<p>IIf enabled, each source line is followed by a section with the assembly instructions generated for it based on the debug info file. By default, the sections are collapsed and can be expanded by pressing the + button on the left of the source lines. Each line of assembly has the same profiling annotations as the source lines.</p>
+<p>IIf enabled, each source line is followed by a section with the assembly instructions generated for it based on the debug info file. By default, the sections are collapsed and can be expanded by <em>clicking</em> the + button on the left of the source lines. Each line of assembly has the same profiling annotations as the source lines.</p>
 <p><a href="img/source-assembly_816x233.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-assembly_816x233.png" /></a></p>
 <p>To view the assembly sections, toggle the ASM button in the toolbar (enabled by default). The <em>Expand</em> and <em>Collapse</em> buttons in the toolbar can be used to toggle the visibility of all assembly sections together.</p>
 <h5 id="call-targets">Call targets</h5>
@@ -1458,11 +1416,11 @@
 <p>Displays a menu that summarizes  the nested statements and their execution time.<br />
 See the <a href="#source-code-outline">Source code outline</a> section above for documentation.</p>
 <h5 id="instances">Instances</h5>
-<p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the <em>Assembly view</em> feature.  </p>
-<p>See the <a href="assembly-view.html#instances">Profiling toolbar: Instances</a> section in the <em>Assembly view</em> page for details.</p>
+<p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the <em>Assembly</em> view feature.  </p>
+<p>See the <a href="assembly-view.html#instances">Profiling toolbar: Instances</a> section in the <em>Assembly</em> view page for details.</p>
 <h5 id="threads">Threads</h5>
-<p>The Threads menu displays the threads IDs and their execution time percentage and value, similar to the <em>Assembly view</em> feature.  </p>
-<p>See the <a href="assembly-view.html#threads">Profiling toolbar: Threads</a> section in the <em>Assembly view</em> page for details.</p>
+<p>The Threads menu displays the threads IDs and their execution time percentage and value, similar to the <em>Assembly</em> view feature.  </p>
+<p>See the <a href="assembly-view.html#threads">Profiling toolbar: Threads</a> section in the <em>Assembly</em> view page for details.</p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
 <summary>Toolbar</summary>
@@ -1488,11 +1446,11 @@ See the <a href="#source-code-outline">Source code outline</a> section above for
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-sync.png" /></td>
-<td>If enabled, selecting a source lines also selects all associated instructions in the <em>Assembly view</em>.</td>
+<td>If enabled, selecting a source lines also selects all associated instructions in the <em>Assembly</em> view.</td>
 </tr>
 <tr>
 <td><img alt="" src="img/source-toolbar-inlinees.png" /></td>
-<td>If enabled, inlinees (inlined functions) debug info is used to load the deepest inlinee function and its source file instead of the current function in the <em>Assembly view</em>.</td>
+<td>If enabled, inlinees (inlined functions) debug info is used to load the deepest inlinee function and its source file instead of the current function in the <em>Assembly</em> view.</td>
 </tr>
 <tr>
 <td><img alt="" src="img/source-toolbar-asm.png" /></td>
@@ -1524,7 +1482,7 @@ See the <a href="#source-code-outline">Source code outline</a> section above for
 <a href="img/source-export-markdown_987x453.png" target="_blank"><img alt="Profiling UI screenshot" src="img/source-export-markdown_987x453.png" style="width:480px" /></a></li>
 </ul>
 <p>The Export menu in the toolbar also has an option to copy to clipboard the function's source code as a HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  </p>
-<p>The Ctrl+C keyboard shortcut copies to the clipboard only the selected source lines as a HTML/Markdown table.</p>
+<p>The <em>Ctrl+C</em> keyboard shortcut copies to the clipboard only the selected source lines as a HTML/Markdown table.</p>
 <h4 id="view-options">View options</h4>
 <p><em>Click</em> on the <em>Gears</em> icon in the top-right part of the view displays the options panel (alternatively, use the <em>Source File</em> tab in the application <em>Settings</em> window.).  </p>
 <p>The tabs below describe each page of the options panel:  </p>

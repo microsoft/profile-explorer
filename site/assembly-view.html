@@ -991,74 +991,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -1096,7 +1054,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1117,7 +1075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1393,7 +1351,7 @@
 </ul>
 <details class="note" open="open">
 <summary>Note</summary>
-<p>When a function is opened in the Assembly view, its corresponding source file is automatically loaded in the <em>Source File</em> view and its <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> displayed in the <em>Flow Graph</em> view.<br>
+<p>When a function is opened in the <em>Assembly</em> view, its corresponding source file is automatically loaded in the <em>Source File</em> view and its <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> displayed in the <em>Flow Graph</em> view.<br>
 <a href="img/assembly-source_1073x279.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-source_1073x279.png" /></a></p>
 </details>
 <h4 id="assembly-text-view">Assembly text view</h4>
@@ -1444,7 +1402,7 @@
 <p><a href="img/assembly-marking-blocks_793x203.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-marking-blocks_793x203.png" /></a>  </p>
 <ul>
 <li>the basic blocks have a label with the block's execution time percentage, as a sum of its instruction's execution time (in the example above, the 55.73% label for B4). <em>Hovering</em> over the label shows the block's execution time value. The label background color uses the same color coding.</li>
-<li>the basic blocks in the <em>Flow Graph</em> view have below the same execution time percentage label as in the Assembly view, with the corresponding background color.</li>
+<li>the basic blocks in the <em>Flow Graph</em> view have below the same execution time percentage label as in the <em>Assembly</em> view, with the corresponding background color.</li>
 </ul>
 <p>When displaying a function for the first time, by default, the slowest instruction is selected and brought into view (this can be configured in the <a href="#view-options">Assembly options</a>). When the function is displayed subsequently, the last vertical scroll position is used instead.  </p>
 <p>To jump at any time to the slowest instruction, <em>click</em> the red <img alt="" src="img/flame-icon.png" /> from the toolbar or the <em>Ctrl+H</em> keyboard shortcut.</p>
@@ -1463,12 +1421,12 @@
 <p><a href="img/assembly-call-target_691x172.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-call-target_691x172.png" style="width:500px" /></a> </p>
 <details class="note" open="open">
 <summary>Note</summary>
-<p>Functions in the list have a right-click context menu with options to open the Assembly view, preview popup, and select the function in the other views.  </p>
-<p><em>Double-click/Ctrl+Return</em> opens the Assembly view for the selected function. Combine these shortcuts with the <em>Shift</em> key to open the Assembly view in a new tab instead.</p>
+<p>Functions in the list have a right-click context menu with options to open the <em>Assembly</em> view, preview popup, and select the function in the other views.  </p>
+<p><em>Double-click/Ctrl+Return</em> opens the <em>Assembly</em><em> view for the selected function. Combine these shortcuts with the </em>Shift<em> key to open the </em><em>Assembly</em> view in a new tab instead.</p>
 </details>
 <p>Call instructions with a known target have the function name operand changed into a link (underlined, bold, blue text). The link makes it easy to navigate to the called function and the function history to go back to the caller.</p>
 <ul>
-<li><em>Double-click</em> on the function name (or the Return key with the name selected) opens the called function in the same tab.  </li>
+<li><em>Double-click</em> on the function name (or the <em>Return</em> key with the name selected) opens the called function in the same tab.  </li>
 <li><em>Shift+Double-Click</em> (or Shift+Return) opens the called function in a new tab.  </li>
 <li><em>Alt+Return</em> shows a preview popup with the called function's assembly. Press the <em>Escape</em> key to close the popup.  </li>
 <li><em>Hovering</em> with the mouse over the function name also shows the preview popup.</li>
@@ -1476,7 +1434,7 @@
 </ul>
 <p><a href="img/assembly-call-hover_922x278.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-call-hover_922x278.png" /></a>  </p>
 <h5 id="opened-functions-history">Opened functions history</h5>
-<p>When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. The history is especially useful when navigating to a called function by double-clicking its name in the assembly since it makes it easy to get back to the caller.  </p>
+<p>When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. The history is especially useful when navigating to a called function by <em>double-clicking</em> its name in the assembly since it makes it easy to get back to the caller.  </p>
 <ul>
 <li>
 <p><em>Click</em> the <em>Back</em> button in the toolbar to navigate back to the previous function in the sequence (or press the <em>Backspace</em> key or the optional <em>Back</em> button on the mouse). The back button also has a menu that lists the previous functions.  </p>
@@ -1506,20 +1464,20 @@
 <p><em>Click</em> on a menu entry to select all instruction associated with the inlinee and brings the first one into view.  </p>
 <p>In the example above, most of the execution time (46.79%) is taken by instructions originating in the <em>std::<em>Rng_from</em>...</em> inlinee, while only 3.60% of execution time is from non-inlined instructions.</p>
 <h5 id="instances">Instances</h5>
-<p>By default, the Assembly view displays the function profile accumulated across all instances of the function (see the <a href="flame-graph-panel.html">Flame Graph view</a> documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  </p>
+<p>By default, the <em>Assembly</em>* view displays the function profile accumulated across all instances of the function (see the <a href="flame-graph-panel.html">Flame Graph view</a> documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  </p>
 <p>The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then its caller, and so on going up the call tree until the paths reach a common node. <em>Hover</em> over an entry to display a tooltip with the complete call path up to the entry point node.  </p>
 <p><a href="img/assembly-instances_1027x182.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-instances_1027x182.png" /></a>  </p>
 <p><em>Click</em> on a menu entry to filter the profile data to include only the selected instance, updating the execution time and all profiling annotations for instructions and basic blocks.  </p>
 <p>The menu entries are checkboxes which allows selecting multiple instances to be included.<br />
 Use the <em>All Instances</em> entry or uncheck all instances to view the entire function profile again.</p>
 <h5 id="threads">Threads</h5>
-<p>By default, the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  </p>
+<p>By default, the <em>Assembly</em> view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  </p>
 <p>The menu entries are checkboxes that allow multiple instances to be selected and included.  
 Use the <em>All Threads</em> entry or uncheck all instances to view the entire function profile again.</p>
 <p><a href="img/assembly-threads_560x214.png" target="_blank"><img alt="Profiling UI screenshot" src="img/assembly-threads_560x214.png" style="width:350px" /></a>  </p>
 <details class="note" open="open">
 <summary>Note</summary>
-<p><em>Hovering</em> with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and, if filtering is used, the name of the instances and threads included in the view. </p>
+<p><em>Hovering</em> with the mouse over the <em>Assembly</em> view tab displays a tooltip with details such as the total/self execution time, module and complete function name and, if filtering is used, the name of the instances and threads included in the view. </p>
 </details>
 <h5 id="export">Export</h5>
 <p>See the <a href="#exporting">Exporting</a> documentation section below.</p>
@@ -1601,11 +1559,11 @@ The settings are saved across sessions when closing the application.</p>
 </tr>
 <tr>
 <td>Back</td>
-<td>If the mouse has an optional <em>Back</em> button, navigates back to the previous opened function in the tab.</td>
+<td>If the mouse has a <em>Back</em> button, navigates back to the previous opened function in the tab.</td>
 </tr>
 <tr>
 <td>Forward</td>
-<td>If the mouse has an optional <em>Forward</em> button, Navigates forward to the next opened function in the tab.</td>
+<td>If the mouse has a <em>Forward</em> button, Navigates forward to the next opened function in the tab.</td>
 </tr>
 </tbody>
 </table>
@@ -1625,8 +1583,8 @@ The settings are saved across sessions when closing the application.</p>
 <td>If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the active tab.</td>
 </tr>
 <tr>
-<td>Shift+Return</td>
-<td>For call target function names, it opens the target function in a new tab.</td>
+<td>Ctrl+Return</td>
+<td>For direct call target function names, it opens the target function in a new tab.</td>
 </tr>
 <tr>
 <td>Alt+Return</td>
@@ -1662,7 +1620,7 @@ The settings are saved across sessions when closing the application.</p>
 </tr>
 <tr>
 <td>Ctrl+F</td>
-<td>Displays the text search panel,</td>
+<td>Displays the text search panel.</td>
 </tr>
 <tr>
 <td>F3</td>

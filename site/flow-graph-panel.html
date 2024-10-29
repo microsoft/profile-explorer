@@ -12,6 +12,8 @@
         <link rel="prev" href="source-panel.html">
       
       
+        <link rel="next" href="profile-marking.html">
+      
       
       <link rel="icon" href="img/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.35">
@@ -857,74 +859,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -962,7 +922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -983,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1115,7 +1075,7 @@
   <h1>Flow Graph view</h1>
 
 <h4 id="overview">Overview</h4>
-<p>The Flow Graph view displays the <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> of the function viewed in the active assembly view.  </p>
+<p>The Flow Graph view displays the <a href="https://en.wikipedia.org/wiki/Control-flow_graph">control-flow graph (CFG)</a> of the function viewed in the active <em>Assembly</em> view.  </p>
 <p>The function CFG makes it easier to see the structure of a function and control-flow created by jumps, branches, and loops. The slowest <a href="https://en.wikipedia.org/wiki/Basic_block">basic blocks</a> are annotated with profiling information.  </p>
 <p><a href="img/flow-graph-view_501x693.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-view_501x693.png" style="width:320px" /></a></p>
 <p>The view has two parts:  </p>
@@ -1143,7 +1103,7 @@
 <p>When a block is selected, the corresponding instructions are also selected in the <em>Assembly</em> view, like in the example below where B5 is selected. Notice that B5 is a single-block, nested loop, while B4 is the loop header block of a larger loop including B5.  </p>
 <p><a href="img/flow-graph-select_1277x370.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flow-graph-select_1277x370.png" /></a> </p>
 <h4 id="profiling-annotations">Profiling annotations</h4>
-<p>Blocks with a significant execution time are marked by using bold text for the block number and changing their background color (same color coding as in the <em>Assembly view</em>).  </p>
+<p>Blocks with a significant execution time are marked by using bold text for the block number and changing their background color (same color coding as in the <em>Assembly</em> view).  </p>
 <p>A label is displayed underneath with the block's execution time percentage relative to the function's total execution time.</p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
@@ -1207,7 +1167,7 @@
 </tr>
 <tr>
 <td>Click+Drag</td>
-<td>Clicking on and dragging an empty part of the view moves the view in the direction of the mouse.</td>
+<td><em>Clicking</em> on and dragging an empty part of the view moves the view in the direction of the mouse.</td>
 </tr>
 <tr>
 <td>Scroll wheel</td>
@@ -1328,6 +1288,22 @@
             </div>
           </a>
         
+        
+          
+          <a href="profile-marking.html" class="md-footer__link md-footer__link--next" aria-label="Next: Function/module marking">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Function/module marking
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
         
       </nav>
     

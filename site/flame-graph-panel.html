@@ -582,7 +582,7 @@
           <li class="md-nav__item">
   <a href="#navigating-the-flame-graph" class="md-nav__link">
     <span class="md-ellipsis">
-      Navigating the Flame graph
+      Navigating the flame graph
     </span>
   </a>
   
@@ -877,74 +877,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -982,7 +940,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1003,7 +961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1070,7 +1028,7 @@
           <li class="md-nav__item">
   <a href="#navigating-the-flame-graph" class="md-nav__link">
     <span class="md-ellipsis">
-      Navigating the Flame graph
+      Navigating the flame graph
     </span>
   </a>
   
@@ -1152,11 +1110,20 @@
 
   <h1>Flame Graph view</h1>
 
+<h4 id="overview">Overview</h4>
+<p>The Flame Graph view is the main means of identifying the parts of the application where most time is spent. The flame graph displays nodes representing functions stacked top to bottom according to the call tree paths forming the stack traces.  </p>
+<p><a href="img/flame-graph-panel_1435x557.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-panel_1435x557.png" /></a></p>
+<p>The view has three parts:</p>
+<ul>
+<li>a toolbar at the top, with action buttons and the <em>Search</em> input box.</li>
+<li>the interactive flame graph view.</li>
+<li>the <a href="#details-panel">Details panel</a> on the right side. The panel displays detailed info about the selected node(s), and its visibility can be toggled using the <em>Details</em> button in the toolbar.</li>
+</ul>
 <details class="note" open="open">
 <summary>Introduction to flame graphs</summary>
 <p>A flame graph is an alternative, more compact way of viewing a call tree. In this view, function instances are nodes with a size proportional to the time spent relative to the caller (parent) function and makes it easier to identify the portions of the app that take most of the time.  </p>
-<p>Nodes are sorted in the horizontal direction based on decreasing time relative to their parent node, while the ordering in the vertical direction forms a stack trace (a path in the call tree). The function taking the most time in the application is then found in the leftmost, bottom part of the Flame graph.</p>
-<p><img alt="Flame graph diagram" src="img/flame-graph.png" style="width:320px" /><br />
+<p>Nodes are sorted in the horizontal direction based on decreasing time relative to their parent node, while the ordering in the vertical direction forms a stack trace (a path in the call tree). The function taking the most time in the application is then found in the leftmost, bottom part of the flame graph.</p>
+<p><img alt="flame graph diagram" src="img/flame-graph.png" style="width:320px" /><br />
 In the example above, the <em>main</em> function is considered the process entry point, calling <em>foo</em> and <em>bar</em>, with <em>foo</em> taking 60% of the time and <em>bar</em> 40%. Function <em>foo</em> spends a part of its total (inclusive) time in the calls to <em>baz</em> and <em>etc1</em>, while the rest is self (exclusive) time, meaning instructions part of <em>foo</em> which are not calls to other functions.  </p>
 <p>Note that there are two instances of the function <em>baz</em> with different execution times, each with a unique path to it in the call tree starting from <em>main</em> (all other functions have a single instance). You can see the time of each instance by <em>hovering</em> with the mouse over it or in the <em>Details panel</em> after it's selected.</p>
 <p>The following links provide an introduction to the flame graph visualization concept, its history, and how it's being used across the industry for performance investigations.  </p>
@@ -1165,25 +1132,16 @@ In the example above, the <em>main</em> function is considered the process entry
 <li><a href="https://www.youtube.com/watch?v=VMpTU15rIZY">Visualizing Performance - The Developers’ Guide to Flame Graphs (youtube.com)</a></li>
 </ul>
 </details>
-<h4 id="overview">Overview</h4>
-<p>The Flame graph view is the main means of identifying the parts of the application where most time is spent. </p>
-<p><a href="img/flame-graph-panel_1435x557.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-panel_1435x557.png" /></a></p>
-<p>The view has three parts:</p>
-<ul>
-<li>a toolbar at the top, with action buttons and the <em>Search</em> input box.</li>
-<li>the interactive flame graph itself.</li>
-<li>the Details panel on the right side. The panel displays detailed info about the selected node(s), and its visibility can be toggled using the <em>Details</em> button in the toolbar.</li>
-</ul>
 <h5 id="flame-graph-nodes">Flame graph nodes</h5>
-<p>The flame graph displays nodes representing functions stacked top to bottom according to the call tree paths forming the stack traces. Each node is a unique instance of a function — a function having multiple instances means there are several paths in the call tree that call the function.  </p>
+<p>Each node is a unique instance of a function — a function having multiple instances means there are several paths in the call tree that call the function.  </p>
 <p>Each node has the demangled (undecorated) function name, optionally prepended with the module name, followed by the execution time percentage relative to the entire trace and the execution time.  </p>
-<p>By default, the nodes are color-coded based on the module names to which the functions belong. Nodes for functions executing in the kernel/managed context are marked with a different text and border color (blue by default). The displayed text fields and colors can be customized in the Flame graph options.  </p>
+<p>By default, the nodes are color-coded based on the module names to which the functions belong. Nodes for functions executing in the kernel/managed context are marked with a different text and border color (blue by default). The displayed text fields and colors can be customized in the flame graph options.  </p>
 <details class="note" open="open">
 <summary>Note</summary>
 <p>When the called function nodes are too small to be visible in the view, they are collapsed under a placeholder node rendered with a hatch pattern. Placeholder nodes are expanded into individual nodes when zooming in the view.  </p>
 </details>
-<h5 id="navigating-the-flame-graph">Navigating the Flame graph</h5>
-<p>A <em>double-click</em> on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  </p>
+<h5 id="navigating-the-flame-graph">Navigating the flame graph</h5>
+<p>A <em>double-click</em> on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after <em>double-clicking</em> the node hovered in the screenshot above.  </p>
 <p><a href="img/flame-graph-expand_944x428.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand_944x428.png" /></a></p>
 <p>Expanding a node can be repeated to go deeper down the call path. The <em>Back</em> button in the toolbar (or <em>Backspace</em> key/<em>Back</em> mouse button) undoes the operation and returns the view to its previous state.  </p>
 <p><a href="img/flame-graph-expand2_947x456.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-expand2_947x456.png" /></a></p>
@@ -1192,12 +1150,12 @@ In the example above, the <em>main</em> function is considered the process entry
 <p>In the screenshot above, the nodes starting with <em>ntoskrnl.exe!KiPageFault</em> use a different style to mark code executing in kernel mode. The user mode and kernel mode call stacks are automatically combined.</p>
 </details>
 <h5 id="changing-the-root-node">Changing the root node</h5>
-<p>It can be helpful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.</p>
+<p>It can be helpful to view only a subregion of the flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.</p>
 <p>To change the root node, from the right-click context menu, select <em>Set Function as Root</em> (alternatively, use the <em>Alt+Double-click</em> shortcut). After the switch, the toolbar displays the name of the current root node. Setting a new root node can be repeated in the new view.</p>
-<p>To remove the root node and view the entire Flame graph, <em>click</em> the <em>X</em> button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.</p>
+<p>To remove the root node and view the entire flame graph, <em>click</em> the <em>X</em> button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.</p>
 <p><a href="img/flame-graph-root_946x435.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-root_946x435.png" /></a></p>
 <h4 id="searching-functions">Searching functions</h4>
-<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.</p>
+<p>Use the <em>search input box</em> in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the <em>up/down</em> buttons on the right can be used to navigate between results. Press the <em>Escape</em> key to reset the search or the X button next to the input box.</p>
 <p><a href="img/flame-graph-search_1078x286.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-search_1078x286.png" /></a></p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
@@ -1216,7 +1174,7 @@ In the example above, the <em>main</em> function is considered the process entry
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-reset.png" /></td>
-<td>Resets the view to it's original state, displaying the entire Flame graph.</td>
+<td>Resets the view to it's original state, displaying the entire flame graph.</td>
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-minus.png" /></td>
@@ -1232,7 +1190,7 @@ In the example above, the <em>main</em> function is considered the process entry
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-source.png" /></td>
-<td>If enabled, selecting a node also displays the associated function in the Source file view, with the source lines annotated with profiling data.</td>
+<td>If enabled, selecting a node also displays the associated function in the <em>Source File</em> view, with the source lines annotated with profiling data.</td>
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-module.png" /></td>
@@ -1240,7 +1198,7 @@ In the example above, the <em>main</em> function is considered the process entry
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-details.png" /></td>
-<td>If enabled, display the Details panel on the right side of the Flame graph view.</td>
+<td>If enabled, display the <em>Details panel</em> on the right side of the <em>Flame Graph</em> view.</td>
 </tr>
 <tr>
 <td>Search box</td>
@@ -1261,11 +1219,11 @@ In the example above, the <em>main</em> function is considered the process entry
 <tbody>
 <tr>
 <td>Hover</td>
-<td>Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times. Clicking the <em>Pin button</em> or dragging the popup expands it into a panel equivalent to the <em>Details panel</em>. Multiple such panels can be kept open at the same time.</td>
+<td>Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times. <em>Clicking</em> the <em>Pin button</em> or dragging the popup expands it into a panel equivalent to the <em>Details panel</em>. Multiple such panels can be kept open at the same time.</td>
 </tr>
 <tr>
 <td>Click</td>
-<td>Selects a node and deselects any previously selected nodes. The <em>Details panel</em> is updated and, if <em>Sync</em> is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the Source file view if <em>Source</em> is enabled in the toolbar. <br><br>Clicking an empty part of the view deselects all nodes.</td>
+<td>Selects a node and deselects any previously selected nodes. The <em>Details panel</em> is updated and, if <em>Sync</em> is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the <em>Source File</em> view if <em>Source</em> is enabled in the toolbar. <br><br><em>Clicking</em> an empty part of the view deselects all nodes.</td>
 </tr>
 <tr>
 <td>Ctrl+Click</td>
@@ -1276,24 +1234,32 @@ In the example above, the <em>main</em> function is considered the process entry
 <td>When a node is selected, it expands the selection to include all nodes in the call stack between the pointed node and the selected one. The <em>Details panel</em> is updated to display a combined view of all selected nodes.</td>
 </tr>
 <tr>
-<td>Double-click</td>
+<td>Middle-click</td>
 <td>Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly.</td>
 </tr>
 <tr>
+<td>Back</td>
+<td>If the mouse has a <em>Back</em> button, this undoes the previous action, such as expanding a node (double-click) or changing the root node. An alternative is pressing the <em>Backspace</em> key or the <em>Back</em> button in the toolbar.</td>
+</tr>
+<tr>
+<td>Double-click</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
+</tr>
+<tr>
 <td>Ctrl+Double-click</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab,</td>
+</tr>
+<tr>
+<td>Shift+Double-click</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Ctrl+Shift+Double-click</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Alt+Double-click</td>
-<td>Sets the selected node as the root node of the Flame graph.</td>
-</tr>
-<tr>
-<td>Back</td>
-<td>If the mouse has an optional <em>Back</em> button, this undoes the previous action, such as expanding a node (double-click) or changing the root node. An alternative is pressing the <em>Backspace</em> key or the <em>Back</em> button in the toolbar.</td>
+<td>Sets the selected node as the root node of the flame graph.</td>
 </tr>
 <tr>
 <td>Right-click</td>
@@ -1301,7 +1267,7 @@ In the example above, the <em>main</em> function is considered the process entry
 </tr>
 <tr>
 <td>Click+Drag</td>
-<td>If the flame graph is larger than the view, clicking on and dragging an empty part of the view moves the view in the direction of the mouse.</td>
+<td>If the flame graph is larger than the view, <em>clicking</em> on and dragging an empty part of the view moves the view in the direction of the mouse.</td>
 </tr>
 <tr>
 <td>Scroll wheel</td>
@@ -1338,20 +1304,28 @@ In the example above, the <em>main</em> function is considered the process entry
 </thead>
 <tbody>
 <tr>
-<td>Return</td>
+<td>Space</td>
 <td>Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly.</td>
 </tr>
 <tr>
-<td>Ctrl+Return</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
 </tr>
 <tr>
-<td>Ctrl+Shift+Return</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Ctrl+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
 </tr>
 <tr>
 <td>Alt+Return</td>
 <td>Opens a preview popup with the assembly of the selected function. Press the <em>Escape</em> key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time.</td>
+</tr>
+<tr>
+<td>Shift+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab, with profile data filtered to include only the selected instance.</td>
+</tr>
+<tr>
+<td>Ctrl+Shift+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab, with profile data filtered to include only the selected instance.</td>
 </tr>
 <tr>
 <td>Alt+Shift+Return</td>
@@ -1397,12 +1371,12 @@ In the example above, the <em>main</em> function is considered the process entry
 <p><a href="img/flame-graph-context-menu_539x651.png" target="_blank"><img alt="Profiling UI screenshot" src="img/flame-graph-context-menu_539x651.png" style="width:380px" /></a>  </p>
 </details>
 <h4 id="details-panel">Details panel</h4>
-<p>The Details panel shows extended information about the selected node(s) in the Flame graph. It provides a quick overview of the slowest functions and modules being called directly or through other functions starting with the selection.  </p>
+<p>The Details panel shows extended information about the selected node(s) in the flame graph. It provides a quick overview of the slowest functions and modules being called directly or through other functions starting with the selection.  </p>
 <p>The top shows the <em>Total</em> (inclusive) execution time and <em>Self</em> (exclusive) execution time values for the selected node (function instance). The right side shows the index of the chosen instance, among all instances, with the slowest instance having the lowest index. Use the left/right arrow buttons to switch to the previous/next function instance.  </p>
 <details class="note" open="open">
 <summary>Note</summary>
-<p>Functions in the lists have a right-click context menu with options to open the Assembly view, preview popup, and select the function in the other views.  </p>
-<p><em>Double-click/Ctrl+Return</em> opens the Assembly view for the selected function. Combine these shortcuts with the <em>Shift</em> key to open the Assembly view in a new tab instead.<br />
+<p>Functions in the lists have a right-click context menu with options to open the <em>Assembly</em> view, preview popup, and select the function in the other views.  </p>
+<p><em>Double-click/Ctrl+Return</em> opens the <em>Assembly</em><em> view for the selected function. Combine these shortcuts with the </em>Shift<em> key to open the </em><em>Assembly</em> view in a new tab instead.<br />
 <em>Hovering</em> with the mouse over a function opens a preview popup with the function's assembly.    </p>
 <p>When multiple functions are selected, the application status bar displays the sum of their execution time as a percentage and value.</p>
 </details>
@@ -1426,11 +1400,11 @@ In the example above, the <em>main</em> function is considered the process entry
 </tr>
 <tr>
 <td>Histogram</td>
-<td>The histogram displays the time distribution across all function instances. Instances with similar times are grouped, and the number of instances in each group is shown above, with more details when <em>hovering</em> over a group with the mouse.<br><br><em>Clicking</em> on a group selects the first node from the group in the Flame graph view. The <em>Total/Self</em> radio buttons switch between using the total time or self time for the histogram.<br><br>In the above example, there are 3 instances of function <em>genString</em>, one with an execution time of ~1.5ms and two, binned together, with ~1sec each. The time of the selected instance is marked with a green arrow, and the average/median times are indicated by red/blue dotted lines.</td>
+<td>The histogram displays the time distribution across all function instances. Instances with similar times are grouped, and the number of instances in each group is shown above, with more details when <em>hovering</em> over a group with the mouse.<br><br><em>Clicking</em> on a group selects the first node from the group in the <em>Flame Graph</em> view. The <em>Total/Self</em> radio buttons switch between using the total time or self time for the histogram.<br><br>In the above example, there are 3 instances of function <em>genString</em>, one with an execution time of ~1.5ms and two, binned together, with ~1sec each. The time of the selected instance is marked with a green arrow, and the average/median times are indicated by red/blue dotted lines.</td>
 </tr>
 <tr>
 <td>Threads</td>
-<td>Displays the list of threads on which all function instances execute, with each thread's total/self execution time percentage and execution time value.<br><br><em>Right-clicking</em> a thread shows a context menu with options to open the Assembly view with profile data filtered to include only the selected thread and multiple options for changing the thread filtering for the entire trace.<br><br><em>Double-clicking</em> a thread filters the entire trace to show only code executing on that thread.</td>
+<td>Displays the list of threads on which all function instances execute, with each thread's total/self execution time percentage and execution time value.<br><br><em>Right-clicking</em> a thread shows a context menu with options to open the <em>Assembly</em> view with profile data filtered to include only the selected thread and multiple options for changing the thread filtering for the entire trace.<br><br><em>Double-clicking</em> a thread filters the entire trace to show only code executing on that thread.</td>
 </tr>
 <tr>
 <td>Module</td>
@@ -1438,7 +1412,7 @@ In the example above, the <em>main</em> function is considered the process entry
 </tr>
 <tr>
 <td>Function</td>
-<td>Displays the complete function name, followed by the execution context as U/K/M standing for User/Kernel/Managed mode. Shortcut buttons on the right side:<br> <table>  <tbody>  <tr>  <tr>  <td><img alt="" src="img/details-panel-preview.png" style="width:24px" /></td>  <td>Opens a preview popup with the function's assembly.</td>  </tr>  <tr>  <td><img alt="" src="img/details-panel-tab.png" style="width:24px" /></td>  <td>Opens the function's Assembly view in a new tab.</td>  </tr>  <td><img alt="" src="img/details-panel-mark-module.png" style="width:24px" /></td>  <td>Marks all function nodes with a color.</td>  </tr> <tr>  <td><img alt="" src="img/details-panel-copy.png" style="width:24px" /></td>  <td>Copies to clipboard the function name.</td>  </tr>   </tbody>  </table></td>
+<td>Displays the complete function name, followed by the execution context as U/K/M standing for User/Kernel/Managed mode. Shortcut buttons on the right side:<br> <table>  <tbody>  <tr>  <tr>  <td><img alt="" src="img/details-panel-preview.png" style="width:24px" /></td>  <td>Opens a preview popup with the function's assembly.</td>  </tr>  <tr>  <td><img alt="" src="img/details-panel-tab.png" style="width:24px" /></td>  <td>Opens the function's <em>Assembly</em> view in a new tab.</td>  </tr>  <td><img alt="" src="img/details-panel-mark-module.png" style="width:24px" /></td>  <td>Marks all function nodes with a color.</td>  </tr> <tr>  <td><img alt="" src="img/details-panel-copy.png" style="width:24px" /></td>  <td>Copies to clipboard the function name.</td>  </tr>   </tbody>  </table></td>
 </tr>
 </tbody>
 </table>
@@ -1449,7 +1423,7 @@ In the example above, the <em>main</em> function is considered the process entry
 </div>
 <div class="tabbed-block">
 <p><a href="img/details-panel-functions_565x706.png" target="_blank"><img alt="Profiling UI screenshot" src="img/details-panel-functions_565x706.png" style="width:380px" /></a>  </p>
-<p>The Functions tab lists the slowest functions being called directly or through other functions, starting with the selected function instance node. By default, the list is sorted by self (exclusive) time in descending order. The Flame graph options can change the sorting to consider total (inclusive) time instead.</p>
+<p>The Functions tab lists the slowest functions being called directly or through other functions, starting with the selected function instance node. By default, the list is sorted by self (exclusive) time in descending order. The flame graph options can change the sorting to consider total (inclusive) time instead.</p>
 </div>
 <div class="tabbed-block">
 <p><a href="img/details-panel-modules_565x706.png" target="_blank"><img alt="Profiling UI screenshot" src="img/details-panel-modules_565x706.png" style="width:380px" /></a>  </p>

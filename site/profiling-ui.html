@@ -808,74 +808,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -913,7 +871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -934,7 +892,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1023,7 +981,7 @@
 <p>The left side of the panel lists the modules (binaries) with profiling data, sorted based on the total time used by the functions part of the module.  </p>
 </li>
 <li>
-<p><a href="flame-graph-panel.html">Flame Graph view</a>: displays an interacitve flame graph view of the call tree. The right side of the panel shows detailed information about the selected node(s).  </p>
+<p><a href="flame-graph-panel.html">Flame Graph view</a>: displays an interactive <em>Flame Graph</em> view of the call tree. The right side of the panel shows detailed information about the selected node(s).  </p>
 </li>
 <li>
 <p><a href="timeline-panel.html">Timeline view</a>: displays the thread activity during the entire duration of the trace and allows filtering of the displayed profiling data to specific threads and time ranges.  </p>
@@ -1041,11 +999,11 @@
 <ul>
 <li>
 <p><a href="assembly-view.html">Assembly view</a>: displays the function's assembly code, where each instruction is annotated with the corresponding source line number and inlining information.  </p>
-<p>The right side shows the time percentage (relative to the function's time) and time taken by each instruction. The slowest instructions are marked with colors and flame icons. Clicking an instruction selects its corresponding source line in the Source File view.  </p>
+<p>The right side shows the time percentage (relative to the function's time) and time taken by each instruction. The slowest instructions are marked with colors and flame icons. <em>Clicking</em> an instruction selects its corresponding source line in the <em>Source File</em> view.  </p>
 </li>
 <li>
 <p><a href="source-panel.html">Source File view</a>: displays the function's source file and, optionally, the assembly code generated for each line.  </p>
-<p>The right side shows the time percentage (relative to the function's time) and time taken by each line. The slowest lines are marked with colors and flame icons. Clicking a line selects the corresponding instructions in the Assembly view.  </p>
+<p>The right side shows the time percentage (relative to the function's time) and time taken by each line. The slowest lines are marked with colors and flame icons. <em>Clicking</em> a line selects the corresponding instructions in the <em>Assembly</em> view.  </p>
 </li>
 <li>
 <p><a href="source-panel.html">Flow Graph view</a>: displays the function's <a href="https://en.wikipedia.org/wiki/Control-flow_graph" target="_blank">control-flow graph</a>, constructed by analyzing the assembly code and forming basic blocks (a sequence of instructions that starts with jump targets and ends with jumps or branch instructions).  </p>

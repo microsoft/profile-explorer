@@ -859,74 +859,32 @@
   
   
     <li class="md-nav__item">
-      <a href="marking.md" class="md-nav__link">
+      <a href="profile-overview.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trace profile overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="profile-marking.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Function/module marking
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Preview popups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="workspaces.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Working with multiple functions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="function-instances.md" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Viewing function instances
   </span>
   
 
@@ -964,7 +922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="options.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -985,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="options.md" class="md-nav__link">
+      <a href="rust.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1126,22 +1084,30 @@
 <li>the list of functions from either the entire trace or filtered to display only the functions part of a single module. By default, the list is sorted by self (exclusive) time in descending order.</li>
 </ul>
 <h5 id="modules-list">Modules list</h5>
-<p>The modules list has an entry for each module with profile data and starts with an <em>All</em> entry representing all modules combined. Each entry has the module name, execution time percentage relative to the entire trace and execution time value. Modules are sorted by their execution time in descending order.</p>
-<p>By default, the <em>All</em> entry is active and the function list displays all functions with profile data in the trace.  </p>
-<p><em>Double-click</em> a module (or use the Return key) to display only its functions. Selecting a module while the <em>All</em> entry is active selects its functions in the list.</p>
+<p>The modules list has an entry for each module with profile data and starts with an <em>All</em> entry representing all modules combined.  </p>
+<p>Each entry has the module name, total (inclusive) execution time percentage relative to the entire trace and the time value, with a background color based on its name.  </p>
+<p>Modules are sorted by their execution time in descending order. By default, the <em>All</em> entry is active and the function list displays all functions with profile data in the trace.  </p>
+<p><em>Double-click</em> a module (or press the <em>Return</em> key) to display only its functions. Selecting a module while the <em>All</em> entry is active selects its functions in the list.</p>
 <h5 id="functions-list">Functions list</h5>
-<p>The function list has an entry for each function with profile data. An entry has the demangled (undecorated) function name, module and self (exclusive) execution time, and total (inclusive) execution time. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  </p>
-<p>The list is filtered based on the active module. The displayed columns and style can be customized in the Summary options.</p>
-<p>The function list is by default sorted by the self (exclusive) execution time in decreasing order.<br />
-<em>Click</em> the same column header to toggle between decreasing and  increasing order.<br />
+<p>The function list has an entry for each function with profile data. Each entry has:  </p>
+<ul>
+<li>the <a href="https://en.wikipedia.org/wiki/Name_mangling">demangled</a> (undecorated) function name.  </li>
+<li>module name, a background color based on its name.</li>
+<li>self (exclusive) execution time percentage relative to the entire trace and the time value.  </li>
+<li>total (inclusive) execution time percentage relative to the entire trace and the time value.  </li>
+<li>optionally, the mangled (decorated) function name, configurable in the <a href="#view-options">Summary options</a>.</li>
+</ul>
+<p>If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  </p>
+<p>The list is filtered based on the active module. The function list is by default sorted by the self (exclusive) execution time in decreasing sorting order. The displayed columns and style can be customized in the <a href="#view-options">Summary options</a>.  </p>
+<p><em>Click</em> the same column header to toggle between decreasing and  increasing sorting order.<br />
 <em>Click</em> on a column to sort the list based on its values.  </p>
 <details class="note" open="open">
 <summary>Note</summary>
 <p>The same sorting actions apply to other list views in the application. Not all list views support sorting currently.  </p>
 <p>The columns in all list views can be resized and reorder. The new layout is saved across sessions when closing the application.</p>
 </details>
-<p>If marking of functions based on their name or module is active, the function entries use the marking background color.</p>
-<p>Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.<br />
+<p>If marking of functions based on name or module is active, the function entries use the matching marking background color.</p>
+<p>Hovering over a function displays a popup with the slowest stack trace (call path) ending at the function instance with most execution time. Pin or drag the popup to keep it open.<br />
 <a href="img/summary-preview_654x551.png" target="_blank"><img alt="Profiling UI screenshot" src="img/summary-preview_654x551.png" style="width:450px" /></a></p>
 <h4 id="view-interaction">View interaction</h4>
 <details class="abstract" open="open">
@@ -1160,7 +1126,7 @@
 </tr>
 <tr>
 <td><img alt="" src="img/flame-graph-toolbar-source.png" /></td>
-<td>If enabled, selecting a function also displays the source in the Source file view, with the source lines annotated with profiling data.</td>
+<td>If enabled, selecting a function also displays the source in the <em>Source File</em> view, with the source lines annotated with profiling data.</td>
 </tr>
 <tr>
 <td>Export</td>
@@ -1172,7 +1138,7 @@
 </tr>
 <tr>
 <td><img alt="" src="img/summary-toolbar-up.png" /></td>
-<td>Scrolls up the list to the start (equivalent to pressing Ctrl+Home).</td>
+<td>Scrolls up the list to the start (equivalent to pressing <em>Ctrl+Home</em>).</td>
 </tr>
 </tbody>
 </table>
@@ -1193,15 +1159,15 @@
 </tr>
 <tr>
 <td>Click</td>
-<td>Selects the function in the other views if <em>Sync</em> is enabled in the toolbar and displays the source in the Source file view if <em>Source</em> is enabled in the toolbar.</td>
+<td>Selects the function in the other views if <em>Sync</em> is enabled in the toolbar and displays the source in the <em>Source File</em> view if <em>Source</em> is enabled in the toolbar.</td>
 </tr>
 <tr>
 <td>Double-click</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
 </tr>
 <tr>
-<td>Shift+Double-click</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Ctrl+Double-click</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
 </tr>
 <tr>
 <td>Right-click</td>
@@ -1226,19 +1192,19 @@
 <tbody>
 <tr>
 <td>Return</td>
-<td>Opens the Assembly view of the selected function in the active tab.</td>
+<td>Opens the <em>Assembly</em> view of the selected function in the active tab.</td>
 </tr>
 <tr>
-<td>Shift+Return</td>
-<td>Opens the Assembly view of the selected function in a new tab.</td>
+<td>Ctrl+Return</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab.</td>
 </tr>
 <tr>
-<td>Ctrl+Shift+Left</td>
-<td>Opens the Assembly view of the selected function in a new tab docked to the left of the active tab.</td>
+<td>Ctrl+Left</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab docked to the left of the active tab.</td>
 </tr>
 <tr>
-<td>Ctrl+Shift+Right</td>
-<td>Opens the Assembly view of the selected function in a new tab docked to the right of the active tab.</td>
+<td>Ctrl+Right</td>
+<td>Opens the <em>Assembly</em> view of the selected function in a new tab docked to the right of the active tab.</td>
 </tr>
 <tr>
 <td>Alt+Return</td>
@@ -1274,7 +1240,7 @@
 <a href="img/summary-export-markdown_1003x172.png" target="_blank"><img alt="Profiling UI screenshot" src="img/summary-export-markdown_1003x172.png" /></a></li>
 </ul>
 <p>The <em>Export</em> menu in the toolbar also has an option to copy to the clipboard the current function list as an HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  </p>
-<p>The Ctrl+C keyboard shortcut copies to the clipboard only the selected functions as a HTML/Markdown table.</p>
+<p>The <em>Ctrl+C</em> keyboard shortcut copies to the clipboard only the selected functions as a HTML/Markdown table.</p>
 <h4 id="view-options">View options</h4>
 <p><em>Click</em> on the <em>Gears</em> icon in the top-right part of the view displays the options panel (alternatively, use the <em>Summary</em> tab in the application <em>Settings</em> window.).  </p>
 <p>The tabs below describe each page of the options panel:  </p>
