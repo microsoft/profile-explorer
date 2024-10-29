@@ -1,9 +1,21 @@
+#### Overview
+
+The Flame Graph view is the main means of identifying the parts of the application where most time is spent. The flame graph displays nodes representing functions stacked top to bottom according to the call tree paths forming the stack traces.  
+
+[![Profiling UI screenshot](img/flame-graph-panel_1435x557.png)](img/flame-graph-panel_1435x557.png){:target="_blank"}
+
+The view has three parts:
+
+- a toolbar at the top, with action buttons and the *Search* input box.
+- the interactive flame graph view.
+- the [Details panel](#details-panel) on the right side. The panel displays detailed info about the selected node(s), and its visibility can be toggled using the *Details* button in the toolbar.
+
 ???+ note "Introduction to flame graphs"
     A flame graph is an alternative, more compact way of viewing a call tree. In this view, function instances are nodes with a size proportional to the time spent relative to the caller (parent) function and makes it easier to identify the portions of the app that take most of the time.  
 
-    Nodes are sorted in the horizontal direction based on decreasing time relative to their parent node, while the ordering in the vertical direction forms a stack trace (a path in the call tree). The function taking the most time in the application is then found in the leftmost, bottom part of the Flame graph.
+    Nodes are sorted in the horizontal direction based on decreasing time relative to their parent node, while the ordering in the vertical direction forms a stack trace (a path in the call tree). The function taking the most time in the application is then found in the leftmost, bottom part of the flame graph.
    
-    ![Flame graph diagram](img/flame-graph.png){: style="width:320px"}  
+    ![flame graph diagram](img/flame-graph.png){: style="width:320px"}  
     In the example above, the *main* function is considered the process entry point, calling *foo* and *bar*, with *foo* taking 60% of the time and *bar* 40%. Function *foo* spends a part of its total (inclusive) time in the calls to *baz* and *etc1*, while the rest is self (exclusive) time, meaning instructions part of *foo* which are not calls to other functions.  
 
     Note that there are two instances of the function *baz* with different execution times, each with a unique path to it in the call tree starting from *main* (all other functions have a single instance). You can see the time of each instance by *hovering* with the mouse over it or in the *Details panel* after it's selected.
@@ -13,32 +25,20 @@
     - [CPU Flame Graphs (brendangregg.com)](https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html)
     - [Visualizing Performance - The Developers’ Guide to Flame Graphs (youtube.com)](https://www.youtube.com/watch?v=VMpTU15rIZY)
 
-#### Overview
-
-The Flame graph view is the main means of identifying the parts of the application where most time is spent. 
-
-[![Profiling UI screenshot](img/flame-graph-panel_1435x557.png)](img/flame-graph-panel_1435x557.png){:target="_blank"}
-
-The view has three parts:
-
-- a toolbar at the top, with action buttons and the *Search* input box.
-- the interactive flame graph itself.
-- the Details panel on the right side. The panel displays detailed info about the selected node(s), and its visibility can be toggled using the *Details* button in the toolbar.
-
 ##### Flame graph nodes
 
-The flame graph displays nodes representing functions stacked top to bottom according to the call tree paths forming the stack traces. Each node is a unique instance of a function — a function having multiple instances means there are several paths in the call tree that call the function.  
+Each node is a unique instance of a function — a function having multiple instances means there are several paths in the call tree that call the function.  
 
 Each node has the demangled (undecorated) function name, optionally prepended with the module name, followed by the execution time percentage relative to the entire trace and the execution time.  
 
-By default, the nodes are color-coded based on the module names to which the functions belong. Nodes for functions executing in the kernel/managed context are marked with a different text and border color (blue by default). The displayed text fields and colors can be customized in the Flame graph options.  
+By default, the nodes are color-coded based on the module names to which the functions belong. Nodes for functions executing in the kernel/managed context are marked with a different text and border color (blue by default). The displayed text fields and colors can be customized in the flame graph options.  
 
 ???+ note
     When the called function nodes are too small to be visible in the view, they are collapsed under a placeholder node rendered with a hatch pattern. Placeholder nodes are expanded into individual nodes when zooming in the view.  
 
-##### Navigating the Flame graph
+##### Navigating the flame graph
 
-A *double-click* on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after double-clicking the node hovered in the screenshot above.  
+A *double-click* on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after *double-clicking* the node hovered in the screenshot above.  
 
 [![Profiling UI screenshot](img/flame-graph-expand_944x428.png)](img/flame-graph-expand_944x428.png){:target="_blank"}
 
@@ -51,17 +51,17 @@ Expanding a node can be repeated to go deeper down the call path. The *Back* but
 
 ##### Changing the root node
 
-It can be helpful to view only a subregion of the Flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.
+It can be helpful to view only a subregion of the flame graph. By changing the root node, only nodes for functions starting with the new root are displayed, and execution time percentages are computed relative to the new root, which starts at 100%.
 
 To change the root node, from the right-click context menu, select *Set Function as Root* (alternatively, use the *Alt+Double-click* shortcut). After the switch, the toolbar displays the name of the current root node. Setting a new root node can be repeated in the new view.
 
-To remove the root node and view the entire Flame graph, *click* the *X* button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.
+To remove the root node and view the entire flame graph, *click* the *X* button next to its name in the toolbar. If multiple nested root nodes were set, removing the current node activates the previous one.
 
 [![Profiling UI screenshot](img/flame-graph-root_946x435.png)](img/flame-graph-root_946x435.png){:target="_blank"}
 
 #### Searching functions
 
-Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the *up/down* buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.
+Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the *up/down* buttons on the right can be used to navigate between results. Press the *Escape* key to reset the search or the X button next to the input box.
 
 [![Profiling UI screenshot](img/flame-graph-search_1078x286.png)](img/flame-graph-search_1078x286.png){:target="_blank"}
 
@@ -71,29 +71,31 @@ Use the *search input box* in the toolbar to search for functions with a specifi
     | Button | Description |
     | ------ | ------------|
     | ![](img/flame-graph-toolbar-back.png) | Undoes the previous action, such as expanding a node or changing the root node. |
-    | ![](img/flame-graph-toolbar-reset.png) | Resets the view to it's original state, displaying the entire Flame graph. |
+    | ![](img/flame-graph-toolbar-reset.png) | Resets the view to it's original state, displaying the entire flame graph. |
     | ![](img/flame-graph-toolbar-minus.png) | Zooms out the view around the center point. |
     | ![](img/flame-graph-toolbar-plus.png) | Zooms in the view around the center point. |
     | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a node also selects the associated function in the other profiling views. |
-    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a node also displays the associated function in the Source file view, with the source lines annotated with profiling data. |
+    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a node also displays the associated function in the *Source File* view, with the source lines annotated with profiling data. |
     | ![](img/flame-graph-toolbar-module.png) | If enabled, display the module name before the function name in the nodes as module!function. |
-    | ![](img/flame-graph-toolbar-details.png) | If enabled, display the Details panel on the right side of the Flame graph view. |
+    | ![](img/flame-graph-toolbar-details.png) | If enabled, display the *Details panel* on the right side of the *Flame Graph* view. |
     | Search box | Search for nodes with a specific function name using a case-insensitive substring search. Press the *Escape* key to reset the search or the *X* button next to the input box. |
 
 ???+ abstract "Mouse shortcuts"
     | Action | Description |
     | ------ | ------------|
-    | Hover | Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times. Clicking the *Pin button* or dragging the popup expands it into a panel equivalent to the *Details panel*. Multiple such panels can be kept open at the same time. |
-    | Click | Selects a node and deselects any previously selected nodes. The *Details panel* is updated and, if *Sync* is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the Source file view if *Source* is enabled in the toolbar. <br><br>Clicking an empty part of the view deselects all nodes. |
+    | Hover | Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times. *Clicking* the *Pin button* or dragging the popup expands it into a panel equivalent to the *Details panel*. Multiple such panels can be kept open at the same time. |
+    | Click | Selects a node and deselects any previously selected nodes. The *Details panel* is updated and, if *Sync* is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the *Source File* view if *Source* is enabled in the toolbar. <br><br>*Clicking* an empty part of the view deselects all nodes. |
     | Ctrl+Click | Selects the pointed node and keeps the previously selected nodes (append). The *Details panel* is updated to display a combined view of all selected nodes. |
     | Shift+Click | When a node is selected, it expands the selection to include all nodes in the call stack between the pointed node and the selected one. The *Details panel* is updated to display a combined view of all selected nodes. |
-    | Double-click | Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly. |
-    | Ctrl+Double-click | Opens the Assembly view of the selected function in the active tab. |
-    | Ctrl+Shift+Double-click | Opens the Assembly view of the selected function in a new tab. |
-    | Alt+Double-click | Sets the selected node as the root node of the Flame graph. |
-    | Back | If the mouse has an optional *Back* button, this undoes the previous action, such as expanding a node (double-click) or changing the root node. An alternative is pressing the *Backspace* key or the *Back* button in the toolbar.|
+    | Middle-click | Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly. |
+    | Back | If the mouse has a *Back* button, this undoes the previous action, such as expanding a node (double-click) or changing the root node. An alternative is pressing the *Backspace* key or the *Back* button in the toolbar.|
+    | Double-click | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Double-click | Opens the *Assembly* view of the selected function in the active tab,  |
+    | Shift+Double-click | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
+    | Ctrl+Shift+Double-click | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
+    | Alt+Double-click | Sets the selected node as the root node of the flame graph. |
     | Right-click | Shows the context menu for the selected nodes. |
-    | Click+Drag | If the flame graph is larger than the view, clicking on and dragging an empty part of the view moves the view in the direction of the mouse. |
+    | Click+Drag | If the flame graph is larger than the view, *clicking* on and dragging an empty part of the view moves the view in the direction of the mouse. |
     | Scroll wheel | Scrolls the view vertically if the flame graph is larger than the view. |
     | Shift+Scroll wheel | Scrolls the view horizontally if the flame graph is larger than the view. |
     | Ctrl+Scroll wheel | Zooms in or out the view around the mouse pointer position. |
@@ -106,10 +108,12 @@ Use the *search input box* in the toolbar to search for functions with a specifi
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
-    | Return | Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly. |
-    | Ctrl+Return | Opens the Assembly view of the selected function in the active tab. |
-    | Ctrl+Shift+Return | Opens the Assembly view of the selected function in a new tab. |
+    | Space | Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly. |
+    | Return | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Return | Opens the *Assembly* view of the selected function in a new tab. |
     | Alt+Return | Opens a preview popup with the assembly of the selected function. Press the *Escape* key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time. |
+    | Shift+Return | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
+    | Ctrl+Shift+Return | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
     | Alt+Shift+Return | Opens a preview popup with the assembly of the selected function, with profile data filtered to include only the selected instance. |
     | Ctrl+C | Copies to clipboard a HTML and Markdown table with a summary of the selected nodes. |
     | Ctrl+Shift+C | Copies to clipboard the function names of the selected nodes. |
@@ -125,14 +129,14 @@ Use the *search input box* in the toolbar to search for functions with a specifi
 
 #### Details panel
 
-The Details panel shows extended information about the selected node(s) in the Flame graph. It provides a quick overview of the slowest functions and modules being called directly or through other functions starting with the selection.  
+The Details panel shows extended information about the selected node(s) in the flame graph. It provides a quick overview of the slowest functions and modules being called directly or through other functions starting with the selection.  
 
 The top shows the *Total* (inclusive) execution time and *Self* (exclusive) execution time values for the selected node (function instance). The right side shows the index of the chosen instance, among all instances, with the slowest instance having the lowest index. Use the left/right arrow buttons to switch to the previous/next function instance.  
 
 ???+ note
-    Functions in the lists have a right-click context menu with options to open the Assembly view, preview popup, and select the function in the other views.  
+    Functions in the lists have a right-click context menu with options to open the *Assembly* view, preview popup, and select the function in the other views.  
 
-    *Double-click/Ctrl+Return* opens the Assembly view for the selected function. Combine these shortcuts with the *Shift* key to open the Assembly view in a new tab instead.  
+    *Double-click/Ctrl+Return* opens the *Assembly** view for the selected function. Combine these shortcuts with the *Shift* key to open the **Assembly* view in a new tab instead.  
     *Hovering* with the mouse over a function opens a preview popup with the function's assembly.    
     
     When multiple functions are selected, the application status bar displays the sum of their execution time as a percentage and value.
@@ -147,10 +151,10 @@ The information displayed in the tabs below is for the selected function instanc
     | Section | Description |
     | ------ | ------------|
     | Instances | Displays total execution time (sum), average, and median across all function instances, as a total/self execution time percentage relative to the entire trace and execution time value. |
-    | Histogram | The histogram displays the time distribution across all function instances. Instances with similar times are grouped, and the number of instances in each group is shown above, with more details when *hovering* over a group with the mouse.<br><br>*Clicking* on a group selects the first node from the group in the Flame graph view. The *Total/Self* radio buttons switch between using the total time or self time for the histogram.<br><br>In the above example, there are 3 instances of function *genString*, one with an execution time of ~1.5ms and two, binned together, with ~1sec each. The time of the selected instance is marked with a green arrow, and the average/median times are indicated by red/blue dotted lines. |
-    | Threads | Displays the list of threads on which all function instances execute, with each thread's total/self execution time percentage and execution time value.<br><br>*Right-clicking* a thread shows a context menu with options to open the Assembly view with profile data filtered to include only the selected thread and multiple options for changing the thread filtering for the entire trace.<br><br>*Double-clicking* a thread filters the entire trace to show only code executing on that thread. |
+    | Histogram | The histogram displays the time distribution across all function instances. Instances with similar times are grouped, and the number of instances in each group is shown above, with more details when *hovering* over a group with the mouse.<br><br>*Clicking* on a group selects the first node from the group in the *Flame Graph* view. The *Total/Self* radio buttons switch between using the total time or self time for the histogram.<br><br>In the above example, there are 3 instances of function *genString*, one with an execution time of ~1.5ms and two, binned together, with ~1sec each. The time of the selected instance is marked with a green arrow, and the average/median times are indicated by red/blue dotted lines. |
+    | Threads | Displays the list of threads on which all function instances execute, with each thread's total/self execution time percentage and execution time value.<br><br>*Right-clicking* a thread shows a context menu with options to open the *Assembly* view with profile data filtered to include only the selected thread and multiple options for changing the thread filtering for the entire trace.<br><br>*Double-clicking* a thread filters the entire trace to show only code executing on that thread. |
     | Module | Displays the name of the module to which the function belongs. Shortcut buttons on the right side:<br> <table>  <tbody>  <tr>  <td>![](img/details-panel-mark-module.png){: style="width:24px"}</td>  <td>Marks all function nodes belonging to the module with a color.</td>  </tr> <tr>  <td>![](img/details-panel-copy.png){: style="width:24px"}</td>  <td>Copies to clipboard the module name.</td>  </tr>   </tbody>  </table> |
-    | Function | Displays the complete function name, followed by the execution context as U/K/M standing for User/Kernel/Managed mode. Shortcut buttons on the right side:<br> <table>  <tbody>  <tr>  <tr>  <td>![](img/details-panel-preview.png){: style="width:24px"}</td>  <td>Opens a preview popup with the function's assembly.</td>  </tr>  <tr>  <td>![](img/details-panel-tab.png){: style="width:24px"}</td>  <td>Opens the function's Assembly view in a new tab.</td>  </tr>  <td>![](img/details-panel-mark-module.png){: style="width:24px"}</td>  <td>Marks all function nodes with a color.</td>  </tr> <tr>  <td>![](img/details-panel-copy.png){: style="width:24px"}</td>  <td>Copies to clipboard the function name.</td>  </tr>   </tbody>  </table> |
+    | Function | Displays the complete function name, followed by the execution context as U/K/M standing for User/Kernel/Managed mode. Shortcut buttons on the right side:<br> <table>  <tbody>  <tr>  <tr>  <td>![](img/details-panel-preview.png){: style="width:24px"}</td>  <td>Opens a preview popup with the function's assembly.</td>  </tr>  <tr>  <td>![](img/details-panel-tab.png){: style="width:24px"}</td>  <td>Opens the function's *Assembly* view in a new tab.</td>  </tr>  <td>![](img/details-panel-mark-module.png){: style="width:24px"}</td>  <td>Marks all function nodes with a color.</td>  </tr> <tr>  <td>![](img/details-panel-copy.png){: style="width:24px"}</td>  <td>Copies to clipboard the function name.</td>  </tr>   </tbody>  </table> |
 
 === "Stack"
     [![Profiling UI screenshot](img/details-panel-stack_565x706.png){: style="width:380px"}](img/details-panel-stack_565x706.png){:target="_blank"}  
@@ -159,7 +163,7 @@ The information displayed in the tabs below is for the selected function instanc
 === "Functions"
     [![Profiling UI screenshot](img/details-panel-functions_565x706.png){: style="width:380px"}](img/details-panel-functions_565x706.png){:target="_blank"}  
 
-    The Functions tab lists the slowest functions being called directly or through other functions, starting with the selected function instance node. By default, the list is sorted by self (exclusive) time in descending order. The Flame graph options can change the sorting to consider total (inclusive) time instead.
+    The Functions tab lists the slowest functions being called directly or through other functions, starting with the selected function instance node. By default, the list is sorted by self (exclusive) time in descending order. The flame graph options can change the sorting to consider total (inclusive) time instead.
 === "Modules"
     [![Profiling UI screenshot](img/details-panel-modules_565x706.png){: style="width:380px"}](img/details-panel-modules_565x706.png){:target="_blank"}  
 

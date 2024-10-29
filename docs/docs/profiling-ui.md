@@ -8,7 +8,7 @@ Once a trace is loaded, the *Summary*, *Flame Graph*, and *Timeline* views provi
 
     The left side of the panel lists the modules (binaries) with profiling data, sorted based on the total time used by the functions part of the module.  
 
-- [Flame Graph view](flame-graph-panel.md): displays an interacitve flame graph view of the call tree. The right side of the panel shows detailed information about the selected node(s).  
+- [Flame Graph view](flame-graph-panel.md): displays an interactive *Flame Graph* view of the call tree. The right side of the panel shows detailed information about the selected node(s).  
 
 - [Timeline view](timeline-panel.md): displays the thread activity during the entire duration of the trace and allows filtering of the displayed profiling data to specific threads and time ranges.  
 
@@ -24,11 +24,11 @@ Open a function to display the *Assembly*, *Source File*, and *Flow Graph* views
 
 - [Assembly view](assembly-view.md): displays the function's assembly code, where each instruction is annotated with the corresponding source line number and inlining information.  
 
-    The right side shows the time percentage (relative to the function's time) and time taken by each instruction. The slowest instructions are marked with colors and flame icons. Clicking an instruction selects its corresponding source line in the Source File view.  
+    The right side shows the time percentage (relative to the function's time) and time taken by each instruction. The slowest instructions are marked with colors and flame icons. *Clicking* an instruction selects its corresponding source line in the *Source File* view.  
 
 - [Source File view](source-panel.md): displays the function's source file and, optionally, the assembly code generated for each line.  
 
-    The right side shows the time percentage (relative to the function's time) and time taken by each line. The slowest lines are marked with colors and flame icons. Clicking a line selects the corresponding instructions in the Assembly view.  
+    The right side shows the time percentage (relative to the function's time) and time taken by each line. The slowest lines are marked with colors and flame icons. *Clicking* a line selects the corresponding instructions in the *Assembly* view.  
 
 - [Flow Graph view](source-panel.md): displays the function's [control-flow graph](https://en.wikipedia.org/wiki/Control-flow_graph){:target="_blank"}, constructed by analyzing the assembly code and forming basic blocks (a sequence of instructions that starts with jump targets and ends with jumps or branch instructions).  
 

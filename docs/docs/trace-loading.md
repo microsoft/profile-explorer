@@ -10,7 +10,7 @@ Once the trace file is selected in the *Open File dialog*, the **Load profile tr
 
 [![Load profile window screenshot](img/load-trace_1332x738.png)](img/load-trace_1332x738.png){:target="_blank"}
 
-From the list, select the process you want to analyze and press the **Load Profile** button (alternatively, *double-click* or press the *Return* key).  
+From the list, select the process you want to analyze and *click* the **Load Profile** button (alternatively, *double-click* or press the *Return* key).  
 
 The selected process is loaded from the trace file, any required binary and symbol files are downloaded and the profiling data is analyzed. Once loading is completed, the window closes and the profiling views are populated, as described in [Profiling UI overview](profiling-ui.md).
 
@@ -63,7 +63,7 @@ You can use the logs from the [Trace view report](trace-overview.md) to understa
 | Option | Description |
 | ------ | ------------|
 | Handle Kernel profile samples | Include samples executing in the kernel context and connect the call stacks between kernel and user mode code. |
-| Handle CPU performance counter samples | Process CPU performance counter (PMC) events and display them in the Summary, Assembly and Source File views using additional columns. |
+| Handle CPU performance counter samples | Process CPU performance counter (PMC) events and display them in the Summary, Assembly and *Source File* views using additional columns. |
 | Download source files from Source Server | Automatically attempt to download source files from the location indicated by the debug info file. If the download URL requires authentication, it can be configured in the Authentication section found below. |
 
 ##### Authentication

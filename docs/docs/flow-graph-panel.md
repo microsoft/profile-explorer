@@ -1,6 +1,6 @@
 #### Overview
 
-The Flow Graph view displays the [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) of the function viewed in the active assembly view.  
+The Flow Graph view displays the [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) of the function viewed in the active *Assembly* view.  
 
 The function CFG makes it easier to see the structure of a function and control-flow created by jumps, branches, and loops. The slowest [basic blocks](https://en.wikipedia.org/wiki/Basic_block) are annotated with profiling information.  
 
@@ -38,7 +38,7 @@ When a block is selected, the corresponding instructions are also selected in th
 
 #### Profiling annotations
 
-Blocks with a significant execution time are marked by using bold text for the block number and changing their background color (same color coding as in the *Assembly view*).  
+Blocks with a significant execution time are marked by using bold text for the block number and changing their background color (same color coding as in the *Assembly* view).  
 
 A label is displayed underneath with the block's execution time percentage relative to the function's total execution time.
 
@@ -60,7 +60,7 @@ A label is displayed underneath with the block's execution time percentage relat
     | Hover | Hovering over a block displays a preview popup with the corresponding instructions from the *Assembly* view. |
     | Click | Selects a block and also selects the corresponding instructions the *Assembly* view (can be configured in the [Flow Graph options](#view-options)) |
     | Right-click | Shows the context menu for the selected block. |
-    | Click+Drag | Clicking on and dragging an empty part of the view moves the view in the direction of the mouse. |
+    | Click+Drag | *Clicking* on and dragging an empty part of the view moves the view in the direction of the mouse. |
     | Scroll wheel | Scrolls the view vertically if graph is larger than the view. |
     | Ctrl+Scroll wheel | Zooms in or out the view around the mouse pointer position. |
 

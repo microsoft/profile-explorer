@@ -35,7 +35,7 @@ Expanding a callee function from the list goes down the call tree, showing a lis
     | ------ | ------------|
     | ![](img/flame-graph-toolbar-back.png) | Navigates back to the previous viewed function in the view. |
     | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a node also selects the associated function in the other profiling views. |
-    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a node also displays the associated function in the Source file view, with the source lines annotated with profiling data. |
+    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a node also displays the associated function in the *Source File* view, with the source lines annotated with profiling data. |
     | ![](img/call-tree-toolbar-combine.png) | If enabled, all function instances are displayed combined, with the lists of callers and callees merged and execution time summed up. |
     | ![](img/flame-graph-toolbar-module.png) | If enabled, display the module name before the function name in the nodes as module!function. |
     | Search box | Search for nodes with a specific function name using a case-insensitive substring search. Press the *Escape* key to reset the search or the *X* button next to the input box. |
@@ -43,21 +43,22 @@ Expanding a callee function from the list goes down the call tree, showing a lis
 ???+ abstract "Mouse shortcuts"
     | Action | Description |
     | ------ | ------------|
-    | Hover |  Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times, similar to the Flame Graph view. |
-    | Click | Selects the function. If *Sync* is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the Source file view if *Source* is enabled in the toolbar. |
-    | Double-click | Switches the view to display the selected function instead. |
-    | Ctrl+Double-click | Opens the Assembly view of the selected function in the active tab. |
-    | Ctrl+Shift+Double-click | Opens the Assembly view of the selected function in a new tab. |
+    | Hover |  Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times, similar to the *Flame Graph* view. |
+    | Double-click | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Double-click | Opens the *Assembly* view of the selected function in a new tab. |
+    | Shift+Double-click | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
+    | Ctrl+Shift+Double-click | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
     | Right-click | Shows the context menu for the selected function. |
-    | Back | If the mouse has an optional *Back* button, navigates back to the previous viewed function in the view. |
+    | Back | If the mouse has a *Back* button, navigates back to the previous viewed function in the view. |
 
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
-    | Return | Switches the view to display the selected function instead. |
-    | Ctrl+Return | Opens the Assembly view of the selected function in the active tab. |
-    | Ctrl+Shift+Return | Opens the Assembly view of the selected function in a new tab. |
+    | Return | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Return | Opens the *Assembly* view of the selected function in a new tab. |
     | Alt+Return | Opens a preview popup with the assembly of the selected function. Press the *Escape* key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time. |
+    | Shift+Return | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
+    | Ctrl+Shift+Return | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
     | Alt+Shift+Return | Opens a preview popup with the assembly of the selected function, with profile data filtered to include only the selected instance. |
     | Ctrl+C | Copies to clipboard a HTML and Markdown table with a summary of the selected nodes. |
     | Ctrl+Shift+C | Copies to clipboard the function names of the selected nodes. |

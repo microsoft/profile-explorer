@@ -14,7 +14,7 @@ The view has four parts:
 - several columns on the right side with the profiling data for each instruction. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
 
 ???+ note
-    When a function is opened in the Assembly view, its corresponding source file is automatically loaded in the *Source File* view and its [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) displayed in the *Flow Graph* view.<br>
+    When a function is opened in the *Assembly* view, its corresponding source file is automatically loaded in the *Source File* view and its [control-flow graph (CFG)](https://en.wikipedia.org/wiki/Control-flow_graph) displayed in the *Flow Graph* view.<br>
     [![Profiling UI screenshot](img/assembly-source_1073x279.png)](img/assembly-source_1073x279.png){:target="_blank"}
 
 #### Assembly text view
@@ -82,7 +82,7 @@ Instruction execution time is displayed and annotated on several parts of the as
 [![Profiling UI screenshot](img/assembly-marking-blocks_793x203.png)](img/assembly-marking-blocks_793x203.png){:target="_blank"}  
 
 - the basic blocks have a label with the block's execution time percentage, as a sum of its instruction's execution time (in the example above, the 55.73% label for B4). *Hovering* over the label shows the block's execution time value. The label background color uses the same color coding.
-- the basic blocks in the *Flow Graph* view have below the same execution time percentage label as in the Assembly view, with the corresponding background color.
+- the basic blocks in the *Flow Graph* view have below the same execution time percentage label as in the *Assembly* view, with the corresponding background color.
 
 When displaying a function for the first time, by default, the slowest instruction is selected and brought into view (this can be configured in the [Assembly options](#view-options)). When the function is displayed subsequently, the last vertical scroll position is used instead.  
 
@@ -104,13 +104,13 @@ Combining the parsed assembly and profiling information, call instructions are m
 [![Profiling UI screenshot](img/assembly-call-target_691x172.png){: style="width:500px"}](img/assembly-call-target_691x172.png){:target="_blank"} 
 
 ???+ note
-    Functions in the list have a right-click context menu with options to open the Assembly view, preview popup, and select the function in the other views.  
+    Functions in the list have a right-click context menu with options to open the *Assembly* view, preview popup, and select the function in the other views.  
     
-    *Double-click/Ctrl+Return* opens the Assembly view for the selected function. Combine these shortcuts with the *Shift* key to open the Assembly view in a new tab instead.
+    *Double-click/Ctrl+Return* opens the *Assembly** view for the selected function. Combine these shortcuts with the *Shift* key to open the **Assembly* view in a new tab instead.
 
  Call instructions with a known target have the function name operand changed into a link (underlined, bold, blue text). The link makes it easy to navigate to the called function and the function history to go back to the caller.
 
-- *Double-click* on the function name (or the Return key with the name selected) opens the called function in the same tab.  
+- *Double-click* on the function name (or the *Return* key with the name selected) opens the called function in the same tab.  
 - *Shift+Double-Click* (or Shift+Return) opens the called function in a new tab.  
 - *Alt+Return* shows a preview popup with the called function's assembly. Press the *Escape* key to close the popup.  
 - *Hovering* with the mouse over the function name also shows the preview popup.
@@ -120,7 +120,7 @@ Combining the parsed assembly and profiling information, call instructions are m
 
 ##### Opened functions history
 
-When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. The history is especially useful when navigating to a called function by double-clicking its name in the assembly since it makes it easy to get back to the caller.  
+When multiple functions were opened in the same tab, a history is kept per tab that makes it possible to go back/forward to a previous/next opened function. The history is especially useful when navigating to a called function by *double-clicking* its name in the assembly since it makes it easy to get back to the caller.  
 
 - *Click* the *Back* button in the toolbar to navigate back to the previous function in the sequence (or press the *Backspace* key or the optional *Back* button on the mouse). The back button also has a menu that lists the previous functions.  
 
@@ -161,7 +161,7 @@ In the example above, most of the execution time (46.79%) is taken by instructio
 
 ##### Instances
 
-By default, the Assembly view displays the function profile accumulated across all instances of the function (see the [Flame Graph view](flame-graph-panel.md) documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  
+By default, the *Assembly** view displays the function profile accumulated across all instances of the function (see the [Flame Graph view](flame-graph-panel.md) documentation for more details about instances). Filtering the function profile based on an instance makes it possible to understand better when certain parts dominate execution time (for example, based on a parameter passed by the caller, one part or another of the function executes).  
 
 The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value. The menu entries use a compact form of the call path, where the first name is the caller, then its caller, and so on going up the call tree until the paths reach a common node. *Hover* over an entry to display a tooltip with the complete call path up to the entry point node.  
 
@@ -174,7 +174,7 @@ Use the *All Instances* entry or uncheck all instances to view the entire functi
 
 ##### Threads
 
-By default, the Assembly view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  
+By default, the *Assembly* view displays the function profile accumulated across all threads the function executed on. Similar to instances, the profile can be filtered to consider only a subset of the threads. The Threads menu displays the threads IDs and their execution time percentage and value.  
 
 The menu entries are checkboxes that allow multiple instances to be selected and included.  
 Use the *All Threads* entry or uncheck all instances to view the entire function profile again.
@@ -182,7 +182,7 @@ Use the *All Threads* entry or uncheck all instances to view the entire function
 [![Profiling UI screenshot](img/assembly-threads_560x214.png){: style="width:350px"}](img/assembly-threads_560x214.png){:target="_blank"}  
 
 ???+ note
-    *Hovering* with the mouse over the Assembly view tab displays a tooltip with details such as the total/self execution time, module and complete function name and, if filtering is used, the name of the instances and threads included in the view. 
+    *Hovering* with the mouse over the *Assembly* view tab displays a tooltip with details such as the total/self execution time, module and complete function name and, if filtering is used, the name of the instances and threads included in the view. 
 
 ##### Export
 
@@ -216,14 +216,14 @@ The settings are saved across sessions when closing the application.
     | Double-click | If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the active tab. |
     | Shift+Double-click | For call target function names, it opens the target function in a new tab.  |
     | Right-click | Shows the context menu for the selected instructions. |
-    | Back | If the mouse has an optional *Back* button, navigates back to the previous opened function in the tab. |
-    | Forward | If the mouse has an optional *Forward* button, Navigates forward to the next opened function in the tab. |
+    | Back | If the mouse has a *Back* button, navigates back to the previous opened function in the tab. |
+    | Forward | If the mouse has a *Forward* button, Navigates forward to the next opened function in the tab. |
 
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
     | Return | If an instruction operand is selected, jumps to its definition.<br>For jump/branch target address, jumps to the destination basic block.<br>For call target function names, it opens the target function in the active tab. |
-    | Shift+Return | For call target function names, it opens the target function in a new tab. |
+    | Ctrl+Return | For direct call target function names, it opens the target function in a new tab. |
     | Alt+Return | For direct call target function names, displays a preview popup with the target function's assembly. |
     | Backspace | Navigates back to the previous opened function in the tab. |
     | Shift+Backspace | Navigates forward to the next opened function in the tab. |
@@ -232,7 +232,7 @@ The settings are saved across sessions when closing the application.
     | Shift+F2 | Jumps to the next previous instruction in the sequence. |
     | Ctrl+C | Copies to clipboard a HTML and Markdown table with a summary of the selected instructions. |
     | Ctrl+Shift+C | Copies to clipboard the assembly text of the selected instructions. |
-    | Ctrl+F | Displays the text search panel, |
+    | Ctrl+F | Displays the text search panel. |
     | F3 | Jumps to the next text search result. |
     | Shift+F3 | Jumps to the previous text search result. |
     | Escape | Resets text searching and closed the text search panel. |

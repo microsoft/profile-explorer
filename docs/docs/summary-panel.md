@@ -12,20 +12,29 @@ The view has three parts:
 
 ##### Modules list
 
-The modules list has an entry for each module with profile data and starts with an *All* entry representing all modules combined. Each entry has the module name, execution time percentage relative to the entire trace and execution time value. Modules are sorted by their execution time in descending order.
+The modules list has an entry for each module with profile data and starts with an *All* entry representing all modules combined.  
 
-By default, the *All* entry is active and the function list displays all functions with profile data in the trace.  
+Each entry has the module name, total (inclusive) execution time percentage relative to the entire trace and the time value, with a background color based on its name.  
 
-*Double-click* a module (or use the Return key) to display only its functions. Selecting a module while the *All* entry is active selects its functions in the list.
+Modules are sorted by their execution time in descending order. By default, the *All* entry is active and the function list displays all functions with profile data in the trace.  
+
+*Double-click* a module (or press the *Return* key) to display only its functions. Selecting a module while the *All* entry is active selects its functions in the list.
 
 ##### Functions list
 
-The function list has an entry for each function with profile data. An entry has the demangled (undecorated) function name, module and self (exclusive) execution time, and total (inclusive) execution time. If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
+The function list has an entry for each function with profile data. Each entry has:  
 
-The list is filtered based on the active module. The displayed columns and style can be customized in the Summary options.
+- the [demangled](https://en.wikipedia.org/wiki/Name_mangling) (undecorated) function name.  
+- module name, a background color based on its name.
+- self (exclusive) execution time percentage relative to the entire trace and the time value.  
+- total (inclusive) execution time percentage relative to the entire trace and the time value.  
+- optionally, the mangled (decorated) function name, configurable in the [Summary options](#view-options).
 
-The function list is by default sorted by the self (exclusive) execution time in decreasing order.  
-*Click* the same column header to toggle between decreasing and  increasing order.  
+If CPU performance counters are found and loaded from the trace, the additional columns with metrics and the counters are appended after the last column.  
+
+The list is filtered based on the active module. The function list is by default sorted by the self (exclusive) execution time in decreasing sorting order. The displayed columns and style can be customized in the [Summary options](#view-options).  
+
+*Click* the same column header to toggle between decreasing and  increasing sorting order.  
 *Click* on a column to sort the list based on its values.  
 
 ???+ note
@@ -33,9 +42,9 @@ The function list is by default sorted by the self (exclusive) execution time in
     
     The columns in all list views can be resized and reorder. The new layout is saved across sessions when closing the application.
 
-If marking of functions based on their name or module is active, the function entries use the marking background color.
+If marking of functions based on name or module is active, the function entries use the matching marking background color.
 
-Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.  
+Hovering over a function displays a popup with the slowest stack trace (call path) ending at the function instance with most execution time. Pin or drag the popup to keep it open.  
 [![Profiling UI screenshot](img/summary-preview_654x551.png){: style="width:450px"}](img/summary-preview_654x551.png){:target="_blank"}
 
 #### View interaction
@@ -44,18 +53,18 @@ Hovering over a function displays a popup with the stack trace (call path) end w
     | Button | Description |
     | ------ | ------------|
     | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a function also selects it in the other profiling views. |
-    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a function also displays the source in the Source file view, with the source lines annotated with profiling data. |
+    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a function also displays the source in the *Source File* view, with the source lines annotated with profiling data. |
     | Export | Export the current function list into one of multiple formats (Excel, HTML and Markdown) or copy to clipboard the function list as  a HTML/Markdown table. |
     | Search box | Search for functions with a specific name using a case-insensitive substring search. Searching filters the list down to display only the matching entries. Press the *Escape* key to reset the search or the *X* button next to the input box. |
-    | ![](img/summary-toolbar-up.png) | Scrolls up the list to the start (equivalent to pressing Ctrl+Home). |
+    | ![](img/summary-toolbar-up.png) | Scrolls up the list to the start (equivalent to pressing *Ctrl+Home*). |
 
 ???+ abstract "Mouse shortcuts"
     | Action | Description |
     | ------ | ------------|
     | Hover | Hovering over a function displays a popup with the stack trace (call path) end with the slowest function's instance. Pin or drag the popup to keep it open.|
-    | Click | Selects the function in the other views if *Sync* is enabled in the toolbar and displays the source in the Source file view if *Source* is enabled in the toolbar.  |
-    | Double-click | Opens the Assembly view of the selected function in the active tab. |
-    | Shift+Double-click | Opens the Assembly view of the selected function in a new tab. |
+    | Click | Selects the function in the other views if *Sync* is enabled in the toolbar and displays the source in the *Source File* view if *Source* is enabled in the toolbar.  |
+    | Double-click | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Double-click | Opens the *Assembly* view of the selected function in a new tab. |
     | Right-click | Shows the context menu for the selected functions. |
 
     !!! note
@@ -64,10 +73,10 @@ Hovering over a function displays a popup with the stack trace (call path) end w
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
-    | Return | Opens the Assembly view of the selected function in the active tab. |
-    | Shift+Return | Opens the Assembly view of the selected function in a new tab. |
-    | Ctrl+Shift+Left | Opens the Assembly view of the selected function in a new tab docked to the left of the active tab. |
-    | Ctrl+Shift+Right | Opens the Assembly view of the selected function in a new tab docked to the right of the active tab. |
+    | Return | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Return | Opens the *Assembly* view of the selected function in a new tab. |
+    | Ctrl+Left | Opens the *Assembly* view of the selected function in a new tab docked to the left of the active tab. |
+    | Ctrl+Right | Opens the *Assembly* view of the selected function in a new tab docked to the right of the active tab. |
     | Alt+Return | Opens a preview popup with the assembly of the selected function. Press the *Escape* key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time. |
     | Ctrl+C | Copies to clipboard a HTML and Markdown table with a summary of the selected functions. |
     | Ctrl+Shift+C | Copies to clipboard the function names of the selected functions. |
@@ -89,7 +98,7 @@ The current function list can be exported and saved into multiple formats, with 
 
 The *Export* menu in the toolbar also has an option to copy to the clipboard the current function list as an HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  
 
-The Ctrl+C keyboard shortcut copies to the clipboard only the selected functions as a HTML/Markdown table.
+The *Ctrl+C* keyboard shortcut copies to the clipboard only the selected functions as a HTML/Markdown table.
 
 #### View options
 

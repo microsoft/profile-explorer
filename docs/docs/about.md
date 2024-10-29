@@ -1,6 +1,6 @@
 #### Overview
 
-Profile Explorer is a tool for viewing CPU profiling traces collected through the [Event Tracing for Windows (ETW)]((https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-)) infrastructure on machines with x64 and ARM64 CPUs. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views, such as slow functions list, flame graph, call tree, timeline, assembly code view, and source file view.  
+Profile Explorer is a tool for viewing CPU profiling traces collected through the [Event Tracing for Windows (ETW)]((https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/event-tracing-for-windows--etw-)) infrastructure on machines with x64 and ARM64 CPUs. Its focus is on presenting the slowest parts of the profiled application through an easy-to-use but detailed UI consisting of several views, such as slow functions list, flame graph, call tree, timeline, assembly code view, and *Source File* view.  
 
 The app offers some unique features based on the binary analysis it performs and the IDE-like UI, such as easy navigation through disassembly, improved mapping to source lines, displaying the function [control-flow graph](https://en.wikipedia.org/wiki/Control-flow_graph), viewing of multiple functions at the same time, marking, searching, filtering and much more.  
 

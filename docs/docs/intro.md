@@ -42,9 +42,9 @@ Most app views have a *question mark* button in the upper-right corner.
 
 - the image is opened in a new tab if viewed in a browser.
 - the image is opened in a preview popup if viewed from the app's built-in *Help* panel.  
-To close the preview popup, *click* again on the image (either in the preview popup or in the page) or press the Escape key.
+To close the preview popup, *click* again on the image (either in the preview popup or in the page) or press the *Escape* key.
 
 **Videos**
 
 *Click* on a video's full-screen button in the bottom-right corner to enlarge it.  
-To restore to default size, *click* again on the full-screen button or press the Escape key.
+To restore to default size, *click* again on the full-screen button or press the *Escape* key.

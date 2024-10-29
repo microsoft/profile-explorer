@@ -1,6 +1,6 @@
 #### Overview
 
-The Source File view displays the source code of the function viewed in the active assembly view. When a function is opened in the Assembly view, using the debug info file, its corresponding source file is identified, downloaded if needed, and loaded in the view, with source lines annotated with profiling information.  
+The Source File view displays the source code of the function viewed in the active *Assembly** view. When a function is opened in the **Assembly* view, using the debug info file, its corresponding source file is identified, downloaded if needed, and loaded in the view, with source lines annotated with profiling information.  
 
 [![Profiling UI screenshot](img/source-view_1000x503.png)](img/source-view_1000x503.png){:target="_blank"}
 
@@ -46,7 +46,7 @@ When another source file is searched, starting with the debug info path, the map
 
 #### Source code view
 
-The view is similar to the Assembly view, having four parts:  
+The view is similar to the *Assembly* view, having four parts:  
 
 - a main toolbar at the top, with general action buttons.
 - a secondary toolbar underneath with profiling-specific info and action buttons.
@@ -67,15 +67,15 @@ Each line corresponds to one source line, with the following values and buttons 
 
 When a source line is selected, if *Sync* is enabled in the toolbar, the associated instructions are also selected in the *Assembly* view.  
 
-In the example below, the start of the loop on line 21 is selected, with the instructions forming the loop header selected in the Assembly view; the selected instructions corresponding to the loop back-edge are not visible in the screenshot.
+In the example below, the start of the loop on line 21 is selected, with the instructions forming the loop header selected in the *Assembly* view; the selected instructions corresponding to the loop back-edge are not visible in the screenshot.
 
 [![Profiling UI screenshot](img/source-selection-sync_934x400.png)](img/source-selection-sync_934x400.png){:target="_blank"}
 
-Vice versa, selecting an instruction in the Assembly view also selects the corresponding source line.
+Vice versa, selecting an instruction in the *Assembly* view also selects the corresponding source line.
 
 ##### Profiling annotations
 
-Similar to the Assembly view, execution time is displayed and annotated on several parts of the source lines and columns using text, colors, and flame icons:
+Similar to the *Assembly* view, execution time is displayed and annotated on several parts of the source lines and columns using text, colors, and flame icons:
 
 - the *Time (%)* column displays the source line's execution time percentage relative to the total function execution time. The column style can be changed in the [Source File options](#view-options).
 - the *Time (ms)* column displays the source files's execution time value. The time unit and column style can be changed in the [Source File options](#view-options).
@@ -92,7 +92,7 @@ To jump at any time to the slowest source line, *click* the ![](img/flame-icon.p
 
 ##### Assembly code sections
 
-IIf enabled, each source line is followed by a section with the assembly instructions generated for it based on the debug info file. By default, the sections are collapsed and can be expanded by pressing the + button on the left of the source lines. Each line of assembly has the same profiling annotations as the source lines.
+IIf enabled, each source line is followed by a section with the assembly instructions generated for it based on the debug info file. By default, the sections are collapsed and can be expanded by *clicking* the + button on the left of the source lines. Each line of assembly has the same profiling annotations as the source lines.
 
 [![Profiling UI screenshot](img/source-assembly_816x233.png)](img/source-assembly_816x233.png){:target="_blank"}
 
@@ -150,15 +150,15 @@ See the [Source code outline](#source-code-outline) section above for documentat
 
 ##### Instances
 
-The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the *Assembly view* feature.  
+The Instances menu displays the call paths leading to all instances of the function, with their execution time percentage and value, similar to the *Assembly* view feature.  
 
-See the [Profiling toolbar: Instances](assembly-view.md#instances) section in the *Assembly view* page for details.
+See the [Profiling toolbar: Instances](assembly-view.md#instances) section in the *Assembly* view page for details.
 
 ##### Threads
 
-The Threads menu displays the threads IDs and their execution time percentage and value, similar to the *Assembly view* feature.  
+The Threads menu displays the threads IDs and their execution time percentage and value, similar to the *Assembly* view feature.  
 
-See the [Profiling toolbar: Threads](assembly-view.md#threads) section in the *Assembly view* page for details.
+See the [Profiling toolbar: Threads](assembly-view.md#threads) section in the *Assembly* view page for details.
 
 #### View interaction
 
@@ -168,8 +168,8 @@ See the [Profiling toolbar: Threads](assembly-view.md#threads) section in the *A
     | ![](img/source-toolbar-open.png) | Shows an *Open File* dialog to select a local source file to load in the view. |
     | ![](img/source-toolbar-reset.png) | Displays a menu with options for resetting exclusions set on the current source file or all source files. |
     | ![](img/source-toolbar-path.png) | Displays a menu with options for copying the source file path to clipboard, navigating to the source file in *File Explorer* and opening the source file in the default editor. |
-    | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a source lines also selects all associated instructions in the *Assembly view*. |
-    | ![](img/source-toolbar-inlinees.png) | If enabled, inlinees (inlined functions) debug info is used to load the deepest inlinee function and its source file instead of the current function in the *Assembly view*. |
+    | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a source lines also selects all associated instructions in the *Assembly* view. |
+    | ![](img/source-toolbar-inlinees.png) | If enabled, inlinees (inlined functions) debug info is used to load the deepest inlinee function and its source file instead of the current function in the *Assembly* view. |
     | ![](img/source-toolbar-asm.png) | If enabled, each source line is followed by a section with the assembly instructions generated for it, based on the debug info file. See [Assembly code sections](#assembly-code-sections) above for details. |
     | ![](img/source-toolbar-asm-collapse.png) | Hides (collapses) all assembly sections. |
     | ![](img/source-toolbar-asm-expand.png) | Shows (expands) all assembly sections. |
@@ -188,7 +188,7 @@ The function's source code, combined with profiling annotations and execution ti
 
 The Export menu in the toolbar also has an option to copy to clipboard the function's source code as a HTML/Markdown table (pasting in an application supporting HTML - such as the Microsoft Office suite and online editors - will use the HTML version, code/text editors will use Markdown version instead).  
 
-The Ctrl+C keyboard shortcut copies to the clipboard only the selected source lines as a HTML/Markdown table.
+The *Ctrl+C* keyboard shortcut copies to the clipboard only the selected source lines as a HTML/Markdown table.
 
 #### View options
 

@@ -21,7 +21,7 @@ A function node has the demangled (undecorated) function name, optionally prepen
 
 #### Searching functions
 
-Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the *up/down* buttons on the right can be used to navigate between results. Press the Escape key to reset the search or the X button next to the input box.
+Use the *search input box* in the toolbar to search for functions with a specific name using a case-insensitive substring search. Matching nodes and function names are marked, and the *up/down* buttons on the right can be used to navigate between results. Press the *Escape* key to reset the search or the X button next to the input box.
 
 [![Profiling UI screenshot](img/call-tree-search_1077x402.png){: style="width:700px"}](img/call-tree-search_1077x402.png){:target="_blank"}
 
@@ -33,25 +33,30 @@ Use the *search input box* in the toolbar to search for functions with a specifi
     | ![](img/flame-graph-toolbar-reset.png) | Resets the view to the initial state. |
     | ![](img/call-tree-toobar-flame.png) | Expands several levels of the the slowest path in the call tree. |
     | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a node also selects the associated function in the other profiling views. |
-    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a node also displays the associated function in the Source file view, with the source lines annotated with profiling data. |
+    | ![](img/flame-graph-toolbar-source.png) | If enabled, selecting a node also displays the associated function in the *Source File* view, with the source lines annotated with profiling data. |
     | ![](img/flame-graph-toolbar-module.png) | If enabled, display the module name before the function name in the nodes as module!function. |
     | Search box | Search for nodes with a specific function name using a case-insensitive substring search. Press the *Escape* key to reset the search or the *X* button next to the input box. |
 
 ???+ abstract "Mouse shortcuts"
     | Action | Description |
     | ------ | ------------|
-    | Hover |  Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times, similar to the Flame Graph view. |
-    | Click | Selects the function. If *Sync* is enabled in the toolbar, the function is selected in the other panels. Displays the associated function in the Source file view if *Source* is enabled in the toolbar. |
-    | Ctrl+Double-click | Opens the Assembly view of the selected function in the active tab. |
-    | Ctrl+Shift+Double-click | Opens the Assembly view of the selected function in a new tab. |
+    | Hover |  Hovering over a node briefly displays a preview popup with the complete function name and total/self execution times. *Clicking* the *Pin button* or dragging the popup expands it into a panel equivalent to the *Details panel*. Multiple such panels can be kept open at the same time. |
+    | Click | Selects a function. If *Sync* is enabled in the toolbar, the function is also selected in the other panels. Displays the associated function in the *Source File* view if *Source* is enabled in the toolbar. |
+    | Double-click | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Double-click | Opens the *Assembly* view of the selected function in a new tab. |
+    | Shift+Double-click | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
+    | Ctrl+Shift+Double-click | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
     | Right-click | Shows the context menu for the selected function. |
 
 ???+ abstract "Keyboard shortcuts"
     | Keys | Description |
     | ------ | ------------|
-    | Ctrl+Return | Opens the Assembly view of the selected function in the active tab. |
-    | Ctrl+Shift+Return | Opens the Assembly view of the selected function in a new tab. |
+    | Space | Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly. |
+    | Return | Opens the *Assembly* view of the selected function in the active tab. |
+    | Ctrl+Return | Opens the *Assembly* view of the selected function in a new tab. |
     | Alt+Return | Opens a preview popup with the assembly of the selected function. Press the *Escape* key to close the popup.<br><br>Multiple preview popups can be can be kept open at the same time. |
+    | Shift+Return | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
+    | Ctrl+Shift+Return | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
     | Alt+Shift+Return | Opens a preview popup with the assembly of the selected function, with profile data filtered to include only the selected instance. |
     | Ctrl+C | Copies to clipboard a HTML and Markdown table with a summary of the selected nodes. |
     | Ctrl+Shift+C | Copies to clipboard the function names of the selected nodes. |

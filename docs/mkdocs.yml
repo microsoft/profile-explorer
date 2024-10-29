@@ -21,13 +21,11 @@ nav:
     - Source File view: source-panel.md
     - Flow Graph view: flow-graph-panel.md
   - Additional functionality:
-    - Function/module marking: marking.md
-    - Preview popups: workspaces.md
-    - Working with multiple functions: workspaces.md
-    - Viewing function instances: function-instances.md
+    - Trace profile overview: profile-overview.md
+    - Function/module marking: profile-marking.md
     - Workspaces: workspaces.md
     - Application options: options.md
-    - Rust support: options.md
+    - Rust support: rust.md
 theme:
   logo: img/logo.png
   favicon: img/favicon.png
