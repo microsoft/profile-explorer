@@ -365,7 +365,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
 
     node.Children.Sort((a, b) => {
       int result = b.Time.CompareTo(a.Time);
-      return result != 0 ? result : string.Compare(a.FunctionName, a.FunctionName, StringComparison.Ordinal);
+      return result != 0 ? result : string.Compare(a.FunctionName, b.FunctionName, StringComparison.Ordinal);
     });
   }
 
@@ -690,6 +690,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       CreateProfileCallTree(node, rootNode, CallTreeListItemKind.CallTreeNode, visitedNodes);
     }
 
+    SortCallTreeNodes(rootNode);
     return rootNode;
   }
 
@@ -730,6 +731,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
           CreateProfileCallTree(childNode, nodeEx, nodeEx, kind, visitedNodes, percentageFunc);
         }
 
+        SortCallTreeNodes(nodeEx);
         break;
       }
       case CallTreeListItemKind.CalleeNode when node.HasChildren: {
@@ -750,7 +752,6 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
       }
     }
 
-    SortCallTreeNodes(parentNodeEx);
     visitedNodes.Remove(node);
     return nodeEx;
   }
