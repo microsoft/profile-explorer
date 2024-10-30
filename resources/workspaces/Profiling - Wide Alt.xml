@@ -5,9 +5,8 @@
       <LayoutAnchorablePaneGroup Orientation="Horizontal" DockWidth="824.5" FloatingWidth="961" FloatingHeight="290" FloatingLeft="766" FloatingTop="450.5">
         <LayoutAnchorablePane Id="0591fedc-8df3-40da-95f4-daa204df6824" DockWidth="824.5" FloatingWidth="961" FloatingHeight="290" FloatingLeft="766" FloatingTop="450.5">
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Summary" IsSelected="True" ContentId="Sections" FloatingLeft="766" FloatingTop="450.5" FloatingWidth="961" FloatingHeight="290" LastActivationTimeStamp="12/01/2023 12:55:10" />
-          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Pass Output" ContentId="PassOutput" FloatingLeft="766" FloatingTop="450.5" FloatingWidth="961" FloatingHeight="290" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Definition" ContentId="Definition" FloatingLeft="766" FloatingTop="450.5" FloatingWidth="961" FloatingHeight="290" />
-          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Scripting" ContentId="Scripting" FloatingLeft="766" FloatingTop="450.5" FloatingWidth="961" FloatingHeight="290" />
+		  <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Notes" ContentId="Notes" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Developer" ContentId="Developer" FloatingLeft="766" FloatingTop="450.5" FloatingWidth="961" FloatingHeight="290" />
         </LayoutAnchorablePane>
       </LayoutAnchorablePaneGroup>
@@ -30,9 +29,8 @@
     <LayoutPanel Orientation="Horizontal" DockHeight="306" DockMinHeight="50" FloatingHeight="280">
       <LayoutAnchorablePaneGroup Orientation="Horizontal" DockMinHeight="200">
         <LayoutAnchorablePane Id="5c894cd9-041a-4af2-8160-0d903012df90">
-          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Source File - bench.cpp" IsSelected="True" ContentId="SourceFile" ToolTip="D:\work\bench\bench\bench.cpp" FloatingLeft="693.3333333333333" FloatingTop="629.6666666666666" FloatingWidth="628" FloatingHeight="290" LastActivationTimeStamp="12/01/2023 12:55:08" PreviousContainerId="5c894cd9-041a-4af2-8160-0d903012df90" PreviousContainerIndex="3" />
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Source File" IsSelected="True" ContentId="SourceFile" ToolTip="D:\work\bench\bench\bench.cpp" FloatingLeft="693.3333333333333" FloatingTop="629.6666666666666" FloatingWidth="628" FloatingHeight="290" LastActivationTimeStamp="12/01/2023 12:55:08" PreviousContainerId="5c894cd9-041a-4af2-8160-0d903012df90" PreviousContainerIndex="3" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="References" ContentId="ReferencesPanelHost" LastActivationTimeStamp="11/26/2023 21:07:08" />
-          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Notes" ContentId="Notes" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Bookmarks" ContentId="Bookmarks" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Search Results" ContentId="SearchResults" />
         </LayoutAnchorablePane>
