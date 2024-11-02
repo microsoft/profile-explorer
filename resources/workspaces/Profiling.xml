@@ -23,7 +23,7 @@
       <LayoutAnchorablePaneGroup Orientation="Horizontal" DockWidth="1.3545508625817966*" DockMinHeight="200">
         <LayoutAnchorablePane Id="40ed3bab-577b-421f-94a2-ea0190bf0ad4" DockWidth="0.9103641456582633*">
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Timeline" IsSelected="True" ContentId="Timeline" LastActivationTimeStamp="11/30/2023 12:26:01" />
-          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="References" ContentId="ReferencesPanelHost" LastActivationTimeStamp="11/28/2023 09:12:55" /
+          <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="References" ContentId="ReferencesPanelHost" LastActivationTimeStamp="11/28/2023 09:12:55" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Bookmarks" ContentId="Bookmarks" />
           <LayoutAnchorable AutoHideMinWidth="100" AutoHideMinHeight="100" Title="Search Results" ContentId="SearchResults" />
         </LayoutAnchorablePane>

@@ -169,7 +169,6 @@ See the [Profiling toolbar: Threads](assembly-view.md#threads) section in the *A
     | ![](img/source-toolbar-reset.png) | Displays a menu with options for resetting exclusions set on the current source file or all source files. |
     | ![](img/source-toolbar-path.png) | Displays a menu with options for copying the source file path to clipboard, navigating to the source file in *File Explorer* and opening the source file in the default editor. |
     | ![](img/flame-graph-toolbar-sync.png) | If enabled, selecting a source lines also selects all associated instructions in the *Assembly* view. |
-    | ![](img/source-toolbar-inlinees.png) | If enabled, inlinees (inlined functions) debug info is used to load the deepest inlinee function and its source file instead of the current function in the *Assembly* view. |
     | ![](img/source-toolbar-asm.png) | If enabled, each source line is followed by a section with the assembly instructions generated for it, based on the debug info file. See [Assembly code sections](#assembly-code-sections) above for details. |
     | ![](img/source-toolbar-asm-collapse.png) | Hides (collapses) all assembly sections. |
     | ![](img/source-toolbar-asm-expand.png) | Shows (expands) all assembly sections. |
@@ -205,5 +204,4 @@ The tabs below describe each page of the options panel:
     [![Profiling UI screenshot](img/source-options-profiling_591x583.png){: style="width:400px"}](img/source-options-profiling_591x583.png){:target="_blank"}  
 
 #### More documentation in progress
-- inlinees
 - options panel
