@@ -290,6 +290,7 @@
               Command="local:AppCommand.OpenDebug"
               Header="_Open Debug File" />
             <MenuItem
+              Visibility="Collapsed"
               Command="local:AppCommand.OpenDiffDebug"
               Header="_Open Diff Debug File" />
 
@@ -588,17 +589,17 @@
           </MenuItem>
 
           <MenuItem Header="Tools">
-            <MenuItem
-              Header="Diff Mode"
-              IsCheckable="True"
-              IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource DiffIcon}" />
-              </MenuItem.Icon>
-            </MenuItem>
+            <!-- <MenuItem -->
+            <!--   Header="Diff Mode" -->
+            <!--   IsCheckable="True" -->
+            <!--   IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}"> -->
+            <!--   <MenuItem.Icon> -->
+            <!--     <Image -->
+            <!--       Width="16" -->
+            <!--       Height="16" -->
+            <!--       Source="{StaticResource DiffIcon}" /> -->
+            <!--   </MenuItem.Icon> -->
+            <!-- </MenuItem> -->
 
             <MenuItem
               Click="FunctionReportMenu_Click"
@@ -686,6 +687,7 @@
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
               Orientation="Horizontal">
               <ToggleButton
+                Visibility="Collapsed"
                 x:Name="DiffModeButton"
                 Padding="2,1,2,1"
                 VerticalAlignment="Center"
@@ -1504,14 +1506,14 @@
                   <local:DominatorTreePanel x:Name="DominatorTreePanel" />
                 </avalonDock:LayoutAnchorable>
 
-                <avalonDock:LayoutAnchorable
-                  x:Name="PostDominatorTreePanelHost"
-                  Title="PostDominator Tree"
-                  ContentId="PostDominatorTree"
-                  IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                  IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                  <local:PostDominatorTreePanel x:Name="PostDominatorTreePanel" />
-                </avalonDock:LayoutAnchorable>
+                <!-- <avalonDock:LayoutAnchorable -->
+                <!--   x:Name="PostDominatorTreePanelHost" -->
+                <!--   Title="PostDominator Tree" -->
+                <!--   ContentId="PostDominatorTree" -->
+                <!--   IsActiveChanged="LayoutAnchorable_IsActiveChanged" -->
+                <!--   IsSelectedChanged="LayoutAnchorable_IsSelectedChanged"> -->
+                <!--   <local:PostDominatorTreePanel x:Name="PostDominatorTreePanel" /> -->
+                <!-- </avalonDock:LayoutAnchorable> -->
 
                 <avalonDock:LayoutAnchorable
                   x:Name="ExpressionGraphPanelHost"
