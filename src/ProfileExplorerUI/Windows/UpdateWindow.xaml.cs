@@ -48,12 +48,28 @@ public partial class UpdateWindow : Window {
         NewVersionLabel.Text = updateInfo_.CurrentVersion;
         CurrentVersionLabel.Text = updateInfo_.InstalledVersion.ToString();
 
-        if (!string.IsNullOrEmpty(updateInfo_.ChangelogURL)) {
-          // Force light mode for the WebView2 control for now.
-          await Browser.EnsureCoreWebView2Async();
-          Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
-          Browser.Source = new Uri(updateInfo_.ChangelogURL);
+        if (string.IsNullOrEmpty(updateInfo_.ChangelogURL)) {
+          return;
         }
+
+        // Force light mode for the WebView2 control for now.
+        var webView2Environment = await CoreWebView2Environment.CreateAsync(null, App.GetSettingsDirectoryPath());
+
+        try {
+          await Browser.EnsureCoreWebView2Async(webView2Environment);
+
+          if (Browser.CoreWebView2 == null) {
+            Trace.WriteLine("Failed to initialize WebView2 control in UpdateWindow.");
+            return;
+          }
+        }
+        catch (Exception ex) {
+          Trace.WriteLine($"Failed to initialize WebView2 control in UpdateWindow: {ex.Message}");
+          return;
+        }
+
+        Browser.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+        Browser.Source = new Uri(updateInfo_.ChangelogURL);
       }
     }
     catch (Exception ex) {

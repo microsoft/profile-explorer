@@ -153,6 +153,7 @@
             </StackPanel>
           </ToggleButton>
           <ToggleButton
+            Visibility="Collapsed"
             Height="20"
             Margin="2,0,4,0"
             Padding="0,0,2,0"
@@ -215,9 +216,10 @@
               Source="{StaticResource ExpandIcon}"
               Style="{StaticResource DisabledImageStyle}" />
           </Button>
-          <Separator />
+          <Separator Visibility="Collapsed"/>
           <ComboBox
             Name="InlineeComboBox"
+            Visibility="Collapsed"
             Width="200"
             MinWidth="100"
             MaxWidth="200"
@@ -235,6 +237,7 @@
             </ComboBox.ItemTemplate>
           </ComboBox>
           <Button
+            Visibility="Collapsed"
             Click="InlineUpButton_Click"
             IsEnabled="{Binding HasInlinees}"
             ToolTip="Switch to inlinee caller function (go up the call tree)">
@@ -243,6 +246,7 @@
               Style="{StaticResource DisabledImageStyle}" />
           </Button>
           <Button
+            Visibility="Collapsed"
             Click="InlineDownButton_Click"
             IsEnabled="{Binding HasInlinees}"
             ToolTip="Switch to inlinee called function (go down the call tree)">

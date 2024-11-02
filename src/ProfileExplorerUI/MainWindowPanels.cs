@@ -1412,9 +1412,9 @@ public partial class MainWindow : Window, ISession {
       case ToolPanelKind.DominatorTree: {
         return DominatorTreePanelHost;
       }
-      case ToolPanelKind.PostDominatorTree: {
-        return PostDominatorTreePanelHost;
-      }
+      // case ToolPanelKind.PostDominatorTree: {
+      //   return PostDominatorTreePanelHost;
+      // }
       case ToolPanelKind.ExpressionGraph: {
         return ExpressionGraphPanelHost;
       }
