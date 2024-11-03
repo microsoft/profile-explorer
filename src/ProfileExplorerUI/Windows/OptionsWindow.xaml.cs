@@ -27,7 +27,7 @@ public partial class OptionsWindow : Window {
     DocumentOptionsPanel.Initialize(this, App.Settings.DocumentSettings, Session);
     GraphOptionsPanel.Initialize(this, App.Settings.FlowGraphSettings, Session);
     ExpressionGraphOptionsPanel.Initialize(this, App.Settings.ExpressionGraphSettings, Session);
-    DiffOptionsPanel.Initialize(this, App.Settings.DiffSettings, Session);
+    // DiffOptionsPanel.Initialize(this, App.Settings.DiffSettings, Session);
     TimelineOptionsPanel.Initialize(this, App.Settings.TimelineSettings, Session);
     FlameGraphOptionsPanel.Initialize(this, App.Settings.FlameGraphSettings, Session);
     CallTreeOptionsPanel.Initialize(this, App.Settings.CallTreeSettings, Session);

@@ -219,20 +219,20 @@
             VerticalAlignment="Stretch" />
         </ScrollViewer>
       </TabItem>
-      <TabItem
-        Header="Diffing"
-        Style="{StaticResource TabControlStyle}">
-        <ScrollViewer
-          HorizontalScrollBarVisibility="Disabled"
-          VerticalScrollBarVisibility="Auto">
-          <options:DiffOptionsPanel
-            x:Name="DiffOptionsPanel"
-            Width="Auto"
-            Height="Auto"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch" />
-        </ScrollViewer>
-      </TabItem>
+      <!-- <TabItem -->
+      <!--   Header="Diffing" -->
+      <!--   Style="{StaticResource TabControlStyle}"> -->
+      <!--   <ScrollViewer -->
+      <!--     HorizontalScrollBarVisibility="Disabled" -->
+      <!--     VerticalScrollBarVisibility="Auto"> -->
+      <!--     <options:DiffOptionsPanel -->
+      <!--       x:Name="DiffOptionsPanel" -->
+      <!--       Width="Auto" -->
+      <!--       Height="Auto" -->
+      <!--       HorizontalAlignment="Stretch" -->
+      <!--       VerticalAlignment="Stretch" /> -->
+      <!--   </ScrollViewer> -->
+      <!-- </TabItem> -->
     </TabControl>
 
     <Grid
