@@ -54,26 +54,26 @@
       Command="local:GraphCommand.GraphFitAll"
       CommandTarget="{Binding ElementName=GraphHost}"
       Modifiers="Ctrl" />
-    <KeyBinding
-      Key="M"
-      Command="local:GraphCommand.MarkBlock"
-      CommandTarget="{Binding ElementName=GraphHost}"
-      Modifiers="Ctrl" />
-    <KeyBinding
-      Key="M"
-      Command="local:GraphCommand.MarkGroup"
-      CommandTarget="{Binding ElementName=GraphHost}"
-      Modifiers="Shift+Ctrl" />
-    <KeyBinding
-      Key="P"
-      Command="local:GraphCommand.MarkPredecessors"
-      CommandTarget="{Binding ElementName=GraphHost}"
-      Modifiers="Ctrl" />
-    <KeyBinding
-      Key="S"
-      Command="local:GraphCommand.MarkSuccessors"
-      CommandTarget="{Binding ElementName=GraphHost}"
-      Modifiers="Ctrl" />
+    <!-- <KeyBinding -->
+    <!--   Key="M" -->
+    <!--   Command="local:GraphCommand.MarkBlock" -->
+    <!--   CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--   Modifiers="Ctrl" /> -->
+    <!-- <KeyBinding -->
+    <!--   Key="M" -->
+    <!--   Command="local:GraphCommand.MarkGroup" -->
+    <!--   CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--   Modifiers="Shift+Ctrl" /> -->
+    <!-- <KeyBinding -->
+    <!--   Key="P" -->
+    <!--   Command="local:GraphCommand.MarkPredecessors" -->
+    <!--   CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--   Modifiers="Ctrl" /> -->
+    <!-- <KeyBinding -->
+    <!--   Key="S" -->
+    <!--   Command="local:GraphCommand.MarkSuccessors" -->
+    <!--   CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--   Modifiers="Ctrl" /> -->
     <!-- <KeyBinding -->
     <!--   Key="L" -->
     <!--   Command="local:GraphCommand.MarkLoop" -->
@@ -176,33 +176,33 @@
             </StackPanel>
           </Button>
 
-          <Separator />
-          <Menu
-            VerticalAlignment="Center"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-            <MenuItem
-              Padding="0,2,0,2"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Header="Clear"
-              OverridesDefaultStyle="True">
-              <MenuItem.Icon>
-                <Image
-                  Width="16"
-                  Height="16"
-                  Source="{StaticResource RemoveIcon}"
-                  Style="{StaticResource DisabledImageStyle}" />
-              </MenuItem.Icon>
-              <MenuItem
-                Command="local:GraphCommand.ClearMarked"
-                CommandTarget="{Binding ElementName=GraphHost}"
-                Header="Selected Marker" />
-              <MenuItem
-                Command="local:GraphCommand.ClearAllMarked"
-                CommandTarget="{Binding ElementName=GraphHost}"
-                Header="All Markers" />
-            </MenuItem>
-          </Menu>
+          <!-- <Separator /> -->
+          <!-- <Menu -->
+          <!--   VerticalAlignment="Center" -->
+          <!--   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"> -->
+          <!--   <MenuItem -->
+          <!--     Padding="0,2,0,2" -->
+          <!--     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+          <!--     BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+          <!--     Header="Clear" -->
+          <!--     OverridesDefaultStyle="True"> -->
+          <!--     <MenuItem.Icon> -->
+          <!--       <Image -->
+          <!--         Width="16" -->
+          <!--         Height="16" -->
+          <!--         Source="{StaticResource RemoveIcon}" -->
+          <!--         Style="{StaticResource DisabledImageStyle}" /> -->
+          <!--     </MenuItem.Icon> -->
+          <!--     <MenuItem -->
+          <!--       Command="local:GraphCommand.ClearMarked" -->
+          <!--       CommandTarget="{Binding ElementName=GraphHost}" -->
+          <!--       Header="Selected Marker" /> -->
+          <!--     <MenuItem -->
+          <!--       Command="local:GraphCommand.ClearAllMarked" -->
+          <!--       CommandTarget="{Binding ElementName=GraphHost}" -->
+          <!--       Header="All Markers" /> -->
+          <!--   </MenuItem> -->
+          <!-- </Menu> -->
         </ToolBar>
       </ToolBarTray>
 

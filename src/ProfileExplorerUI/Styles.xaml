@@ -179,50 +179,50 @@
   </ContextMenu>
 
   <ContextMenu x:Key="GraphContextMenu">
-    <MenuItem
-      Focusable="False"
-      Header="Mark Block"
-      IsHitTestVisible="False" />
-    <MenuItem>
-      <MenuItem.Header>
-        <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkBlock" />
-      </MenuItem.Header>
-    </MenuItem>
-    <Separator />
-    <MenuItem Header="Mark Predecessors">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPredecessors" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem Header="Mark Successors">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkSuccessors" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <MenuItem
-      Header="Mark Node Group"
-      ToolTip="Mark block and all its predecessors and succesors">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkGroup" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
-    <Separator />
-
-    <MenuItem
-      Header="Mark Dominators"
-      ToolTip="Mark all the blocks that dominate it">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominators" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
+    <!-- <MenuItem -->
+    <!--   Focusable="False" -->
+    <!--   Header="Mark Block" -->
+    <!--   IsHitTestVisible="False" /> -->
+    <!-- <MenuItem> -->
+    <!--   <MenuItem.Header> -->
+    <!--     <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkBlock" /> -->
+    <!--   </MenuItem.Header> -->
+    <!-- </MenuItem> -->
+    <!-- <Separator /> -->
+    <!-- <MenuItem Header="Mark Predecessors"> -->
+    <!--   <MenuItem> -->
+    <!--     <MenuItem.Header> -->
+    <!--       <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPredecessors" /> -->
+    <!--     </MenuItem.Header> -->
+    <!--   </MenuItem> -->
+    <!-- </MenuItem> -->
+    <!-- <MenuItem Header="Mark Successors"> -->
+    <!--   <MenuItem> -->
+    <!--     <MenuItem.Header> -->
+    <!--       <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkSuccessors" /> -->
+    <!--     </MenuItem.Header> -->
+    <!--   </MenuItem> -->
+    <!-- </MenuItem> -->
+    <!-- <MenuItem -->
+    <!--   Header="Mark Node Group" -->
+    <!--   ToolTip="Mark block and all its predecessors and succesors"> -->
+    <!--   <MenuItem> -->
+    <!--     <MenuItem.Header> -->
+    <!--       <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkGroup" /> -->
+    <!--     </MenuItem.Header> -->
+    <!--   </MenuItem> -->
+    <!-- </MenuItem> -->
+    <!-- <Separator /> -->
+    <!-- -->
+    <!-- <MenuItem -->
+    <!--   Header="Mark Dominators" -->
+    <!--   ToolTip="Mark all the blocks that dominate it"> -->
+    <!--   <MenuItem> -->
+    <!--     <MenuItem.Header> -->
+    <!--       <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominators" /> -->
+    <!--     </MenuItem.Header> -->
+    <!--   </MenuItem> -->
+    <!-- </MenuItem> -->
     <!-- <MenuItem -->
     <!--   Header="Mark Post-Dominators" -->
     <!--   ToolTip="Mark all the blocks that post-dominate it"> -->
@@ -232,15 +232,15 @@
     <!--     </MenuItem.Header> -->
     <!--   </MenuItem> -->
     <!-- </MenuItem> -->
-    <MenuItem
-      Header="Mark Dominance Frontier"
-      ToolTip="Mark all the blocks in its dominance frontier">
-      <MenuItem>
-        <MenuItem.Header>
-          <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominanceFrontier" />
-        </MenuItem.Header>
-      </MenuItem>
-    </MenuItem>
+    <!-- <MenuItem -->
+    <!--   Header="Mark Dominance Frontier" -->
+    <!--   ToolTip="Mark all the blocks in its dominance frontier"> -->
+    <!--   <MenuItem> -->
+    <!--     <MenuItem.Header> -->
+    <!--       <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominanceFrontier" /> -->
+    <!--     </MenuItem.Header> -->
+    <!--   </MenuItem> -->
+    <!-- </MenuItem> -->
     <!-- <MenuItem -->
     <!--   Header="Mark Post-Dominance Frontier" -->
     <!--   ToolTip="Mark all the blocks in its post-dominance frontier"> -->
@@ -250,7 +250,7 @@
     <!--     </MenuItem.Header> -->
     <!--   </MenuItem> -->
     <!-- </MenuItem> -->
-    <Separator />
+    <!-- <Separator /> -->
 
     <!-- <MenuItem Header="Mark Loop"> -->
     <!--   <MenuItem> -->
@@ -286,22 +286,22 @@
 
     </MenuItem>
 
-    <MenuItem Header="Clear">
-      <MenuItem.Icon>
-        <Image
-          Width="16"
-          Height="16"
-          Source="{StaticResource RemoveIcon}" />
-      </MenuItem.Icon>
-      <MenuItem
-        Command="local:GraphCommand.ClearMarked"
-        CommandTarget="{Binding ElementName=GraphHost}"
-        Header="Selected Marker" />
-      <MenuItem
-        Command="local:GraphCommand.ClearAllMarked"
-        CommandTarget="{Binding ElementName=GraphHost}"
-        Header="All Markers" />
-    </MenuItem>
+    <!-- <MenuItem Header="Clear"> -->
+    <!--   <MenuItem.Icon> -->
+    <!--     <Image -->
+    <!--       Width="16" -->
+    <!--       Height="16" -->
+    <!--       Source="{StaticResource RemoveIcon}" /> -->
+    <!--   </MenuItem.Icon> -->
+    <!--   <MenuItem -->
+    <!--     Command="local:GraphCommand.ClearMarked" -->
+    <!--     CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--     Header="Selected Marker" /> -->
+    <!--   <MenuItem -->
+    <!--     Command="local:GraphCommand.ClearAllMarked" -->
+    <!--     CommandTarget="{Binding ElementName=GraphHost}" -->
+    <!--     Header="All Markers" /> -->
+    <!-- </MenuItem> -->
   </ContextMenu>
 
   <Style

@@ -90,23 +90,23 @@
               </StackPanel>
             </ToggleButton.Content>
           </ToggleButton>
-          <ToggleButton
-            MinWidth="75"
-            Margin="-1,0,0,0"
-            Padding="4,2,4,2"
-            HorizontalContentAlignment="Stretch"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-            IsChecked="{Binding ShowSSA, Mode=TwoWay}">
-            <ToggleButton.Content>
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="SSA uses" />
-                <TextBlock
-                  Margin="8,0,0,0"
-                  FontWeight="Medium"
-                  Text="{Binding SSACount}" />
-              </StackPanel>
-            </ToggleButton.Content>
-          </ToggleButton>
+          <!-- <ToggleButton -->
+          <!--   MinWidth="75" -->
+          <!--   Margin="-1,0,0,0" -->
+          <!--   Padding="4,2,4,2" -->
+          <!--   HorizontalContentAlignment="Stretch" -->
+          <!--   BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" -->
+          <!--   IsChecked="{Binding ShowSSA, Mode=TwoWay}"> -->
+          <!--   <ToggleButton.Content> -->
+          <!--     <StackPanel Orientation="Horizontal"> -->
+          <!--       <TextBlock Text="SSA uses" /> -->
+          <!--       <TextBlock -->
+          <!--         Margin="8,0,0,0" -->
+          <!--         FontWeight="Medium" -->
+          <!--         Text="{Binding SSACount}" /> -->
+          <!--     </StackPanel> -->
+          <!--   </ToggleButton.Content> -->
+          <!-- </ToggleButton> -->
 
           <Button
             Command="local:ReferenceCommand.CopyToClipboard"

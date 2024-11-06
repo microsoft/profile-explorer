@@ -275,10 +275,12 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     //? TODO: There should be an option to pick default behavior for SSA values
     //?  - if SSA def, show only SSA uses
     //?  - or always show all refs
+
     // Enabled the filters.
-    if (alwaysShowSSAUses) {
-      FilterKind |= ReferenceKind.SSA;
-    }
+    // if (alwaysShowSSAUses) {
+    //   FilterKind |= ReferenceKind.SSA;
+    // }
+    FilterKind = ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
 
     var refFinder = new ReferenceFinder(Document.Function);
     var operandRefs = refFinder.FindAllReferences(operand);

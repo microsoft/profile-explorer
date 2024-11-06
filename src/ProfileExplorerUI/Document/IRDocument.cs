@@ -1466,57 +1466,58 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
         e.Handled = true;
         break;
       }
-      case Key.M: {
-        if (Utils.IsControlModifierActive()) {
-          if (Utils.IsShiftModifierActive()) {
-            MarkBlockExecuted(this, null);
-          }
-          else {
-            MarkExecuted(this, null);
-          }
-        }
-
-        e.Handled = true;
-        break;
-      }
-      case Key.D: {
-        if (Utils.IsControlModifierActive()) {
-          if (Utils.IsShiftModifierActive()) {
-            MarkDefinitionBlockExecuted(this, null);
-          }
-          else {
-            MarkDefinitionExecuted(this, null);
-          }
-        }
-
-        e.Handled = true;
-        break;
-      }
-      case Key.U: {
-        if (Utils.IsControlModifierActive()) {
-          if (Utils.IsShiftModifierActive()) {
-            MarkUsesExecuted(this, null);
-          }
-          else {
-            ShowUsesExecuted(this, null);
-          }
-        }
-
-        e.Handled = true;
-        break;
-      }
-      case Key.Delete: {
-        if (Utils.IsControlModifierActive() ||
-            Utils.IsShiftModifierActive()) {
-          ClearAllMarkersExecuted(this, null);
-        }
-        else {
-          ClearMarkerExecuted(this, null);
-        }
-
-        e.Handled = true;
-        break;
-      }
+      // Saving of markings with profiling not yet implemented.
+      // case Key.M: {
+      //   if (Utils.IsControlModifierActive()) {
+      //     if (Utils.IsShiftModifierActive()) {
+      //       MarkBlockExecuted(this, null);
+      //     }
+      //     else {
+      //       MarkExecuted(this, null);
+      //     }
+      //   }
+      //
+      //   e.Handled = true;
+      //   break;
+      // }
+      // case Key.D: {
+      //   if (Utils.IsControlModifierActive()) {
+      //     if (Utils.IsShiftModifierActive()) {
+      //       MarkDefinitionBlockExecuted(this, null);
+      //     }
+      //     else {
+      //       MarkDefinitionExecuted(this, null);
+      //     }
+      //   }
+      //
+      //   e.Handled = true;
+      //   break;
+      // }
+      // case Key.U: {
+      //   if (Utils.IsControlModifierActive()) {
+      //     if (Utils.IsShiftModifierActive()) {
+      //       MarkUsesExecuted(this, null);
+      //     }
+      //     else {
+      //       ShowUsesExecuted(this, null);
+      //     }
+      //   }
+      //
+      //   e.Handled = true;
+      //   break;
+      // }
+      // case Key.Delete: {
+      //   if (Utils.IsControlModifierActive() ||
+      //       Utils.IsShiftModifierActive()) {
+      //     ClearAllMarkersExecuted(this, null);
+      //   }
+      //   else {
+      //     ClearMarkerExecuted(this, null);
+      //   }
+      //
+      //   e.Handled = true;
+      //   break;
+      // }
       case Key.B: {
         if (Utils.IsControlModifierActive()) {
           if (Utils.IsShiftModifierActive()) {

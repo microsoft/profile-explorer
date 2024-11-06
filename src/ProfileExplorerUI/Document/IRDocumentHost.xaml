@@ -489,44 +489,44 @@
             </Button>
 
             <Separator />
-            <Menu
-              VerticalAlignment="Center"
-              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-              <MenuItem
-                Padding="0,2,2,2"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Header="Clear"
-                OverridesDefaultStyle="True">
-                <MenuItem.Icon>
-                  <Image
-                    Width="18"
-                    Height="18"
-                    Margin="-2,0,-2,0"
-                    Source="{StaticResource RemoveIcon}"
-                    Style="{StaticResource DisabledImageStyle}" />
-                </MenuItem.Icon>
-                <MenuItem
-                  Command="local:DocumentCommand.ClearMarker"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Selected Marker"
-                  InputGestureText="Ctrl+Del" />
-                <MenuItem
-                  Command="local:DocumentCommand.ClearAllMarkers"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="All Markers"
-                  InputGestureText="Ctrl+Shift+Del" />
-                <MenuItem
-                  Command="local:DocumentCommand.ClearBlockMarkers"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="All Block Markers" />
-                <MenuItem
-                  Command="local:DocumentCommand.ClearInstructionMarkers"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="All Instruction Markers" />
-              </MenuItem>
-            </Menu>
-            <Separator />
+            <!-- <Menu -->
+            <!--   VerticalAlignment="Center" -->
+            <!--   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"> -->
+            <!--   <MenuItem -->
+            <!--     Padding="0,2,2,2" -->
+            <!--     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     BorderBrush="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" -->
+            <!--     Header="Clear" -->
+            <!--     OverridesDefaultStyle="True"> -->
+            <!--     <MenuItem.Icon> -->
+            <!--       <Image -->
+            <!--         Width="18" -->
+            <!--         Height="18" -->
+            <!--         Margin="-2,0,-2,0" -->
+            <!--         Source="{StaticResource RemoveIcon}" -->
+            <!--         Style="{StaticResource DisabledImageStyle}" /> -->
+            <!--     </MenuItem.Icon> -->
+            <!--     <MenuItem -->
+            <!--       Command="local:DocumentCommand.ClearMarker" -->
+            <!--       CommandTarget="{Binding ElementName=TextView}" -->
+            <!--       Header="Selected Marker" -->
+            <!--       InputGestureText="Ctrl+Del" /> -->
+            <!--     <MenuItem -->
+            <!--       Command="local:DocumentCommand.ClearAllMarkers" -->
+            <!--       CommandTarget="{Binding ElementName=TextView}" -->
+            <!--       Header="All Markers" -->
+            <!--       InputGestureText="Ctrl+Shift+Del" /> -->
+            <!--     <MenuItem -->
+            <!--       Command="local:DocumentCommand.ClearBlockMarkers" -->
+            <!--       CommandTarget="{Binding ElementName=TextView}" -->
+            <!--       Header="All Block Markers" /> -->
+            <!--     <MenuItem -->
+            <!--       Command="local:DocumentCommand.ClearInstructionMarkers" -->
+            <!--       CommandTarget="{Binding ElementName=TextView}" -->
+            <!--       Header="All Instruction Markers" /> -->
+            <!--   </MenuItem> -->
+            <!-- </Menu> -->
+            <!-- <Separator /> -->
 
             <!-- <Menu -->
             <!--   VerticalAlignment="Center" -->
@@ -1106,19 +1106,19 @@
                       Style="{StaticResource DisabledImageStyle}" />
                   </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.ShowUses"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Show SSA Uses"
-                  InputGestureText="Ctrl+U">
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource SectionIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                  </MenuItem.Icon>
-                </MenuItem>
+                <!-- <MenuItem -->
+                <!--   Command="local:DocumentCommand.ShowUses" -->
+                <!--   CommandTarget="{Binding ElementName=TextView}" -->
+                <!--   Header="Show SSA Uses" -->
+                <!--   InputGestureText="Ctrl+U"> -->
+                <!--   <MenuItem.Icon> -->
+                <!--     <Image -->
+                <!--       Width="16" -->
+                <!--       Height="16" -->
+                <!--       Source="{StaticResource SectionIcon}" -->
+                <!--       Style="{StaticResource DisabledImageStyle}" /> -->
+                <!--   </MenuItem.Icon> -->
+                <!-- </MenuItem> -->
                 <MenuItem
                   Command="local:DocumentCommand.ShowExpressionGraph"
                   CommandTarget="{Binding ElementName=TextView}"
@@ -1165,73 +1165,74 @@
                 </MenuItem>
                 <Separator />
 
-                <MenuItem
-                  Focusable="False"
-                  Header="Mark"
-                  InputGestureText="Ctrl+M"
-                  IsHitTestVisible="False" />
-                <MenuItem>
-                  <MenuItem.Header>
-                    <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" />
-                  </MenuItem.Header>
-                </MenuItem>
-                <Separator />
-
-                <MenuItem>
-                  <MenuItem.Header>
-                    <local:IconSelector
-                      Margin="0,2,0,2"
-                      IconSelectedCommand="local:DocumentCommand.MarkIcon" />
-                  </MenuItem.Header>
-                </MenuItem>
-                <Separator />
-
-                <MenuItem
-                  Header="Mark Block"
-                  InputGestureText="Ctrl+Shift+M">
-                  <MenuItem>
-                    <MenuItem.Header>
-                      <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkBlock" />
-                    </MenuItem.Header>
-                  </MenuItem>
-                </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.MarkDefinition"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Mark Definition(s)"
-                  InputGestureText="Ctrl+D">
-                  <MenuItem>
-                    <MenuItem.Header>
-                      <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinition" />
-                    </MenuItem.Header>
-                  </MenuItem>
-                </MenuItem>
-                <MenuItem
-                  Header="Mark Definition Block"
-                  InputGestureText="Ctrl+Shift+D">
-                  <MenuItem>
-                    <MenuItem.Header>
-                      <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinitionBlock" />
-                    </MenuItem.Header>
-                  </MenuItem>
-                </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.MarkUses"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Mark Uses"
-                  InputGestureText="Ctrl+Shift+U">
-                  <MenuItem>
-                    <MenuItem.Header>
-                      <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkUses" />
-                    </MenuItem.Header>
-                  </MenuItem>
-                </MenuItem>
-                <MenuItem
-                  Command="local:DocumentCommand.MarkReferences"
-                  CommandTarget="{Binding ElementName=TextView}"
-                  Header="Mark All References"
-                  InputGestureText="Ctrl+Shift+R" />
-                <Separator />
+                <!-- Saving of markings with profiling not yet implemented -->
+                <!-- <MenuItem -->
+                <!--   Focusable="False" -->
+                <!--   Header="Mark" -->
+                <!--   InputGestureText="Ctrl+M" -->
+                <!--   IsHitTestVisible="False" /> -->
+                <!-- <MenuItem> -->
+                <!--   <MenuItem.Header> -->
+                <!--     <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" /> -->
+                <!--   </MenuItem.Header> -->
+                <!-- </MenuItem> -->
+                <!-- <Separator /> -->
+                <!-- -->
+                <!-- <MenuItem> -->
+                <!--   <MenuItem.Header> -->
+                <!--     <local:IconSelector -->
+                <!--       Margin="0,2,0,2" -->
+                <!--       IconSelectedCommand="local:DocumentCommand.MarkIcon" /> -->
+                <!--   </MenuItem.Header> -->
+                <!-- </MenuItem> -->
+                <!-- <Separator /> -->
+                <!-- -->
+                <!-- <MenuItem -->
+                <!--   Header="Mark Block" -->
+                <!--   InputGestureText="Ctrl+Shift+M"> -->
+                <!--   <MenuItem> -->
+                <!--     <MenuItem.Header> -->
+                <!--       <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkBlock" /> -->
+                <!--     </MenuItem.Header> -->
+                <!--   </MenuItem> -->
+                <!-- </MenuItem> -->
+                <!-- <MenuItem -->
+                <!--   Command="local:DocumentCommand.MarkDefinition" -->
+                <!--   CommandTarget="{Binding ElementName=TextView}" -->
+                <!--   Header="Mark Definition(s)" -->
+                <!--   InputGestureText="Ctrl+D"> -->
+                <!--   <MenuItem> -->
+                <!--     <MenuItem.Header> -->
+                <!--       <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinition" /> -->
+                <!--     </MenuItem.Header> -->
+                <!--   </MenuItem> -->
+                <!-- </MenuItem> -->
+                <!-- <MenuItem -->
+                <!--   Header="Mark Definition Block" -->
+                <!--   InputGestureText="Ctrl+Shift+D"> -->
+                <!--   <MenuItem> -->
+                <!--     <MenuItem.Header> -->
+                <!--       <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinitionBlock" /> -->
+                <!--     </MenuItem.Header> -->
+                <!--   </MenuItem> -->
+                <!-- </MenuItem> -->
+                <!-- <MenuItem -->
+                <!--   Command="local:DocumentCommand.MarkUses" -->
+                <!--   CommandTarget="{Binding ElementName=TextView}" -->
+                <!--   Header="Mark Uses" -->
+                <!--   InputGestureText="Ctrl+Shift+U"> -->
+                <!--   <MenuItem> -->
+                <!--     <MenuItem.Header> -->
+                <!--       <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkUses" /> -->
+                <!--     </MenuItem.Header> -->
+                <!--   </MenuItem> -->
+                <!-- </MenuItem> -->
+                <!-- <MenuItem -->
+                <!--   Command="local:DocumentCommand.MarkReferences" -->
+                <!--   CommandTarget="{Binding ElementName=TextView}" -->
+                <!--   Header="Mark All References" -->
+                <!--   InputGestureText="Ctrl+Shift+R" /> -->
+                <!-- <Separator /> -->
 
                 <MenuItem
                   Command="local:DocumentCommand.UndoAction"
@@ -1247,33 +1248,33 @@
                   </MenuItem.Icon>
                 </MenuItem>
 
-                <MenuItem Header="Clear">
-                  <MenuItem
-                    Command="local:DocumentCommand.ClearMarker"
-                    CommandTarget="{Binding ElementName=TextView}"
-                    Header="Selected Marker"
-                    InputGestureText="Ctrl+Del" />
-                  <MenuItem
-                    Command="local:DocumentCommand.ClearAllMarkers"
-                    CommandTarget="{Binding ElementName=TextView}"
-                    Header="All Markers"
-                    InputGestureText="Ctrl+Shift+Del" />
-                  <MenuItem
-                    Command="local:DocumentCommand.ClearBlockMarkers"
-                    CommandTarget="{Binding ElementName=TextView}"
-                    Header="All Block Markers" />
-                  <MenuItem
-                    Command="local:DocumentCommand.ClearInstructionMarkers"
-                    CommandTarget="{Binding ElementName=TextView}"
-                    Header="All Instruction Markers" />
-                  <MenuItem.Icon>
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource RemoveIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                  </MenuItem.Icon>
-                </MenuItem>
+                <!-- <MenuItem Header="Clear"> -->
+                <!--   <MenuItem -->
+                <!--     Command="local:DocumentCommand.ClearMarker" -->
+                <!--     CommandTarget="{Binding ElementName=TextView}" -->
+                <!--     Header="Selected Marker" -->
+                <!--     InputGestureText="Ctrl+Del" /> -->
+                <!--   <MenuItem -->
+                <!--     Command="local:DocumentCommand.ClearAllMarkers" -->
+                <!--     CommandTarget="{Binding ElementName=TextView}" -->
+                <!--     Header="All Markers" -->
+                <!--     InputGestureText="Ctrl+Shift+Del" /> -->
+                <!--   <MenuItem -->
+                <!--     Command="local:DocumentCommand.ClearBlockMarkers" -->
+                <!--     CommandTarget="{Binding ElementName=TextView}" -->
+                <!--     Header="All Block Markers" /> -->
+                <!--   <MenuItem -->
+                <!--     Command="local:DocumentCommand.ClearInstructionMarkers" -->
+                <!--     CommandTarget="{Binding ElementName=TextView}" -->
+                <!--     Header="All Instruction Markers" /> -->
+                <!--   <MenuItem.Icon> -->
+                <!--     <Image -->
+                <!--       Width="16" -->
+                <!--       Height="16" -->
+                <!--       Source="{StaticResource RemoveIcon}" -->
+                <!--       Style="{StaticResource DisabledImageStyle}" /> -->
+                <!--   </MenuItem.Icon> -->
+                <!-- </MenuItem> -->
               </ContextMenu>
             </local:IRDocument.ContextMenu>
           </local:IRDocument>
