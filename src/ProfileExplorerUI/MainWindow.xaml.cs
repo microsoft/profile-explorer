@@ -383,6 +383,13 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
       return;
     }
 
+    // If the window is minimized, restore it first, otherwise
+    // the message box will not be visible even after restoring the window
+    // and the entire UI is blocked.
+    if (WindowState == WindowState.Minimized) {
+      WindowState = WindowState.Normal;
+    }
+
     if (sessionState_.Info.IsFileSession) {
       using var centerForm = new DialogCenteringHelper(this);
 
