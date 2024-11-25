@@ -15,6 +15,10 @@ One of the app's key advantages is its performance. It loads traces fast and off
 #### Assembly, Source File and Flow Graph views of a function:
 <img width="886" alt="image" src="https://github.com/user-attachments/assets/dac21739-49ba-4274-9d12-e0a1b4937bdf">
 
+#### Video introduction
+
+https://github.com/user-attachments/assets/d9a281d3-dc92-4cbe-a3e5-80c4588676a2
+
 ### ⬇️ Download
 
 Installers for the latest version:
@@ -110,10 +114,6 @@ The following projects are build from source, as either x64 or native arm64 bina
 The application started as a tool for helping compiler developers interact with and better understand a compiler's [intermediate representation (IR)](https://en.wikipedia.org/wiki/Intermediate_representation). After adding simple support for viewing profile traces, it gradually gained more profiling features and primarily became a profile viewer.  
 
 The tool's initial focus on compilers has led to some distinctive features, such as the ability to parse assembly code into an internal IR. This enables an interactive view of assembly code and the visualization of control-flow graphs, for example.
-
-### Video demo
-
-https://github.com/user-attachments/assets/d9a281d3-dc92-4cbe-a3e5-80c4588676a2
 
 ### Contributing
 
