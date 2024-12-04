@@ -7,15 +7,17 @@ using System.IO;
 namespace ProfileExplorer.Core;
 
 public class SourceFileMapper {
-  private readonly Dictionary<string, string> map_;
+  private readonly Dictionary<string, string> sourcePathMap_;
+  private readonly Dictionary<string, string> sourceFileCache_;
   private readonly object lockObject_ = new();
 
-  public SourceFileMapper(Dictionary<string, string> map = null) {
-    map_ = map;
-    map_ ??= new Dictionary<string, string>();
+  public SourceFileMapper(Dictionary<string, string> sourcePathMap = null) {
+    sourcePathMap_ = sourcePathMap;
+    sourcePathMap_ ??= new Dictionary<string, string>(); // Saved across sessions.
+    sourceFileCache_ = new Dictionary<string, string>(); // Active per session.
   }
 
-  public Dictionary<string, string> SourceMap => map_;
+  public Dictionary<string, string> SourceMap => sourcePathMap_;
 
   public string Map(string sourceFile, Func<string> lookup = null) {
     if (string.IsNullOrEmpty(sourceFile)) {
@@ -43,15 +45,23 @@ public class SourceFileMapper {
 
   public void Reset() {
     lock (lockObject_) {
-      map_.Clear();
+      sourcePathMap_.Clear();
+      sourcePathMap_.Clear();
     }
   }
 
   private bool TryLookupInMap(string sourceFile, out string result) {
+    // Check the direct mapping cache first.
+    if (sourceFileCache_.TryGetValue(sourceFile, out result)) {
+      return true;
+    }
+
+    // Use the past directory mappings to build the equivalent
+    // local path for the source file.
     int index = sourceFile.LastIndexOf(Path.DirectorySeparatorChar);
 
     while (index > 0) {
-      if (map_.TryGetValue(sourceFile.Substring(0, index), out string mappedDirectory)) {
+      if (sourcePathMap_.TryGetValue(sourceFile.Substring(0, index), out string mappedDirectory)) {
         result = Path.Combine(mappedDirectory, sourceFile.Substring(index + 1));
         return true;
       }
@@ -69,18 +79,26 @@ public class SourceFileMapper {
       return;
     }
 
+    sourceFileCache_[originalPath] = mappedPath;
+
+    // Try to create a mapping between the directory paths,
+    // to be used later with another source file part of the same
+    // directory structure.
     int prevOriginalPath = originalPath.Length;
     int prevMappedPath = mappedPath.Length;
     int originalPathIndex = originalPath.LastIndexOf(Path.DirectorySeparatorChar);
     int mappedPathIndex = mappedPath.LastIndexOf(Path.DirectorySeparatorChar);
 
     while (originalPathIndex > 0 && mappedPathIndex > 0) {
-      if (originalPath.Substring(originalPathIndex, prevOriginalPath - originalPathIndex) !=
-          mappedPath.Substring(mappedPathIndex, prevMappedPath - mappedPathIndex)) {
+      // Stop once there is a mismatch in directory names.
+      // Use a case-insensitive compare for Windows paths.
+      if (!originalPath.Substring(originalPathIndex, prevOriginalPath - originalPathIndex).Equals(
+        mappedPath.Substring(mappedPathIndex, prevMappedPath - mappedPathIndex),
+        StringComparison.OrdinalIgnoreCase)) {
         return;
       }
 
-      map_[originalPath.Substring(0, originalPathIndex)] = mappedPath.Substring(0, mappedPathIndex);
+      sourcePathMap_[originalPath.Substring(0, originalPathIndex)] = mappedPath.Substring(0, mappedPathIndex);
       prevOriginalPath = originalPathIndex;
       prevMappedPath = mappedPathIndex;
 

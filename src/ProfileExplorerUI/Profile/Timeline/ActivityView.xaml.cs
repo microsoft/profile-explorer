@@ -305,7 +305,7 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     }
 
     samplingInterval_ = profile_.Report.SamplingInterval;
-    maxWidth_ = prevMaxWidth_ = visibleArea.Width;
+    maxWidth_ = prevMaxWidth_ = Math.Max(0, visibleArea.Width);
     visual_ = new DrawingVisual();
     visual_.Drawing?.Freeze();
     AddVisualChild(visual_);
@@ -329,8 +329,8 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
       return;
     }
 
-    prevMaxWidth_ = maxWidth;
-    maxWidth_ = maxWidth;
+    prevMaxWidth_ = Math.Max(0, maxWidth);
+    maxWidth_ = Math.Max(0, maxWidth);
     Redraw();
     InvalidateMeasure();
   }
@@ -565,13 +565,14 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
   }
 
   private List<SliceList> ComputeSampleSlices(ProfileData profile, int threadId = -1) {
-    if (profile.Samples.Count == 0) {
+    if (profile.Samples.Count == 0 || maxWidth_ < double.Epsilon) {
       return new List<SliceList>();
     }
 
     startTime_ = profile.Samples[0].Sample.Time;
     endTime_ = profile.Samples[^1].Sample.Time;
-    double slices = maxWidth_ / sliceWidth_ * (prevMaxWidth_ / maxWidth_);
+    double slices = (maxWidth_ / sliceWidth_) * (prevMaxWidth_ / maxWidth_);
+
     var timeDiff = endTime_ - startTime_;
     double timePerSlice = timeDiff.Ticks / slices;
     double timePerSliceReciproc = 1.0 / timePerSlice;

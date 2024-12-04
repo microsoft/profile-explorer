@@ -27,6 +27,8 @@ namespace ProfileExplorer.UI.Binary;
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;
   private const int FunctionCacheMissThreshold = 100;
+  private const int MaxLogEntryLength = 10240;
+
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
   private static readonly StringWriter authLogWriter_;
   private static readonly SymwebHandler authSymwebHandler_;
@@ -608,14 +610,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
             Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
             string filePath = sourceLine.SourceFile.GetSourceFile();
 
-            if (ValidateDownloadedSourceFile(filePath)) {
+            if (SourceFileChecksumMatchesPDB(sourceFile, filePath)) {
               Trace.WriteLine($"Downloaded source file {filePath}");
               localFilePath = filePath;
               hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
             }
             else {
               Trace.WriteLine($"Failed to download source file {localFilePath}");
-              Trace.WriteLine(symbolReaderLog_.ToString());
+              Trace.WriteLine(symbolReaderLog_.ToString().TrimToLength(MaxLogEntryLength));
               symbolReaderLog_.GetStringBuilder().Clear();
               Trace.WriteLine("---------------------------------");
             }
@@ -630,25 +632,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return new SourceFileDebugInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
   }
 
-  private bool ValidateDownloadedSourceFile(string filePath) {
-    try {
-      if (!File.Exists(filePath)) {
-        return false;
-      }
-
-      // If the source server requires authentication, but it's not properly set up,
-      // usually an HTML error page is returned instead, treat it as a failure.
-      //? TODO: Better way to detect this, may need change in TraceEvent lib.
-      string fileText = File.ReadAllText(filePath);
-      return !fileText.Contains(@"<!DOCTYPE html");
-    }
-    catch (Exception ex) {
-      Trace.WriteLine($"Failed to validate downloaded source file {filePath}: {ex.Message}");
+  private bool SourceFileChecksumMatchesPDB(IDiaSourceFile sourceFile, string filePath) {
+    if (string.IsNullOrEmpty(filePath)) {
       return false;
     }
-  }
 
-  private bool SourceFileChecksumMatchesPDB(IDiaSourceFile sourceFile, string filePath) {
     var hashAlgo = GetSourceFileChecksumHashAlgorithm(sourceFile);
     byte[] pdbChecksum = GetSourceFileChecksum(sourceFile);
     byte[] fileChecksum = ComputeSourceFileChecksum(filePath, hashAlgo);

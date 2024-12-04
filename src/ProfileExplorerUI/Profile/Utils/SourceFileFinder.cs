@@ -55,6 +55,10 @@ public class SourceFileFinder {
         return (SourceFileDebugInfo.Unknown, FailureReason.DebugInfoNotFound);
       }
 
+      // First get the source file path from the debug file (this may download it
+      // from a source file server, if enabled). If the file path is not found
+      // on this machine, try to map it to a local path either automatically
+      // or by asking the user to manually locate the source file.
       var sourceInfo = SourceFileDebugInfo.Unknown;
       var funcProfile = session_.ProfileData?.GetFunctionProfile(function);
 
@@ -81,6 +85,8 @@ public class SourceFileFinder {
     // Check if the file can be found. If it's from another machine,
     // a mapping is done after the user is asked to pick the new location of the file.
     if (File.Exists(sourceInfo.FilePath)) {
+      // This assumes that a checksum match was done already
+      // and this is the right source file.
       return (sourceInfo, FailureReason.None);
     }
     else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
