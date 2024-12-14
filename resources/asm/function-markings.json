@@ -70,6 +70,13 @@
       "Name": "\\b(MsgWaitForMultipleObjects|MsgWaitForMultipleObjectsEx|RegisterWaitForSingleObject|SignalObjectAndWait|UnregisterWait|UnregisterWaitEx|WaitForMultipleObjects|WaitForMultipleObjectsEx|WaitForSingleObject|WaitForSingleObjectEx|WaitOnAddress|WaitOrTimerCallback|WakeByAddressAll|WakeByAddressSingle)\\b",
       "Color": "#000000",
       "IsRegex": true
+    },
+    {
+      "IsEnabled": true,
+      "Title": "Exception Handling",
+      "Name": "\\b(RaiseException|RtlRaiseException|RtlDispatchException|RtlpExecuteHandlerForException|__CxxFrameHandler4|RtlUnwind|RtlUnwindEx|__ExceptionPtrRethrow)\\b",
+      "Color": "#000000",
+      "IsRegex": true
     }
   ],
   "Title": "Builtin"

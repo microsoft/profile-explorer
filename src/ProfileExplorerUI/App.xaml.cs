@@ -542,7 +542,10 @@ public partial class App : Application {
 
       foreach (string file in files) {
         string destFile = GetCompilerSettingsFilePath(Path.GetFileName(file), directory);
-        File.Copy(file, destFile, false);
+
+        //? TODO: This should rather try to merge the potentially newer file
+        //? with the existing one that may have user customizations.
+        File.Copy(file, destFile, true);
       }
 
       return true;
