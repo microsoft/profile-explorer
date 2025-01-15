@@ -157,20 +157,21 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   }
 
   private async void InlineeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-    if (InlineeComboBox.SelectedItem != null &&
-        !disableInlineeComboboxEvents_) {
-      UpdateInlineeText();
-      var inlinee = (SourceStackFrame)InlineeComboBox.SelectedItem;
-
-      if (InlineeComboBox.SelectedIndex > 0 &&
-          await LoadInlineeSourceFile(inlinee)) {
-        return;
-      }
-
-      // If failing to load inlinee, load main source file instead.
-      currentInlinee_ = null;
-      await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
-    }
+    // Handling of inlinees not handled quite right, disable for now.
+    // if (InlineeComboBox.SelectedItem != null &&
+    //     !disableInlineeComboboxEvents_) {
+    //   UpdateInlineeText();
+    //   var inlinee = (SourceStackFrame)InlineeComboBox.SelectedItem;
+    //
+    //   if (InlineeComboBox.SelectedIndex > 0 &&
+    //       await LoadInlineeSourceFile(inlinee)) {
+    //     return;
+    //   }
+    //
+    //   // If failing to load inlinee, load main source file instead.
+    //   currentInlinee_ = null;
+    //   await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter);
+    // }
   }
 
   private void InlineUpButton_Click(object sender, RoutedEventArgs e) {
@@ -443,20 +444,22 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     var tag = instr?.GetTag<SourceLocationTag>();
 
     if (tag != null) {
-      if (tag.HasInlinees &&
-          settings_.SyncLineWithDocument &&
-          settings_.SyncInlineeWithDocument) {
-        // Display deepest inlinee instead, if that fails
-        // then it falls back to loading the function's source below.
-        if (!await LoadInlineeSourceFile(tag)) {
-          InlineeComboBox.SelectedIndex = 0; // First item means "no inlinee".
-        }
-
-        return;
-      }
-      else {
-        ResetInlinee();
-      }
+      // Handling of inlinees not handled quite right, disable for now.
+      //
+      // if (tag.HasInlinees &&
+      //     settings_.SyncLineWithDocument &&
+      //     settings_.SyncInlineeWithDocument) {
+      //   // Display deepest inlinee instead, if that fails
+      //   // then it falls back to loading the function's source below.
+      //   if (!await LoadInlineeSourceFile(tag)) {
+      //     InlineeComboBox.SelectedIndex = 0; // First item means "no inlinee".
+      //   }
+      //
+      //   return;
+      // }
+      // else {
+      //   ResetInlinee();
+      // }
 
       if (await LoadSourceFileForFunction(section_.ParentFunction, ProfileTextView.ProfileFilter)) {
         if (settings_.SyncLineWithDocument) {
