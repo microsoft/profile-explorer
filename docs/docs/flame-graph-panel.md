@@ -38,7 +38,7 @@ By default, the nodes are color-coded based on the module names to which the fun
 
 ##### Navigating the flame graph
 
-A *double-click* on a node expands it to cover the entire view and may expand the collapsed nodes. For example, the called nodes become visible after *double-clicking* the node hovered in the screenshot above.  
+*Middle-click* on a node expands it to cover the entire view and may expand collapsed child nodes. For example, the called nodes become visible after expanding the node hovered in the screenshot above. Alternatively, with a node already selected press the *Space* key to expand it. 
 
 [![Profiling UI screenshot](img/flame-graph-expand_944x428.png)](img/flame-graph-expand_944x428.png){:target="_blank"}
 
@@ -90,7 +90,7 @@ Use the *search input box* in the toolbar to search for functions with a specifi
     | Middle-click | Expands (zooms-in) the pointed node to cover the view's width, adjusting child node widths accordingly. |
     | Back | If the mouse has a *Back* button, this undoes the previous action, such as expanding a node (double-click) or changing the root node. An alternative is pressing the *Backspace* key or the *Back* button in the toolbar.|
     | Double-click | Opens the *Assembly* view of the selected function in the active tab. |
-    | Ctrl+Double-click | Opens the *Assembly* view of the selected function in the active tab,  |
+    | Ctrl+Double-click | Opens the *Assembly* view of the selected function in a new tab. |
     | Shift+Double-click | Opens the *Assembly* view of the selected function in the active tab, with profile data filtered to include only the selected instance. |
     | Ctrl+Shift+Double-click | Opens the *Assembly* view of the selected function in a new tab, with profile data filtered to include only the selected instance. |
     | Alt+Double-click | Sets the selected node as the root node of the flame graph. |
