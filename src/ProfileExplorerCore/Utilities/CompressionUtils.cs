@@ -39,21 +39,6 @@ public static class CompressionUtils {
     return Encoding.UTF8.GetString(Decompress(data));
   }
 
-  public static byte[] CreateMD5(byte[] data) {
-    using var md5 = MD5.Create();
-    return md5.ComputeHash(data);
-  }
-
-  public static string CreateMD5String(byte[] data) {
-    byte[] hash = CreateMD5(data);
-    return BitConverter.ToString(hash).Replace("-", string.Empty, StringComparison.Ordinal).
-      ToLowerInvariant();
-  }
-
-  public static string CreateMD5String(string text) {
-    return CreateMD5String(Encoding.UTF8.GetBytes(text));
-  }
-
   public static byte[] CreateSHA256(byte[] data) {
     using var sha = SHA256.Create();
     return sha.ComputeHash(data);
