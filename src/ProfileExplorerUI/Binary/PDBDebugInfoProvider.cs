@@ -638,6 +638,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     var hashAlgo = GetSourceFileChecksumHashAlgorithm(sourceFile);
+    if (hashAlgo == null) {
+      return false;
+    }
+
     byte[] pdbChecksum = GetSourceFileChecksum(sourceFile);
     byte[] fileChecksum = ComputeSourceFileChecksum(filePath, hashAlgo);
     return pdbChecksum != null && fileChecksum != null &&
@@ -698,7 +702,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       1 => MD5.Create(),
       2 => SHA1.Create(),
       3 => SHA256.Create(),
-      _ => MD5.Create()
+      _ => null
     };
   }
 
