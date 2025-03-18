@@ -699,8 +699,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   private HashAlgorithm GetSourceFileChecksumHashAlgorithm(IDiaSourceFile sourceFile) {
     return sourceFile.checksumType switch {
-      1 => MD5.Create(),
-      2 => SHA1.Create(),
       3 => SHA256.Create(),
       _ => null
     };
