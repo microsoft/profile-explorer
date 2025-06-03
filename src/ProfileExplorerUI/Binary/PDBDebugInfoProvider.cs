@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Identity;
 using Dia2Lib;
 using Microsoft.Diagnostics.Symbols;
@@ -57,11 +58,22 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     // Create a single instance of the Symweb handler so that
     // when concurrent requests are made and login must be done,
     // the login page is displayed a single time, with other requests waiting for a token.
-    var authCredential = new DefaultAzureCredential(
-      new DefaultAzureCredentialOptions() {
-        ExcludeInteractiveBrowserCredential = false,
-        ExcludeManagedIdentityCredential = true
-      });
+
+    // DefaultAzureCredential is not allowed per SFI. Mimic behavior while continuing
+    // to exclude the managed identity credential. Some of these could likely be removed
+    var credentials = new List<TokenCredential>
+    {
+      new EnvironmentCredential(),
+      new WorkloadIdentityCredential(),
+      new SharedTokenCacheCredential(),
+      new VisualStudioCredential(),
+      new AzureCliCredential(),
+      new AzurePowerShellCredential(),
+      new AzureDeveloperCliCredential(),
+      new InteractiveBrowserCredential()
+    };
+
+    var authCredential = new ChainedTokenCredential(credentials.ToArray());
 
     authLogWriter_ = new StringWriter();
     authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
