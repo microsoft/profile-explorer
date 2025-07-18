@@ -599,12 +599,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // all the images ones loaded in the process.
       int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
       bool acceptModule = moduleIndex >= 0;
-      if (!acceptModule) continue;
+      if (!acceptModule) {
+        Trace.WriteLine($"Binary download SKIPPED - Module not in top modules list: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
+        continue;
+      }
 
       var binaryFile = FromProfileImage(imageList[i]);
 
       if (symbolSettings.IsRejectedBinaryFile(binaryFile)) {
-        Trace.WriteLine($"Rejected failed binary: {binaryFile}");
+        Trace.WriteLine($"Binary download SKIPPED - Binary file previously rejected: {imageList[i].ModuleName} (binary: {binaryFile})");
         rejectedDebugModules_.Add(imageList[i]);
         continue;
       }
@@ -681,12 +684,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     int pdbCount = 0;
     var pdbTaskSemaphore = new SemaphoreSlim(12);
 
+    Trace.WriteLine("=== DEBUG FILE SEARCH LOGGING TEST - This message should ALWAYS appear ===");
+    Trace.WriteLine($"Starting debug file search for {imageLimit} modules. Low sample cutoff: {moduleSampleCutOff}");
+
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
         return;
       }
 
       if (binTaskList[i] == null) {
+        Trace.WriteLine($"Debug file search SKIPPED - Module rejected during binary filtering: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
         rejectedDebugModules_.Add(imageList[i]);
         continue; // Rejected module.
       }
@@ -698,6 +705,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                           topModules[moduleIndex].SampleCount > moduleSampleCutOff;
 
       if (!acceptModule) {
+        if (moduleIndex < 0) {
+          Trace.WriteLine($"Debug file search SKIPPED - Module not in top modules list: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
+        } else {
+          long sampleCount = topModules[moduleIndex].SampleCount;
+          Trace.WriteLine($"Debug file search SKIPPED - Module sample count too low: {imageList[i].ModuleName} (samples: {sampleCount}, cutoff: {moduleSampleCutOff})");
+        }
         rejectedDebugModules_.Add(imageList[i]);
         continue;
       }
@@ -707,11 +720,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       if (symbolFile != null) {
         if (symbolSettings.IsRejectedSymbolFile(symbolFile)) {
-          Trace.WriteLine($"Rejected failed PDB: {symbolFile}");
+          Trace.WriteLine($"Debug file search SKIPPED - Symbol file previously rejected: {imageList[i].ModuleName} (symbol: {symbolFile})");
           rejectedDebugModules_.Add(imageList[i]);
           continue;
         }
 
+        Trace.WriteLine($"Debug file search STARTED - Using ETL symbol file descriptor: {imageList[i].ModuleName} (symbol: {symbolFile})");
         pdbTaskList[i] = Task.Run(async () => {
           await pdbTaskSemaphore.WaitAsync();
           DebugFileSearchResult result;
@@ -729,6 +743,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       else if (binaryFile is {Found: true}) {
         pdbCount++;
 
+        Trace.WriteLine($"Debug file search STARTED - Using binary file path: {imageList[i].ModuleName} (binary: {binaryFile.FilePath})");
         pdbTaskList[i] = Task.Run(async () => {
           await pdbTaskSemaphore.WaitAsync();
           DebugFileSearchResult result;
@@ -742,6 +757,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
           return result;
         });
+      }
+      else {
+        // Neither symbol file from ETL nor binary file available
+        if (symbolFile == null) {
+          Trace.WriteLine($"Debug file search SKIPPED - No symbol file descriptor in ETL: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
+        }
+        if (binaryFile is {Found: false}) {
+          Trace.WriteLine($"Debug file search SKIPPED - Binary file not found: {imageList[i].ModuleName} (details: {binaryFile?.Details})");
+        }
       }
     }
 
@@ -840,6 +864,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
     }
 
+    Trace.WriteLine($"Debug file search SKIPPED - Module not in binary name allowlist: {image.ModuleName} (path: {image.FilePath})");
     return false;
   }
 

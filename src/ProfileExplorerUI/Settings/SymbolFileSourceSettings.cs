@@ -125,13 +125,19 @@ public class SymbolFileSourceSettings : SettingsBase {
   }
 
   public bool IsRejectedBinaryFile(BinaryFileDescriptor file) {
-    return RejectPreviouslyFailedFiles &&
-           RejectedBinaryFiles.Contains(file);
+    bool isRejected = RejectPreviouslyFailedFiles && RejectedBinaryFiles.Contains(file);
+    if (isRejected) {
+      Trace.WriteLine($"Binary file REJECTED - Previously failed: {file?.ImageName} (path: {file?.ImagePath})");
+    }
+    return isRejected;
   }
 
   public bool IsRejectedSymbolFile(SymbolFileDescriptor file) {
-    return RejectPreviouslyFailedFiles &&
-           RejectedSymbolFiles.Contains(file);
+    bool isRejected = RejectPreviouslyFailedFiles && RejectedSymbolFiles.Contains(file);
+    if (isRejected) {
+      Trace.WriteLine($"Symbol file REJECTED - Previously failed: {file?.FileName} (ID: {file?.Id})");
+    }
+    return isRejected;
   }
 
   public void RejectBinaryFile(BinaryFileDescriptor file) {
