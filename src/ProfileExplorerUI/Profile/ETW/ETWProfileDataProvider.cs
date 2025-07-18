@@ -506,20 +506,30 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples);
     var timer = Stopwatch.StartNew();
     int index = 0;
+    int totalSamplesProcessed = 0;
+    int mainProcessSamples = 0;
+    int samplesWithStacks = 0;
+
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Starting top modules collection for process {mainProcess.ProcessId} ({mainProcess.ImageFileName})");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Total samples in trace: {rawProfile.Samples.Count}");
 
     foreach (ref var sample in sampleRefs) {
+      totalSamplesProcessed++;
       var context = sample.GetContext(rawProfile);
 
       if (context.ProcessId != mainProcess.ProcessId) {
         continue;
       }
 
+      mainProcessSamples++;
       var stack = sample.GetStack(rawProfile);
 
       if (stack.IsUnknown) {
         continue;
       }
 
+      samplesWithStacks++;
+      
       foreach (long frame in stack.FramePointers) {
         ProfileImage frameImage = null;
 
@@ -539,12 +549,27 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // for an approximated set of used modules.
       if ((++index & PROGRESS_UPDATE_INTERVAL - 1) == 0 &&
           timer.ElapsedMilliseconds > 1000) {
+        Trace.WriteLine($"TOP_MODULES_DEBUG: Early termination after {timer.ElapsedMilliseconds}ms at sample {totalSamplesProcessed}");
         break;
       }
     }
 
     var moduleList = moduleMap.ToList();
     moduleList.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Collection completed in {timer.Elapsed}");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Processed {totalSamplesProcessed} total samples");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Found {mainProcessSamples} samples for main process {mainProcess.ProcessId}");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Found {samplesWithStacks} samples with valid stacks");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Collected {moduleMap.Count} unique modules");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Top 20 modules by sample count:");
+
+    for (int i = 0; i < Math.Min(20, moduleList.Count); i++) {
+      var module = moduleList[i];
+      Trace.WriteLine($"TOP_MODULES_DEBUG:   {i + 1}. {module.Item1.ModuleName}: {module.Item2} samples (path: {module.Item1.FilePath})");
+    }
+
+    Trace.WriteLine("TOP_MODULES_DEBUG: =====================================");
 
 #if DEBUG
     Trace.WriteLine($"Collected top modules: {timer.Elapsed}, modules: {moduleMap.Count}");
@@ -581,6 +606,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       moduleSampleCutOff = (int)(symbolSettings.LowSampleModuleCutoff * rawProfile.Samples.Count);
     }
 
+    Trace.WriteLine($"BINARY_FILTER_DEBUG: Sample cutoff calculation: {symbolSettings.LowSampleModuleCutoff} * {rawProfile.Samples.Count} = {moduleSampleCutOff}");
+    Trace.WriteLine($"BINARY_FILTER_DEBUG: Skip low sample modules: {symbolSettings.SkipLowSampleModules}");
+    Trace.WriteLine($"BINARY_FILTER_DEBUG: Starting binary filtering for {imageLimit} total modules");
+
     // Locate the referenced binary files in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, 0);
@@ -591,6 +620,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var binTaskSemaphore = new SemaphoreSlim(8);
 
     for (int i = 0; i < imageLimit; i++) {
+      Trace.WriteLine($"BINARY_FILTER_DEBUG: Processing module {i + 1}/{imageLimit}: {imageList[i].ModuleName}");
+      
       if (!IsAcceptedModule(imageList[i])) {
         Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: REJECTED at binary name allowlist stage: {imageList[i].ModuleName}");
         continue;
@@ -600,6 +631,27 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // all the images ones loaded in the process.
       int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
       bool acceptModule = moduleIndex >= 0;
+      
+      if (moduleIndex >= 0) {
+        int sampleCount = topModules[moduleIndex].Item2;
+        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module found in top modules at position {moduleIndex + 1}: {imageList[i].ModuleName} with {sampleCount} samples");
+      } else {
+        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module NOT found in top modules list: {imageList[i].ModuleName}");
+        // Check if there's a similar module name that might be a match
+        var similarModules = topModules.Where(tm => 
+          tm.Item1.ModuleName.Contains(imageList[i].ModuleName, StringComparison.OrdinalIgnoreCase) ||
+          imageList[i].ModuleName.Contains(tm.Item1.ModuleName, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+        
+        if (similarModules.Any()) {
+          Trace.WriteLine($"BINARY_FILTER_DEBUG: Found {similarModules.Count} modules with similar names:");
+          foreach (var sim in similarModules) {
+            int simIndex = topModules.IndexOf(sim);
+            Trace.WriteLine($"BINARY_FILTER_DEBUG:   - {sim.Item1.ModuleName}: {sim.Item2} samples at position {simIndex + 1}");
+          }
+        }
+      }
+      
       if (!acceptModule) {
         Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: REJECTED at top modules stage: {imageList[i].ModuleName} (not in top modules list)");
         continue;
