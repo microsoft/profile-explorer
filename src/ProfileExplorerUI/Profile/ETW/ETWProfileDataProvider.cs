@@ -509,6 +509,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     int totalSamplesProcessed = 0;
     int mainProcessSamples = 0;
     int samplesWithStacks = 0;
+    int samplesWithoutStacks = 0;
 
     Trace.WriteLine($"TOP_MODULES_DEBUG: Starting top modules collection for process {mainProcess.ProcessId} ({mainProcess.ImageFileName})");
     Trace.WriteLine($"TOP_MODULES_DEBUG: Total samples in trace: {rawProfile.Samples.Count}");
@@ -525,6 +526,22 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var stack = sample.GetStack(rawProfile);
 
       if (stack.IsUnknown) {
+        // Even if no stack is available, count the sample IP itself for module identification
+        // This allows us to load debug files for function name resolution even without stacks
+        ProfileImage frameImage = null;
+
+        if (ETWEventProcessor.IsKernelAddress((ulong)sample.IP, pointerSize)) {
+          frameImage = rawProfile.FindImageForIP(sample.IP, ETWEventProcessor.KernelProcessId);
+        }
+        else {
+          frameImage = rawProfile.FindImageForIP(sample.IP, context.ProcessId);
+        }
+
+        if (frameImage != null) {
+          moduleMap.AccumulateValue(frameImage, 1);
+        }
+        
+        samplesWithoutStacks++;
         continue;
       }
 
@@ -561,6 +578,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"TOP_MODULES_DEBUG: Processed {totalSamplesProcessed} total samples");
     Trace.WriteLine($"TOP_MODULES_DEBUG: Found {mainProcessSamples} samples for main process {mainProcess.ProcessId}");
     Trace.WriteLine($"TOP_MODULES_DEBUG: Found {samplesWithStacks} samples with valid stacks");
+    Trace.WriteLine($"TOP_MODULES_DEBUG: Found {samplesWithoutStacks} samples without stacks (using sample IP for module identification)");
     Trace.WriteLine($"TOP_MODULES_DEBUG: Collected {moduleMap.Count} unique modules");
     Trace.WriteLine($"TOP_MODULES_DEBUG: Top 20 modules by sample count:");
 
