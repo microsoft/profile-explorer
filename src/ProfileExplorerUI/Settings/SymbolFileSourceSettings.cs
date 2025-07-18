@@ -127,7 +127,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool IsRejectedBinaryFile(BinaryFileDescriptor file) {
     bool isRejected = RejectPreviouslyFailedFiles && RejectedBinaryFiles.Contains(file);
     if (isRejected) {
-      Trace.WriteLine($"Binary file REJECTED - Previously failed: {file?.ImageName} (path: {file?.ImagePath})");
+      Trace.WriteLine($"BINARY_FILTER_DEBUG: Binary file REJECTED - Previously failed: {file?.ImageName} (path: {file?.ImagePath})");
     }
     return isRejected;
   }
@@ -135,7 +135,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool IsRejectedSymbolFile(SymbolFileDescriptor file) {
     bool isRejected = RejectPreviouslyFailedFiles && RejectedSymbolFiles.Contains(file);
     if (isRejected) {
-      Trace.WriteLine($"Symbol file REJECTED - Previously failed: {file?.FileName} (ID: {file?.Id})");
+      Trace.WriteLine($"DEBUG_FILTER_DEBUG: Symbol file REJECTED - Previously failed: {file?.FileName} (ID: {file?.Id}, Age: {file?.Age})");
     }
     return isRejected;
   }
