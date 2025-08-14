@@ -77,27 +77,30 @@ public static class ExtensionMethods {
     if (string.IsNullOrEmpty(value)) {
       return 0;
     }
-
-    int count = 1;
-    int index = 0;
-
-    while (index < value.Length) {
-      bool found = false;
-
-      foreach (string separator in NewLineStrings) {
-        int lineIndex = value.IndexOf(separator, index, StringComparison.Ordinal);
-
-        if (lineIndex != -1) {
-          index = lineIndex + 1;
-          count++;
-          found = true;
-          break;
+    int lines = 0;
+    int len = value.Length;
+    for (int i = 0; i < len; i++) {
+      char c = value[i];
+      if (c == '\r') {
+        lines++;
+        // Treat CRLF as a single newline.
+        if (i + 1 < len && value[i + 1] == '\n') {
+          i++;
         }
       }
-
-      if (!found) break;
+      else if (c == '\n') {
+        lines++;
+      }
     }
 
-    return count;
+    // If the last character wasn't a newline, account for the final line.
+    if (len > 0) {
+      char last = value[len - 1];
+      if (last != '\n' && last != '\r') {
+        lines++;
+      }
+    }
+
+    return lines;
   }
 }
