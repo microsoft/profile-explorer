@@ -11,7 +11,7 @@ using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Query;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI;
+namespace ProfileExplorer.Core;
 
 public interface ICompilerInfoProvider {
   string CompilerIRName { get; }

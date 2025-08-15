@@ -3,7 +3,7 @@
 using System;
 using ProfileExplorer.Core;
 
-namespace ProfileExplorer.UI;
+namespace ProfileExplorer.Core;
 
 public delegate string FunctionNameFormatter(string name);
 
