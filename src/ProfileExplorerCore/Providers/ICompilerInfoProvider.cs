@@ -16,17 +16,10 @@ namespace ProfileExplorer.Core;
 public interface ICompilerInfoProvider {
   string CompilerIRName { get; }
   string CompilerDisplayName { get; }
-  string DefaultSyntaxHighlightingFile { get; }
   ISession Session { get; }
   ICompilerIRInfo IR { get; }
   INameProvider NameProvider { get; }
-  ISectionStyleProvider SectionStyleProvider { get; }
   IRRemarkProvider RemarkProvider { get; }
-  List<QueryDefinition> BuiltinQueries { get; }
-  List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
-  List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
-  string OpenFileFilter { get; }
-  string OpenDebugFileFilter { get; }
   Task ReloadSettings();
 
   Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
@@ -34,9 +27,6 @@ public interface ICompilerInfoProvider {
 
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
   Task HandleLoadedDocument(LoadedDocument document, string modulePath);
-  IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
-  IDiffInputFilter CreateDiffInputFilter();
-  IDiffOutputFilter CreateDiffOutputFilter();
   IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
   Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
   DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
