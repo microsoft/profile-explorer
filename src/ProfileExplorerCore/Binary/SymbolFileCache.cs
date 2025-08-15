@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ProfileExplorer.Core.FileFormat;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
 namespace ProfileExplorer.Core.Binary;

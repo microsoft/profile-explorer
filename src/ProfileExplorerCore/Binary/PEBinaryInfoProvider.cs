@@ -9,7 +9,8 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Symbols;
-using ProfileExplorer.UI.Compilers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Binary;
 
