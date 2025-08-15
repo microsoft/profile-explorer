@@ -8,7 +8,7 @@ using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Compilers;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public interface IDebugInfoProvider : IDisposable {
   public Machine? Architecture { get; }

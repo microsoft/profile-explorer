@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Diagnostics.Symbols;
 using ProfileExplorer.UI.Compilers;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ = new();

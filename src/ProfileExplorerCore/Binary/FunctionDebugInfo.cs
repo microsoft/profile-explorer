@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 [ProtoContract(SkipConstructor = true)]
 public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {

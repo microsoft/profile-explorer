@@ -13,7 +13,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.ASM;
 using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public delegate void DisassemblerProgressHandler(DisassemblerProgress info);
 

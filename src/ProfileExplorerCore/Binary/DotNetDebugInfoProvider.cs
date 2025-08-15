@@ -12,7 +12,7 @@ using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 //? Provider ASM should return instance instead of JSONDebug
 public class DotNetDebugInfoProvider : IDebugInfoProvider {

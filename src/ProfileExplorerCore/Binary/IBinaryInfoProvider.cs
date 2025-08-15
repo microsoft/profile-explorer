@@ -4,7 +4,7 @@ using System;
 using System.Reflection.PortableExecutable;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public enum BinaryFileKind {
   Native,

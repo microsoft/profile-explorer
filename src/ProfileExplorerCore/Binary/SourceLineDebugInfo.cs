@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using ProfileExplorer.Core.IR;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 [ProtoContract(SkipConstructor = true)]
 public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {

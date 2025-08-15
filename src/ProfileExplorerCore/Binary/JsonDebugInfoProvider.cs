@@ -8,7 +8,7 @@ using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public class JsonDebugInfoProvider : IDebugInfoProvider {
   private Dictionary<string, FunctionDebugInfo> functionMap_;

@@ -23,7 +23,7 @@ using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.UI.Compilers;
 using StringWriter = System.IO.StringWriter;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using ProfileExplorer.Core.FileFormat;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 [ProtoContract]
 public class SymbolFileCache {
