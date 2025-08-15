@@ -103,4 +103,12 @@ public static class ExtensionMethods {
 
     return lines;
   }
+
+  public static string TrimToLength(this string text, int maxLength) {
+    if (text.Length <= maxLength) {
+      return text;
+    }
+
+    return $"{text.Substring(0, maxLength)}..";
+  }
 }

@@ -30,10 +30,6 @@ using Xceed.Wpf.Toolkit.Core.Utilities;
 namespace ProfileExplorer.UI;
 
 public static class Utils {
-  private static readonly TaskFactory TaskFactoryInstance = new(CancellationToken.None,
-                                                                TaskCreationOptions.None,
-                                                                TaskContinuationOptions.None,
-                                                                TaskScheduler.Default);
   private static readonly string HTML_COPY_HEADER =
     "Version:0.9\r\n" +
     "StartHTML:{0:0000000000}\r\n" +
@@ -48,15 +44,6 @@ public static class Utils {
     "<!--EndFragment-->\r\n" +
     "</body>\r\n" +
     "</html>";
-
-  public static TResult RunSync<TResult>(Func<Task<TResult>> func) {
-    return TaskFactoryInstance.StartNew<Task<TResult>>(func).
-      Unwrap<TResult>().GetAwaiter().GetResult();
-  }
-
-  public static void RunSync(Func<Task> func) {
-    TaskFactoryInstance.StartNew<Task>(func).Unwrap().GetAwaiter().GetResult();
-  }
 
   public static bool IsShiftModifierActive() {
     return (Keyboard.Modifiers & ModifierKeys.Shift) != 0;

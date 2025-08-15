@@ -21,7 +21,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Settings;
-using ProfileExplorer.UI.Compilers;
+using ProfileExplorer.Core.Utilities;
 using StringWriter = System.IO.StringWriter;
 
 namespace ProfileExplorer.Core.Binary;

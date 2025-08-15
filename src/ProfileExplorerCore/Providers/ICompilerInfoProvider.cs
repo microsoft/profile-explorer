@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;

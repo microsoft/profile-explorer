@@ -40,14 +40,6 @@ static class ExtensionMethods {
     return value.RemoveChars(NewLineChars);
   }
 
-  public static string TrimToLength(this string text, int maxLength) {
-    if (text.Length <= maxLength) {
-      return text;
-    }
-
-    return $"{text.Substring(0, maxLength)}..";
-  }
-
   public static List<int> AllIndexesOf(this string text, string value) {
     if (string.IsNullOrEmpty(value)) {
       return new List<int>();
