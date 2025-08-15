@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using ProfileExplorer.UI.Binary;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI.Compilers;
+namespace ProfileExplorer.Core.Settings;
 
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceSettings : SettingsBase {

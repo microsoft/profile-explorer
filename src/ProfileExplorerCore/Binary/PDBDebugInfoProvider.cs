@@ -20,6 +20,7 @@ using Microsoft.Diagnostics.Symbols.Authentication;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.UI.Compilers;
 using StringWriter = System.IO.StringWriter;
 

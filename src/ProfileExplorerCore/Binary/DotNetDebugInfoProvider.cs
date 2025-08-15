@@ -9,6 +9,7 @@ using Microsoft.Diagnostics.Symbols;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
 
@@ -184,8 +185,12 @@ public class DotNetDebugInfoProvider : IDebugInfoProvider {
       return false; // Previous attempt failed.
     }
 
+    if (SymbolSettings == null) {
+      return false; // No symbol settings available.
+    }
+
     // Locate the managed debug file.
-    var options = SymbolSettings != null ? SymbolSettings : App.Settings.SymbolSettings.Clone();
+    var options = SymbolSettings;
 
     if (File.Exists(ManagedSymbolFile.FileName)) {
       options.InsertSymbolPath(ManagedSymbolFile.FileName);
