@@ -6,7 +6,7 @@ using System.Reflection.PortableExecutable;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Settings;
-using ProfileExplorer.UI.Compilers;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
 namespace ProfileExplorer.Core.Binary;

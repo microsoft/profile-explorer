@@ -5,8 +5,8 @@ using System.Reflection.PortableExecutable;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
-using ProfileExplorer.UI.Compilers;
 
 namespace ProfileExplorer.Core.Binary;
 

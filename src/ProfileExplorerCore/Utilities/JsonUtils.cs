@@ -2,15 +2,15 @@
 // Licensed under the MIT license.
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Windows.Media;
 
-namespace ProfileExplorer.UI;
+namespace ProfileExplorer.Core.Utilities;
 
-public class JsonColorConverter : JsonConverter<Color> {
+/*public class JsonColorConverter : JsonConverter<Color> {
   public override Color Read(ref Utf8JsonReader reader, Type typeToConvert,
                              JsonSerializerOptions options) {
     return Utils.ColorFromString(reader.GetString());
@@ -30,7 +30,7 @@ public class StringInterningConverter : JsonConverter<string> {
   public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) {
     writer.WriteStringValue(value);
   }
-}
+}*/
 
 public static class JsonUtils {
   public static JsonSerializerOptions GetJsonOptions() {
@@ -40,8 +40,8 @@ public static class JsonUtils {
       IgnoreReadOnlyProperties = true
     };
 
-    options.Converters.Add(new JsonColorConverter());
-    options.Converters.Add(new StringInterningConverter());
+    /*options.Converters.Add(new JsonColorConverter());
+    options.Converters.Add(new StringInterningConverter());*/
     options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     return options;
   }
