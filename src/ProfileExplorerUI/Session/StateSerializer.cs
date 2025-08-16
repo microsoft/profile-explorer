@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 using ProtoBuf.Meta;
 
@@ -132,10 +133,11 @@ public class FontWeightSurrogate {
   }
 }
 
+/// <summary>
+/// UI-specific state serializer that extends the Core StateSerializer with UI type support.
+/// Handles WPF types (Color, Brush, Pen, etc.) and FunctionIR context serialization.
+/// </summary>
 static class StateSerializer {
-  public static readonly int subtypeIdStep_ = 100;
-  public static int nextSubtypeId_;
-
   static StateSerializer() {
     RegisterSurrogate<Color, ColorSurrogate>();
     RegisterSurrogate<Brush, BrushSurrogate>();
@@ -155,31 +157,41 @@ static class StateSerializer {
     model.Add(realType, false).SetSurrogate(surrogateType);
   }
 
+  // Delegate to Core StateSerializer for basic functionality
   public static void RegisterDerivedClass<T1, T2>(int id = 0) {
-    RegisterDerivedClass(typeof(T1), typeof(T2), id);
+    ProfileExplorer.Core.Settings.StateSerializer.RegisterDerivedClass<T1, T2>(id);
   }
 
   public static void RegisterDerivedClass(Type derivedType, Type baseType, int id = 0) {
-    var model = RuntimeTypeModel.Default;
-
-    if (id == 0) {
-      nextSubtypeId_ += subtypeIdStep_;
-      id = nextSubtypeId_;
-    }
-
-    model.Add(baseType, false).AddSubType(id, derivedType);
+    ProfileExplorer.Core.Settings.StateSerializer.RegisterDerivedClass(derivedType, baseType, id);
   }
 
+  // Basic serialization methods - delegate to Core
+  public static byte[] Serialize<T>(T state) where T : class {
+    return ProfileExplorer.Core.Settings.StateSerializer.Serialize(state);
+  }
+
+  public static bool Serialize<T>(string filePath, T state) where T : class {
+    return ProfileExplorer.Core.Settings.StateSerializer.Serialize(filePath, state);
+  }
+
+  public static T Deserialize<T>(byte[] data) where T : class {
+    return ProfileExplorer.Core.Settings.StateSerializer.Deserialize<T>(data);
+  }
+
+  public static T Deserialize<T>(string filePath) where T : class {
+    return ProfileExplorer.Core.Settings.StateSerializer.Deserialize<T>(filePath);
+  }
+
+  // UI-specific overloads with FunctionIR support
   public static byte[] Serialize<T>(T state, FunctionIR function = null) where T : class {
-    using var stream = new MemoryStream();
-    Serializer.Serialize(stream, state);
-    return stream.ToArray();
+    // For now, function parameter is ignored - could be used for context-specific serialization
+    return Serialize(state);
   }
 
   public static bool Serialize<T>(string filePath, T state, FunctionIR function = null) where T : class {
-    using var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.ReadWrite);
-    Serializer.Serialize(stream, state);
-    return true;
+    // For now, function parameter is ignored - could be used for context-specific serialization  
+    return Serialize(filePath, state);
   }
 
   public static T Deserialize<T>(byte[] data, FunctionIR function) where T : class {
@@ -191,20 +203,6 @@ static class StateSerializer {
     }
 
     return null;
-  }
-
-  public static T Deserialize<T>(byte[] data) where T : class {
-    if (data == null) {
-      return null;
-    }
-
-    var stream = new MemoryStream(data);
-    return Serializer.Deserialize<T>(stream);
-  }
-
-  public static T Deserialize<T>(string filePath) where T : class {
-    using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-    return Serializer.Deserialize<T>(stream);
   }
 
   public static T Deserialize<T>(object data, FunctionIR function) where T : class {

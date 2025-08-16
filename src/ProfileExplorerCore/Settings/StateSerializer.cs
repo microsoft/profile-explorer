@@ -11,7 +11,7 @@ namespace ProfileExplorer.Core.Settings;
 /// Core state serializer for non-UI objects using protobuf.
 /// For UI-specific serialization with surrogates, use ProfileExplorer.UI.StateSerializer.
 /// </summary>
-static class StateSerializer {
+public static class StateSerializer {
   public static readonly int subtypeIdStep_ = 100;
   public static int nextSubtypeId_;
 
