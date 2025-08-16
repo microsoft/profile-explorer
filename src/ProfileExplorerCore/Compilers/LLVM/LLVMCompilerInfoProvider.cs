@@ -97,10 +97,6 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
-    return Task.CompletedTask;
-  }
-
   public Task ReloadSettings() {
     return Task.CompletedTask;
   }

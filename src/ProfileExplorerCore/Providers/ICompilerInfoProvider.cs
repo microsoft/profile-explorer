@@ -28,7 +28,6 @@ public interface ICompilerInfoProvider {
                                    FunctionDebugInfo funcDebugInfo = null);
 
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
-  Task HandleLoadedDocument(LoadedDocument document, string modulePath);
   IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
   Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
   DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);

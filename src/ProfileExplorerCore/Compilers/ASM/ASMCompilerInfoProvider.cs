@@ -43,10 +43,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
 
-  public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
-    return Task.CompletedTask;
-  }
-
   public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
                                                 FunctionDebugInfo funcDebugInfo) {
     // Annotate the instructions with debug info (line numbers, source files)
