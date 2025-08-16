@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Diff;

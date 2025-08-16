@@ -10,7 +10,7 @@ using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Query;
 
-namespace ProfileExplorer.UI.Compilers.LLVM;
+namespace ProfileExplorer.Core.Compilers.LLVM;
 
 public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   private LLVMCompilerIRInfo ir_;

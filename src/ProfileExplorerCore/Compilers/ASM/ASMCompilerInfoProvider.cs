@@ -12,7 +12,7 @@ using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
 
-namespace ProfileExplorer.UI.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private static Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();
