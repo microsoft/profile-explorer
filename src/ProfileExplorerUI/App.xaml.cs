@@ -11,6 +11,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shell;
 using System.Xml;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.UI.Settings;
 
 namespace ProfileExplorer.UI;
 
@@ -302,6 +304,9 @@ public partial class App : Application {
       if (Settings.RecentComparedFiles == null) {
         Settings.RecentComparedFiles = new List<Tuple<string, string>>();
       }
+
+      // Register UI-specific type converters for the Core settings system
+      InitializeTypeConverters();
 
       return true;
     }
@@ -706,5 +711,10 @@ public partial class App : Application {
     //? TODO: Start new instance only after settings were saved.
     Process.Start(Process.GetCurrentProcess().MainModule.FileName);
     Current.Shutdown();
+  }
+
+  private static void InitializeTypeConverters() {
+    // Register UI-specific type converters for the Core settings system
+    TypeConverterRegistry.Register(new ColorTypeConverter());
   }
 }

@@ -6,10 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
-using System.Windows.Media;
 using ProtoBuf;
 
-namespace ProfileExplorer.UI;
+namespace ProfileExplorer.Core.Settings;
 
 // A typical settings class should:
 // - should inherit from SettingsBase and be marked with ProtoContract.
@@ -160,27 +159,21 @@ public class SettingsBase {
         property.SetValue(obj, convertedValue);
       }
       else if (optionAttr.Value is string strValue) {
-        // Convert from string to a known type.
-        if (property.PropertyType == typeof(Color)) {
-          property.SetValue(obj, Utils.ColorFromString(strValue));
+        // Try to convert from string using registered type converters.
+        if (TypeConverterRegistry.TryConvertFromString(strValue, property.PropertyType, out object convertedValue)) {
+          property.SetValue(obj, convertedValue);
         }
         else {
-          throw new InvalidOperationException("Type not handled");
+          throw new InvalidOperationException($"No converter available for type {property.PropertyType}");
         }
       }
       else if (optionAttr.Value is string[] strArray) {
-        // Convert from multiple strings to a an array.
-        if (property.PropertyType == typeof(Color[])) {
-          var colors = new Color[strArray.Length];
-
-          for (int i = 0; i < strArray.Length; i++) {
-            colors[i] = Utils.ColorFromString(strArray[i]);
-          }
-
-          property.SetValue(obj, colors);
+        // Try to convert from string array using registered type converters.
+        if (TypeConverterRegistry.TryConvertFromStringArray(strArray, property.PropertyType, out object convertedValue)) {
+          property.SetValue(obj, convertedValue);
         }
         else {
-          throw new InvalidOperationException("Type not handled");
+          throw new InvalidOperationException($"No converter available for array type {property.PropertyType}");
         }
       }
       else {
