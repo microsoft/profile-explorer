@@ -539,12 +539,15 @@ public abstract class SectionReaderBase : IRSectionReader, IDisposable {
       }
 
       // Go back and find the name of the section.
-      int sectionStartLine = lineIndex_ + (hasSectionName ? 1 : 0);
+      // If the current line is both a section and a function start (e.g. ASM 'func:'),
+      // exclude the header from the section body output so tests see only the body.
+      bool isFuncStartLine = SectionStartIsFunctionStart(currentLine_);
+      int sectionStartLine = lineIndex_ + ((hasSectionName || isFuncStartLine) ? 1 : 0);
       int sectionEndLine = 0;
       string sectionName = hasSectionName ? ExtractSectionName(currentLine_) : string.Empty;
 
       // Find the end of the section and extract the function name.
-      long startOffset = hasSectionName ? TextOffset() : previousOffset_;
+      long startOffset = (hasSectionName || isFuncStartLine) ? TextOffset() : previousOffset_;
       long endOffset = startOffset;
       int blockCount = 0;
 
@@ -563,6 +566,8 @@ public abstract class SectionReaderBase : IRSectionReader, IDisposable {
 
         if (sectionTextHandler != null) {
           if (!IsFunctionEnd(currentLine_) || !FunctionEndIsFunctionStart(currentLine_)) {
+            // Add current line as part of section body. Header line was never added because
+            // population starts only after advancing past the section/function start line.
             sectionLines.Add(currentLine_);
           }
         }

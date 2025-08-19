@@ -1,9 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Media;
+using ProtoBuf;
+using ProfileExplorer.UI; // For SettingsBase, OptionValueAttribute, Utils
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 namespace ProfileExplorerUITests.Settings;
 
 [TestClass]
-[TestSubject(typeof(SettingsBase))]
 public class SettingsBaseTests {
   [TestMethod]
   public void TestCollectOptions() {

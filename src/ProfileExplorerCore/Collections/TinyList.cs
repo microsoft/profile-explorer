@@ -111,7 +111,18 @@ public struct TinyList<T> : IList<T> {
   }
 
   public void CopyTo(T[] array, int arrayIndex) {
-    throw new NotImplementedException();
+    if (array == null) throw new ArgumentNullException(nameof(array));
+    if (arrayIndex < 0) throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+    if (array.Length - arrayIndex < count_) throw new ArgumentException("Destination array is not long enough");
+
+    if (count_ == 0) return;
+    if (count_ == 1) {
+      array[arrayIndex] = (T)value_;
+      return;
+    }
+
+    var src = (T[])value_;
+    Array.Copy(src, 0, array, arrayIndex, count_);
   }
 
   public bool Remove(T item) {
@@ -168,11 +179,13 @@ public struct TinyList<T> : IList<T> {
   }
 
   public void Insert(int index, T item) {
-    throw new NotImplementedException();
+  // Not needed for current usage. Implement if required later.
+  throw new NotSupportedException();
   }
 
   public void RemoveAt(int index) {
-    throw new NotImplementedException();
+  // Not needed for current usage. Implement if required later.
+  throw new NotSupportedException();
   }
 
   public T this[int index] {

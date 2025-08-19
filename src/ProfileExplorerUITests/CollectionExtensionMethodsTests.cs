@@ -1,5 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
+using System;
+using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ProfileExplorer.UI; // Extension methods namespace
+
 namespace ProfileExplorerUITests;
 
 [TestClass]
