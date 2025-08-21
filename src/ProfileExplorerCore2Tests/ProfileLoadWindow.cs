@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ using ProfileExplorerCore2.Session;
 using ProfileExplorerCore2.Settings;
 using ProfileExplorerCore2.Utilities;
 
-namespace ProfileExplorerCore2.Windows;
+namespace ProfileExplorerCore2Tests;
 
 public class ProfileLoadWindow {
     private CancelableTaskInstance loadTask_;
@@ -65,12 +64,16 @@ public class ProfileLoadWindow {
         await CancelLoadingTask();
         if (!File.Exists(etlFilePath)) return null;
         using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
-        processList_ = await ETWProfileDataProvider.FindTraceProcesses(etlFilePath, options_, null, task);
+        processList_ = await ETWProfileDataProvider.FindTraceProcesses(etlFilePath, options_, ProcessListProgressCallback, task);
         return processList_;
     }
 
-    // Entry point: Select process by processId
-    public void SelectProcess(int processId) {
+  private void ProcessListProgressCallback(ProcessListProgress progressInfo) {
+    Console.WriteLine("Callback");
+  }
+
+  // Entry point: Select process by processId
+  public void SelectProcess(int processId) {
         if (processList_ == null) throw new InvalidOperationException("Process list not loaded");
         var proc = processList_.FirstOrDefault(p => p.Process.ProcessId == processId);
         if (proc == null) throw new ArgumentException($"Process {processId} not found in ETL");

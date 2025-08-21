@@ -60,7 +60,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   public async Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function) {
-    var loadedDoc = Session.SessionState.FindLoadedDocument(function);
+    var loadedDoc = Session.FindLoadedDocument(function);
 
     lock (loadedDoc) {
       if (loadedDoc.DebugInfo != null) {
