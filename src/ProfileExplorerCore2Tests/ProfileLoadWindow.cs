@@ -65,7 +65,8 @@ public class ProfileLoadWindow {
         if (!File.Exists(etlFilePath)) return null;
         using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
         processList_ = await ETWProfileDataProvider.FindTraceProcesses(etlFilePath, options_, ProcessListProgressCallback, task);
-        return processList_;
+      ProfileFilePath = etlFilePath;
+      return processList_;
     }
 
   private void ProcessListProgressCallback(ProcessListProgress progressInfo) {

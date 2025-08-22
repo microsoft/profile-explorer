@@ -33,8 +33,6 @@ public class BaseSession : ISession
   private LoadedDocument mainDocument_;
 
   public ICompilerInfoProvider CompilerInfo => compilerInfo_;
-    private bool IsSessionStarted { get; set; }
-
     public ProfileData ProfileData { get; private set; }
 
     public IReadOnlyList<LoadedDocument> Documents => documents_;
@@ -142,10 +140,6 @@ public class BaseSession : ISession
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
-
-    if (!IsSessionStarted) {
-      return false;
-    }
 
     if (result != null) {
       result.Report = report;

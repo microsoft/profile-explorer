@@ -34,12 +34,23 @@ public class ProfileLoadWindowTests
         string etlPath = @"C:\Users\benjaming.REDMOND\OneDrive - Microsoft\Documents\My Documents\Tracing\trace.etl";
         int processId = 34376;
 
+        // Remove symbol server search paths for faster test
+        window.SymbolSettings.SymbolPaths.Clear();
+        window.SymbolSettings.UseEnvironmentVarSymbolPaths = false;
+        // Optionally, also clear any default symbol servers if present
+        // window.SymbolSettings.ClearRejectedFiles();
+
         // Act & Assert
         var processList = await window.LoadProcessList(etlPath);
         Assert.NotNull(processList);
         window.SelectProcess(processId);
         var report = await window.LoadProfileTrace();
         Assert.NotNull(report);
-    }
+
+        foreach (var pair in session.ProfileData.ModuleWeights) {
+          double weightPercentage = session.ProfileData.ScaleModuleWeight(pair.Value);
+          Console.WriteLine($"{session.ProfileData.Modules[pair.Key].ModuleName}: {weightPercentage}%, {pair.Value}");
+        }
+  }
 }
 
