@@ -13,10 +13,11 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

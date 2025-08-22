@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 
 namespace ProfileExplorer.UI.Profile;
 

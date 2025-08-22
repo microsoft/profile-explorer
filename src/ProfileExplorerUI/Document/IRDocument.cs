@@ -22,15 +22,16 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
-using TextLocation = ProfileExplorer.Core.TextLocation;
+using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 
@@ -1804,7 +1805,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private IRElement CreateDummyElement(int offset, int length) {
     int line = Document.GetLineByOffset(offset).LineNumber;
-    var location = new TextLocation(offset, line, 0);
+    var location = new ProfileExplorerCore2.TextLocation(offset, line, 0);
     return new IRElement(location, length);
   }
 

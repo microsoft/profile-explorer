@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
 
 namespace ProfileExplorer.UI;
 

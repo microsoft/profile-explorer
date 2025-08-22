@@ -3,14 +3,15 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.ASM;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
+using ProfileExplorerCore2.Compilers.Architecture;
+using ProfileExplorerCore2.Compilers.ASM;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 

@@ -12,8 +12,8 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Editing;
 using Microsoft.CodeAnalysis;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Scripting;
 
 namespace ProfileExplorer.UI;
@@ -52,8 +52,8 @@ public partial class ScriptingPanel : ToolPanelControl {
                 "using System;",
                 "using System.Collections.Generic;",
                 "using System.Windows.Media;",
-                "using ProfileExplorer.Core;", "using ProfileExplorer.Core.IR;",
-                "using ProfileExplorer.Core.Analysis;",
+                "using ProfileExplorerCore2;", "using ProfileExplorerCore2.IR;",
+                "using ProfileExplorerCore2.Analysis;",
                 "using ProfileExplorer.UI;",
                 "using ProfileExplorer.UI.Scripting;",
                 "\n",

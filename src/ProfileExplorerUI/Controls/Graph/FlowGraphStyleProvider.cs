@@ -2,8 +2,9 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Windows.Media;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
 
 namespace ProfileExplorer.UI;
 

@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;

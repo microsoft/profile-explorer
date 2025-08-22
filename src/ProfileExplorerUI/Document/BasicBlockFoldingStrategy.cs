@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2.IR;
 
 namespace ProfileExplorer.UI;
 

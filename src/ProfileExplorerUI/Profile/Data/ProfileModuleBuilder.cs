@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 

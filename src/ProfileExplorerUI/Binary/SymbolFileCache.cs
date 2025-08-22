@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using ProfileExplorer.Core.FileFormat;
+using ProfileExplorerCore2.FileFormat;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI.Binary;

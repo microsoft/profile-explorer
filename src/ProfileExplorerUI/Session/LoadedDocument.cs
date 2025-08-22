@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;

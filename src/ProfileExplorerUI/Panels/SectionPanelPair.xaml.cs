@@ -6,7 +6,8 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

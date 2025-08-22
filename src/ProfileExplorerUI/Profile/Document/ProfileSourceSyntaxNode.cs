@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.SourceParser;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.SourceParser;
 
 namespace ProfileExplorer.UI.Profile.Document;
 

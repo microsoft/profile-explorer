@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using DiffPlex.DiffBuilder.Model;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.OptionsPanels;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

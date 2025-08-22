@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Windows;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

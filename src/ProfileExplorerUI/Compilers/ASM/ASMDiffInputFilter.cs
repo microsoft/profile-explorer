@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Diff;
 
 namespace ProfileExplorer.UI.Compilers.ASM;

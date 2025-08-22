@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorer.UI.DebugServer;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

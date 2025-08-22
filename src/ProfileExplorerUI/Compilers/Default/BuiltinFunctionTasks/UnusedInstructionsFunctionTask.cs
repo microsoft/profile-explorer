@@ -4,10 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Media;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Query;
+using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

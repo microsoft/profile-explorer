@@ -6,10 +6,10 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

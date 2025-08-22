@@ -6,9 +6,10 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Scripting;
 

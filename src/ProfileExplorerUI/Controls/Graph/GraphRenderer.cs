@@ -6,8 +6,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
 
 namespace ProfileExplorer.UI;
 

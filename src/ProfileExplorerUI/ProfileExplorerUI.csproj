@@ -189,7 +189,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\GrpcLib\GrpcLib.csproj" />
 		<ProjectReference Include="..\external\TreeListView\TreeListView.csproj" />
-		<ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
+		<ProjectReference Include="..\ProfileExplorerCore2\ProfileExplorerCore2.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

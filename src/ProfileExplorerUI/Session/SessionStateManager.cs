@@ -4,9 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AvalonDock.Layout;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
+using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Compilers.Architecture;
 
 namespace ProfileExplorer.UI;
 

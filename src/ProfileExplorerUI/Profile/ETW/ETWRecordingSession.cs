@@ -11,7 +11,8 @@ using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

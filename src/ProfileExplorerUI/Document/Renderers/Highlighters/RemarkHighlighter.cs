@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Document;
 
 namespace ProfileExplorer.UI;

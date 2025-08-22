@@ -11,10 +11,11 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Aga.Controls.Tree;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

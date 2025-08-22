@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -3,9 +3,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

@@ -9,7 +9,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

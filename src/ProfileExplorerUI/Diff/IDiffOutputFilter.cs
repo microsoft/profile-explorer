@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using DiffPlex.DiffBuilder.Model;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 
 namespace ProfileExplorer.UI.Diff;
 

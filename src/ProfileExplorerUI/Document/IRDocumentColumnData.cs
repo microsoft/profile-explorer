@@ -7,8 +7,8 @@ using System.Windows;
 using System.Windows.Media;
 using ClosedXML.Excel;
 using HtmlAgilityPack;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.Utilities;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 namespace ProfileExplorer.UI;

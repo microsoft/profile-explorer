@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Binary;
 
 namespace ProfileExplorer.UI.Compilers;

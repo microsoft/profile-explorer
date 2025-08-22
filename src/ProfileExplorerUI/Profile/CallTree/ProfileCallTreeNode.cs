@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Collections;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Collections;
 using ProfileExplorer.UI.Binary;
 
 namespace ProfileExplorer.UI.Profile;

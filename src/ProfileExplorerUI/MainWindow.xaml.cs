@@ -17,11 +17,11 @@ using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using AvalonDock;
 using AvalonDock.Layout;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorer.UI.Compilers.ASM;
 using ProfileExplorer.UI.Compilers.LLVM;
 using ProfileExplorer.UI.Controls;
@@ -29,6 +29,8 @@ using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Scripting;
+using ProfileExplorerCore2.Compilers.Architecture;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

@@ -6,9 +6,10 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Panels;
 

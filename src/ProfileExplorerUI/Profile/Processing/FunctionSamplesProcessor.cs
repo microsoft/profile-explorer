@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Diagnostics;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

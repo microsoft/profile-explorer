@@ -3,15 +3,16 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Graph;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Graph;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

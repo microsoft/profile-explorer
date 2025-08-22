@@ -4,7 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

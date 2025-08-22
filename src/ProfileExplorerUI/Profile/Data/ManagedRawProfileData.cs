@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Binary;
 using ProtoBuf;
 

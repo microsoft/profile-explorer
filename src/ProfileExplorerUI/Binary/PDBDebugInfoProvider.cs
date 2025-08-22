@@ -17,9 +17,9 @@ using Azure.Identity;
 using Dia2Lib;
 using Microsoft.Diagnostics.Symbols;
 using Microsoft.Diagnostics.Symbols.Authentication;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorer.UI.Compilers;
 using StringWriter = System.IO.StringWriter;
 

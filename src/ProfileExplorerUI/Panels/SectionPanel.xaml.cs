@@ -20,8 +20,8 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using ClosedXML.Excel;
 using HtmlAgilityPack;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Analysis;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Analysis;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
@@ -30,6 +30,7 @@ using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
 using PerformanceCounter = ProfileExplorer.UI.Profile.PerformanceCounter;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

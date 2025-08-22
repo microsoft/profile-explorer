@@ -7,8 +7,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Binary;
 
 namespace ProfileExplorer.UI.Profile;

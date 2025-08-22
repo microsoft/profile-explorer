@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Compilers;
 using ProtoBuf;
 

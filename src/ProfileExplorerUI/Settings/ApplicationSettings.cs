@@ -5,13 +5,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
 using ProfileExplorer.UI.Settings;
 using ProtoBuf;
+using ProfileExplorerCore2.Compilers.Architecture;
 
 namespace ProfileExplorer.UI;
 

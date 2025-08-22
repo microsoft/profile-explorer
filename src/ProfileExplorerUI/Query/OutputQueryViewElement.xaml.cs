@@ -4,7 +4,7 @@ using System;
 using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2.IR;
 
 namespace ProfileExplorer.UI.Query;
 

@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
 
 namespace ProfileExplorer.UI;
 

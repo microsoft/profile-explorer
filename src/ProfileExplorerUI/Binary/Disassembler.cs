@@ -9,9 +9,10 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.ASM;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Compilers.ASM;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Binary;
 

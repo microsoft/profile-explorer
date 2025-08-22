@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.IR.Tags;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Document;
-using TextLocation = ProfileExplorer.Core.TextLocation;
+using TextLocation = ProfileExplorerCore2.TextLocation;
 
 namespace ProfileExplorer.UI.Profile;
 

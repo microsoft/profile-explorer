@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.LLVM;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Query;
+using ProfileExplorerCore2.Compilers.LLVM;
 
 namespace ProfileExplorer.UI.Compilers.LLVM;
 

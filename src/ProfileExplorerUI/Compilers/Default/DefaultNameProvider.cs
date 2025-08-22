@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using ProfileExplorer.Core;
+using ProfileExplorerCore2;
 using ProfileExplorer.UI.Binary;
 
 namespace ProfileExplorer.UI.Compilers.Default;

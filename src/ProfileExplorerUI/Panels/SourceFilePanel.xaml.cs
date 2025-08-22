@@ -8,8 +8,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
@@ -17,6 +17,8 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
+using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
 

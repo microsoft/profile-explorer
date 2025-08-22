@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
-using ProfileExplorer.Core.Collections;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2.Collections;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Binary;
 using ProtoBuf;
 

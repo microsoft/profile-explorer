@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
-using ProfileExplorer.Core;
-using ProfileExplorer.Core.Utilities;
+using ProfileExplorerCore2;
+using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Diff;
 
 namespace ProfileExplorer.UI;
