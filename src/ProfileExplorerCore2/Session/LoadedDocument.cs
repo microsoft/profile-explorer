@@ -11,23 +11,23 @@ using ProtoBuf;
 namespace ProfileExplorerCore2.Session;
 
 [ProtoContract]
-public class LoadedDocumentState {
+public class LoadedDocumentState : ILoadedDocumentState {
   [ProtoMember(1)]
-  public Guid Id;
+  public Guid Id { get; set; }
   [ProtoMember(2)]
-  public string ModuleName;
+  public string ModuleName { get; set; }
   [ProtoMember(3)]
-  public string FilePath;
+  public string FilePath { get; set; }
   [ProtoMember(4)]
-  public BinaryFileSearchResult BinaryFile;
+  public BinaryFileSearchResult BinaryFile { get; set; }
   [ProtoMember(5)]
-  public DebugFileSearchResult DebugInfoFile;
+  public DebugFileSearchResult DebugInfoFile { get; set; }
   [ProtoMember(6)]
-  public byte[] DocumentText;
+  public byte[] DocumentText { get; set; }
   [ProtoMember(7)]
-  public List<Tuple<int, byte[]>> SectionStates;
-  [ProtoMember(9)]
-  public List<string> FunctionNames;
+  public List<Tuple<int, byte[]>> SectionStates { get; set; }
+  [ProtoMember(8)]
+  public List<string> FunctionNames { get; set; }
 
   public LoadedDocumentState() {
     SectionStates = new List<Tuple<int, byte[]>>();
@@ -39,7 +39,7 @@ public class LoadedDocumentState {
   }
 }
 
-public class LoadedDocument : IDisposable {
+public class LoadedDocument : ILoadedDocument {
   public Dictionary<IRTextSection, object> SectionStates;
   private IRTextSummary summary_;
   private bool disposed_;
@@ -119,7 +119,7 @@ public class LoadedDocument : IDisposable {
     return SectionStates.TryGetValue(section, out object stateObject) ? stateObject : null;
   }
 
-  public LoadedDocumentState SerializeDocument() {
+  public virtual ILoadedDocumentState SerializeDocument() {
     var state = new LoadedDocumentState(Id) {
       ModuleName = ModuleName, FilePath = FilePath, BinaryFile = BinaryFile,
       DebugInfoFile = DebugInfoFile,

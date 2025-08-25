@@ -78,7 +78,7 @@ public partial class App : Application {
   public static bool IsFirstRun;
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
-  public static ISession Session;
+  public static IUISession Session;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;
   public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);

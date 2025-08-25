@@ -10,11 +10,11 @@ namespace ProfileExplorer.UI.Query;
 
 public class BuiltinFunctionTask : IFunctionTask {
   public delegate bool TaskCallback(FunctionIR function, IRDocument document,
-                                    IFunctionTaskOptions options, ISession session,
+                                    IFunctionTaskOptions options, IUISession session,
                                     CancelableTask cancelableTask);
 
   private TaskCallback callback_;
-  public ISession Session { get; private set; }
+  public IUISession Session { get; private set; }
   public IFunctionTaskOptions Options { get; private set; }
   public FunctionTaskInfo TaskInfo { get; private set; }
   public bool Result { get; set; }
@@ -27,7 +27,7 @@ public class BuiltinFunctionTask : IFunctionTask {
                                     Session, cancelableTask));
   }
 
-  public bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData) {
+  public bool Initialize(IUISession session, FunctionTaskInfo taskInfo, object optionalData) {
     Session = session;
     TaskInfo = taskInfo;
     callback_ = (TaskCallback)optionalData;

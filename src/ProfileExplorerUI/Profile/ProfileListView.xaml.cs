@@ -12,6 +12,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -110,7 +114,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
   private bool showModuleColumn_;
   private bool showContextColumn_;
   private double functionColumnWidth_;
-  private ISession session_;
+  private IUISession session_;
   private IRDocumentPopupInstance previewPopup_;
   private CallTreeNodeSettings settings_;
   private bool searchPanelVisible_;
@@ -142,7 +146,7 @@ public partial class ProfileListView : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => session_;
     set => session_ = value;
   }

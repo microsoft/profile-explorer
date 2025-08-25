@@ -14,7 +14,7 @@ public class ToolPanelControl : UserControl, IToolPanel {
   public virtual HandledEventKind HandledEvents => HandledEventKind.None;
   public virtual IRDocument Document { get; set; }
   public virtual IRDocument BoundDocument { get; set; }
-  public virtual ISession Session { get; set; }
+  public virtual IUISession Session { get; set; }
   public virtual bool SavesStateToFile => false;
   public virtual bool IsUnloaded => Document == null;
   public virtual bool IsPanelEnabled { get; set; }

@@ -28,25 +28,25 @@ public class BaseSession : ISession
   private CancelableTaskInstance documentLoadTask_;
 
   private object lockObject_;
-  private List<LoadedDocument> documents_;
+  private List<ILoadedDocument> documents_;
   private List<CancelableTask> pendingTasks_;
-  private LoadedDocument mainDocument_;
+  private ILoadedDocument mainDocument_;
 
   public ICompilerInfoProvider CompilerInfo => compilerInfo_;
     public ProfileData ProfileData { get; private set; }
 
-    public IReadOnlyList<LoadedDocument> Documents => documents_;
+    public IReadOnlyList<ILoadedDocument> Documents => documents_;
 
     public BaseSession()
     {
     lockObject_ = new object();
-    documents_ = new List<LoadedDocument>();
+    documents_ = new List<ILoadedDocument>();
     pendingTasks_ = new List<CancelableTask>();
 
       compilerInfo_ = null;
     }
 
-    public LoadedDocument FindLoadedDocument(IRTextFunction func) {
+    public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
       var summary = func.ParentSummary;
       return documents_.Find(item => item.Summary == summary);
     }
@@ -84,7 +84,7 @@ public class BaseSession : ISession
     FunctionAnalysisCache.ResetCache();
   }
 
-  public async Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments, ProfileData profileData) {
+  public async Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData) {
     mainDocument_ = mainDocument;
     RegisterLoadedDocument(mainDocument);
 
@@ -95,11 +95,11 @@ public class BaseSession : ISession
     return true;
   }
 
-  private void RegisterLoadedDocument(LoadedDocument docInfo) {
+  private void RegisterLoadedDocument(ILoadedDocument docInfo) {
     documents_.Add(docInfo);
   }
 
-  public async Task<LoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null) {
+  public async Task<ILoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null) {
     return await Task.Run(async () => {
       var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
       var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
@@ -114,7 +114,7 @@ public class BaseSession : ISession
       ConfigureAwait(false);
   }
 
-  private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
+  private async Task<ILoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
                                                   ProgressInfoHandler progressHandler,
                                                   IRTextSectionLoader loader) {
     try {

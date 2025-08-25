@@ -11,6 +11,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Document;
 using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 

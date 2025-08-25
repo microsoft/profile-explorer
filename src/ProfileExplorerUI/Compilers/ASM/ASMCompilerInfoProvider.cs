@@ -5,201 +5,38 @@ using System.Threading.Tasks;
 using System.Windows;
 using ProfileExplorerCore2;
 using ProfileExplorerCore2.IR;
-using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers.Default;
-using ProfileExplorer.UI.Diff;
-using ProfileExplorer.UI.Profile;
-using ProfileExplorer.UI.Query;
 using ProfileExplorerCore2.Compilers.Architecture;
 using ProfileExplorerCore2.Compilers.ASM;
+using ProfileExplorerCore2.Binary;
+using ProfileExplorerCore2.Providers;
+using ProfileExplorer.UI.Compilers.Default;
+using ProfileExplorer.UI.Query;
+using ProfileExplorerCore2.Settings;
+using ProfileExplorer.UI.Profile;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 
-public class ASMCompilerInfoProvider : ICompilerInfoProvider {
-  private static Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();
-  private readonly ISession session_;
-  private readonly ASMNameProvider names_ = new();
+public class ASMUICompilerInfoProvider : ASMCompilerInfoProvider, IUICompilerInfoProvider {
   private readonly DummySectionStyleProvider styles_ = new();
   private readonly DefaultRemarkProvider remarks_;
-  private readonly ASMCompilerIRInfo ir_;
+  private readonly IUISession uI_Session;
 
-  public ASMCompilerInfoProvider(IRMode mode, ISession session) {
-    session_ = session;
-    remarks_ = new DefaultRemarkProvider(this);
-    ir_ = new ASMCompilerIRInfo(mode);
+  public ASMUICompilerInfoProvider(IRMode mode, IUISession session)
+    : base(mode, session) 
+    {
+    uI_Session = session;
   }
 
-  public virtual string CompilerIRName => "ASM";
-  public virtual string CompilerDisplayName => "ASM " + ir_.Mode;
-  public virtual string OpenFileFilter =>
-    "ASM, Binary, Trace Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys;*.etl|All Files|*.*";
-  public virtual string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
-  public virtual string DefaultSyntaxHighlightingFile => (ir_.Mode == IRMode.ARM64 ? "ARM64" : "x86") + " ASM IR";
-  public ISession Session => session_;
-  public ICompilerIRInfo IR => ir_;
-  public INameProvider NameProvider => names_;
+  public new IUISession Session => uI_Session;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
   public List<QueryDefinition> BuiltinQueries => new();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
 
-  public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
+  public virtual Task HandleLoadedDocument(IUILoadedDocument document, string modulePath) {
     return Task.CompletedTask;
-  }
-
-  public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
-                                                FunctionDebugInfo funcDebugInfo) {
-    // Annotate the instructions with debug info (line numbers, source files)
-    // if the debug file is specified and available.
-    var debugInfo = await GetOrCreateDebugInfoProvider(section.ParentFunction);
-
-    if (debugInfo != null) {
-      await Task.Run(() => {
-        if (funcDebugInfo != null) {
-          return debugInfo.AnnotateSourceLocations(function, funcDebugInfo);
-        }
-        else {
-          return debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
-        }
-      });
-    }
-
-    return true;
-  }
-
-  public async Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function) {
-    var loadedDoc = Session.SessionState.FindLoadedDocument(function);
-
-    lock (loadedDoc) {
-      if (loadedDoc.DebugInfo != null) {
-        return loadedDoc.DebugInfo;
-      }
-    }
-
-    if (!loadedDoc.DebugInfoFileExists) {
-      return null;
-    }
-
-    if (loadedDoc.DebugInfoFileExists) {
-      var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
-
-      if (debugInfo != null) {
-        lock (loadedDoc) {
-          loadedDoc.DebugInfo = debugInfo;
-          return debugInfo;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  public IDiffInputFilter CreateDiffInputFilter() {
-    var filter = new ASMDiffInputFilter();
-    filter.Initialize(App.Settings.DiffSettings, IR);
-    return filter;
-  }
-
-  public IDiffOutputFilter CreateDiffOutputFilter() {
-    return new BasicDiffOutputFilter();
-  }
-
-  //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider,
-  //? probably inside SessionState
-  public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
-    if (!debugFile.Found) {
-      return null;
-    }
-
-    lock (this) {
-      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
-        return provider;
-      }
-
-      var newProvider = new PDBDebugInfoProvider(App.Settings.SymbolSettings);
-
-      if (newProvider.LoadDebugInfo(debugFile, provider)) {
-        loadedDebugInfo_[debugFile] = newProvider;
-        provider?.Dispose();
-        return newProvider;
-      }
-
-      return null;
-    }
-  }
-
-  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath,
-                                                                  SymbolFileSourceSettings settings = null) {
-    using var info = new PEBinaryInfoProvider(imagePath);
-
-    if (!info.Initialize()) {
-      return Utils.LocateDebugInfoFile(imagePath, ".json");
-    }
-
-    switch (info.BinaryFileInfo.FileKind) {
-      case BinaryFileKind.Native: {
-        if (settings == null) {
-          // Make sure the binary directory is also included in the symbol search.
-          settings = App.Settings.SymbolSettings.Clone();
-          settings.InsertSymbolPath(imagePath);
-        }
-
-        return await FindDebugInfoFileAsync(info.SymbolFileInfo, settings).ConfigureAwait(false);
-      }
-    }
-
-    return DebugFileSearchResult.None;
-  }
-
-  public DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null) {
-    using var info = new PEBinaryInfoProvider(imagePath);
-
-    if (!info.Initialize()) {
-      return Utils.LocateDebugInfoFile(imagePath, ".json");
-    }
-
-    switch (info.BinaryFileInfo.FileKind) {
-      case BinaryFileKind.Native: {
-        if (settings == null) {
-          // Make sure the binary directory is also included in the symbol search.
-          settings = App.Settings.SymbolSettings.Clone();
-          settings.InsertSymbolPath(imagePath);
-        }
-
-        return FindDebugInfoFile(info.SymbolFileInfo, settings);
-      }
-    }
-
-    return DebugFileSearchResult.None;
-  }
-
-  public async Task<DebugFileSearchResult>
-    FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
-    if (settings == null) {
-      settings = App.Settings.SymbolSettings;
-    }
-
-    return await PDBDebugInfoProvider.LocateDebugInfoFileAsync(symbolFile, settings).ConfigureAwait(false);
-  }
-
-  public DebugFileSearchResult
-    FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
-    if (settings == null) {
-      settings = App.Settings.SymbolSettings;
-    }
-
-    return PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings);
-  }
-
-  public async Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                                SymbolFileSourceSettings settings = null) {
-    if (settings == null) {
-      // Make sure the binary directory is also included in the symbol search.
-      settings = App.Settings.SymbolSettings.Clone();
-    }
-
-    return await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, settings).ConfigureAwait(false);
   }
 
   public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
@@ -214,10 +51,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     // Annotate instrs. with source line numbers if debug info is available.
     var sourceMarker = new SourceDocumentMarker(App.Settings.DocumentSettings.SourceMarkerSettings, this);
     await sourceMarker.Mark(document, function);
-  }
-
-  public Task ReloadSettings() {
-    return Task.CompletedTask;
   }
 
   private static void CreateBlockLabelOverlays(IRDocument document, FunctionIR function) {

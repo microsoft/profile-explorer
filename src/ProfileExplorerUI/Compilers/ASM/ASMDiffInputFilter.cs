@@ -6,6 +6,8 @@ using System.Text;
 using ProfileExplorerCore2;
 using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Diff;
+using ProfileExplorerCore2.Diff;
+using ProfileExplorerCore2.Settings;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 

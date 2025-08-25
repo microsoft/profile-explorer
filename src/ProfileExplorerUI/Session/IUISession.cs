@@ -6,13 +6,19 @@ using System.Threading.Tasks;
 using ProfileExplorerCore2;
 using ProfileExplorerCore2.Graph;
 using ProfileExplorerCore2.IR;
-using ProfileExplorer.UI.Binary;
-using ProfileExplorer.UI.Compilers;
-using ProfileExplorer.UI.Controls;
-using ProfileExplorer.UI.Document;
-using ProfileExplorer.UI.Profile;
-using ProfileExplorer.UI.Query;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Session;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorer.UI.Controls;
+using ProfileExplorerCore2.Binary;
+using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore2.Profile.Timeline;
+using ProfileExplorer.UI.Query;
+using ProfileExplorer.UI.Document;
+using ProfileExplorerCore2.Providers;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;
 
@@ -23,11 +29,11 @@ public enum DuplicatePanelKind {
   Floating
 }
 
-public interface ISession {
+public interface IUISession : ISession {
+  new IUICompilerInfoProvider CompilerInfo { get; }
   IRDocument CurrentDocument { get; }
   IRTextSection CurrentDocumentSection { get; }
   List<IRDocument> OpenDocuments { get; }
-  ICompilerInfoProvider CompilerInfo { get; }
   SessionStateManager SessionState { get; }
   bool IsSessionStarted { get; }
   bool IsInDiffMode { get; }
@@ -36,10 +42,9 @@ public interface ISession {
   DiffModeInfo DiffModeInfo { get; }
   IRTextSummary MainDocumentSummary { get; }
   IRTextSummary DiffDocumentSummary { get; }
-  ProfileData ProfileData { get; }
   ProfileFilterState ProfileFilter { get; set; }
-  Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
-  Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments, ProfileData profileData);
+  Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, IUICompilerInfoProvider compilerInfo);
+  Task<bool> SetupNewSession(IUILoadedDocument mainDocument, List<IUILoadedDocument> otherDocuments, ProfileData profileData);
   IRTextSummary GetDocumentSummary(IRTextSection section);
   IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId);
   IRDocument FindAssociatedDocument(IToolPanel panel);
@@ -89,21 +94,10 @@ public interface ISession {
   void RegisterDetachedPanel(DraggablePopup panel);
   void UnregisterDetachedPanel(DraggablePopup panel);
   Task<bool> SaveSessionDocument(string filePath);
-  Task<LoadedDocument> OpenSessionDocument(string filePath);
+  Task<IUILoadedDocument> OpenSessionDocument(string filePath);
 
-  Task<LoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath,
-                                                 IDebugInfoProvider debugInfo = null);
 
   Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function);
-
-  //? TODO: Extract into an IProfilingSession, connecting all profile panels
-  //? and sending the activity/timeline events to all of them.
-  Task<bool> LoadProfileData(string profileFilePath, List<int> processIds,
-                             ProfileDataProviderOptions options,
-                             SymbolFileSourceSettings symbolSettings,
-                             ProfileDataReport report,
-                             ProfileLoadProgressHandler progressCallback,
-                             CancelableTask cancelableTask);
 
   Task<bool> LoadProfileData(RawProfileData data, List<int> processIds,
                              ProfileDataProviderOptions options,

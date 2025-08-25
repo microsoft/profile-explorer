@@ -33,7 +33,7 @@ class UnusedInstructionsTaskOptions : IFunctionTaskOptions {
 
 class UnusedInstructionsFunctionTask {
   public static bool MarkUnusedInstructions(FunctionIR function, IRDocument document, IFunctionTaskOptions options,
-                                            ISession session, CancelableTask cancelableTask) {
+                                            IUISession session, CancelableTask cancelableTask) {
     var taskOptions = options as UnusedInstructionsTaskOptions;
     var unusedInstr = new HashSet<InstructionIR>();
     var walker = new CFGBlockOrdering(function);

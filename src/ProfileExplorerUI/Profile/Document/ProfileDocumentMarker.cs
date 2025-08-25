@@ -13,6 +13,10 @@ using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Document;
 using TextLocation = ProfileExplorerCore2.TextLocation;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore2.Profile.CallTree;
+using PerformanceCounter = ProfileExplorerCore2.Profile.Data.PerformanceCounter;
 
 namespace ProfileExplorer.UI.Profile;
 

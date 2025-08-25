@@ -13,6 +13,8 @@ using ProfileExplorerCore2;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -41,7 +43,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
   public override ToolPanelKind PanelKind => ToolPanelKind.FlameGraph;
 
-  public override ISession Session {
+  public override IUISession Session {
     get => base.Session;
     set {
       base.Session = value;

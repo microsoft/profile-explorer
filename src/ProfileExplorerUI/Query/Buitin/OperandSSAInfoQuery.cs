@@ -3,14 +3,15 @@
 using ProfileExplorerCore2.Analysis;
 using ProfileExplorerCore2.IR;
 using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Session;
 
 namespace ProfileExplorer.UI.Query.Builtin;
 
 public class OperandSSAInfoQuery : IElementQuery {
-  private ISession session_;
-  public ISession Session => session_;
+  private IUISession session_;
+  public IUISession Session => session_;
 
-  public bool Initialize(ISession session) {
+  public bool Initialize(IUISession session) {
     session_ = session;
     return true;
   }

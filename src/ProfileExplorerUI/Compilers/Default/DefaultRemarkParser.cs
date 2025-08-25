@@ -4,6 +4,7 @@ using System;
 using ProfileExplorerCore2;
 using ProfileExplorerCore2.IR;
 using ProfileExplorerCore2.Parser;
+using ProfileExplorerCore2.Providers;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

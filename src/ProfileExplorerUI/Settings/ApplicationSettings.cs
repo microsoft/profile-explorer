@@ -13,6 +13,8 @@ using ProfileExplorer.UI.Query;
 using ProfileExplorer.UI.Settings;
 using ProtoBuf;
 using ProfileExplorerCore2.Compilers.Architecture;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Settings;
 
 namespace ProfileExplorer.UI;
 
@@ -41,7 +43,7 @@ public class ApplicationSettings {
   [ProtoMember(9)]
   public RemarkSettings RemarkSettings { get; set; }
   [ProtoMember(10)]
-  public DiffSettings DiffSettings { get; set; }
+  public UIDiffSettings DiffSettings { get; set; }
   [ProtoMember(11)]
   public SectionSettings SectionSettings { get; set; }
   [ProtoMember(12)]
@@ -232,7 +234,7 @@ public class ApplicationSettings {
     FlowGraphSettings ??= new FlowGraphSettings();
     ExpressionGraphSettings ??= new ExpressionGraphSettings();
     RemarkSettings ??= new RemarkSettings();
-    DiffSettings ??= new DiffSettings();
+    DiffSettings ??= new UIDiffSettings();
     SectionSettings ??= new SectionSettings();
     FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
     ProfileOptions ??= new ProfileDataProviderOptions();

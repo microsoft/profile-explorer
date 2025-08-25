@@ -48,7 +48,7 @@ public class SearchResultInfo {
   private SectionTextDelegate getSectionText_;
 
   public SearchResultInfo(SearchResultKind resultkind, int index, TextSearchResult result,
-                          IRTextSection section, ISession session,
+                          IRTextSection section, IUISession session,
                           SectionTextDelegate getSectionText) {
     ResultKind = resultkind;
     Index = index;
@@ -62,7 +62,7 @@ public class SearchResultInfo {
   public int Index { get; set; }
   public TextSearchResult Result { get; set; }
   public IRTextSection Section { get; set; }
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
   public string FunctionName => Section.ParentFunction.FormatFunctionName(Session);
 
   public TextBlock Preview {

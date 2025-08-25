@@ -23,7 +23,6 @@ using ProfileExplorerCore2.Graph;
 using ProfileExplorerCore2.IR;
 using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorer.UI.Compilers.ASM;
-using ProfileExplorer.UI.Compilers.LLVM;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Panels;
@@ -31,6 +30,10 @@ using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Scripting;
 using ProfileExplorerCore2.Compilers.Architecture;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Compilers.ASM;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;
 
@@ -62,13 +65,13 @@ public static class AppCommand {
   public static readonly RoutedUICommand OpenHelpPanel = new("Untitled", "OpenHelpPanel", typeof(Window));
 }
 
-public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
+public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private LayoutDocumentPane activeDocumentPanel_;
   private AssemblyMetadataTag addressTag_;
   private bool appIsActivated_;
   private DispatcherTimer autoSaveTimer_;
   private Dictionary<string, DateTime> changedDocuments_;
-  private ICompilerInfoProvider compilerInfo_;
+  private IUICompilerInfoProvider compilerInfo_;
   private MainWindowState fullScreenRestoreState_;
   private Dictionary<GraphKind, GraphLayoutCache> graphLayout_;
   private bool ignoreDiffModeButtonEvent_;
@@ -503,7 +506,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     }
   }
 
-  private async Task ShowSectionPanelDiffs(LoadedDocument result) {
+  private async Task ShowSectionPanelDiffs(IUILoadedDocument result) {
     await SectionPanel.AnalyzeDocumentDiffs();
     await SectionPanel.RefreshDocumentsDiffs();
   }
@@ -990,7 +993,7 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
     AlwaysOnTopButton.IsChecked = state;
   }
 
-  private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
+  private async Task SwitchCompilerTarget(IUICompilerInfoProvider compilerInfo) {
     await EndSession();
     compilerInfo_ = compilerInfo;
     await compilerInfo_.ReloadSettings();
@@ -1010,11 +1013,11 @@ public partial class MainWindow : Window, ISession, INotifyPropertyChanged {
         break;
       }
       case "ASM": {
-        await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
+        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(irMode, this));
         break;
       }
       default: {
-        await SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.x86_64, this));
+        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(IRMode.x86_64, this));
         break;
       }
     }

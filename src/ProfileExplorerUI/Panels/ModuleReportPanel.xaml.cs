@@ -14,9 +14,9 @@ namespace ProfileExplorer.UI;
 public partial class ModuleReportPanel : ToolPanelControl {
   private ModuleReport report_;
   private IRTextSummary summary_;
-  private ISession session_;
+  private IUISession session_;
 
-  public ModuleReportPanel(ISession session) {
+  public ModuleReportPanel(IUISession session) {
     InitializeComponent();
     session_ = session;
   }

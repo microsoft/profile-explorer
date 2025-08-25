@@ -11,6 +11,8 @@ using System.Windows.Media;
 using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.CallTree;
 
 namespace ProfileExplorer.UI;
 

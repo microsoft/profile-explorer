@@ -16,6 +16,7 @@ using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorerCore2.Profile.Processing;
 
 namespace ProfileExplorer.UI.Controls;
 
@@ -27,13 +28,13 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   private UIElement owner_;
   private bool showSourceFile_;
   private bool showModeButtons_;
-  private ISession session;
+  private IUISession session;
   private ParsedIRTextSection parsedSection_;
   private PreviewPopupSettings settings_;
   private bool showHistoryButtons_;
   private OptionsPanelHostPopup optionsPanelPopup_;
 
-  public IRDocumentPopup(Point position, UIElement owner, ISession session, PreviewPopupSettings settings) {
+  public IRDocumentPopup(Point position, UIElement owner, IUISession session, PreviewPopupSettings settings) {
     Debug.Assert(settings != null);
     InitializeComponent();
     SetupEvents();
@@ -52,7 +53,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   public IRElement PreviewedElement { get; set; }
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
-  public ISession Session {
+  public IUISession Session {
     get => session;
     set {
       session = value;
@@ -172,7 +173,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
 
   public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
                                                       Point position, UIElement owner,
-                                                      ISession session,
+                                                      IUISession session,
                                                       PreviewPopupSettings settings,
                                                       string titlePrefix = "",
                                                       bool showSourceCode = false,
@@ -214,7 +215,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
-                                             Point position, UIElement owner, ISession session,
+                                             Point position, UIElement owner, IUISession session,
                                              PreviewPopupSettings settings, string titlePrefix) {
     var popup = new IRDocumentPopup(position, owner, session, settings);
     popup.PreviewedElement = previewedElement;
@@ -470,9 +471,9 @@ public class IRDocumentPopupInstance {
   private MouseHoverLogic hover_;
   private double width_;
   private double height_;
-  private ISession session_;
+  private IUISession session_;
 
-  public IRDocumentPopupInstance(PreviewPopupSettings settings, ISession session) {
+  public IRDocumentPopupInstance(PreviewPopupSettings settings, IUISession session) {
     settings_ = settings;
     width_ = settings != null ? Math.Max(settings.PopupWidth, DefaultWidth) : DefaultWidth;
     height_ = settings != null ? Math.Max(settings.PopupHeight, DefaultHeight) : DefaultHeight;
@@ -612,7 +613,7 @@ public class IRDocumentPopupInstance {
   }
 
   public static async Task ShowPreviewPopup(IRTextFunction function, string title,
-                                            UIElement relativeElement, ISession session,
+                                            UIElement relativeElement, IUISession session,
                                             ProfileSampleFilter profileFilter = null,
                                             bool showSourceCode = false,
                                             Brush titleBarColor = null) {

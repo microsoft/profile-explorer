@@ -9,6 +9,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using HtmlAgilityPack;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorerCore2.Providers;
 
 namespace ProfileExplorer.UI;
 

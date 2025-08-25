@@ -4,6 +4,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using ProfileExplorerCore2.Session;
 
 namespace ProfileExplorer.UI;
 

@@ -4,13 +4,14 @@ using System.Windows.Media;
 using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Query;
 using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Session;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 
 public class RegisterQuery : IElementQuery {
-  public ISession Session { get; private set; }
+  public IUISession Session { get; private set; }
 
-  public bool Initialize(ISession session) {
+  public bool Initialize(IUISession session) {
     Session = session;
     return true;
   }

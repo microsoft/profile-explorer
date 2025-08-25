@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using ProfileExplorerCore2.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -11,7 +12,7 @@ public partial class LightDocumentOptionsPanel : OptionsPanelBase {
 
   public bool SyntaxFileChanged { get; set; }
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
   }
 

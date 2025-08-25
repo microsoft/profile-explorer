@@ -16,7 +16,7 @@ public class ScriptFunctionTask : IFunctionTask {
   private string scriptCode_;
   private ScriptSession scriptSession_;
   public Exception ScriptException { get; private set; }
-  public ISession Session { get; private set; }
+  public IUISession Session { get; private set; }
   public IFunctionTaskOptions Options { get; private set; }
   public FunctionTaskInfo TaskInfo { get; private set; }
   public string OutputText => scriptSession_?.OutputText;
@@ -56,7 +56,7 @@ public class ScriptFunctionTask : IFunctionTask {
     return scriptResult;
   }
 
-  public bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData) {
+  public bool Initialize(IUISession session, FunctionTaskInfo taskInfo, object optionalData) {
     Session = session;
     TaskInfo = taskInfo;
     scriptCode_ = (string)optionalData;

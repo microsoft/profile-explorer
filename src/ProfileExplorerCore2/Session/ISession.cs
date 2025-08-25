@@ -15,13 +15,13 @@ namespace ProfileExplorerCore2.Session;
 public interface ISession {
   ICompilerInfoProvider CompilerInfo { get; }
   ProfileData ProfileData { get; }
-  IReadOnlyList<LoadedDocument> Documents { get; }
+  IReadOnlyList<ILoadedDocument> Documents { get; }
 
-  LoadedDocument FindLoadedDocument(IRTextFunction func);
+  ILoadedDocument FindLoadedDocument(IRTextFunction func);
 
   Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
-  Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments, ProfileData profileData);
+  Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData);
 
-  Task<LoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
+  Task<ILoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
   Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask);
 }

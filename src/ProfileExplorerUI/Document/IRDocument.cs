@@ -32,6 +32,8 @@ using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
 using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Session;
+using ProfileExplorerCore2.Profile.Data;
 
 namespace ProfileExplorer.UI;
 
@@ -216,7 +218,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public List<BlockIR> Blocks => Function.Blocks;
   public BookmarkManager BookmarkManager => bookmarks_;
-  public ISession Session { get; private set; }
+  public IUISession Session { get; private set; }
   public FunctionIR Function { get; set; }
   public IRTextSection Section { get; set; }
   public ReadOnlyMemory<char> SectionText { get; set; }
@@ -261,7 +263,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     return line;
   }
 
-  public void Initialize(TextViewSettingsBase settings, ISession session) {
+  public void Initialize(TextViewSettingsBase settings, IUISession session) {
     Session = session;
     Settings = settings;
   }

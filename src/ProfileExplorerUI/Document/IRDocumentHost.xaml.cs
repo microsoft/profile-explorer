@@ -25,6 +25,10 @@ using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorer.UI.Query;
 using ProtoBuf;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Session;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.CallTree;
 
 namespace ProfileExplorer.UI;
 
@@ -91,7 +95,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool searchPanelVisible_;
   private SectionSearchResult searchResult_;
   private IRElement selectedBlock_;
-  private ISession session_;
+  private IUISession session_;
   private DocumentSettings settings_;
   private List<Remark> remarkList_;
   private RemarkContext activeRemarkContext_;
@@ -117,7 +121,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileHistoryManager historyManager_;
   private MenuItem[] viewMenuItems_;
 
-  public IRDocumentHost(ISession session) {
+  public IRDocumentHost(IUISession session) {
     InitializeComponent();
     DataContext = this;
     PassOutput.DataContext = this;
@@ -177,7 +181,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => session_;
     private set => session_ = value;
   }
@@ -2420,9 +2424,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private class DummyQuery : IElementQuery {
-    public ISession Session { get; }
+    public IUISession Session { get; }
 
-    public bool Initialize(ISession session) {
+    public bool Initialize(IUISession session) {
       return true;
     }
 

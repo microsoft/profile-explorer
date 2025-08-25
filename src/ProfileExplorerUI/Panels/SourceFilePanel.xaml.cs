@@ -10,7 +10,6 @@ using System.Windows.Data;
 using System.Windows.Input;
 using ProfileExplorerCore2;
 using ProfileExplorerCore2.IR;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
@@ -19,6 +18,8 @@ using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorerCore2.IR.Tags;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Binary;
 
 namespace ProfileExplorer.UI;
 
@@ -48,7 +49,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
   public bool HasInlinees => InlineeComboBox.Items.Count > 0;
 
-  public override ISession Session {
+  public override IUISession Session {
     get => base.Session;
     set {
       base.Session = value;

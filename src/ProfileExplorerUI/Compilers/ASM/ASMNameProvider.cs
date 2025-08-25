@@ -2,7 +2,8 @@
 // Licensed under the MIT license.
 using System.Collections.Concurrent;
 using ProfileExplorerCore2;
-using ProfileExplorer.UI.Binary;
+using ProfileExplorerCore2.Binary;
+using ProfileExplorerCore2.Providers;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 

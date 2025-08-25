@@ -127,7 +127,7 @@ public partial class HelpPanel : ToolPanelControl {
     }
   }
 
-  public static async Task DisplayPanelHelp(ToolPanelKind kind, ISession session) {
+  public static async Task DisplayPanelHelp(ToolPanelKind kind, IUISession session) {
     if (await session.ShowPanel(ToolPanelKind.Help) is HelpPanel panel) {
       await panel.LoadPanelHelp(kind);
     }

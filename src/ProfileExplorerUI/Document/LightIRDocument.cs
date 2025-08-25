@@ -49,7 +49,7 @@ public sealed class LightIRDocument : TextEditor {
   private CancelableTask updateHighlightingTask_;
   private DiffLineHighlighter diffHighlighter_;
   private IRDocumentPopupInstance previewPopup_;
-  private ISession session_;
+  private IUISession session_;
 
   public LightIRDocument() {
     lockObject_ = new object();
@@ -77,7 +77,7 @@ public sealed class LightIRDocument : TextEditor {
     Options.EnableHyperlinks = false;
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => session_;
     set {
       session_ = value;

@@ -11,15 +11,15 @@ namespace ProfileExplorer.UI.Scripting;
 // runs the script and populates the output values
 
 public class ElementQueryScript : Script, IElementQuery {
-  private ISession session_;
+  private IUISession session_;
 
   public ElementQueryScript(string code) : base(code) {
   }
 
   public QueryDefinition Query { get; set; }
-  public ISession Session => session_;
+  public IUISession Session => session_;
 
-  public bool Initialize(ISession session) {
+  public bool Initialize(IUISession session) {
     session_ = session;
     return true;
   }

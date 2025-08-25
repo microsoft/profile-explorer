@@ -6,7 +6,7 @@ using System.Windows;
 namespace ProfileExplorer.UI;
 
 public partial class OptionsWindow : Window {
-  public OptionsWindow(ISession session) {
+  public OptionsWindow(IUISession session) {
     InitializeComponent();
     DataContext = this;
     Session = session;
@@ -17,7 +17,7 @@ public partial class OptionsWindow : Window {
     };
   }
 
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
   private void LoadSettings() {

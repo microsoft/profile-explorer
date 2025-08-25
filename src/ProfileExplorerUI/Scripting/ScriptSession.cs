@@ -9,6 +9,7 @@ using System.Windows.Media;
 using ProfileExplorerCore2;
 using ProfileExplorerCore2.Analysis;
 using ProfileExplorerCore2.IR;
+using ProfileExplorerCore2.Session;
 using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Scripting;
@@ -28,11 +29,11 @@ public class ScriptSession {
   private List<Tuple<IRElement, Color>> markedElements_;
   private List<Tuple<IRElement, IconOverlayInfo>> iconElementOverlays_;
   private CancelableTask task_;
-  private ISession session_;
+  private IUISession session_;
   private Dictionary<string, object> variables_;
   private string sectionText_;
 
-  public ScriptSession(IRDocument document, ISession session) {
+  public ScriptSession(IRDocument document, IUISession session) {
     task_ = new CancelableTask();
     document_ = document;
     session_ = session;

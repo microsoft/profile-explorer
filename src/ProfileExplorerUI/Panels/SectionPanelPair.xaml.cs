@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using ProfileExplorerCore2;
+using ProfileExplorerCore2.Document.Renderers.Highlighters;
+using ProfileExplorerCore2.UI;
 using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI;
@@ -34,7 +36,7 @@ public partial class SectionPanelPair : ToolPanelControl {
     DiffPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
   }
 
-  public ICompilerInfoProvider CompilerInfo {
+  public IUICompilerInfoProvider CompilerInfo {
     get => MainPanel.CompilerInfo;
     set {
       MainPanel.CompilerInfo = value;
@@ -60,7 +62,7 @@ public partial class SectionPanelPair : ToolPanelControl {
   public override ToolPanelKind PanelKind => ToolPanelKind.Section;
   public override bool SavesStateToFile => true;
 
-  public override ISession Session {
+  public override IUISession Session {
     get => MainPanel.Session;
     set {
       MainPanel.Session = value;

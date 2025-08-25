@@ -5,10 +5,10 @@ using System;
 namespace ProfileExplorer.UI.Query;
 
 public class BuiltinElementQuery : IElementQuery {
-  private ISession session_;
-  public ISession Session => session_;
+  private IUISession session_;
+  public IUISession Session => session_;
 
-  public bool Initialize(ISession session) {
+  public bool Initialize(IUISession session) {
     session_ = session;
     return true;
   }

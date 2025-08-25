@@ -35,7 +35,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public ICompilerIRInfo IR => ir_;
   public INameProvider NameProvider => names_;
 
-  public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
+  public virtual Task HandleLoadedDocument(ILoadedDocument document, string modulePath) {
     return Task.CompletedTask;
   }
 

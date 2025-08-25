@@ -27,6 +27,7 @@ using ProfileExplorerCore2.Utilities;
 using ProfileExplorer.UI.Controls;
 using Xceed.Wpf.Toolkit.Core.Utilities;
 using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore2.Providers;
 
 namespace ProfileExplorer.UI;
 

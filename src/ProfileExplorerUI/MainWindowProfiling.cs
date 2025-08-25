@@ -9,17 +9,24 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ProfileExplorerCore2;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Windows;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Session;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Profile.ETW;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.Binary;
+using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore2.Profile.Timeline;
 
 namespace ProfileExplorer.UI;
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, IUISession {
   private CancelableTaskInstance updateProfileTask_ = new();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;

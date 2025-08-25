@@ -8,17 +8,9 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProfileExplorer.UI.Document;
+using ProfileExplorerCore2.Document.Renderers.Highlighters;
 
 namespace ProfileExplorer.UI;
-
-public enum DiffKind {
-  None,
-  Insertion,
-  Deletion,
-  Modification,
-  MinorModification,
-  Placeholder
-}
 
 public sealed class DiffTextSegment : TextSegment {
   public DiffTextSegment(DiffKind kind, int startOffset, int length) {

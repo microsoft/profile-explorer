@@ -35,7 +35,7 @@ public sealed class ProfileModuleBuilder {
   }
 
   public IRTextSummary Summary { get; set; }
-  public LoadedDocument ModuleDocument { get; set; }
+  public ILoadedDocument ModuleDocument { get; set; }
   public IDebugInfoProvider DebugInfo { get; set; }
   public bool HasDebugInfo { get; set; }
   public bool Initialized { get; set; }

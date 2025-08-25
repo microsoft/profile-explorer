@@ -24,20 +24,20 @@ public class DiffSettings : SettingsBase {
   public int ManyDiffsModificationPercentage { get; set; }
   [ProtoMember(5)][OptionValue(75)]
   public int ManyDiffsInsertionPercentage { get; set; }
-  [ProtoMember(17)][OptionValue(DiffImplementationKind.Internal)]
+  [ProtoMember(6)][OptionValue(DiffImplementationKind.Internal)]
   [DefaultValue(DiffImplementationKind.Internal)]
   public DiffImplementationKind DiffImplementation { get; set; }
-  [ProtoMember(18)][OptionValue(true)]
+  [ProtoMember(7)][OptionValue(true)]
   public bool FilterTempVariableNames { get; set; }
-  [ProtoMember(19)][OptionValue(true)]
+  [ProtoMember(8)][OptionValue(true)]
   public bool FilterSSADefNumbers { get; set; }
-  [ProtoMember(20)][OptionValue(true)]
+  [ProtoMember(9)][OptionValue(true)]
   public bool ShowInsertions { get; set; }
-  [ProtoMember(21)][OptionValue(true)]
+  [ProtoMember(10)][OptionValue(true)]
   public bool ShowDeletions { get; set; }
-  [ProtoMember(22)][OptionValue(true)]
+  [ProtoMember(11)][OptionValue(true)]
   public bool ShowModifications { get; set; }
-  [ProtoMember(23)][OptionValue(true)]
+  [ProtoMember(12)][OptionValue(true)]
   public bool ShowMinorModifications { get; set; }
   public bool ShowAnyChanges => ShowInsertions || ShowDeletions || ShowModifications || ShowMinorModifications;
 
@@ -45,7 +45,7 @@ public class DiffSettings : SettingsBase {
     ResetAllOptions(this);
   }
 
-  public DiffSettings Clone() {
+  public virtual DiffSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<DiffSettings>(serialized);
   }

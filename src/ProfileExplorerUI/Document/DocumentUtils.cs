@@ -15,6 +15,7 @@ using ProfileExplorerCore2;
 using ProfileExplorerCore2.Analysis;
 using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Profile.Document;
+using ProfileExplorerCore2.Session;
 
 namespace ProfileExplorer.UI.Document;
 

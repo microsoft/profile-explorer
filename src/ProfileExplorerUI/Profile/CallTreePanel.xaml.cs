@@ -16,6 +16,10 @@ using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore2.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 

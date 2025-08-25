@@ -9,9 +9,9 @@ namespace ProfileExplorer.UI.Compilers.Default;
 
 public class ValueNumberQuery : IElementQuery {
   private static readonly string ValueNumberPrefix = "vn ";
-  public ISession Session { get; private set; }
+  public IUISession Session { get; private set; }
 
-  public bool Initialize(ISession session) {
+  public bool Initialize(IUISession session) {
     Session = session;
     return true;
   }

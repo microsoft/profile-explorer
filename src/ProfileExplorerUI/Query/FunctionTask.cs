@@ -13,7 +13,7 @@ public interface IFunctionTaskOptions {
 
 public interface IFunctionTask {
   IFunctionTaskOptions Options { get; }
-  ISession Session { get; }
+  IUISession Session { get; }
   FunctionTaskInfo TaskInfo { get; }
   bool Result { get; }
   string ResultMessage { get; }
@@ -22,6 +22,6 @@ public interface IFunctionTask {
   void SaveOptions();
   QueryData GetOptionsValues();
   void LoadOptionsFromValues(QueryData data);
-  bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData);
+  bool Initialize(IUISession session, FunctionTaskInfo taskInfo, object optionalData);
   Task<bool> Execute(FunctionIR function, IRDocument document, CancelableTask cancelableTask);
 }

@@ -12,6 +12,7 @@ using ProfileExplorerCore2.IR;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
+using ProfileExplorerCore2.UI;
 
 namespace ProfileExplorer.UI;
 
@@ -171,7 +172,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override ToolPanelKind PanelKind => ToolPanelKind.PassOutput;
 
-  public override ISession Session {
+  public override IUISession Session {
     get => TextView.Session;
     set => TextView.Session = value;
   }

@@ -9,9 +9,11 @@ using System.Windows.Input;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 using Microsoft.Win32;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
+using ProfileExplorerCore2.Binary;
+using ProfileExplorerCore2.Session;
+using ProfileExplorerCore2.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -24,7 +26,7 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
 
   public event PropertyChangedEventHandler PropertyChanged;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
     symbolSettings_ = (SymbolFileSourceSettings)Settings;
     ReloadSymbolPathsList();

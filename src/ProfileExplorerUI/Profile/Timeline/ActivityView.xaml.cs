@@ -10,6 +10,9 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorerCore2;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.Timeline;
 using ProfileExplorerCore2.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
@@ -1214,15 +1217,3 @@ public partial class ActivityView : FrameworkElement, INotifyPropertyChanged {
     public int MaxSlices { get; set; }
   }
 }
-
-public record SampleTimeRangeInfo(
-  TimeSpan StartTime,
-  TimeSpan EndTime,
-  int StartSampleIndex,
-  int EndSampleIndex,
-  int ThreadId);
-
-public record struct SampleTimePointInfo(TimeSpan Time, int SampleIndex, int ThreadId);
-
-//? TODO: Use SampleIndex in SampleTimePointInfo/Range
-public record struct SampleIndex(int Index, TimeSpan Time);

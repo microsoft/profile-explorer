@@ -459,9 +459,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return resolvedStack;
   }
 
-  private LoadedDocument FindSessionDocuments(string imageName, out List<LoadedDocument> otherDocuments) {
-    LoadedDocument exeDocument = null;
-    otherDocuments = new List<LoadedDocument>();
+  private ILoadedDocument FindSessionDocuments(string imageName, out List<ILoadedDocument> otherDocuments) {
+    ILoadedDocument exeDocument = null;
+    otherDocuments = new List<ILoadedDocument>();
 
     foreach (var module in imageModuleMap_.Values) {
       var moduleDoc = module.ModuleDocument;

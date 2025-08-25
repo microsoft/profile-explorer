@@ -311,7 +311,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
   public FunctionIR Function { get; set; }
   public IRTextSection Section { get; set; }
 
-  public ISession Session {
+  public IUISession Session {
     get => RemarkTextView.Session;
     set => RemarkTextView.Session = value;
   }

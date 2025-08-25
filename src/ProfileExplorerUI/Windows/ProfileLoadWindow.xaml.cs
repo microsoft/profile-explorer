@@ -18,6 +18,9 @@ using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.ETW;
 
 namespace ProfileExplorer.UI;
 
@@ -46,7 +49,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private bool openLoadedSession_;
   private double lastProgressPercentage_ = 0;
 
-  public ProfileLoadWindow(ISession session, bool recordMode,
+  public ProfileLoadWindow(IUISession session, bool recordMode,
                            RecordingSession loadedSession = null,
                            bool openLoadedSession = false) {
     InitializeComponent();
@@ -72,7 +75,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
 
   public string ProfileFilePath {
     get => profileFilePath_;

@@ -3,6 +3,7 @@
 using System;
 using System.Windows;
 using System.Windows.Media;
+using ProfileExplorerCore2.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

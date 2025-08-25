@@ -3,7 +3,9 @@
 using System;
 using DiffPlex.DiffBuilder.Model;
 using ProfileExplorerCore2;
-using ProfileExplorer.UI.Diff;
+using ProfileExplorerCore2.Diff;
+using ProfileExplorerCore2.Document.Renderers.Highlighters;
+using ProfileExplorerCore2.Settings;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

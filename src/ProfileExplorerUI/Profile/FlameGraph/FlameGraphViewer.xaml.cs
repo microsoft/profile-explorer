@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using ProfileExplorerCore2.Profile.CallTree;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -44,7 +45,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   public Rect VisibleArea => renderer_.VisibleArea;
   public bool IsZoomed => Math.Abs(MaxGraphWidth - VisibleArea.Width) > 1;
   public FlameGraphNode SelectedNode => selectedNode_;
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
   public HighlightingStyle SelectedNodeStyle { get; private set; }
   public HighlightingStyle MarkedNodeStyle { get; private set; }
   public List<FlameGraphNode> SelectedNodes => selectedNodes_.ToKeyList();
@@ -254,7 +255,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode,
-                               Rect visibleArea, FlameGraphSettings settings, ISession session,
+                               Rect visibleArea, FlameGraphSettings settings, IUISession session,
                                bool isTimelineView = false, int threadId = -1) {
     if (initialized_) {
       Reset();
@@ -312,7 +313,7 @@ public partial class FlameGraphViewer : FrameworkElement {
   }
 
   public async Task Initialize(ProfileCallTree callTree, Rect visibleArea, FlameGraphSettings settings,
-                               ISession session, bool isTimelineView = false, int threadId = -1) {
+                               IUISession session, bool isTimelineView = false, int threadId = -1) {
     await Initialize(callTree, null, visibleArea, settings, session, isTimelineView, threadId);
   }
 

@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using ProfileExplorer.UI.Controls;
+using ProfileExplorerCore2.Session;
+using ProfileExplorerCore2.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -15,7 +17,7 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
   public OptionsPanelHostPopup(UserControl panel, Point position,
                                double width, double height,
                                UIElement referenceElement,
-                               SettingsBase settings, ISession session,
+                               SettingsBase settings, IUISession session,
                                bool showResetButton = true) {
     InitializeComponent();
 
@@ -50,12 +52,12 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
     set => optionsPanel_.Settings = value;
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => optionsPanel_.Session;
     set => optionsPanel_.Session = value;
   }
 
-  public void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     Settings = settings;
     Session = session;
   }
@@ -65,7 +67,7 @@ public partial class OptionsPanelHostPopup : DraggablePopup, IOptionsPanel {
   public void PanelAfterReset() { }
 
   public static OptionsPanelHostPopup Create<T, S>(SettingsBase settings, FrameworkElement relativeControl,
-                                                   ISession session,
+                                                   IUISession session,
                                                    Func<S, bool, Task<S>> newSettingsHandler,
                                                    Action panelClosedHandler,
                                                    Point positionAdjustment = new(),

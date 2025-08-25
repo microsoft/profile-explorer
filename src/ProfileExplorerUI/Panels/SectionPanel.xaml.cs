@@ -29,8 +29,13 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
-using PerformanceCounter = ProfileExplorer.UI.Profile.PerformanceCounter;
 using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore2.Document.Renderers.Highlighters;
+using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore2.Profile.Data;
+using PerformanceCounter = ProfileExplorerCore2.Profile.Data.PerformanceCounter;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.UI;
 
 namespace ProfileExplorer.UI;
 
@@ -1096,7 +1101,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public IRTextFunction CurrentFunction => currentFunction_;
   public bool HasAnnotatedSections => annotatedSections_.Count > 0;
-  public ICompilerInfoProvider CompilerInfo { get; set; }
+  public IUICompilerInfoProvider CompilerInfo { get; set; }
   public override ToolPanelKind PanelKind => ToolPanelKind.Section;
   public override bool SavesStateToFile => true;
 

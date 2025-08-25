@@ -21,6 +21,9 @@ using ProfileExplorerCore2;
 using ProfileExplorer.UI.Controls;
 using PlotCommands = OxyPlot.PlotCommands;
 using VerticalAlignment = System.Windows.VerticalAlignment;
+using ProfileExplorerCore2.Profile.CallTree;
+using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore2.Profile.Processing;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -83,7 +86,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     CallTreeNode = null;
   }
 
-  public override ISession Session {
+  public override IUISession Session {
     get => base.Session;
     set {
       base.Session = value;
@@ -344,7 +347,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     CategoryList.SelectFirstItem();
   }
 
-  public void Initialize(ISession session, IFunctionProfileInfoProvider funcInfoProvider) {
+  public void Initialize(IUISession session, IFunctionProfileInfoProvider funcInfoProvider) {
     Session = session;
     Settings = App.Settings.CallTreeNodeSettings;
     funcInfoProvider_ = funcInfoProvider;
@@ -686,7 +689,7 @@ public partial class CallTreeNodePanel : ToolPanelControl, INotifyPropertyChange
     histogramVisible_ = true;
   }
 
-  public static ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node, ISession session) {
+  public static ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node, IUISession session) {
     if (node == null) {
       return null;
     }
