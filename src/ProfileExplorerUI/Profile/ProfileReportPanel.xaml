@@ -6,6 +6,7 @@
   xmlns:local="clr-namespace:ProfileExplorer.UI"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:profile="clr-namespace:ProfileExplorer.UI.Profile"
+  xmlns:profileData="clr-namespace:ProfileExplorerCore2.Profile.Data;assembly=ProfileExplorerCore2"
   d:DesignHeight="650"
   d:DesignWidth="800"
   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -392,17 +393,17 @@
                               <Style.Triggers>
                                 <DataTrigger
                                   Binding="{Binding State}"
-                                  Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                  Value="{x:Static profileData:ModuleLoadState.Loaded}">
                                   <Setter Property="Source" Value="{StaticResource CheckIcon}" />
                                 </DataTrigger>
                                 <DataTrigger
                                   Binding="{Binding State}"
-                                  Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                  Value="{x:Static profileData:ModuleLoadState.NotFound}">
                                   <Setter Property="Source" Value="{StaticResource VoidIcon}" />
                                 </DataTrigger>
                                 <DataTrigger
                                   Binding="{Binding State}"
-                                  Value="{x:Static profile:ModuleLoadState.Failed}">
+                                  Value="{x:Static profileData:ModuleLoadState.Failed}">
                                   <Setter Property="Source" Value="{StaticResource WarningYellow}" />
                                 </DataTrigger>
                               </Style.Triggers>
@@ -416,17 +417,17 @@
                               <Style.Triggers>
                                 <DataTrigger
                                   Binding="{Binding State}"
-                                  Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                  Value="{x:Static profileData:ModuleLoadState.Loaded}">
                                   <Setter Property="Text" Value="Yes" />
                                 </DataTrigger>
                                 <DataTrigger
                                   Binding="{Binding State}"
-                                  Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                  Value="{x:Static profileData:ModuleLoadState.NotFound}">
                                   <Setter Property="Text" Value="Not Found" />
                                 </DataTrigger>
                                 <DataTrigger
                                   Binding="{Binding State}"
-                                  Value="{x:Static profile:ModuleLoadState.Failed}">
+                                  Value="{x:Static profileData:ModuleLoadState.Failed}">
                                   <Setter Property="Text" Value="Failed" />
                                 </DataTrigger>
                               </Style.Triggers>

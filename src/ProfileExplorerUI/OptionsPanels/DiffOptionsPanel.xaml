@@ -7,6 +7,7 @@
   xmlns:local="clr-namespace:ProfileExplorer.UI.OptionsPanels"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:settings="clr-namespace:ProfileExplorer.UI"
+  xmlns:core2ui="clr-namespace:ProfileExplorerCore2.UI;assembly=ProfileExplorerCore2"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
   d:DesignHeight="560"
   d:DesignWidth="340 "
@@ -140,13 +141,13 @@
             Orientation="Vertical">
             <RadioButton
               Content="Internal"
-              IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.Internal}}"
+              IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static core2ui:DiffImplementationKind.Internal}}"
               ToolTip="Use the internal diff implementation, which is faster but less accurate" />
             <RadioButton
               x:Name="ExternalDiffRadioButton"
               Margin="0,2,0,2"
               Content="Beyond Compare"
-              IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.External}}"
+              IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static core2ui:DiffImplementationKind.External}}"
               ToolTip="Use Beyond Compare as the external diff tool (requires Beyond Compare to be installed)" />
             <DockPanel
               Margin="0,2,0,2"
