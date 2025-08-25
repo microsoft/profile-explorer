@@ -581,6 +581,9 @@ public partial class App : Application {
     AppStartTime = DateTime.UtcNow;
     base.OnStartup(e);
 
+    // Register UI-specific type converters for settings system
+    RegisterSettingsTypeConverters();
+
     if (!Debugger.IsAttached) {
       SetupExceptionHandling();
     }
@@ -618,6 +621,11 @@ public partial class App : Application {
       var field = t.GetField("_menuDropAlignment", BindingFlags.NonPublic | BindingFlags.Static);
       field.SetValue(null, false);
     }
+  }
+
+  private void RegisterSettingsTypeConverters() {
+    // Register UI-specific type converters for the settings system
+    ProfileExplorerCore2.Settings.SettingsTypeRegistry.RegisterConverter(new ProfileExplorerUI.Settings.ColorSettingsConverter());
   }
 
   private void SetupJumplist() {

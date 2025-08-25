@@ -4,13 +4,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Media;
 using ProtoBuf;
-using ProfileExplorer.UI; // For SettingsBase, OptionValueAttribute, Utils
+using ProfileExplorer.UI; // For Utils
+using ProfileExplorerCore2.Settings; // For SettingsBase, OptionValueAttribute
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ProfileExplorerUITests.Settings;
 
 [TestClass]
 public class SettingsBaseTests {
+  [ClassInitialize]
+  public static void ClassInitialize(TestContext context) {
+    // Register UI-specific type converters for the settings system
+    SettingsTypeRegistry.RegisterConverter(new ProfileExplorerUI.Settings.ColorSettingsConverter());
+  }
+
   [TestMethod]
   public void TestCollectOptions() {
     var data = new DerivedObject();

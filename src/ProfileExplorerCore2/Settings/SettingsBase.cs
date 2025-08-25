@@ -18,6 +18,37 @@ namespace ProfileExplorerCore2.Settings;
 // - have a ProtoAfterDeserialization method that initializes reference members.
 // - have a Reset method that calls ResetAllOptions.
 // - have an Equals method that calls AreSettingsOptionsEqual.
+//
+// Type handling registry for custom type conversion
+public static class SettingsTypeRegistry {
+  private static readonly Dictionary<Type, ISettingsTypeConverter> _converters = new();
+
+  /// <summary>
+  /// Registers a type converter for use in settings serialization/deserialization.
+  /// </summary>
+  /// <param name="converter">The type converter to register.</param>
+  public static void RegisterConverter(ISettingsTypeConverter converter) {
+    if (converter == null) throw new ArgumentNullException(nameof(converter));
+    _converters[converter.TargetType] = converter;
+  }
+
+  /// <summary>
+  /// Gets a registered converter for the specified type.
+  /// </summary>
+  /// <param name="type">The type to get a converter for.</param>
+  /// <returns>The registered converter, or null if none is registered.</returns>
+  internal static ISettingsTypeConverter GetConverter(Type type) {
+    _converters.TryGetValue(type, out var converter);
+    return converter;
+  }
+
+  /// <summary>
+  /// Clears all registered converters. Primarily for testing purposes.
+  /// </summary>
+  public static void ClearConverters() {
+    _converters.Clear();
+  }
+}
 // - have a ToString method that calls PrintOptions.
 // - have a Clone method that serializes and deserializes the object.
 //
@@ -160,30 +191,26 @@ public class SettingsBase {
         property.SetValue(obj, convertedValue);
       }
       else if (optionAttr.Value is string strValue) {
-        throw new InvalidOperationException("Type not handled");
-        // Convert from string to a known type.
-        /*if (property.PropertyType == typeof(Color)) {
-          property.SetValue(obj, Utils.ColorFromString(strValue));
+        // Try to find a registered converter for this type
+        var converter = SettingsTypeRegistry.GetConverter(property.PropertyType);
+        if (converter != null) {
+          object convertedValue = converter.ConvertFromString(strValue);
+          property.SetValue(obj, convertedValue);
         }
         else {
-          throw new InvalidOperationException("Type not handled");
-        }*/
+          throw new InvalidOperationException($"Type {property.PropertyType.Name} not handled - no converter registered");
+        }
       }
       else if (optionAttr.Value is string[] strArray) {
-        throw new InvalidOperationException("Type not handled");
-        // Convert from multiple strings to a an array.
-        /*if (property.PropertyType == typeof(Color[])) {
-          var colors = new Color[strArray.Length];
-
-          for (int i = 0; i < strArray.Length; i++) {
-            colors[i] = Utils.ColorFromString(strArray[i]);
-          }
-
-          property.SetValue(obj, colors);
+        // Try to find a registered converter for this type
+        var converter = SettingsTypeRegistry.GetConverter(property.PropertyType.GetElementType() ?? property.PropertyType);
+        if (converter != null) {
+          Array convertedArray = converter.ConvertFromStringArray(strArray);
+          property.SetValue(obj, convertedArray);
         }
         else {
-          throw new InvalidOperationException("Type not handled");
-        }*/
+          throw new InvalidOperationException($"Type {property.PropertyType.Name} not handled - no converter registered");
+        }
       }
       else {
         throw new InvalidOperationException("Type not handled");
