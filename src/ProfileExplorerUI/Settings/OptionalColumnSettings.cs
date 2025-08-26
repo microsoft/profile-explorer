@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Windows.Media;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

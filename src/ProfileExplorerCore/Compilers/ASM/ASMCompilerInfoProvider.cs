@@ -3,16 +3,16 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private static Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();

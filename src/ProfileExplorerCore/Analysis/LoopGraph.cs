@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Generic;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
-namespace ProfileExplorerCore.Analysis;
+namespace ProfileExplorer.Core.Analysis;
 
 public enum LoopKind {
   Natural,

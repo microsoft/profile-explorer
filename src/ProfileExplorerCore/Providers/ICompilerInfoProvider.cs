@@ -3,14 +3,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Providers;
+namespace ProfileExplorer.Core.Providers;
 
 public interface ICompilerInfoProvider {
   string CompilerIRName { get; }

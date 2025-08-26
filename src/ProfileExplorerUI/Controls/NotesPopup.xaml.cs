@@ -4,8 +4,8 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI.Controls;
 

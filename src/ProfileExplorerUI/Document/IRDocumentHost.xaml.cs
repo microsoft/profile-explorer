@@ -14,8 +14,8 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
@@ -24,11 +24,11 @@ using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorer.UI.Query;
 using ProtoBuf;
-using ProfileExplorerCore.Utilities;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI;
 

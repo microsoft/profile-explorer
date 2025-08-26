@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using System.Windows.Media;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI.Query;
 

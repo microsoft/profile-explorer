@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 public delegate void ProfileLoadProgressHandler(ProfileLoadProgress info);
 public delegate void ProcessListProgressHandler(ProcessListProgress info);

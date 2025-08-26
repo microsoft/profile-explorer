@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.IR.Tags;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public sealed class SourceStackFrame : IEquatable<SourceStackFrame> {
   public SourceStackFrame(string function, string filePath, int line, int column) {

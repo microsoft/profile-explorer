@@ -6,10 +6,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Graph;
+namespace ProfileExplorer.Core.Graph;
 
 public class GraphVizPrinter {
   private int subgraphIndex_;

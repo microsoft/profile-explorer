@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Document;
-using TextLocation = ProfileExplorerCore.TextLocation;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Profile.CallTree;
-using PerformanceCounter = ProfileExplorerCore.Profile.Data.PerformanceCounter;
+using TextLocation = ProfileExplorer.Core.TextLocation;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Profile.CallTree;
+using PerformanceCounter = ProfileExplorer.Core.Profile.Data.PerformanceCounter;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Diagnostics;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

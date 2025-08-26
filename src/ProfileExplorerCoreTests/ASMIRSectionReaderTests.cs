@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.ASM;
 
-namespace ProfileExplorerCoreTests;
+namespace ProfileExplorer.CoreTests;
 
 [TestClass]
 public class ASMIRSectionReaderTests {

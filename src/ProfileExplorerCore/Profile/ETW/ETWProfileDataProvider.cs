@@ -9,17 +9,17 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.Compilers.ASM;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.ETW;
+namespace ProfileExplorer.Core.Profile.ETW;
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;

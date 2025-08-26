@@ -3,7 +3,7 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:oxy="http://oxyplot.org/wpf"
   xmlns:profile="clr-namespace:ProfileExplorer.UI.Profile"
-  xmlns:callTree="clr-namespace:ProfileExplorerCore.Profile.CallTree;assembly=ProfileExplorerCore"
+  xmlns:callTree="clr-namespace:ProfileExplorer.Core.Profile.CallTree;assembly=ProfileExplorerCore"
   xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
   <system:Boolean x:Key="TrueBool">True</system:Boolean>

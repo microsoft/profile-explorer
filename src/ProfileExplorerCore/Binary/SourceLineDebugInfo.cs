@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.IR.Tags;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 [ProtoContract(SkipConstructor = true)]
 public struct SourceLineDebugInfo : IEquatable<SourceLineDebugInfo> {

@@ -14,11 +14,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
 using Microsoft.Win32;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 public static class Utils {
   private static readonly TaskFactory TaskFactoryInstance = new(CancellationToken.None,

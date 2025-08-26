@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace ProfileExplorerCore.Collections;
+namespace ProfileExplorer.Core.Collections;
 
 public class SparseBitvector : IEquatable<SparseBitvector> {
   private Node startNode_;

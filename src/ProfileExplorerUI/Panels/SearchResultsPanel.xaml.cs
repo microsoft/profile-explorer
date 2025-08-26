@@ -10,9 +10,9 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 using ProfileExplorer.UI.Document;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

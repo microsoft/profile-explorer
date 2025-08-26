@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Threading.Tasks;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Query;
 

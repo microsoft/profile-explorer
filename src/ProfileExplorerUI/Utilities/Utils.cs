@@ -21,13 +21,13 @@ using System.Xml;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using Microsoft.Win32;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Controls;
 using Xceed.Wpf.Toolkit.Core.Utilities;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI;
 

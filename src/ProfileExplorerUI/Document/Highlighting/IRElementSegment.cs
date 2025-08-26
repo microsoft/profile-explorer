@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI;
 

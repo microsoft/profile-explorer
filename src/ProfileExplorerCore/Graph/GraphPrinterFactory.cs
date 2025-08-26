@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Graph;
+namespace ProfileExplorer.Core.Graph;
 
 public static class GraphPrinterFactory {
   public static GraphVizPrinter CreateInstance<T, U>(

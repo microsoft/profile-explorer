@@ -5,16 +5,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
 using ProfileExplorer.UI.Settings;
 using ProtoBuf;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI;
 

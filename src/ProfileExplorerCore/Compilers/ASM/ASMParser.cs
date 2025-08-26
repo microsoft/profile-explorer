@@ -4,15 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.Collections;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Lexer;
-using ProfileExplorerCore.Parser;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Collections;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Lexer;
+using ProfileExplorer.Core.Parser;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public sealed class ASMParser : ParserBase {
   private static Dictionary<string, Keyword> keywordMap_ =

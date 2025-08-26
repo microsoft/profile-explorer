@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI;
 

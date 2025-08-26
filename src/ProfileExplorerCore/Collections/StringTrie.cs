@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Collections;
+namespace ProfileExplorer.Core.Collections;
 
 // A compact representation of a Trie<T> using only arrays, which makes it
 // more cache friendly and much faster (>10x for large tries) than a simple trie

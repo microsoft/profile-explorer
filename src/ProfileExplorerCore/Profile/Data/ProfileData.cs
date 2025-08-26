@@ -4,12 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 public class ProfileData {
   public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {

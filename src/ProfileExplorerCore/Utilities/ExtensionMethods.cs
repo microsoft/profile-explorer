@@ -5,11 +5,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 static class ExtensionMethods {
   private static readonly char[] NewLineChars = {'\r', '\n'};

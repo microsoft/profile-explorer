@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
 //? TODO: Reference finding for symbols withou SSA can use the reachability graph
 //? to trim down the set of potential definitions. Useful in the text viewer for highlighting and goto def.
@@ -12,7 +12,7 @@ using ProfileExplorerCore.IR.Tags;
 //?    useful especially for registers
 //?    can be done in parallel too
 
-namespace ProfileExplorerCore.Analysis;
+namespace ProfileExplorer.Core.Analysis;
 
 [Flags]
 public enum ReferenceKind {

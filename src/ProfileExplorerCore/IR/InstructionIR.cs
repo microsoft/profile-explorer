@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public enum InstructionKind {
   Unary,

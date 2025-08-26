@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.Utils;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Utils;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Session;
+namespace ProfileExplorer.Core.Session;
 
 [ProtoContract]
 public class LoadedDocumentState : ILoadedDocumentState {

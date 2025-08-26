@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public class IRElement : TaggedObject {
   public IRElement() {

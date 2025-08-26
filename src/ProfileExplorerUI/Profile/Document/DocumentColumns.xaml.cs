@@ -11,7 +11,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Folding;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.OptionsPanels;
 
 namespace ProfileExplorer.UI.Document;

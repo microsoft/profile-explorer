@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Graph;
+namespace ProfileExplorer.Core.Graph;
 
 public sealed class FlowGraphPrinter : GraphVizPrinter {
   private const int LargeGraphThresholdMin = 500;

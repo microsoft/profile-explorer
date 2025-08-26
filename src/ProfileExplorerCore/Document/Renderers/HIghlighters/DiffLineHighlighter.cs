@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Windows;
 
-namespace ProfileExplorerCore.Document.Renderers.Highlighters;
+namespace ProfileExplorer.Core.Document.Renderers.Highlighters;
 
 public enum DiffKind {
   None,

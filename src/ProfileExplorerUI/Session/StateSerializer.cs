@@ -7,7 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 using ProtoBuf;
 using ProtoBuf.Meta;
 

@@ -17,14 +17,14 @@ using Azure.Identity;
 using Dia2Lib;
 using Microsoft.Diagnostics.Symbols;
 using Microsoft.Diagnostics.Symbols.Authentication;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using StringWriter = System.IO.StringWriter;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private const int MaxDemangledFunctionNameLength = 8192;

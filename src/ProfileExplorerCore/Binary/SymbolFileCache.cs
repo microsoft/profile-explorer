@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using ProfileExplorerCore.FileFormat;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.FileFormat;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 [ProtoContract]
 public class SymbolFileCache {

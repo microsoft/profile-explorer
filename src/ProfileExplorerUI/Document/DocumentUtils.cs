@@ -11,11 +11,11 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Profile.Document;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI.Document;
 

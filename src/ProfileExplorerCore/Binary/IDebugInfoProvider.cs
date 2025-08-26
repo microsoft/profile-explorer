@@ -3,13 +3,13 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public interface IDebugInfoProvider : IDisposable {
   public Machine? Architecture { get; }

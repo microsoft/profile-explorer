@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore.Profile.Processing;
+using ProfileExplorer.Core.Profile.Processing;
 
 namespace ProfileExplorer.UI;
 

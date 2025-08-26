@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Generic;
-using ProfileExplorerCore.Profile.Data;
+using ProfileExplorer.Core.Profile.Data;
 
-namespace ProfileExplorerCore.Profile.Processing;
+namespace ProfileExplorer.Core.Profile.Processing;
 
 public sealed class FunctionsForSamplesProcessor : ProfileSampleProcessor {
   private HashSet<IRTextFunction> functionSet_;

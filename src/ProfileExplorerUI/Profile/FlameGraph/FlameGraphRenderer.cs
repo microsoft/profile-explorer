@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public sealed class DocumentSectionLoader : IRTextSectionLoader {
   private IRSectionReader documentReader_;

@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Parser;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public interface ICompilerIRInfo {
   IRMode Mode { get; set; }

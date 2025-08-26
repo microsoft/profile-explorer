@@ -7,12 +7,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.Document.Renderers.Highlighters;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.Diff;
 

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ProfileExplorerCore.FileFormat;
+namespace ProfileExplorer.Core.FileFormat;
 
 public sealed class FileArchive : IDisposable {
   public delegate void FileProgressDelegate(int currentFile, int totalFiles);

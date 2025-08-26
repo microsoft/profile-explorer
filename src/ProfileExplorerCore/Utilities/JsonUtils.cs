@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 /*public class JsonColorConverter : JsonConverter<Color> {
   public override Color Read(ref Utf8JsonReader reader, Type typeToConvert,

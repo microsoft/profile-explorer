@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Runtime.CompilerServices;
 
-namespace ProfileExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 public static class CharTable {
   private const byte CHAR_WHITESPACE = 1;

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ProfileExplorerCore.IR.Tags;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public interface ISSAValue {
   int DefinitionId { get; set; }

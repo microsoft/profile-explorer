@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Threading.Tasks;
 using System.Windows.Controls;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 
 namespace ProfileExplorer.UI;
 

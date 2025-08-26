@@ -4,13 +4,13 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Compilers.ASM;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 public sealed class ProfileModuleBuilder {
 #if DEBUG

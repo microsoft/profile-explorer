@@ -5,12 +5,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using ProfileExplorerCore.Controls;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.Controls;
+using ProfileExplorer.Core.IR;
 using ProtoBuf;
 using ProtoBuf.Meta;
 
-namespace ProfileExplorerCore.Session;
+namespace ProfileExplorer.Core.Session;
 
 static class StateSerializer {
   public static readonly int subtypeIdStep_ = 100;

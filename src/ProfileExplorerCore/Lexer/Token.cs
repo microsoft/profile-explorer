@@ -3,7 +3,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace ProfileExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 // Definitions for token types.
 // Some tokens (identifier, string, number, etc.) have additional associated data.

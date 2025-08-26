@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.SourceParser;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.SourceParser;
 
 namespace ProfileExplorer.UI.Profile.Document;
 

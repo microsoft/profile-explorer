@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Lexer;
+using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorerCore.Parser;
+namespace ProfileExplorer.Core.Parser;
 
 public class ParsingErrorHandler : IRParsingErrorHandler {
   public ParsingErrorHandler() {

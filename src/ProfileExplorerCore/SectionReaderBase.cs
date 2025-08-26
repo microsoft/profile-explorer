@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public abstract class SectionReaderBase : IRSectionReader, IDisposable {
   public static readonly long MAX_PRELOADED_FILE_SIZE = 256 * 1024 * 1024; // 256 MB

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Windows.Media;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI;
 

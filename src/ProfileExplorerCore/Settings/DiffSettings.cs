@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.ComponentModel;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.UI;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.UI;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Settings;
+namespace ProfileExplorer.Core.Settings;
 
 [ProtoContract(SkipConstructor = true)]
 public class DiffSettings : SettingsBase {

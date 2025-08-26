@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using ProfileExplorer.Core.SourceParser;
 
-namespace ProfileExplorerCore.SourceParser;
+namespace ProfileExplorer.Core.SourceParser;
 
 public enum SourceCodeLanguage {
   Cpp,

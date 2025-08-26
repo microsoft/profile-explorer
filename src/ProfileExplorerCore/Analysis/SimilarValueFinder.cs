@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Generic;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Analysis;
+namespace ProfileExplorer.Core.Analysis;
 
 public class SimilarValueFinder {
   private FunctionIR function_;

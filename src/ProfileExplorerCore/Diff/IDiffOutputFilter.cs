@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using DiffPlex.DiffBuilder.Model;
-using ProfileExplorerCore.Document.Renderers.Highlighters;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.Settings;
 
-namespace ProfileExplorerCore.Diff;
+namespace ProfileExplorer.Core.Diff;
 
 public interface IDiffOutputFilter {
   char[] IgnoredDiffLetters { get; }

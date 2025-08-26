@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.ETW;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCoreTests;
+namespace ProfileExplorer.CoreTests;
 
 public class ProfileLoadWindow {
     private CancelableTaskInstance loadTask_;

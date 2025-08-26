@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ProfileExplorerCore.SourceParser;
+namespace ProfileExplorer.Core.SourceParser;
 
 public enum SourceSyntaxNodeKind {
   Root,

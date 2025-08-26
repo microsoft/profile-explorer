@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Linq;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Analysis;
+namespace ProfileExplorer.Core.Analysis;
 
 public class DominanceFrontier {
   private readonly Dictionary<BlockIR, List<BlockIR>> frontierMap_;

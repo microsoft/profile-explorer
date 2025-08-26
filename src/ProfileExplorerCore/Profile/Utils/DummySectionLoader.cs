@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ProfileExplorerCore.Profile.Utils;
+namespace ProfileExplorer.Core.Profile.Utils;
 
 public sealed class DummySectionLoader : IRTextSectionLoader {
   public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {

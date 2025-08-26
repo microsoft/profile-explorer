@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore.Analysis;
+using ProfileExplorer.Core.Analysis;
 
-namespace ProfileExplorerCore.IR.Tags;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public sealed class LoopBlockTag : ITag {
   public LoopBlockTag(Loop parentLoop, int nestingLevel = 0) {

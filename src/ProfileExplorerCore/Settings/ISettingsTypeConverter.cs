@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 
-namespace ProfileExplorerCore.Settings;
+namespace ProfileExplorer.Core.Settings;
 
 /// <summary>
 /// Interface for custom type converters used in settings serialization/deserialization.

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core.Providers;
 
-namespace ProfileExplorerCore.Session;
+namespace ProfileExplorer.Core.Session;
 
 public interface ILoadedDocumentState {
   Guid Id { get; set; }

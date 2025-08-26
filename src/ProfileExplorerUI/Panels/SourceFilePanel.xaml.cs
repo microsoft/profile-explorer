@@ -8,18 +8,18 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Utilities;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Binary;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Binary;
 
 namespace ProfileExplorer.UI;
 

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ProfileExplorerCore.IR.Tags;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public sealed class RegisterTag : ITag {
   public RegisterTag(RegisterIR register, TaggedObject owner) {

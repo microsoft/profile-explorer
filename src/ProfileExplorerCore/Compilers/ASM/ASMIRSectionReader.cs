@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public sealed class ASMIRSectionReader : SectionReaderBase {
   public ASMIRSectionReader(string filePath, bool expectSectionHeaders) :

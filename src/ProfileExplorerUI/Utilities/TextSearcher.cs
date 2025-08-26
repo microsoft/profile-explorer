@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Enumeration;
 using System.Text.RegularExpressions;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

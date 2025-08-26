@@ -9,12 +9,12 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
-using ProfileExplorerCore.Compilers.ASM;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public delegate void DisassemblerProgressHandler(DisassemblerProgress info);
 

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
-namespace ProfileExplorerCore.Profile.Timeline;
+namespace ProfileExplorer.Core.Profile.Timeline;
 
 /*public class MarkedSamples {
   public MarkedSamples(int index, ProfileCallTreeNode node, List<SampleIndex> samples, HighlightingStyle style) {

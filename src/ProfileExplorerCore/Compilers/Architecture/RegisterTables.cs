@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Compilers.Architecture;
+namespace ProfileExplorer.Core.Compilers.Architecture;
 
 public static class RegisterTables {
   // Static instances to have the tables built only once.

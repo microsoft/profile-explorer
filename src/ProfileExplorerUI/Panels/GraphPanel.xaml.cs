@@ -9,16 +9,16 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.Graph;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Graph;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProtoBuf;
-using ProfileExplorerCore.Utilities;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.IR.Tags;
 
 namespace ProfileExplorer.UI;
 

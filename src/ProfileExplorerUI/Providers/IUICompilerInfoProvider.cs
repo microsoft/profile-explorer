@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using ProfileExplorer.UI.Query;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorerUI.Session;
 using ProtoBuf;
 

@@ -5,11 +5,11 @@ using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.ETW;
+namespace ProfileExplorer.Core.Profile.ETW;
 
 public sealed partial class ETWEventProcessor {
   private void ProcessDotNetEvents(RawProfileData profile, CancelableTask cancelableTask) {

@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Collections;
-using ProfileExplorerCore.Profile.ETW;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Collections;
+using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 [ProtoContract(SkipConstructor = true)]
 public class RawProfileData : IDisposable {

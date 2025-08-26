@@ -8,7 +8,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
 

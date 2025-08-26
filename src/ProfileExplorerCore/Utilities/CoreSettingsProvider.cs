@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 public static class CoreSettingsProvider
 {

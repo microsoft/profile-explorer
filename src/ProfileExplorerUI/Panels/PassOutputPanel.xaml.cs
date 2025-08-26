@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
-using ProfileExplorerCore.UI;
+using ProfileExplorer.Core.UI;
 
 namespace ProfileExplorer.UI;
 

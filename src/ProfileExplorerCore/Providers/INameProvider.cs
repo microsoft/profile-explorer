@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 
-namespace ProfileExplorerCore.Providers;
+namespace ProfileExplorer.Core.Providers;
 
 public delegate string FunctionNameFormatter(string name);
 

@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Settings;
+namespace ProfileExplorer.Core.Settings;
 
 [ProtoContract(SkipConstructor = true)]
 public class GeneralSettings : SettingsBase {

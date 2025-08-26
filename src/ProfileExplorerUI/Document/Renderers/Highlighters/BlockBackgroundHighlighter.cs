@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI;
 

@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ProfileExplorerCore.IR.Tags;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public sealed class AssemblyMetadataTag : ITag {
   public AssemblyMetadataTag() {

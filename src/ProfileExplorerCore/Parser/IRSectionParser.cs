@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Lexer;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorerCore.Parser;
+namespace ProfileExplorer.Core.Parser;
 
 public interface IRSectionParser {
   void SkipCurrentToken();

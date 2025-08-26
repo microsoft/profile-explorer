@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public sealed class FunctionIR : IRElement {
   private Dictionary<ulong, IRElement> elementMap_;

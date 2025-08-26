@@ -2,12 +2,12 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Diagnostics;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.Timeline;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Timeline;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.Processing;
+namespace ProfileExplorer.Core.Profile.Processing;
 
 public sealed class FunctionSamplesProcessor : ProfileSampleProcessor {
   private const int AllThreadsKey = -1;

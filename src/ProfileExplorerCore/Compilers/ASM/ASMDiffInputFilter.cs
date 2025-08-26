@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public class ASMDiffInputFilter : IDiffInputFilter {
   private Dictionary<string, int> addressMap_;

@@ -3,7 +3,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public struct TextLocation : IComparable<TextLocation> {
   public int Offset {

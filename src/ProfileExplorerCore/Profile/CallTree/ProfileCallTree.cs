@@ -7,11 +7,11 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.CallTree;
+namespace ProfileExplorer.Core.Profile.CallTree;
 
 public enum ProfileCallTreeNodeKind {
   Unset = 0,

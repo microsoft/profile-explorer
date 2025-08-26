@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI;
 

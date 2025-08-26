@@ -4,10 +4,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.ETW;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.ETW;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 // Represents a resolved stack frame with details about the function and image it belongs to.
 // To reduce memory usage, the RVA field is stored in a derived class with the smallest possible size,

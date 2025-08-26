@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Controls;
+namespace ProfileExplorer.Core.Controls;
 
 [ProtoContract(SkipConstructor = true)]
 public class IRElementReference {

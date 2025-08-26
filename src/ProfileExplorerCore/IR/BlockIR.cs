@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public sealed class BlockIR : IRElement {
   public BlockIR(IRElementId elementId, int number, FunctionIR parent) :

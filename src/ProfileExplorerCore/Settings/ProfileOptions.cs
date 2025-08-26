@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Session;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Settings;
+namespace ProfileExplorer.Core.Settings;
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRecordingSessionOptions> {

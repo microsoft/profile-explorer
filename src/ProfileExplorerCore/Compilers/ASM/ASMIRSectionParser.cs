@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Parser;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public sealed class ASMIRSectionParser : IRSectionParser {
   private ICompilerIRInfo irInfo_;

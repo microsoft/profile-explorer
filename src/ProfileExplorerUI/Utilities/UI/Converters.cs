@@ -8,11 +8,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI;
 

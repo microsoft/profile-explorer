@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using CSharpTest.Net.Collections;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Parser;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public class ParsedIRTextSection {
   public ParsedIRTextSection(IRTextSection section, ReadOnlyMemory<char> text, FunctionIR function) {

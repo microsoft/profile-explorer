@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Parser;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

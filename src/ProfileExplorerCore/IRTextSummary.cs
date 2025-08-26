@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public class IRTextSummary : IEquatable<IRTextSummary> {
   private Dictionary<string, IRTextFunction> functionNameMap_;

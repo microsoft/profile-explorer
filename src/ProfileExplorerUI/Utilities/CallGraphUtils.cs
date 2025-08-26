@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.Graph;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Graph;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;

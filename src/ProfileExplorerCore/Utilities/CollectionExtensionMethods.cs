@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ProfileExplorerCore.Controls;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.Controls;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 public static class CollectionExtensionMethods {
   public static List<T> CloneList<T>(this List<T> list) {

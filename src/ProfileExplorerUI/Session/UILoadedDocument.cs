@@ -4,20 +4,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.Utils;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Utils;
+using ProfileExplorer.Core.Session;
 using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;
 
 [ProtoContract]
 public class UILoadedDocumentState : LoadedDocumentState, IUILoadedDocumentState {
-  // Inherited properties from LoadedDocumentState (ProtoMember 1–7, 9)
+  // Inherited properties from LoadedDocumentState (ProtoMember 1ï¿½7, 9)
   // Add new property for panel states:
   [ProtoMember(8)]
   public List<Tuple<int, PanelObjectPairState>> PanelStates { get; set; }

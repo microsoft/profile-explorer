@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Lexer;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorerCore.Parser;
+namespace ProfileExplorer.Core.Parser;
 
 public class ParserBase {
   protected readonly Lexer.Lexer lexer_ = new();

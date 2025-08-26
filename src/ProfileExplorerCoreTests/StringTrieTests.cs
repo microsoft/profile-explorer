@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.Collections;
 
-namespace ProfileExplorerCoreTests;
+namespace ProfileExplorer.CoreTests;
 
 [TestClass]
 public class StringTrieTests {

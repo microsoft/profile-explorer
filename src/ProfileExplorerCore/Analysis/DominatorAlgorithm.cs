@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Analysis;
+namespace ProfileExplorer.Core.Analysis;
 
 [Flags]
 public enum DominatorAlgorithmOptions {

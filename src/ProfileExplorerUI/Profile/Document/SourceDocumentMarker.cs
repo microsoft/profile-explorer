@@ -8,10 +8,10 @@ using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 

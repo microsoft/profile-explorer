@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Settings;
+namespace ProfileExplorer.Core.Settings;
 
 // A typical settings class should:
 // - should inherit from SettingsBase and be marked with ProtoContract.

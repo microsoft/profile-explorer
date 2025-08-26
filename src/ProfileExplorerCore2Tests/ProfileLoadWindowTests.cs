@@ -6,22 +6,22 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.Compilers.ASM;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.ETW;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using Xunit;
 
-namespace ProfileExplorerCoreTests;
+namespace ProfileExplorer.CoreTests;
 
 public class ProfileLoadWindowTests
 {

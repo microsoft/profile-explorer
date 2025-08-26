@@ -7,7 +7,7 @@
   xmlns:local="clr-namespace:ProfileExplorer.UI.OptionsPanels"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:settings="clr-namespace:ProfileExplorer.UI"
-  xmlns:core2ui="clr-namespace:ProfileExplorerCore.UI;assembly=ProfileExplorerCore"
+  xmlns:core2ui="clr-namespace:ProfileExplorer.Core.UI;assembly=ProfileExplorerCore"
   xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
   d:DesignHeight="560"
   d:DesignWidth="340 "

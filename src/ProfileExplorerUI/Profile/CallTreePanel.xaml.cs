@@ -11,15 +11,15 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Aga.Controls.Tree;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
-using ProfileExplorerCore.Utilities;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Profile.Data;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 

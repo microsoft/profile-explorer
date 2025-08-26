@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public class SourceFileMapper {
   private readonly Dictionary<string, string> sourcePathMap_;

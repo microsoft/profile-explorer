@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using ProfileExplorerCore.Profile.Utils;
+using ProfileExplorer.Core.Profile.Utils;
 
-namespace ProfileExplorerCore.Profile.ETW;
+namespace ProfileExplorer.Core.Profile.ETW;
 
 public class ProfilerNamedPipeServer : IDisposable {
   public delegate void FunctionCallTargetsReceivedDelegate(long functionId, int rejitId, int processId, long address,

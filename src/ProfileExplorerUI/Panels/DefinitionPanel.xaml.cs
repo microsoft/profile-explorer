@@ -3,10 +3,10 @@
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

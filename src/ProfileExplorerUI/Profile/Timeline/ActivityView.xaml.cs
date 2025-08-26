@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.Timeline;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Timeline;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public enum TypeKind {
   Integer,

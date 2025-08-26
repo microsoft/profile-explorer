@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public class TaggedObject {
   public List<ITag> Tags { get; set; }

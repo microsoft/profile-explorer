@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace ProfileExplorerCore.Collections;
+namespace ProfileExplorer.Core.Collections;
 
 // A lightweight list implementation that stores a single item or an array of items.
 public struct TinyList<T> : IList<T> {

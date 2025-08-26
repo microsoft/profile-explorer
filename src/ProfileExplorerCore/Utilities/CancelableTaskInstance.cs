@@ -3,7 +3,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 // Manages a unique running instance of a CancelableTask.
 public class CancelableTaskInstance : IDisposable {

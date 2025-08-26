@@ -11,13 +11,13 @@ using System.Windows;
 using System.Windows.Controls;
 using AvalonDock.Layout;
 using AvalonDock.Layout.Serialization;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Settings;
 using ProfileExplorer.UI.Windows;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI;
 

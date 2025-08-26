@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 [ProtoContract(SkipConstructor = true)]
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

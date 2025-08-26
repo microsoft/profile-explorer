@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 using System;
 using DiffPlex.DiffBuilder.Model;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.Document.Renderers.Highlighters;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

@@ -3,12 +3,12 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 public class FunctionProfileData {
   public FunctionProfileData() {

@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 using System.Windows.Media;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

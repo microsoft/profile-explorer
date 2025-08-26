@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.Processing;
+namespace ProfileExplorer.Core.Profile.Processing;
 
 // Provides support for running an analysis over samples, with filtering,
 // in parallel, by splitting the samples into multiple chunks, each

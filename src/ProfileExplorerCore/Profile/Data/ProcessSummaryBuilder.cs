@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 public class ProcessSummaryBuilder {
   private RawProfileData profile_;

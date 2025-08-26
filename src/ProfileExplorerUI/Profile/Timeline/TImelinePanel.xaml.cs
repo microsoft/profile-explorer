@@ -17,10 +17,10 @@ using System.Windows.Threading;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Profile.Timeline;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Timeline;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Graph;
+namespace ProfileExplorer.Core.Graph;
 
 public enum GraphKind {
   FlowGraph,

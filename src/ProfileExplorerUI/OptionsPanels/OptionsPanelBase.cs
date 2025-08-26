@@ -6,8 +6,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using ProfileExplorerCore.Session;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

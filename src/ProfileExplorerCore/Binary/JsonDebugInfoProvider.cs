@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 public class JsonDebugInfoProvider : IDebugInfoProvider {
   private Dictionary<string, FunctionDebugInfo> functionMap_;

@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Profile.Timeline;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Timeline;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.Processing;
+namespace ProfileExplorer.Core.Profile.Processing;
 
 public class ProfileSampleFilter : IEquatable<ProfileSampleFilter> {
   public ProfileSampleFilter() {

@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using ProfileExplorerCore.Collections;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Lexer;
+using ProfileExplorer.Core.Collections;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorerCore.Graph;
+namespace ProfileExplorer.Core.Graph;
 
 public sealed class GraphvizReader {
   private static readonly Dictionary<string, Keyword> keywordMap_ =

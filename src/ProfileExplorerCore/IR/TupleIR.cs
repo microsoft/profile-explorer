@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public enum TupleKind {
   Instruction,

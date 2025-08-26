@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProfileExplorerCore;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Diff;
-using ProfileExplorerCore.Diff;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 

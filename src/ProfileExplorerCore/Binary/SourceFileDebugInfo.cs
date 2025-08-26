@@ -3,7 +3,7 @@
 using System;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 [ProtoContract(SkipConstructor = true)]
 public struct SourceFileDebugInfo : IEquatable<SourceFileDebugInfo> {

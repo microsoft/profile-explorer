@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public class IRPassOutput {
   public static readonly IRPassOutput Empty = new(0, 0, 0, 0);

@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using ProfileExplorer.UI;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorerUI.Session;
 

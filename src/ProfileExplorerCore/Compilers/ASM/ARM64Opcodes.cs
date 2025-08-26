@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.Collections;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.Collections;
+using ProfileExplorer.Core.IR;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public enum ARM64Opcode {
   RET,

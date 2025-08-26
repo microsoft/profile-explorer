@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public class IRTextSection : IEquatable<IRTextSection> {
   private CompressedObject<Dictionary<int, string>> lineMetadata_;

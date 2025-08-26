@@ -14,17 +14,17 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.SourceParser;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.SourceParser;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
-using ProfileExplorerCore.Utilities;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.Processing;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI.Profile.Document;
 

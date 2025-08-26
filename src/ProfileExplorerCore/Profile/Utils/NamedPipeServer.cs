@@ -9,7 +9,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 
-namespace ProfileExplorerCore.Profile.Utils;
+namespace ProfileExplorer.Core.Profile.Utils;
 
 public class NamedPipeServer : IDisposable {
   public delegate void MessageReceivedDelegate(PipeMessageHeader messageHeader, byte[] messageBody);

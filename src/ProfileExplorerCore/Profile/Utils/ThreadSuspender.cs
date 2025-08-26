@@ -8,7 +8,7 @@ using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace ProfileExplorerCore.Profile.Utils;
+namespace ProfileExplorer.Core.Profile.Utils;
 
 // Copied from ClrMD.
 class WindowsThreadSuspender : CriticalFinalizerObject, IDisposable {

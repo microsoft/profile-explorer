@@ -3,7 +3,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using ProfileExplorerCore.IR;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI.Query;
 

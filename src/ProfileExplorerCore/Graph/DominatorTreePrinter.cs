@@ -3,11 +3,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using ProfileExplorerCore.Analysis;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Graph;
+namespace ProfileExplorer.Core.Graph;
 
 public sealed class DominatorTreePrinter : GraphVizPrinter {
   private FunctionIR function_;

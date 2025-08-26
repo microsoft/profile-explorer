@@ -6,13 +6,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
 using Microsoft.Diagnostics.Symbols;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Binary;
+namespace ProfileExplorer.Core.Binary;
 
 //? Provider ASM should return instance instead of JSONDebug
 public class DotNetDebugInfoProvider : IDebugInfoProvider {

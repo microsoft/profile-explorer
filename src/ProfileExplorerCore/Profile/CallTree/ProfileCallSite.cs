@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace ProfileExplorerCore.Profile.CallTree;
+namespace ProfileExplorer.Core.Profile.CallTree;
 
 public class ProfileCallSite : IEquatable<ProfileCallSite> {
   public ProfileCallSite(long rva) {

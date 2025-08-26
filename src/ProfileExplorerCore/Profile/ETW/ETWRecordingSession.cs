@@ -11,12 +11,12 @@ using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.Utils;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Utils;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.ETW;
+namespace ProfileExplorer.Core.Profile.ETW;
 
 public sealed class ETWRecordingSession : IDisposable {
   private static readonly string ProfilerPath = "ProfileExplorerProfiler.dll";

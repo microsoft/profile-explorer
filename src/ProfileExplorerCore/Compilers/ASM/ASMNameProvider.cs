@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Concurrent;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public sealed class ASMNameProvider : INameProvider {
   private static ConcurrentDictionary<string, string> demangledNameMap_;

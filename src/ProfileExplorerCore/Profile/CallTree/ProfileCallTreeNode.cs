@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Collections;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Collections;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCore.Profile.CallTree;
+namespace ProfileExplorer.Core.Profile.CallTree;
 
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
   private static readonly object MergedNodeTag = new();

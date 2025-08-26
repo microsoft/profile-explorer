@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorer.Core.Profile.CallTree;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 public class ModuleProfileInfo {
   public ModuleProfileInfo() { }

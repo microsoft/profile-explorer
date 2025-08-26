@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace ProfileExplorerCore.Utilities;
+namespace ProfileExplorer.Core.Utilities;
 
 public static class ExtensionMethodsCore {
   private static readonly string[] NewLineStrings = {"\r\n", "\r", "\n"};

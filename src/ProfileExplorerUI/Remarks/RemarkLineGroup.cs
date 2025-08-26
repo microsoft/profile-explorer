@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Generic;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 
 namespace ProfileExplorer.UI;
 

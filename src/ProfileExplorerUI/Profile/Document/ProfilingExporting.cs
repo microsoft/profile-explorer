@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
 using HtmlAgilityPack;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Session;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI.Profile;
 

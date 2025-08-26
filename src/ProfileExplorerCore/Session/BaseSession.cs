@@ -5,17 +5,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using System.Collections.Generic;
-using ProfileExplorerCore.Compilers.ASM;
-using ProfileExplorerCore.Profile.ETW;
-using ProfileExplorerCore.Analysis;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Analysis;
 
-namespace ProfileExplorerCore.Session;
+namespace ProfileExplorer.Core.Session;
 
 public enum SessionKind {
   Default = 0,

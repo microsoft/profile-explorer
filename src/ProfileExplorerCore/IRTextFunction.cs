@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public class IRTextFunction : IEquatable<IRTextFunction> {
   private int cachedHashCode_;

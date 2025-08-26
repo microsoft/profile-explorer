@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Dia2Lib;
 using ProfileExplorer.Core;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 
 namespace PDBViewer;
 

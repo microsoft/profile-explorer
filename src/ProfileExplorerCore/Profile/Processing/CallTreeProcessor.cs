@@ -3,10 +3,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorerCore.Profile.CallTree;
-using ProfileExplorerCore.Profile.Data;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
 
-namespace ProfileExplorerCore.Profile.Processing;
+namespace ProfileExplorer.Core.Profile.Processing;
 
 public sealed class CallTreeProcessor : ProfileSampleProcessor {
   private List<ProfileCallTree> chunks_;

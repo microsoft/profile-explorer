@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.FileFormat;
 
-namespace ProfileExplorerCoreTests.FileFormat;
+namespace ProfileExplorer.CoreTests.FileFormat;
 
 [TestClass]
 public class FileArchiveTest {

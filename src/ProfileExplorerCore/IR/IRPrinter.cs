@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Text;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.IR.Tags;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public class IRPrinter {
   private StringBuilder builder_;

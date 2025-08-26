@@ -3,15 +3,15 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using ProfileExplorerCore;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Compilers.Architecture;
-using ProfileExplorerCore.Compilers.ASM;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Query;
-using ProfileExplorerCore.Settings;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorerUI.Session;
 

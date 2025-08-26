@@ -3,13 +3,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.Providers;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Utilities;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
-namespace ProfileExplorerCore.Profile.Data;
+namespace ProfileExplorer.Core.Profile.Data;
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileDataReport : IEquatable<ProfileDataReport> {

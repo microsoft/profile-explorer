@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows.Media;
 using ProtoBuf;
 using ProfileExplorer.UI; // For Utils
-using ProfileExplorerCore.Settings; // For SettingsBase, OptionValueAttribute
+using ProfileExplorer.Core.Settings; // For SettingsBase, OptionValueAttribute
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ProfileExplorerUITests.Settings;

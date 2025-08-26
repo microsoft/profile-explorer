@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ProfileExplorerCore;
+namespace ProfileExplorer.Core;
 
 public delegate void ProgressInfoHandler(IRSectionReader reader, SectionReaderProgressInfo info);
 public delegate void SectionTextHandler(IRSectionReader reader, SectionReaderText info);

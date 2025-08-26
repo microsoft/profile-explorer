@@ -4,7 +4,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 
-namespace ProfileExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 public sealed class Lexer {
   public delegate bool TokenAction(Token token);

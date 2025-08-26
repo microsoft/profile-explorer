@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI.Profile;
 

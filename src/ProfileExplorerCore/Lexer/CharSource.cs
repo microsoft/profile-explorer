@@ -3,7 +3,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace ProfileExplorerCore.Lexer;
+namespace ProfileExplorer.Core.Lexer;
 
 public sealed class CharSource {
   public static readonly char EOF = '\0';

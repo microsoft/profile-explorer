@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace ProfileExplorerCore.Collections;
+namespace ProfileExplorer.Core.Collections;
 
 public sealed class CompressedSegmentedList<T> : IDisposable, IList<T> where T : struct {
   // The GC Large Object Heap is used for allocations > 85 KB,

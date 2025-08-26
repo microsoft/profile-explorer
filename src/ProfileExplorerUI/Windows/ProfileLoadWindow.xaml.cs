@@ -13,14 +13,14 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
-using ProfileExplorerCore;
+using ProfileExplorer.Core;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore.Utilities;
-using ProfileExplorerCore.Settings;
-using ProfileExplorerCore.Profile.Data;
-using ProfileExplorerCore.Profile.ETW;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.ETW;
 
 namespace ProfileExplorer.UI;
 

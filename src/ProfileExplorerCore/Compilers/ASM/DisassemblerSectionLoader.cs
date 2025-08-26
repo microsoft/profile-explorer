@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore.Binary;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.Providers;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
 
-namespace ProfileExplorerCore.Compilers.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private IRTextSummary summary_;

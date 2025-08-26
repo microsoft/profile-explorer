@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Diagnostics;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.IR.Tags;
 
-namespace ProfileExplorerCore.IR;
+namespace ProfileExplorer.Core.IR;
 
 public enum OperandKind {
   Variable,

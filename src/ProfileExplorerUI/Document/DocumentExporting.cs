@@ -9,8 +9,8 @@ using System.Web;
 using System.Windows;
 using ClosedXML.Excel;
 using HtmlAgilityPack;
-using ProfileExplorerCore.IR;
-using ProfileExplorerCore.IR.Tags;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
 namespace ProfileExplorer.UI.Document;
 
