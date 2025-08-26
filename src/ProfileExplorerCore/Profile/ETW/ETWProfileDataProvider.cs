@@ -320,7 +320,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (exeDocument == null) {
           Trace.WriteLine($"LoadTraceAsync: WARNING - Failed to find main EXE document for {imageName}");
-          exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
+          exeDocument = session_.CreateLoadedDocument(string.Empty, string.Empty, Guid.Empty);
           exeDocument.Summary = new IRTextSummary(string.Empty);
         }
         else {
@@ -607,7 +607,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     ILoadedDocument exeDocument = null;
     otherDocuments = new List<ILoadedDocument>();
 
-    foreach (var module in imageModuleMap_.Values) {
+    foreach (ProfileModuleBuilder module in imageModuleMap_.Values) {
       var moduleDoc = module.ModuleDocument;
 
       if (moduleDoc == null) {

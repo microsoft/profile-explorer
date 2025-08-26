@@ -1784,6 +1784,14 @@ public partial class MainWindow : Window, IUISession {
     return new UI.Compilers.ASM.ASMUICompilerInfoProvider(mode, this);
   }
 
+  public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
+    return new UILoadedDocument(filePath, modulePath, id);
+  }
+
+  public ILoadedDocument CreateDummyDocument(string name) {
+    return UILoadedDocument.CreateDummyDocument(name);
+  }
+
   public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
     if (compilerInfo is IUICompilerInfoProvider uICompilerInfo) {
       return await StartNewSession(sessionName, sessionKind, uICompilerInfo);

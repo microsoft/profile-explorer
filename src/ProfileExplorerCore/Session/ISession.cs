@@ -21,6 +21,8 @@ public interface ISession {
   ILoadedDocument FindLoadedDocument(IRTextFunction func);
 
   ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode);
+  ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id);
+  ILoadedDocument CreateDummyDocument(string name);
   Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
   Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData);
 

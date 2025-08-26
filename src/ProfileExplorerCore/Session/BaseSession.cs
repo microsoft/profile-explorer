@@ -56,6 +56,14 @@ public class BaseSession : ISession
       return new ASMCompilerInfoProvider(mode, this);
     }
 
+    public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
+      return new LoadedDocument(filePath, modulePath, id);
+    }
+
+    public ILoadedDocument CreateDummyDocument(string name) {
+      return LoadedDocument.CreateDummyDocument(name);
+    }
+
   public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
     await SwitchCompilerTarget(compilerInfo);
 
@@ -124,7 +132,7 @@ public class BaseSession : ISession
                                                   IRTextSectionLoader loader) {
     try {
       var result = await Task.Run(() => {
-        var result = new LoadedDocument(filePath, modulePath, id);
+        var result = CreateLoadedDocument(filePath, modulePath, id);
         result.Loader = loader;
         result.Summary = result.Loader.LoadDocument(progressHandler);
         return result;
