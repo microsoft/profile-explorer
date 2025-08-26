@@ -8,7 +8,7 @@ using ProtoBuf;
 namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
-public class SectionSettings : SettingsBase {
+public class SectionSettings : ProfileExplorer.Core.Settings.SectionSettings {
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDurationMs;
 
   public SectionSettings() {
@@ -42,7 +42,7 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(16)][OptionValue(true)]
   public bool LowerIdenticalToPreviousOpacity { get; set; }
   [ProtoMember(17)][OptionValue(true)]
-  public bool ShowDemangledNames { get; set; }
+  public override bool ShowDemangledNames { get; set; }
   [ProtoMember(18)][OptionValue(true)]
   public bool DemangleOnlyNames { get; set; }
   [ProtoMember(19)][OptionValue(true)]
@@ -82,7 +82,7 @@ public class SectionSettings : SettingsBase {
   [ProtoMember(37)][OptionValue()]
   public ColumnSettings ModuleListColumns { get; set; }
 
-  public FunctionNameDemanglingOptions DemanglingOptions {
+  public override FunctionNameDemanglingOptions DemanglingOptions {
     get {
       var options = FunctionNameDemanglingOptions.Default;
 
@@ -124,7 +124,7 @@ public class SectionSettings : SettingsBase {
     InitializeReferenceOptions(this);
   }
 
-  public SectionSettings Clone() {
+  public override SectionSettings Clone() {
     byte[] serialized = StateSerializer.Serialize(this);
     return StateSerializer.Deserialize<SectionSettings>(serialized);
   }

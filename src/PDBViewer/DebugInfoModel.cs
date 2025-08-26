@@ -5,7 +5,7 @@ using System.Text;
 
 namespace PDBViewer;
 
-//? TODO: Move to ProfileExplorer.Core and share with ProfileExplorerUI.
+//? TODO: Move to ProfileExplorerCore and share with ProfileExplorerUI.
 public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
   public static readonly FunctionDebugInfo Unknown = new(null, 0, 0);
 

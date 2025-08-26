@@ -11,6 +11,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shell;
 using System.Xml;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Settings;
 
 namespace ProfileExplorer.UI;
 
@@ -603,6 +605,9 @@ public partial class App : Application {
       Settings = new ApplicationSettings();
       IsFirstRun = true;
     }
+
+    // Configure CoreSettingsProvider to use UI settings instead of defaults
+    CoreSettingsProvider.SetProvider(new UISettingsProvider());
 
     if (Settings.GeneralSettings.DisableHardwareRendering) {
       Trace.WriteLine($"Disable hardware rendering");
