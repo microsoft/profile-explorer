@@ -6,10 +6,10 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Document.Renderers.Highlighters;
-using ProfileExplorerCore2.UI;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Document.Renderers.Highlighters;
+using ProfileExplorerCore.UI;
+using ProfileExplorerCore.Utilities;
 
 namespace ProfileExplorer.UI;
 

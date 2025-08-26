@@ -9,12 +9,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
-using ProfileExplorerCore2;
+using ProfileExplorerCore;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
-using ProfileExplorerCore2.Utilities;
-using ProfileExplorerCore2.Profile.CallTree;
-using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore.Utilities;
+using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorerCore.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 

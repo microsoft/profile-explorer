@@ -2,15 +2,15 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.Compilers.LLVM;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Providers;
-using ProfileExplorerCore2.Binary;
-using ProfileExplorerCore2.Diff;
+using ProfileExplorerCore;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.Compilers.LLVM;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Providers;
+using ProfileExplorerCore.Binary;
+using ProfileExplorerCore.Diff;
 using ProfileExplorer.UI.Compilers.Default;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 using ProfileExplorer.UI;
 using ProfileExplorer.UI.Query;
 using ProfileExplorerUI.Session;

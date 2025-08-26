@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 
 namespace ProfileExplorer.UI;
 

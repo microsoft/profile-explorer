@@ -8,7 +8,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:optionsPanels="clr-namespace:ProfileExplorer.UI.OptionsPanels"
   xmlns:profile="clr-namespace:ProfileExplorer.UI.Profile"
-  xmlns:profileData="clr-namespace:ProfileExplorerCore2.Profile.Data;assembly=ProfileExplorerCore2"
+  xmlns:profileData="clr-namespace:ProfileExplorerCore.Profile.Data;assembly=ProfileExplorerCore"
   xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
   Title="Load profile trace"
   Width="900"

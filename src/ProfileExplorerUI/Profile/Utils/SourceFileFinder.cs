@@ -6,10 +6,10 @@ using System.IO;
 using System.IO.Enumeration;
 using System.Threading.Tasks;
 using System.Windows;
-using ProfileExplorerCore2;
+using ProfileExplorerCore;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore2.Binary;
-using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore.Binary;
+using ProfileExplorerCore.Profile.Data;
 
 namespace ProfileExplorer.UI.Document;
 

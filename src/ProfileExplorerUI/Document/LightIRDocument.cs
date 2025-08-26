@@ -9,12 +9,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Analysis;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Analysis;
+using ProfileExplorerCore.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore.Utilities;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
@@ -436,7 +436,7 @@ public sealed class LightIRDocument : TextEditor {
 
     foreach (var result in searchResults) {
       int line = Document.GetLineByOffset(result.Offset).LineNumber;
-      var location = new ProfileExplorerCore2.TextLocation(result.Offset, line, 0);
+      var location = new ProfileExplorerCore.TextLocation(result.Offset, line, 0);
       var element = new IRElement(location, result.Length);
       group.Add(element);
     }

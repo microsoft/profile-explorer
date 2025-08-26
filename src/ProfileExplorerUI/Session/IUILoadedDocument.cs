@@ -6,13 +6,13 @@ using System.IO;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using ProfileExplorer.UI;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Binary;
-using ProfileExplorerCore2.Profile.Data;
-using ProfileExplorerCore2.Providers;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Settings;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Binary;
+using ProfileExplorerCore.Profile.Data;
+using ProfileExplorerCore.Providers;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Settings;
+using ProfileExplorerCore.Utilities;
 
 namespace ProfileExplorerUI.Session;
 

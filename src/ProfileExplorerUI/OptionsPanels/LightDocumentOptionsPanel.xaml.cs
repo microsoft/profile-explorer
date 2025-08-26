@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

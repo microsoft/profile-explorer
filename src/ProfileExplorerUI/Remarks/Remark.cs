@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Media;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.Utilities;
 
 namespace ProfileExplorer.UI;
 

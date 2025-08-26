@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ProfileExplorerCore2\ProfileExplorerCore2.csproj" />
+    <ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
   </ItemGroup>
 
 </Project>

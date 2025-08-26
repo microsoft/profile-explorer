@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Windows;
 using System.Windows.Data;
-using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 

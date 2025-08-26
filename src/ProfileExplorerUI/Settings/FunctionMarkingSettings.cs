@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

@@ -625,7 +625,7 @@ public partial class App : Application {
 
   private void RegisterSettingsTypeConverters() {
     // Register UI-specific type converters for the settings system
-    ProfileExplorerCore2.Settings.SettingsTypeRegistry.RegisterConverter(new ProfileExplorerUI.Settings.ColorSettingsConverter());
+    ProfileExplorerCore.Settings.SettingsTypeRegistry.RegisterConverter(new ProfileExplorerUI.Settings.ColorSettingsConverter());
   }
 
   private void SetupJumplist() {

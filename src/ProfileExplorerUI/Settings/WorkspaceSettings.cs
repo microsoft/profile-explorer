@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI.Settings;

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using ProfileExplorerCore2;
+using ProfileExplorerCore;
 
 namespace ProfileExplorer.UI;
 

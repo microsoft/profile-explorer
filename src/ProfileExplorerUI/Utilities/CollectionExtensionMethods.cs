@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Data;
 using ICSharpCode.AvalonEdit.Document;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 
 namespace ProfileExplorer.UI;
 

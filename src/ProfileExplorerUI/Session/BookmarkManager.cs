@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

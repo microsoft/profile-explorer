@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore2.Analysis;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.IR.Tags;
-using ProfileExplorerCore2.Session;
+using ProfileExplorerCore.Analysis;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.IR.Tags;
+using ProfileExplorerCore.Session;
 
 namespace ProfileExplorer.UI.Query.Builtin;
 

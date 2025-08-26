@@ -11,9 +11,9 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorerCore2.Binary;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Binary;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

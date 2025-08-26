@@ -4,8 +4,8 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.Utilities;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI.Document;

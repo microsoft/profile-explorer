@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows.Media;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 using ProfileExplorer.UI.Query;
-using ProfileExplorerCore2.IR.Tags;
-using ProfileExplorerCore2.Session;
+using ProfileExplorerCore.IR.Tags;
+using ProfileExplorerCore.Session;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

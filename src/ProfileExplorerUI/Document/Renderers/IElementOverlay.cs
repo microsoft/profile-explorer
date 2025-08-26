@@ -3,7 +3,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI.Document;

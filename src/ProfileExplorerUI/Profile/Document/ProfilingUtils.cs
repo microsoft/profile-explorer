@@ -9,16 +9,16 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.IR.Tags;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.IR.Tags;
+using ProfileExplorerCore.Utilities;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile.Document;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Profile.Processing;
-using ProfileExplorerCore2.Profile.CallTree;
-using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Profile.Processing;
+using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorerCore.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 

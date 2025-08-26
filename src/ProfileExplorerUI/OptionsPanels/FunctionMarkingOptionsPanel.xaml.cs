@@ -6,7 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ProfileExplorer.UI.Windows;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

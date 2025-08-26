@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
 

@@ -8,7 +8,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProfileExplorer.UI.Document;
-using ProfileExplorerCore2.Document.Renderers.Highlighters;
+using ProfileExplorerCore.Document.Renderers.Highlighters;
 
 namespace ProfileExplorer.UI;
 

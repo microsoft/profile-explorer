@@ -12,10 +12,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
-using ProfileExplorerCore2.Profile.CallTree;
-using ProfileExplorerCore2.Profile.Data;
-using ProfileExplorerCore2.Profile.Processing;
-using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorerCore.Profile.Data;
+using ProfileExplorerCore.Profile.Processing;
+using ProfileExplorerCore.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -6,11 +6,11 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Analysis;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Analysis;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Utilities;
 
 namespace ProfileExplorer.UI.Scripting;
 

@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows.Media;
-using ProfileExplorerCore2.Graph;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Graph;
+using ProfileExplorerCore.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

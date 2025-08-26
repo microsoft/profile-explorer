@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Concurrent;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Binary;
-using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Binary;
+using ProfileExplorerCore.Providers;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 

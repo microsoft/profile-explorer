@@ -13,21 +13,21 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Analysis;
-using ProfileExplorerCore2.Graph;
-using ProfileExplorerCore2.IR;
-using ProfileExplorerCore2.IR.Tags;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Analysis;
+using ProfileExplorerCore.Graph;
+using ProfileExplorerCore.IR;
+using ProfileExplorerCore.IR.Tags;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
-using ProfileExplorerCore2.Compilers.Architecture;
-using ProfileExplorerCore2.Utilities;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Profile.Data;
-using ProfileExplorerCore2.Providers;
-using ProfileExplorerCore2.Binary;
+using ProfileExplorerCore.Compilers.Architecture;
+using ProfileExplorerCore.Utilities;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Profile.Data;
+using ProfileExplorerCore.Providers;
+using ProfileExplorerCore.Binary;
 using ProfileExplorerUI.Session;
 using System.Linq;
 
@@ -153,7 +153,7 @@ public partial class MainWindow : Window, IUISession {
   }
 
   public async Task<IUILoadedDocument>
-    LoadProfileBinaryDocument(string filePath, string modulePath, ProfileExplorerCore2.Binary.IDebugInfoProvider debugInfo) {
+    LoadProfileBinaryDocument(string filePath, string modulePath, ProfileExplorerCore.Binary.IDebugInfoProvider debugInfo) {
     return await Task.Run(async () => {
         var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
         var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
@@ -1780,7 +1780,7 @@ public partial class MainWindow : Window, IUISession {
     return sessionState_.FindLoadedDocument(func);
   }
 
-  public async Task<bool> StartNewSession(string sessionName, ProfileExplorerCore2.Session.SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
+  public async Task<bool> StartNewSession(string sessionName, ProfileExplorerCore.Session.SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
     if (compilerInfo is IUICompilerInfoProvider uICompilerInfo) {
       return await StartNewSession(sessionName, sessionKind, uICompilerInfo);
     }

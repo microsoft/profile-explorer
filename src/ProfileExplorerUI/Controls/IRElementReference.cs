@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;

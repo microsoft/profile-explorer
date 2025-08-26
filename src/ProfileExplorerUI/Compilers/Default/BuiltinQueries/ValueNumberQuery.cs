@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using System.Windows.Media;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore.IR;
 using ProfileExplorer.UI.Query;
 
 namespace ProfileExplorer.UI.Compilers.Default;

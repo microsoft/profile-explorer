@@ -23,9 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrpcLib", "GrpcLib\GrpcLib.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDBViewer", "PDBViewer\PDBViewer.csproj", "{669B5EBC-A5D6-4CEC-B3DB-6DA7D0CA7B79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfileExplorerCore2", "ProfileExplorerCore2\ProfileExplorerCore2.csproj", "{9AEAA725-5DB2-491B-BA23-24DA177EB384}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfileExplorerCore2Tests", "ProfileExplorerCore2Tests\ProfileExplorerCore2Tests.csproj", "{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfileExplorerCore", "ProfileExplorerCore\ProfileExplorerCore.csproj", "{9AEAA725-5DB2-491B-BA23-24DA177EB384}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -183,22 +181,6 @@ Global
 		{9AEAA725-5DB2-491B-BA23-24DA177EB384}.Release|x64.Build.0 = Release|Any CPU
 		{9AEAA725-5DB2-491B-BA23-24DA177EB384}.Release|x86.ActiveCfg = Release|Any CPU
 		{9AEAA725-5DB2-491B-BA23-24DA177EB384}.Release|x86.Build.0 = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|x64.Build.0 = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Debug|x86.Build.0 = Debug|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|ARM64.Build.0 = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|x64.ActiveCfg = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|x64.Build.0 = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|x86.ActiveCfg = Release|Any CPU
-		{1300DC83-9B42-4F17-98E0-B5BC0C6B1D9E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

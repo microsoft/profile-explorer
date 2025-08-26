@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

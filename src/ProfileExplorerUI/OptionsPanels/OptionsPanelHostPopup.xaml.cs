@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 

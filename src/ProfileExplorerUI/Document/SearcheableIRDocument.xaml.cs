@@ -7,8 +7,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore;
+using ProfileExplorerCore.IR;
 
 namespace ProfileExplorer.UI.Document;
 

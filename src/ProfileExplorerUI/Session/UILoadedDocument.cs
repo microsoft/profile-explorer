@@ -4,13 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using ProfileExplorerCore2;
+using ProfileExplorerCore;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
-using ProfileExplorerCore2.Providers;
-using ProfileExplorerCore2.Binary;
-using ProfileExplorerCore2.Profile.Utils;
-using ProfileExplorerCore2.Session;
+using ProfileExplorerCore.Providers;
+using ProfileExplorerCore.Binary;
+using ProfileExplorerCore.Profile.Utils;
+using ProfileExplorerCore.Session;
 using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;

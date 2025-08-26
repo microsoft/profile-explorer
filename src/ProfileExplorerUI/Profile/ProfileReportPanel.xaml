@@ -6,7 +6,7 @@
   xmlns:local="clr-namespace:ProfileExplorer.UI"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:profile="clr-namespace:ProfileExplorer.UI.Profile"
-  xmlns:profileData="clr-namespace:ProfileExplorerCore2.Profile.Data;assembly=ProfileExplorerCore2"
+  xmlns:profileData="clr-namespace:ProfileExplorerCore.Profile.Data;assembly=ProfileExplorerCore"
   d:DesignHeight="650"
   d:DesignWidth="800"
   Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"

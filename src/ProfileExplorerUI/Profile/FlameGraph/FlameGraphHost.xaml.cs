@@ -11,11 +11,11 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using ProfileExplorerCore2;
+using ProfileExplorerCore;
 using ProfileExplorer.UI.Controls;
-using ProfileExplorerCore2.Profile.CallTree;
-using ProfileExplorerCore2.Profile.Processing;
-using ProfileExplorerCore2.Profile.Data;
+using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorerCore.Profile.Processing;
+using ProfileExplorerCore.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 

@@ -7,11 +7,11 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ProfileExplorerCore2;
+using ProfileExplorerCore;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore2.Session;
-using ProfileExplorerCore2.Profile.CallTree;
-using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore.Session;
+using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorerCore.Providers;
 
 namespace ProfileExplorer.UI;
 

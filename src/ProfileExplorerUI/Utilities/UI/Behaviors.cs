@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore.Utilities;
 
 namespace ProfileExplorer.UI;
 

@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.Profile.CallTree;
-using ProfileExplorerCore2.Profile.Data;
-using ProfileExplorerCore2.Providers;
+using ProfileExplorerCore;
+using ProfileExplorerCore.Profile.CallTree;
+using ProfileExplorerCore.Profile.Data;
+using ProfileExplorerCore.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 

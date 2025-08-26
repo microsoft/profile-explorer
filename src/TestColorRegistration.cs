@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Windows.Media;
-using ProfileExplorerCore2.Settings;
+using ProfileExplorerCore.Settings;
 using ProfileExplorerUI.Settings;
 
 namespace TestTypeRegistration

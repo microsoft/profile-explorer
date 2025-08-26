@@ -11,12 +11,12 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore;
+using ProfileExplorerCore.IR;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
-using ProfileExplorerCore2.Profile.Processing;
+using ProfileExplorerCore.Profile.Processing;
 
 namespace ProfileExplorer.UI.Controls;
 

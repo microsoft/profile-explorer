@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
-using ProfileExplorerCore2;
-using ProfileExplorerCore2.IR;
+using ProfileExplorerCore;
+using ProfileExplorerCore.IR;
 using ProfileExplorer.UI.Scripting;
-using ProfileExplorerCore2.Utilities;
+using ProfileExplorerCore.Utilities;
 
 namespace ProfileExplorer.UI.Query;
 
