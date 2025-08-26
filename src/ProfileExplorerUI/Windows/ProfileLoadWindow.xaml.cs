@@ -459,6 +459,10 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       }
     }
 
+    // Add detailed logging for debugging stuck progress
+    var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+    Trace.WriteLine($"[{timestamp}] Progress: {progressInfo.Stage} - {progressInfo.Current}/{progressInfo.Total} ({percentage:P1}) - {progressInfo.Optional}");
+
     Dispatcher.Invoke(() => {
       // With multi-threaded processing, current value is not always increasing...
       if (progressInfo.Stage == ProfileLoadStage.TraceProcessing) {
@@ -468,9 +472,9 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       LoadProgressBar.Maximum = progressInfo.Total;
       LoadProgressBar.Value = progressInfo.Current;
 
-      LoadProgressLabel.Text = progressInfo.Stage switch {
+      string stageText = progressInfo.Stage switch {
         ProfileLoadStage.TraceReading    => "Reading trace",
-        ProfileLoadStage.TraceProcessing => "Processing trace",
+        ProfileLoadStage.TraceProcessing => $"Processing trace samples ({progressInfo.Current:N0}/{progressInfo.Total:N0})",
         ProfileLoadStage.ComputeCallTree => "Computing Call Tree",
         ProfileLoadStage.BinaryLoading => "Downloading and loading binaries" +
                                           (!string.IsNullOrEmpty(progressInfo.Optional) ?
@@ -481,6 +485,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
         _                                      => ""
       };
+
+      // Add more detail to the processing stage
+      if (progressInfo.Stage == ProfileLoadStage.TraceProcessing && !string.IsNullOrEmpty(progressInfo.Optional)) {
+        stageText += $" - {progressInfo.Optional}";
+      }
+
+      LoadProgressLabel.Text = stageText;
 
       if (progressInfo.Total != 0) {
         ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";

@@ -86,29 +86,60 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-    UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
+    Trace.WriteLine($"LoadTraceAsync(file): Starting trace loading from file: {tracePath}");
+    Trace.WriteLine($"LoadTraceAsync(file): Process IDs: [{string.Join(", ", processIds)}]");
+    
+    try {
+      UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
 
-    var rawProfile = await Task.Run(() => {
-      int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
-      symbolSettings.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
+      Trace.WriteLine($"LoadTraceAsync(file): Creating ETW event processor");
+      var rawProfile = await Task.Run(() => {
+        int acceptedProcessId = processIds.Count == 1 ? processIds[0] : 0;
+        symbolSettings.InsertSymbolPath(tracePath); // Include the trace path in the symbol search path.
 
-      if (symbolSettings.IncludeSymbolSubdirectories) {
-        symbolSettings.ExpandSymbolPathsSubdirectories([".pdb"]);
+        if (symbolSettings.IncludeSymbolSubdirectories) {
+          symbolSettings.ExpandSymbolPathsSubdirectories([".pdb"]);
+        }
+
+        Trace.WriteLine($"LoadTraceAsync(file): Starting ETW event processing for process {acceptedProcessId}");
+        using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
+        var result = eventProcessor.ProcessEvents(progressCallback, cancelableTask);
+        Trace.WriteLine($"LoadTraceAsync(file): ETW event processing completed, found {result?.Samples?.Count ?? 0} samples");
+        return result;
+      });
+
+      if (rawProfile == null) {
+        Trace.WriteLine($"LoadTraceAsync(file): ERROR - ETW event processing returned null");
+        return null;
       }
 
-      using var eventProcessor = new ETWEventProcessor(tracePath, options, acceptedProcessId);
-      return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
-    });
+      var mainProcess = rawProfile.FindProcess(processIds[0]);
+      if (mainProcess == null) {
+        Trace.WriteLine($"LoadTraceAsync(file): ERROR - Failed to find main process id {processIds[0]} in trace");
+        Trace.WriteLine($"LoadTraceAsync(file): Available processes: [{string.Join(", ", rawProfile.Processes.Select(p => p.ProcessId))}]");
+        return null;
+      }
 
-    if (rawProfile.FindProcess(processIds[0]) == null) {
-      Trace.WriteLine($"Failed to find main process id {processIds[0]} in trace.");
+      Trace.WriteLine($"LoadTraceAsync(file): Found main process {processIds[0]}: {mainProcess.ImageFileName}");
+      Trace.WriteLine($"LoadTraceAsync(file): Calling LoadTraceAsync with raw profile");
+      
+      var result = await LoadTraceAsync(rawProfile, processIds, options, symbolSettings,
+                                        report, progressCallback, cancelableTask);
+      
+      Trace.WriteLine($"LoadTraceAsync(file): LoadTraceAsync completed, disposing raw profile");
+      rawProfile.Dispose();
+      
+      Trace.WriteLine($"LoadTraceAsync(file): Returning {(result != null ? "success" : "failure")}");
+      return result;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"LoadTraceAsync(file): EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+      Trace.WriteLine($"LoadTraceAsync(file): Stack trace: {ex.StackTrace}");
+      if (ex.InnerException != null) {
+        Trace.WriteLine($"LoadTraceAsync(file): Inner exception: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
+      }
       return null;
     }
-
-    var result = await LoadTraceAsync(rawProfile, processIds, options, symbolSettings,
-                                      report, progressCallback, cancelableTask);
-    rawProfile.Dispose();
-    return result;
   }
 
   public async Task<ProfileData> LoadTraceAsync(RawProfileData rawProfile, List<int> processIds,
@@ -117,154 +148,212 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 ProfileDataReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-    // Fill in report details.
-    var mainProcess = rawProfile.FindProcess(processIds[0]);
-    report_ = report;
-    report_.Process = mainProcess;
-    report.TraceInfo = rawProfile.TraceInfo;
-    int mainProcessId = mainProcess.ProcessId;
-
-    // Save process and thread info.
-    profileData_.Process = mainProcess;
-    options_ = options;
-
-    foreach (int procId in processIds) {
-      var proc = rawProfile.FindProcess(procId);
-
-      if (proc != null) {
-        profileData_.AddThreads(proc.Threads(rawProfile));
-      }
-    }
-
-    // Save all modules to include the ones loaded in the kernel only,
-    // which would show up in stack traces if kernel samples are enabled.
-    profileData_.AddModules(rawProfile.Images);
-
+    Trace.WriteLine($"LoadTraceAsync: Starting profile loading for {processIds.Count} processes");
+    
     try {
+      // Fill in report details.
+      var mainProcess = rawProfile.FindProcess(processIds[0]);
+      if (mainProcess == null) {
+        Trace.WriteLine($"LoadTraceAsync: ERROR - Main process {processIds[0]} not found in raw profile");
+        return null;
+      }
+      
+      Trace.WriteLine($"LoadTraceAsync: Found main process {processIds[0]}: {mainProcess.ImageFileName}");
+      
+      report_ = report;
+      report_.Process = mainProcess;
+      report.TraceInfo = rawProfile.TraceInfo;
+      int mainProcessId = mainProcess.ProcessId;
+
+      // Save process and thread info.
+      profileData_.Process = mainProcess;
+      options_ = options;
+
+      foreach (int procId in processIds) {
+        var proc = rawProfile.FindProcess(procId);
+
+        if (proc != null) {
+          Trace.WriteLine($"LoadTraceAsync: Adding threads for process {procId}: {proc.Threads(rawProfile).Count()} threads");
+          profileData_.AddThreads(proc.Threads(rawProfile));
+        }
+        else {
+          Trace.WriteLine($"LoadTraceAsync: WARNING - Process {procId} not found in raw profile");
+        }
+      }
+
+      // Save all modules to include the ones loaded in the kernel only,
+      // which would show up in stack traces if kernel samples are enabled.
+      int moduleCount = rawProfile.Images.Count();
+      Trace.WriteLine($"LoadTraceAsync: Adding {moduleCount} modules from raw profile");
+      profileData_.AddModules(rawProfile.Images);
+
       string imageName = Utilities.Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
+      Trace.WriteLine($"LoadTraceAsync: Main image name: {imageName}");
 
       if (options.HasBinarySearchPaths) {
+        Trace.WriteLine($"LoadTraceAsync: Adding {options.BinarySearchPaths.Count} binary search paths");
         symbolSettings.InsertSymbolPaths(options.BinarySearchPaths);
       }
 
       // The entire ETW processing must be done on the same thread.
+      Trace.WriteLine($"LoadTraceAsync: Starting main processing task");
       bool result = await Task.Run(async () => {
-        // Start getting the function address data while the trace is loading.
-        var totalSw = Stopwatch.StartNew();
-        UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
+        try {
+          // Start getting the function address data while the trace is loading.
+          var totalSw = Stopwatch.StartNew();
+          UpdateProgress(progressCallback, ProfileLoadStage.TraceReading, 0, 0);
+          Trace.WriteLine($"LoadTraceAsync: Task.Run started, beginning binary/debug file loading");
 
-        // Start getting the function address data while the trace is loading.
-        if (cancelableTask is {IsCanceled: true}) {
-          return false;
-        }
-
-#if DEBUG
-        rawProfile.PrintProcess(mainProcessId);
-        //profile.PrintSamples(mainProcessId);
-#endif
-
-        // Preload binaries and debug files, downloading them concurrently if needed.
-        await LoadBinaryAndDebugFiles(rawProfile, mainProcess, imageName,
-                                      symbolSettings, progressCallback, cancelableTask);
-
-        if (cancelableTask is {IsCanceled: true}) {
-          return false;
-        }
-
-        // Start main processing part, resolving stack frames,
-        // mapping IPs/RVAs to functions using the debug info.
-        UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, 0, rawProfile.Samples.Count);
-        var processingSw = Stopwatch.StartNew();
-
-        // Split sample processing in multiple chunks, each done by another thread.
-        int chunks = CoreSettingsProvider.GeneralSettings.CurrentCpuCoreLimit;
-#if DEBUG
-        chunks = 1;
-#endif
-        int chunkSize = rawProfile.ComputeSampleChunkLength(chunks);
-        int sampleCount = rawProfile.Samples.Count;
-
-        Trace.WriteLine($"LoadTraceAsync: Using {chunks} threads");
-        var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
-        var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
-        var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-
-        // Process the raw samples and stacks by resolving stack frame symbols
-        // and creating the function profiles.
-        for (int k = 0; k < chunks; k++) {
-          int start = Math.Min(k * chunkSize, sampleCount);
-          int end = k == chunks - 1 ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
-
-          tasks.Add(taskFactory.StartNew(() => {
-            var chunkSamples = ProcessSamplesChunk(rawProfile, start, end,
-                                                   processIds, options.IncludeKernelEvents,
-                                                   symbolSettings, progressCallback, cancelableTask, chunks);
-            return chunkSamples;
-          }));
-        }
-
-        await Task.WhenAll(tasks.ToArray());
-        Trace.WriteLine($"LoadTraceAsync: Done processing samples in {processingSw.Elapsed}");
-
-        if (cancelableTask is {IsCanceled: true}) {
-          return false;
-        }
-
-        // Collect samples from tasks.
-        CollectChunkSamples(tasks);
-
-        // Create the per-function profile and call tree.
-        UpdateProgress(progressCallback, ProfileLoadStage.ComputeCallTree, 0, rawProfile.Samples.Count);
-        var callTreeSw = Stopwatch.StartNew();
-        profileData_.ComputeThreadSampleRanges();
-        profileData_.FilterFunctionProfile(new ProfileSampleFilter());
-
-        Trace.WriteLine(
-          $"LoadTraceAsync: Done compute func profile/call tree in {callTreeSw.Elapsed}, {callTreeSw.ElapsedMilliseconds} ms");
-        Trace.WriteLine(
-          $"LoadTraceAsync: Done processing trace in {processingSw.Elapsed}, {processingSw.ElapsedMilliseconds} ms");
-
-        // Process performance counters.
-        if (rawProfile.HasPerformanceCountersEvents) {
-          ProcessPerformanceCounters(rawProfile, processIds, symbolSettings, progressCallback, cancelableTask);
-        }
+          // Start getting the function address data while the trace is loading.
+          if (cancelableTask is {IsCanceled: true}) {
+            Trace.WriteLine($"LoadTraceAsync: Cancellation requested before binary loading");
+            return false;
+          }
 
 #if DEBUG
-        // PrintSampleStatistics();
+          rawProfile.PrintProcess(mainProcessId);
+          //profile.PrintSamples(mainProcessId);
 #endif
-        Trace.WriteLine($"LoadTraceAsync: Done loading profile in {totalSw.Elapsed}");
-        return true;
+
+          // Preload binaries and debug files, downloading them concurrently if needed.
+          Trace.WriteLine($"LoadTraceAsync: Starting LoadBinaryAndDebugFiles");
+          await LoadBinaryAndDebugFiles(rawProfile, mainProcess, imageName,
+                                        symbolSettings, progressCallback, cancelableTask);
+          Trace.WriteLine($"LoadTraceAsync: Completed LoadBinaryAndDebugFiles");
+
+          if (cancelableTask is {IsCanceled: true}) {
+            Trace.WriteLine($"LoadTraceAsync: Cancellation requested after binary loading");
+            return false;
+          }
+
+          // Start main processing part, resolving stack frames,
+          // mapping IPs/RVAs to functions using the debug info.
+          UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing, rawProfile.Samples.Count, 0);
+          var processingSw = Stopwatch.StartNew();
+          Trace.WriteLine($"LoadTraceAsync: Starting sample processing for {rawProfile.Samples.Count} samples");
+
+          // Split sample processing in multiple chunks, each done by another thread.
+          int chunks = CoreSettingsProvider.GeneralSettings.CurrentCpuCoreLimit;
+#if DEBUG
+          chunks = 1;
+#endif
+          int chunkSize = rawProfile.ComputeSampleChunkLength(chunks);
+          int sampleCount = rawProfile.Samples.Count;
+
+          Trace.WriteLine($"LoadTraceAsync: Using {chunks} threads, chunk size: {chunkSize}");
+          var tasks = new List<Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>>();
+          var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
+          var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+
+          // Process the raw samples and stacks by resolving stack frame symbols
+          // and creating the function profiles.
+          for (int k = 0; k < chunks; k++) {
+            int start = Math.Min(k * chunkSize, sampleCount);
+            int end = k == chunks - 1 ? sampleCount : Math.Min((k + 1) * chunkSize, sampleCount);
+
+            Trace.WriteLine($"LoadTraceAsync: Creating task {k} for samples {start}-{end}");
+            tasks.Add(taskFactory.StartNew(async () => {
+              var chunkSamples = await ProcessSamplesChunk(rawProfile, start, end,
+                                                     processIds, options.IncludeKernelEvents,
+                                                     symbolSettings, progressCallback, cancelableTask, chunks).ConfigureAwait(false);
+              return chunkSamples;
+            }).Unwrap());
+          }
+
+          Trace.WriteLine($"LoadTraceAsync: Waiting for {tasks.Count} sample processing tasks");
+          await Task.WhenAll(tasks.ToArray());
+          Trace.WriteLine($"LoadTraceAsync: Done processing samples in {processingSw.Elapsed}");
+
+          if (cancelableTask is {IsCanceled: true}) {
+            Trace.WriteLine($"LoadTraceAsync: Cancellation requested after sample processing");
+            return false;
+          }
+
+          // Collect samples from tasks.
+          Trace.WriteLine($"LoadTraceAsync: Collecting chunk samples");
+          CollectChunkSamples(tasks);
+
+          // Create the per-function profile and call tree.
+          UpdateProgress(progressCallback, ProfileLoadStage.ComputeCallTree, 0, rawProfile.Samples.Count);
+          var callTreeSw = Stopwatch.StartNew();
+          Trace.WriteLine($"LoadTraceAsync: Computing thread sample ranges and function profile");
+          
+          profileData_.ComputeThreadSampleRanges();
+          profileData_.FilterFunctionProfile(new ProfileSampleFilter());
+
+          Trace.WriteLine(
+            $"LoadTraceAsync: Done compute func profile/call tree in {callTreeSw.Elapsed}, {callTreeSw.ElapsedMilliseconds} ms");
+          Trace.WriteLine(
+            $"LoadTraceAsync: Done processing trace in {processingSw.Elapsed}, {processingSw.ElapsedMilliseconds} ms");
+
+          // Process performance counters.
+          if (rawProfile.HasPerformanceCountersEvents) {
+            Trace.WriteLine($"LoadTraceAsync: Processing {rawProfile.PerformanceCountersEvents.Count} performance counter events");
+            ProcessPerformanceCounters(rawProfile, processIds, symbolSettings, progressCallback, cancelableTask);
+          }
+          else {
+            Trace.WriteLine($"LoadTraceAsync: No performance counter events to process");
+          }
+
+#if DEBUG
+          // PrintSampleStatistics();
+#endif
+          Trace.WriteLine($"LoadTraceAsync: Done loading profile in {totalSw.Elapsed}");
+          return true;
+        }
+        catch (Exception ex) {
+          Trace.WriteLine($"LoadTraceAsync: EXCEPTION in Task.Run: {ex.GetType().Name}: {ex.Message}");
+          Trace.WriteLine($"LoadTraceAsync: Stack trace: {ex.StackTrace}");
+          throw; // Re-throw to be caught by outer try-catch
+        }
       });
 
       if (cancelableTask is {IsCanceled: true}) {
+        Trace.WriteLine($"LoadTraceAsync: Cancellation requested after main processing task");
         return null;
       }
 
       // Setup session documents.
       if (result) {
+        Trace.WriteLine($"LoadTraceAsync: Main processing succeeded, setting up session documents");
         var exeDocument = FindSessionDocuments(imageName, out var otherDocuments);
 
         if (exeDocument == null) {
-          Trace.WriteLine($"Failed to find main EXE document");
+          Trace.WriteLine($"LoadTraceAsync: WARNING - Failed to find main EXE document for {imageName}");
           exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
           exeDocument.Summary = new IRTextSummary(string.Empty);
         }
         else {
-          Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
+          Trace.WriteLine($"LoadTraceAsync: Using exe document {exeDocument.ModuleName} with {otherDocuments.Count} other documents");
         }
 
+        Trace.WriteLine($"LoadTraceAsync: Calling session_.SetupNewSession");
         await session_.SetupNewSession(exeDocument, otherDocuments, profileData_).ConfigureAwait(false);
+        Trace.WriteLine($"LoadTraceAsync: Completed session_.SetupNewSession");
+      }
+      else {
+        Trace.WriteLine($"LoadTraceAsync: ERROR - Main processing task returned false (failed)");
       }
 
       if (cancelableTask is {IsCanceled: true}) {
+        Trace.WriteLine($"LoadTraceAsync: Cancellation requested after session setup");
         return null;
       }
 
+      Trace.WriteLine($"LoadTraceAsync: Returning {(result ? "success" : "failure")}");
       return result ? profileData_ : null;
     }
     catch (Exception ex) {
-      Trace.TraceError($"Exception loading profile: {ex.Message}");
-      Trace.WriteLine(ex.StackTrace);
+      Trace.TraceError($"LoadTraceAsync: TOP-LEVEL EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+      Trace.WriteLine($"LoadTraceAsync: Exception details - Type: {ex.GetType().FullName}");
+      Trace.WriteLine($"LoadTraceAsync: Exception source: {ex.Source}");
+      Trace.WriteLine($"LoadTraceAsync: Stack trace: {ex.StackTrace}");
+      
+      if (ex.InnerException != null) {
+        Trace.WriteLine($"LoadTraceAsync: Inner exception: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
+        Trace.WriteLine($"LoadTraceAsync: Inner exception stack: {ex.InnerException.StackTrace}");
+      }
+      
       Trace.Flush();
       return null;
     }
@@ -300,7 +389,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  private List<(ProfileSample Sample, ResolvedProfileStack Stack)>
+  private async Task<List<(ProfileSample Sample, ResolvedProfileStack Stack)>>
     ProcessSamplesChunk(RawProfileData rawProfile, int start, int end, List<int> processIds,
                         bool includeKernelEvents,
                         SymbolFileSourceSettings symbolSettings,
@@ -309,22 +398,36 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var totalWeight = TimeSpan.Zero;
     var profileWeight = TimeSpan.Zero;
     var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(end - start + 1);
-    var sampleRefs = CollectionsMarshal.AsSpan(rawProfile.Samples).Slice(start, end - start);
     int sampleIndex = 0;
+    var chunkSw = Stopwatch.StartNew();
+    int stackResolutionCount = 0;
+    int kernelSamplesSkipped = 0;
+    int otherProcessSamplesSkipped = 0;
 
-    foreach (ref var sample in sampleRefs) {
+    Trace.WriteLine($"ProcessSamplesChunk: Processing chunk {start}-{end} ({end - start} samples) on thread {Thread.CurrentThread.ManagedThreadId}");
+
+    for (int i = start; i < end; i++) {
+      var sample = rawProfile.Samples[i];
+      
       // Update progress every pow2 N samples.
       if ((++sampleIndex & PROGRESS_UPDATE_INTERVAL - 1) == 0) {
         if (cancelableTask is {IsCanceled: true}) {
+          Trace.WriteLine($"ProcessSamplesChunk: Cancellation requested at sample {sampleIndex}");
           return samples;
         }
 
-        int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
+        // Calculate global progress more accurately - each chunk processes start+sampleIndex samples
+        int globalProgress = start + sampleIndex;
+        var elapsed = chunkSw.Elapsed;
+        var samplesPerSecond = sampleIndex / Math.Max(elapsed.TotalSeconds, 0.001);
+        var progressInfo = $"Thread {Thread.CurrentThread.ManagedThreadId}: {samplesPerSecond:F0} samples/sec, {stackResolutionCount} stacks resolved";
+        
         UpdateProgress(progressCallback, ProfileLoadStage.TraceProcessing,
-                       rawProfile.Samples.Count, position);
+                       rawProfile.Samples.Count, globalProgress, progressInfo);
       }
 
       if (!includeKernelEvents && sample.IsKernelCode) {
+        kernelSamplesSkipped++;
         continue;
       }
 
@@ -332,6 +435,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       var context = sample.GetContext(rawProfile);
 
       if (!processIds.Contains(context.ProcessId)) {
+        otherProcessSamplesSkipped++;
         continue;
       }
 
@@ -363,7 +467,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #if DEBUG
         Interlocked.Increment(ref UnresolvedStackCount);
 #endif
-        resolvedStack = ProcessUnresolvedStack(stack, context, rawProfile, symbolSettings);
+        stackResolutionCount++;
+        resolvedStack = await ProcessUnresolvedStackAsync(stack, context, rawProfile, symbolSettings).ConfigureAwait(false);
         stack.SetOptionalData(resolvedStack); // Cache resolved stack.
       }
       else {
@@ -379,6 +484,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       samples.Add((sample, resolvedStack));
     }
 
+    var finalElapsed = chunkSw.Elapsed;
+    Trace.WriteLine($"ProcessSamplesChunk: Completed chunk {start}-{end} in {finalElapsed.TotalSeconds:F2}s, " +
+                   $"processed {samples.Count} samples, resolved {stackResolutionCount} stacks, " +
+                   $"skipped {kernelSamplesSkipped} kernel + {otherProcessSamplesSkipped} other process samples");
+
     lock (lockObject_) {
       profileData_.TotalWeight += totalWeight;
       profileData_.ProfileWeight += profileWeight;
@@ -387,14 +497,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return samples;
   }
 
-  private ResolvedProfileStack ProcessUnresolvedStack(ProfileStack stack,
+  private async Task<ResolvedProfileStack> ProcessUnresolvedStackAsync(ProfileStack stack,
                                                       ProfileContext context, RawProfileData rawProfile,
                                                       SymbolFileSourceSettings symbolSettings) {
+    var sw = Stopwatch.StartNew();
     var resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
     long[] stackFrames = stack.FramePointers;
     bool isManagedCode = false;
     int frameIndex = 0;
     int pointerSize = rawProfile.TraceInfo.PointerSize;
+    int kernelFrames = 0;
+    int managedFrames = 0;
+    int unknownFrames = 0;
+    int resolvedFrames = 0;
 
     //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
     //? for ex it never gets to main. Easy example is a quicksort impl
@@ -404,6 +519,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       isManagedCode = false;
 
       if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
+        kernelFrames++;
         frameImage = rawProfile.FindImageForIP(frameIp, ETWEventProcessor.KernelProcessId);
       }
       else {
@@ -418,10 +534,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           if (managedFunc != null) {
             frameImage = managedFunc.Image;
             isManagedCode = true;
+            managedFrames++;
           }
         }
 
         if (frameImage == null) {
+          unknownFrames++;
           resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack,
                                  pointerSize);
           continue;
@@ -431,11 +549,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       // Try to resolve the frame using the lists of processes/images and debug info.
       long frameRva = 0;
       ProfileModuleBuilder profileModuleBuilder = null;
-      profileModuleBuilder = GetModuleBuilder(rawProfile, frameImage, context.ProcessId, symbolSettings);
+      var moduleStartTime = sw.Elapsed;
+      profileModuleBuilder = await GetModuleBuilderAsync(rawProfile, frameImage, context.ProcessId, symbolSettings).ConfigureAwait(false);
+      var moduleEndTime = sw.Elapsed;
 
       if (profileModuleBuilder == null) {
+        unknownFrames++;
         resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
         continue;
+      }
+
+      // Track significant module builder delays
+      var moduleTime = (moduleEndTime - moduleStartTime).TotalMilliseconds;
+      if (moduleTime > 10) { // Log delays > 10ms
+        Trace.WriteLine($"Slow module builder for {frameImage.ModuleName}: {moduleTime:F1}ms");
       }
 
       if (isManagedCode) {
@@ -446,7 +573,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
 
       // Find the function the sample belongs to.
+      var funcStartTime = sw.Elapsed;
       var funcPair = profileModuleBuilder.GetOrCreateFunction(frameRva);
+      var funcEndTime = sw.Elapsed;
+
+      // Track significant function lookup delays
+      var funcTime = (funcEndTime - funcStartTime).TotalMilliseconds;
+      if (funcTime > 10) { // Log delays > 10ms
+        Trace.WriteLine($"Slow function lookup in {frameImage.ModuleName} at RVA 0x{frameRva:X}: {funcTime:F1}ms");
+      }
 
       // Create the function profile data, with the merged weight of all instances
       // of the func. across all call stacks.
@@ -454,6 +589,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                            profileModuleBuilder.IsManaged);
       resolvedStack.AddFrame(funcPair.Function, frameIp, frameRva, frameIndex,
                              resolvedFrame, stack, pointerSize);
+      resolvedFrames++;
+    }
+
+    var totalTime = sw.Elapsed;
+    
+    // Log slow stack resolutions for debugging
+    if (totalTime.TotalMilliseconds > 50) { // Log stacks taking > 50ms
+      Trace.WriteLine($"Slow stack resolution: {totalTime.TotalMilliseconds:F1}ms for {stackFrames.Length} frames " +
+                     $"(resolved: {resolvedFrames}, unknown: {unknownFrames}, managed: {managedFrames}, kernel: {kernelFrames})");
     }
 
     return resolvedStack;
@@ -752,10 +896,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
 #endif
 
-    // Start a new session in the proper ASM mode.
-    await session_.StartNewSession(mainImageName, SessionKind.FileSession,
-                                   new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
-
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
@@ -873,41 +1013,94 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #endif
   }
 
-  private ProfileModuleBuilder CreateModuleBuilder(ProfileImage image, RawProfileData rawProfile, int processId,
+  private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
                                                    SymbolFileSourceSettings symbolSettings) {
+    var totalSw = Stopwatch.StartNew();
     var imageModule = new ProfileModuleBuilder(report_, session_);
     IDebugInfoProvider imageDebugInfo = null;
 
+    Trace.WriteLine($"CreateModuleBuilderAsync: Starting for module {image.ModuleName}");
+
+    // Time spent on initial setup
+    var initSw = Stopwatch.StartNew();
+    
     if (IsAcceptedModule(image)) {
       imageDebugInfo = rawProfile.GetDebugInfoForManagedImage(image, processId);
 
       if (imageDebugInfo != null) {
         imageDebugInfo.SymbolSettings = symbolSettings;
+        Trace.WriteLine($"CreateModuleBuilderAsync: Found managed debug info for {image.ModuleName}");
       }
     }
+    
+    var initTime = initSw.Elapsed;
 
-    if (imageModule.Initialize(FromProfileImage(image), symbolSettings, imageDebugInfo).ConfigureAwait(false).
-      GetAwaiter().GetResult()) {
-      // If binary couldn't be found, try to initialize using
-      // the PDB signature from the trace file.
+    // Time spent on module initialization
+    var moduleInitSw = Stopwatch.StartNew();
+    Trace.WriteLine($"CreateModuleBuilderAsync: Calling Initialize for {image.ModuleName}");
+    
+    try {
+      bool moduleInitialized = await imageModule.Initialize(FromProfileImage(image), symbolSettings, imageDebugInfo).ConfigureAwait(false);
+      var moduleInitTime = moduleInitSw.Elapsed;
+      
+      Trace.WriteLine($"CreateModuleBuilderAsync: Initialize completed for {image.ModuleName}, result: {moduleInitialized}");
 
-      if (rejectedDebugModules_.Contains(image)) {
+      if (moduleInitialized) {
+        // If binary couldn't be found, try to initialize using
+        // the PDB signature from the trace file.
+
+        if (rejectedDebugModules_.Contains(image)) {
 #if DEBUG
-        Trace.WriteLine($"Skipped rejected module {image.ModuleName}");
+          Trace.WriteLine($"CreateModuleBuilderAsync: Skipped rejected module {image.ModuleName}");
 #endif
-        return imageModule;
+          return imageModule;
+        }
+
+        // Time spent on debug info file lookup
+        var debugFileSw = Stopwatch.StartNew();
+        var debugInfoFile = GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
+                                             image, rawProfile, processId, symbolSettings);
+        var debugFileTime = debugFileSw.Elapsed;
+
+        // Time spent on debug info initialization
+        var debugInitSw = Stopwatch.StartNew();
+        bool debugInitialized = false;
+        if (debugInfoFile != null) {
+          Trace.WriteLine($"CreateModuleBuilderAsync: Initializing debug info for {image.ModuleName}");
+          debugInitialized = await imageModule.InitializeDebugInfo(debugInfoFile).ConfigureAwait(false);
+          Trace.WriteLine($"CreateModuleBuilderAsync: Debug info initialization for {image.ModuleName}, result: {debugInitialized}");
+        }
+        else {
+          Trace.WriteLine($"CreateModuleBuilderAsync: No debug info file found for {image.ModuleName}");
+        }
+        var debugInitTime = debugInitSw.Elapsed;
+
+        if (debugInfoFile != null && !debugInitialized) {
+          Trace.TraceWarning($"CreateModuleBuilderAsync: Failed to load debug debugInfo for image: {image.FilePath}");
+        }
+
+        var totalTime = totalSw.Elapsed;
+        
+        // Log modules that take significant time to create
+        if (totalTime.TotalMilliseconds > 100) { // Log modules taking > 100ms
+          Trace.WriteLine($"CreateModuleBuilderAsync: Slow module creation for {image.ModuleName}: {totalTime.TotalMilliseconds:F1}ms total " +
+                         $"(init: {initTime.TotalMilliseconds:F1}ms, module: {moduleInitTime.TotalMilliseconds:F1}ms, " +
+                         $"debugFile: {debugFileTime.TotalMilliseconds:F1}ms, debugInit: {debugInitTime.TotalMilliseconds:F1}ms)");
+        }
+      }
+      else {
+        var totalTime = totalSw.Elapsed;
+        Trace.WriteLine($"CreateModuleBuilderAsync: Module initialization failed for {image.ModuleName} after {totalTime.TotalMilliseconds:F1}ms");
       }
 
-      var debugInfoFile = GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
-                                           image, rawProfile, processId, symbolSettings);
-
-      if (!imageModule.InitializeDebugInfo(debugInfoFile).
-        ConfigureAwait(false).GetAwaiter().GetResult()) {
-        Trace.TraceWarning($"Failed to load debug debugInfo for image: {image.FilePath}");
-      }
+      Trace.WriteLine($"CreateModuleBuilderAsync: Completed for module {image.ModuleName}");
+      return imageModule;
     }
-
-    return imageModule;
+    catch (Exception ex) {
+      Trace.WriteLine($"CreateModuleBuilderAsync: EXCEPTION for module {image.ModuleName}: {ex.GetType().Name}: {ex.Message}");
+      Trace.WriteLine($"CreateModuleBuilderAsync: Stack trace: {ex.StackTrace}");
+      throw;
+    }
   }
 
   private DebugFileSearchResult GetDebugInfoFile(BinaryFileSearchResult binaryFile,
@@ -951,6 +1144,35 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return false;
   }
 
+  private async Task<ProfileModuleBuilder> GetModuleBuilderAsync(RawProfileData rawProfile, ProfileImage queryImage, int processId,
+                                                SymbolFileSourceSettings symbolSettings) {
+    // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
+    if (queryImage == prevImage_) {
+      return prevProfileModuleBuilder_;
+    }
+
+    if (!imageModuleMap_.TryGetValue(queryImage.Id, out var imageModule)) {
+      // TODO: Why not lock on queryImage?
+      lock (imageLocks_[queryImage.Id % IMAGE_LOCK_COUNT]) {
+        if (imageModuleMap_.TryGetValue(queryImage.Id, out imageModule)) {
+          prevImage_ = queryImage;
+          prevProfileModuleBuilder_ = imageModule;
+          return imageModule;
+        }
+      }
+
+      // Create the module builder outside the lock to avoid blocking other threads
+      imageModule = await CreateModuleBuilderAsync(queryImage, rawProfile, processId, symbolSettings).ConfigureAwait(false);
+      
+      // Add to the cache
+      imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+    }
+
+    prevImage_ = queryImage;
+    prevProfileModuleBuilder_ = imageModule;
+    return imageModule;
+  }
+
   private ProfileModuleBuilder GetModuleBuilder(RawProfileData rawProfile, ProfileImage queryImage, int processId,
                                                 SymbolFileSourceSettings symbolSettings) {
     // prevImage_/prevModule_ are TLS variables since this is called from multiple threads.
@@ -965,7 +1187,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           return imageModule;
         }
 
-        imageModule = CreateModuleBuilder(queryImage, rawProfile, processId, symbolSettings);
+        // Fall back to sync version with deadlock risk - this is for compatibility
+        imageModule = CreateModuleBuilderAsync(queryImage, rawProfile, processId, symbolSettings).ConfigureAwait(false).GetAwaiter().GetResult();
         imageModuleMap_.TryAdd(queryImage.Id, imageModule);
       }
     }
@@ -1006,9 +1229,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           break;
         }
 
-        int position = Interlocked.Add(ref currentSampleIndex_, PROGRESS_UPDATE_INTERVAL);
         UpdateProgress(progressCallback, ProfileLoadStage.PerfCounterProcessing,
-                       rawProfile.PerformanceCountersEvents.Count, position);
+                       rawProfile.PerformanceCountersEvents.Count, index);
       }
 
       var context = counter.GetContext(rawProfile);

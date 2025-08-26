@@ -49,13 +49,18 @@ public partial class MainWindow : Window, IUISession {
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
+    Trace.WriteLine($"LoadProfileData: Starting profile data loading for {profileFilePath}");
     var sw = Stopwatch.StartNew();
     using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
 
+    Trace.WriteLine($"LoadProfileData: LoadTraceAsync completed, result is {(result != null ? "NOT NULL" : "NULL")}");
+    Trace.WriteLine($"LoadProfileData: IsSessionStarted = {IsSessionStarted}");
+    
     if (!IsSessionStarted) {
+      Trace.WriteLine($"LoadProfileData: ERROR - Session not started, returning false");
       return false;
     }
 
@@ -64,6 +69,10 @@ public partial class MainWindow : Window, IUISession {
       sessionState_.ProfileData = result;
       UpdateWindowTitle();
       UnloadProfilingDebugInfo();
+      Trace.WriteLine($"LoadProfileData: Successfully set profile data in session");
+    }
+    else {
+      Trace.WriteLine($"LoadProfileData: ERROR - LoadTraceAsync returned null result");
     }
 
     Trace.WriteLine($"Done profile load and setup: {sw}, {sw.ElapsedMilliseconds} ms");

@@ -18,8 +18,4 @@
 		<PackageReference Include="MSTest.TestFramework" Version="3.6.1" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
-	</ItemGroup>
-
 </Project>
