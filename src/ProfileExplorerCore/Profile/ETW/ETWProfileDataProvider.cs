@@ -896,6 +896,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
 #endif
 
+    await session_.StartNewSession(mainImageName, SessionKind.FileSession,
+      session_.CreateCompilerInfoProvider(irMode)).ConfigureAwait(false);
+
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
@@ -19,6 +20,7 @@ public interface ISession {
 
   ILoadedDocument FindLoadedDocument(IRTextFunction func);
 
+  ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode);
   Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
   Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData);
 

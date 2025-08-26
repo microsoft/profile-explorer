@@ -12,6 +12,7 @@ using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 using System.Collections.Generic;
 using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.Profile.ETW;
 using ProfileExplorer.Core.Analysis;
 
@@ -49,6 +50,10 @@ public class BaseSession : ISession
     public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
       var summary = func.ParentSummary;
       return documents_.Find(item => item.Summary == summary);
+    }
+
+    public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
+      return new ASMCompilerInfoProvider(mode, this);
     }
 
   public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {

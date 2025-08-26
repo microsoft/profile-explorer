@@ -13,14 +13,9 @@ using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.Processing;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorerUI.Session;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI;
-
-public enum SessionKind {
-  Default = 0,
-  FileSession = 1,
-  DebugSession = 2
-}
 
 [ProtoContract(SkipConstructor = true)]
 public class SessionInfo {

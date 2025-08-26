@@ -1780,7 +1780,11 @@ public partial class MainWindow : Window, IUISession {
     return sessionState_.FindLoadedDocument(func);
   }
 
-  public async Task<bool> StartNewSession(string sessionName, ProfileExplorer.Core.Session.SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
+  public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
+    return new UI.Compilers.ASM.ASMUICompilerInfoProvider(mode, this);
+  }
+
+  public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
     if (compilerInfo is IUICompilerInfoProvider uICompilerInfo) {
       return await StartNewSession(sessionName, sessionKind, uICompilerInfo);
     }
