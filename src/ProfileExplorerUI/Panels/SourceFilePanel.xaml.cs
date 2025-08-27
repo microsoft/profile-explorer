@@ -316,7 +316,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFileFinder_.SaveSettings(settings_.FinderSettings);
 
     byte[] data = Session.LoadPanelState(this, section_) as byte[];
-    var state = StateSerializer.Deserialize<ProfileIRDocument.SourceFileState>(data);
+    var state = UIStateSerializer.Deserialize<ProfileIRDocument.SourceFileState>(data);
 
     if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, null, state)) {

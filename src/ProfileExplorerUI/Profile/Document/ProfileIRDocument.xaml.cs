@@ -1179,7 +1179,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       VerticalOffset = TextView.VerticalOffset,
       AssemblyFoldingStates = SaveFoldingsState()
     };
-    byte[] data = StateSerializer.Serialize(state);
+    byte[] data = UIStateSerializer.Serialize(state);
     Session.SavePanelState(data, panel, Section);
   }
 

@@ -12,12 +12,23 @@ using ProtoBuf.Meta;
 
 namespace ProfileExplorer.Core.Session;
 
-static class StateSerializer {
+public static class StateSerializer {
   public static readonly int subtypeIdStep_ = 100;
   public static int nextSubtypeId_;
+  private static bool isInitialized_;
+  private static readonly object initLock_ = new object();
 
   static StateSerializer() {
-    RuntimeTypeModel.Default.InternStrings = true;
+    Initialize();
+  }
+
+  public static void Initialize() {
+    lock (initLock_) {
+      if (!isInitialized_) {
+        RuntimeTypeModel.Default.InternStrings = true;
+        isInitialized_ = true;
+      }
+    }
   }
 
   public static void RegisterSurrogate<T1, T2>() {

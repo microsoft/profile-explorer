@@ -55,8 +55,8 @@ public class TimelineSettings : SettingsBase {
   }
 
   public TimelineSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<TimelineSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<TimelineSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

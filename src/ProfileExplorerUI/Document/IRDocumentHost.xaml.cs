@@ -469,7 +469,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double verticalOffset = 0;
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
+      var state = UIStateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
       await TextView.LoadSavedSection(parsedSection, state.DocumentState);
       horizontalOffset = state.HorizontalOffset;
       verticalOffset = state.VerticalOffset;
@@ -1119,7 +1119,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     state.DocumentState = TextView.SaveState();
     state.HorizontalOffset = TextView.HorizontalOffset;
     state.VerticalOffset = TextView.VerticalOffset;
-    byte[] data = StateSerializer.Serialize(state, Function);
+    byte[] data = UIStateSerializer.Serialize(state, Function);
 
     Session.SaveDocumentState(data, section);
     Session.SetSectionAnnotationState(section, state.HasAnnotations);

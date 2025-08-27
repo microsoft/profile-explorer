@@ -3134,7 +3134,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     object data = Session.LoadPanelState(this, null);
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<SectionPanelState>(data);
+      var state = UIStateSerializer.Deserialize<SectionPanelState>(data);
 
       foreach (int sectionId in state.AnnotatedSections) {
         var section = summary_.GetSectionWithId(sectionId);
@@ -3325,7 +3325,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       ? ((IRTextFunctionEx)FunctionList.SelectedItem).Function.Number
       : 0;
 
-    byte[] data = StateSerializer.Serialize(state);
+    byte[] data = UIStateSerializer.Serialize(state);
     Session.SavePanelState(data, this, null);
   }
 

@@ -45,8 +45,8 @@ public class CallTreeSettings : SettingsBase {
   }
 
   public CallTreeSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<CallTreeSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<CallTreeSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

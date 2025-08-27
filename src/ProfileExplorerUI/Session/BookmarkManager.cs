@@ -46,11 +46,11 @@ public class BookmarkManager {
       SelectedIndex = selectedIndex_
     };
 
-    return StateSerializer.Serialize(bookmarkState, function);
+    return UIStateSerializer.Serialize(bookmarkState, function);
   }
 
   public void LoadState(byte[] data, FunctionIR function) {
-    var bookmarkState = StateSerializer.Deserialize<BookmarkManagerState>(data, function);
+    var bookmarkState = UIStateSerializer.Deserialize<BookmarkManagerState>(data, function);
     bookmarks_ = bookmarkState.Bookmarks ?? new List<Bookmark>();
     elementBookmarkMap_ =
       bookmarkState.ElementBookmarkMap?.ToDictionary<IRElementReference, IRElement, Bookmark>() ??

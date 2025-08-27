@@ -89,8 +89,8 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public FlameGraphSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<FlameGraphSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<FlameGraphSettings>(serialized);
   }
 
   public void ResedCachedPalettes() {

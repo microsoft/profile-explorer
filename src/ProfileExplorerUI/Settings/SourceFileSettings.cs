@@ -48,8 +48,8 @@ public class SourceFileSettings : TextViewSettingsBase {
   }
 
   public SourceFileSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<SourceFileSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<SourceFileSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

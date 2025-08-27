@@ -294,7 +294,7 @@ public partial class App : Application {
 
       string path = GetSettingsFilePath();
       byte[] data = File.ReadAllBytes(path);
-      Settings = StateSerializer.Deserialize<ApplicationSettings>(data);
+      Settings = UIStateSerializer.Deserialize<ApplicationSettings>(data);
 
       // Do some basic sanity checks in case the settings file is incompatible.
       if (Settings.RecentFiles == null) {
@@ -316,7 +316,7 @@ public partial class App : Application {
 
   public static void SaveApplicationSettings() {
     try {
-      byte[] data = StateSerializer.Serialize(Settings);
+      byte[] data = UIStateSerializer.Serialize(Settings);
       CreateSettingsDirectory();
       string path = GetSettingsFilePath();
       File.WriteAllBytes(path, data);

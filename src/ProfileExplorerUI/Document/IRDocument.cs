@@ -3004,7 +3004,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     var refFinder = CreateReferenceFinder();
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
+      var state = UIStateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
       var markerState = state.DocumentState.MarkedHighlighter;
 
       if (markerState != null && markerState.Groups != null) {

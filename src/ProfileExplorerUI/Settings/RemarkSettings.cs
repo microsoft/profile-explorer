@@ -63,8 +63,8 @@ public class RemarkSettings : SettingsBase {
   }
 
   public RemarkSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<RemarkSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<RemarkSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

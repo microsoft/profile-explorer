@@ -31,7 +31,7 @@ public class UIDiffSettings : DiffSettings {
   public string ExternalDiffAppPath { get; set; }
 
   public UIDiffSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<UIDiffSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<UIDiffSettings>(serialized);
   }
 }

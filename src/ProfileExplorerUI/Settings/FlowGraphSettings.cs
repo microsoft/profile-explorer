@@ -39,8 +39,8 @@ public class FlowGraphSettings : GraphSettings {
   }
 
   public FlowGraphSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<FlowGraphSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<FlowGraphSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

@@ -88,8 +88,8 @@ public class ColumnSettings : SettingsBase {
   }
 
   public ColumnSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<ColumnSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<ColumnSettings>(serialized);
   }
 
   public override bool Equals(object obj) {
@@ -119,8 +119,8 @@ public class ColumnState : SettingsBase {
   }
 
   public ColumnState Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<ColumnState>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<ColumnState>(serialized);
   }
 
   public override bool Equals(object obj) {

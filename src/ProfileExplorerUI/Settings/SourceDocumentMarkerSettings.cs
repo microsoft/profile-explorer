@@ -38,8 +38,8 @@ public class SourceDocumentMarkerSettings : SettingsBase {
   }
 
   public SourceDocumentMarkerSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<SourceDocumentMarkerSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<SourceDocumentMarkerSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

@@ -139,8 +139,8 @@ public class OptionalColumnSettings : SettingsBase {
   }
 
   public OptionalColumnSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<OptionalColumnSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<OptionalColumnSettings>(serialized);
   }
 
   public override bool Equals(object obj) {
@@ -190,8 +190,8 @@ public class OptionalColumnStyle : SettingsBase {
   }
 
   public OptionalColumnStyle Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<OptionalColumnStyle>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<OptionalColumnStyle>(serialized);
   }
 
   public override bool Equals(object obj) {

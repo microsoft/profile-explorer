@@ -125,8 +125,8 @@ public class SectionSettings : ProfileExplorer.Core.Settings.SectionSettings {
   }
 
   public override SectionSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<SectionSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<SectionSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

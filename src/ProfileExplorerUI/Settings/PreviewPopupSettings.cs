@@ -48,8 +48,8 @@ public class PreviewPopupSettings : SettingsBase {
   }
 
   public PreviewPopupSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<PreviewPopupSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<PreviewPopupSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

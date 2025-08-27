@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Session;
 using ProtoBuf;
-using ProtoBuf.Meta;
 
 namespace ProfileExplorer.UI;
 
@@ -132,89 +129,20 @@ public class FontWeightSurrogate {
   }
 }
 
-static class StateSerializer {
-  public static readonly int subtypeIdStep_ = 100;
-  public static int nextSubtypeId_;
-
-  static StateSerializer() {
-    RegisterSurrogate<Color, ColorSurrogate>();
-    RegisterSurrogate<Brush, BrushSurrogate>();
-    RegisterSurrogate<Pen, PenSurrogate>();
-    RegisterSurrogate<Rect, RectSurrogate>();
-    RegisterSurrogate<FontWeight, FontWeightSurrogate>();
-    RuntimeTypeModel.Default.InternStrings = true;
+public static class UIStateSerializer {
+  static UIStateSerializer() {
+    // Initialize the core StateSerializer
+    StateSerializer.Initialize();
+    
+    // Register UI-specific surrogates
+    StateSerializer.RegisterSurrogate<Color, ColorSurrogate>();
+    StateSerializer.RegisterSurrogate<Brush, BrushSurrogate>();
+    StateSerializer.RegisterSurrogate<Pen, PenSurrogate>();
+    StateSerializer.RegisterSurrogate<Rect, RectSurrogate>();
+    StateSerializer.RegisterSurrogate<FontWeight, FontWeightSurrogate>();
   }
 
-  public static void RegisterSurrogate<T1, T2>() {
-    RegisterSurrogate(typeof(T1), typeof(T2));
-  }
-
-  public static void RegisterSurrogate(Type realType, Type surrogateType) {
-    var model = RuntimeTypeModel.Default;
-    model.Add(surrogateType);
-    model.Add(realType, false).SetSurrogate(surrogateType);
-  }
-
-  public static void RegisterDerivedClass<T1, T2>(int id = 0) {
-    RegisterDerivedClass(typeof(T1), typeof(T2), id);
-  }
-
-  public static void RegisterDerivedClass(Type derivedType, Type baseType, int id = 0) {
-    var model = RuntimeTypeModel.Default;
-
-    if (id == 0) {
-      nextSubtypeId_ += subtypeIdStep_;
-      id = nextSubtypeId_;
-    }
-
-    model.Add(baseType, false).AddSubType(id, derivedType);
-  }
-
-  public static byte[] Serialize<T>(T state, FunctionIR function = null) where T : class {
-    using var stream = new MemoryStream();
-    Serializer.Serialize(stream, state);
-    return stream.ToArray();
-  }
-
-  public static bool Serialize<T>(string filePath, T state, FunctionIR function = null) where T : class {
-    using var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.ReadWrite);
-    Serializer.Serialize(stream, state);
-    return true;
-  }
-
-  public static T Deserialize<T>(byte[] data, FunctionIR function) where T : class {
-    var value = Deserialize<T>(data);
-
-    if (value != null) {
-      PatchIRElementObjects(value, function);
-      return value;
-    }
-
-    return null;
-  }
-
-  public static T Deserialize<T>(byte[] data) where T : class {
-    if (data == null) {
-      return null;
-    }
-
-    var stream = new MemoryStream(data);
-    return Serializer.Deserialize<T>(stream);
-  }
-
-  public static T Deserialize<T>(string filePath) where T : class {
-    using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-    return Serializer.Deserialize<T>(stream);
-  }
-
-  public static T Deserialize<T>(object data, FunctionIR function) where T : class {
-    return Deserialize<T>((byte[])data, function);
-  }
-
-  public static T Deserialize<T>(object data) where T : class {
-    return Deserialize<T>((byte[])data);
-  }
-
+  // UI-specific functionality for working with highlighted elements
   public static List<ElementGroupState> SaveElementGroupState(List<HighlightedSegmentGroup> groups) {
     var groupStates = new List<ElementGroupState>();
 
@@ -258,42 +186,49 @@ static class StateSerializer {
     return groups;
   }
 
-  public static void PatchIRElementObjects(object value, FunctionIR function) {
-    if (value == null) {
-      return;
-    }
+  // Delegate core serialization functionality to the Core StateSerializer
+  public static byte[] Serialize<T>(T state, FunctionIR function = null) where T : class {
+    return StateSerializer.Serialize(state, function);
+  }
 
-    if (value is IRElementReference elementRef) {
-      elementRef.Value = function.GetElementWithId(elementRef.Id);
-      return;
-    }
+  public static bool Serialize<T>(string filePath, T state, FunctionIR function = null) where T : class {
+    return StateSerializer.Serialize(filePath, state, function);
+  }
 
-    if (!value.GetType().GetTypeInfo().IsClass) {
-      return; // Don't walk primitive types.
-    }
+  public static T Deserialize<T>(byte[] data, FunctionIR function) where T : class {
+    return StateSerializer.Deserialize<T>(data, function);
+  }
 
-    if (value is IList list) {
-      foreach (object item in list) {
-        PatchIRElementObjects(item, function);
-      }
-    }
-    else if (value is IDictionary dict) {
-      foreach (object item in dict.Keys) {
-        PatchIRElementObjects(item, function);
-      }
+  public static T Deserialize<T>(byte[] data) where T : class {
+    return StateSerializer.Deserialize<T>(data);
+  }
 
-      foreach (object item in dict.Values) {
-        PatchIRElementObjects(item, function);
-      }
-    }
-    else {
-      var fields = value.GetType().GetFields(BindingFlags.Public |
-                                             BindingFlags.NonPublic |
-                                             BindingFlags.Instance);
+  public static T Deserialize<T>(string filePath) where T : class {
+    return StateSerializer.Deserialize<T>(filePath);
+  }
 
-      foreach (var field in fields) {
-        PatchIRElementObjects(field.GetValue(value), function);
-      }
-    }
+  public static T Deserialize<T>(object data, FunctionIR function) where T : class {
+    return StateSerializer.Deserialize<T>(data, function);
+  }
+
+  public static T Deserialize<T>(object data) where T : class {
+    return StateSerializer.Deserialize<T>(data);
+  }
+
+  // Expose core functionality for advanced scenarios
+  public static void RegisterSurrogate<T1, T2>() {
+    StateSerializer.RegisterSurrogate<T1, T2>();
+  }
+
+  public static void RegisterSurrogate(Type realType, Type surrogateType) {
+    StateSerializer.RegisterSurrogate(realType, surrogateType);
+  }
+
+  public static void RegisterDerivedClass<T1, T2>(int id = 0) {
+    StateSerializer.RegisterDerivedClass<T1, T2>(id);
+  }
+
+  public static void RegisterDerivedClass(Type derivedType, Type baseType, int id = 0) {
+    StateSerializer.RegisterDerivedClass(derivedType, baseType, id);
   }
 }

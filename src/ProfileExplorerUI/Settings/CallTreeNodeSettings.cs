@@ -60,8 +60,8 @@ public class CallTreeNodeSettings : SettingsBase {
   }
 
   public CallTreeNodeSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<CallTreeNodeSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<CallTreeNodeSettings>(serialized);
   }
 
   [ProtoAfterDeserialization]

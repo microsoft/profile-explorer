@@ -171,8 +171,8 @@ public class FunctionMarkingSettings : SettingsBase {
   }
 
   public FunctionMarkingSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<FunctionMarkingSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<FunctionMarkingSettings>(serialized);
   }
 
   public void AddModuleColor(string moduleName, Color color) {

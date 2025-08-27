@@ -891,7 +891,7 @@ public partial class GraphPanel : ToolPanelControl {
     }
 
     byte[] data = Session.LoadPanelState(this, Document.Section) as byte[];
-    var state = StateSerializer.Deserialize<GraphPanelState>(data, Document.Function);
+    var state = UIStateSerializer.Deserialize<GraphPanelState>(data, Document.Function);
 
     if (state != null) {
       SetZoom(state.ZoomLevel);
@@ -922,7 +922,7 @@ public partial class GraphPanel : ToolPanelControl {
     state.ZoomLevel = GraphViewer.ZoomLevel;
     state.HorizontalOffset = GraphHost.HorizontalOffset;
     state.VerticalOffset = GraphHost.VerticalOffset;
-    byte[] data = StateSerializer.Serialize(state, document.Function);
+    byte[] data = UIStateSerializer.Serialize(state, document.Function);
     Session.SavePanelState(data, this, section);
 
     // Clear references to IR objects that would keep the previous function alive.

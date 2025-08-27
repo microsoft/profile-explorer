@@ -138,7 +138,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
   }
 
   public ElementHighlighterState SaveState(FunctionIR function) {
-    return new ElementHighlighterState(StateSerializer.SaveElementGroupState(groups_));
+    return new ElementHighlighterState(UIStateSerializer.SaveElementGroupState(groups_));
   }
 
   public void LoadState(ElementHighlighterState state, FunctionIR function) {
@@ -146,7 +146,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
       return; // Most likely a file from an older version of the app.
     }
 
-    groups_ = StateSerializer.LoadElementGroupState(state.Groups);
+    groups_ = UIStateSerializer.LoadElementGroupState(state.Groups);
     Version++;
   }
 

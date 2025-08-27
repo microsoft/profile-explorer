@@ -232,7 +232,7 @@ public class SessionStateManager : IDisposable {
   public static Task<SessionState> DeserializeSession(byte[] data) {
     return Task.Run(() => {
       byte[] decompressedData = CompressionUtils.Decompress(data);
-      var state = StateSerializer.Deserialize<SessionState>(decompressedData);
+      var state = UIStateSerializer.Deserialize<SessionState>(decompressedData);
       return state;
     });
   }
@@ -397,7 +397,7 @@ public class SessionStateManager : IDisposable {
     }
 
     return Task.Run(() => {
-      byte[] data = StateSerializer.Serialize(state);
+      byte[] data = UIStateSerializer.Serialize(state);
       byte[] compressedData = CompressionUtils.Compress(data);
       return compressedData;
     });
