@@ -4,15 +4,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using ProfileExplorer.Core;
-using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.Compilers.ASM;
-using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.LLVM;
+using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Providers;
-using ProfileExplorer.UI.Compilers.Default;
-using ProfileExplorer.UI.Query;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
+using ProfileExplorer.UI.Compilers.Default;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorer.UI.Query;
 using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
@@ -26,6 +28,7 @@ public class ASMUICompilerInfoProvider : ASMCompilerInfoProvider, IUICompilerInf
     : base(mode, session) 
     {
     uI_Session = session;
+    remarks_ = new DefaultRemarkProvider(this);
   }
 
   public new IUISession Session => uI_Session;
