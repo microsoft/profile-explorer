@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Binary;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.UI.Profile;
 
 namespace ProfileExplorerUITests.Synthetic;
