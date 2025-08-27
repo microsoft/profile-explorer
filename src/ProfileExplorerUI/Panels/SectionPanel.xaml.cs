@@ -36,6 +36,7 @@ using ProfileExplorer.Core.Profile.Data;
 using PerformanceCounter = ProfileExplorer.Core.Profile.Data.PerformanceCounter;
 using ProfileExplorer.Core.Profile.CallTree;
 using ProfileExplorer.Core.UI;
+using ProfileExplorer.Core.Compilers.ASM;
 
 namespace ProfileExplorer.UI;
 

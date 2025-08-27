@@ -30,6 +30,7 @@ using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorerUI.Session;
 using System.Linq;
+using ProfileExplorer.Core.Compilers.ASM;
 
 namespace ProfileExplorer.UI;
 
