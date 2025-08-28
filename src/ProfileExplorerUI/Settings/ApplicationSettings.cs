@@ -45,7 +45,7 @@ public class ApplicationSettings {
   [ProtoMember(10)]
   public UIDiffSettings DiffSettings { get; set; }
   [ProtoMember(11)]
-  public SectionSettings SectionSettings { get; set; }
+  public UISectionSettings SectionSettings { get; set; }
   [ProtoMember(12)]
   public List<string> RecentTextSearches { get; set; }
   [ProtoMember(13)]
@@ -235,7 +235,7 @@ public class ApplicationSettings {
     ExpressionGraphSettings ??= new ExpressionGraphSettings();
     RemarkSettings ??= new RemarkSettings();
     DiffSettings ??= new UIDiffSettings();
-    SectionSettings ??= new SectionSettings();
+    SectionSettings ??= new UISectionSettings();
     FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
     ProfileOptions ??= new ProfileDataProviderOptions();
     SymbolSettings ??= new SymbolFileSourceSettings();

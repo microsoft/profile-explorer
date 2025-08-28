@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;

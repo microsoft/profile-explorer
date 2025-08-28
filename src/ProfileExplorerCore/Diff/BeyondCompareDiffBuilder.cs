@@ -9,10 +9,11 @@ using System.Text;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder.Model;
 using HtmlAgilityPack;
+using ProfileExplorer.Core.Utilities;
 
 #pragma warning disable CA1305, CA1307
 
-namespace ProfileExplorer.UI.Diff;
+namespace ProfileExplorer.Core.Diff;
 
 public class BeyondCompareDiffBuilder {
   private const string BeyondCompareDirectory = @"Beyond Compare 4";

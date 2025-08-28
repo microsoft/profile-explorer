@@ -8,10 +8,10 @@ using ProtoBuf;
 namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
-public class SectionSettings : ProfileExplorer.Core.Settings.SectionSettings {
+public class UISectionSettings : SectionSettings {
   public static readonly int DefaultCallStackPopupDuration = (int)HoverPreview.ExtraLongHoverDurationMs;
 
-  public SectionSettings() {
+  public UISectionSettings() {
     Reset();
   }
 
@@ -102,7 +102,7 @@ public class SectionSettings : ProfileExplorer.Core.Settings.SectionSettings {
     }
   }
 
-  public bool HasFunctionListChanges(SectionSettings other) {
+  public bool HasFunctionListChanges(UISectionSettings other) {
     return ShowDemangledNames != other.ShowDemangledNames ||
            DemangleOnlyNames != other.DemangleOnlyNames ||
            DemangleNoReturnType != other.DemangleNoReturnType ||
@@ -124,9 +124,9 @@ public class SectionSettings : ProfileExplorer.Core.Settings.SectionSettings {
     InitializeReferenceOptions(this);
   }
 
-  public override SectionSettings Clone() {
+  public override UISectionSettings Clone() {
     byte[] serialized = UIStateSerializer.Serialize(this);
-    return UIStateSerializer.Deserialize<SectionSettings>(serialized);
+    return UIStateSerializer.Deserialize<UISectionSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

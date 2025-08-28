@@ -33,7 +33,7 @@ public class HelpIndex {
   public HelpTopic HomeTopic { get; set; }
 
   public static HelpIndex DeserializeFromFile(string filePath) {
-    if (JsonUtils.DeserializeFromFile(filePath, out HelpIndex index)) {
+    if (UIJsonUtils.DeserializeFromFile(filePath, out HelpIndex index)) {
       return index;
     }
 
@@ -41,7 +41,7 @@ public class HelpIndex {
   }
 
   public static HelpIndex Deserialize(string text) {
-    if (JsonUtils.Deserialize(text, out HelpIndex index)) {
+    if (UIJsonUtils.Deserialize(text, out HelpIndex index)) {
       return index;
     }
 

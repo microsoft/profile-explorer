@@ -8,11 +8,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
-using ProfileExplorer.Core.UI;
 
 namespace ProfileExplorer.UI;
 

@@ -10,6 +10,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProtoBuf;

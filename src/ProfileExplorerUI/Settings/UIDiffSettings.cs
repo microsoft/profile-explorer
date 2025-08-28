@@ -9,26 +9,25 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract(SkipConstructor = true)]
 public class UIDiffSettings : DiffSettings {
-  [ProtoMember(13)][OptionValue("#FFF6D9")]
+  [ProtoMember(14)][OptionValue("#FFF6D9")]
   public Color ModificationColor { get; set; }
-  [ProtoMember(14)][OptionValue("#ff6f00")]
+  [ProtoMember(15)][OptionValue("#ff6f00")]
   public Color ModificationBorderColor { get; set; }
-  [ProtoMember(15)][OptionValue("#E2F0D3")]
+  [ProtoMember(16)][OptionValue("#E2F0D3")]
   public Color InsertionColor { get; set; }
-  [ProtoMember(16)][OptionValue("#7FA72E")]
+  [ProtoMember(17)][OptionValue("#7FA72E")]
   public Color InsertionBorderColor { get; set; }
-  [ProtoMember(17)][OptionValue("#FFE8EA")]
+  [ProtoMember(18)][OptionValue("#FFE8EA")]
   public Color DeletionColor { get; set; }
-  [ProtoMember(18)][OptionValue("#B33232")]
+  [ProtoMember(19)][OptionValue("#B33232")]
   public Color DeletionBorderColor { get; set; }
-  [ProtoMember(19)][OptionValue("#E1E1E1")]
+  [ProtoMember(20)][OptionValue("#E1E1E1")]
   public Color MinorModificationColor { get; set; }
-  [ProtoMember(20)][OptionValue("#8F8F8F")]
+  [ProtoMember(21)][OptionValue("#8F8F8F")]
   public Color MinorModificationBorderColor { get; set; }
-  [ProtoMember(21)][OptionValue("#A9A9A9")]
+  [ProtoMember(22)][OptionValue("#A9A9A9")]
   public Color PlaceholderBorderColor { get; set; }
-  [ProtoMember(22)][OptionValue("")]
-  public string ExternalDiffAppPath { get; set; }
+  
 
   public UIDiffSettings Clone() {
     byte[] serialized = UIStateSerializer.Serialize(this);

@@ -60,11 +60,11 @@ class SectionStyleProviderSerializer {
       List = sectionNameMarkers
     };
 
-    return JsonUtils.SerializeToFile(data, path);
+    return UIJsonUtils.SerializeToFile(data, path);
   }
 
   public bool Load(string path, out List<MarkedSectionName> sectionNameMarkers) {
-    if (JsonUtils.DeserializeFromFile(path, out SerializedData data)) {
+    if (UIJsonUtils.DeserializeFromFile(path, out SerializedData data)) {
       sectionNameMarkers = data.List;
       return true;
     }

@@ -27,17 +27,17 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   }
 
   private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.DefaultCallStackPopupDuration;
+    ((UISectionSettings)Settings).CallStackPopupDuration = UISectionSettings.DefaultCallStackPopupDuration;
     ReloadSettings();
   }
 
   private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
+    ((UISectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
+    ((UISectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 }

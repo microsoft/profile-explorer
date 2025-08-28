@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -8,17 +9,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ProfileExplorer.Core.Utilities;
-
-/*public class JsonColorConverter : JsonConverter<Color> {
-  public override Color Read(ref Utf8JsonReader reader, Type typeToConvert,
-                             JsonSerializerOptions options) {
-    return Utils.ColorFromString(reader.GetString());
-  }
-
-  public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options) {
-    writer.WriteStringValue(Utils.ColorToString(value));
-  }
-}*/
 
 public class StringInterningConverter : JsonConverter<string> {
   public override string Read(ref Utf8JsonReader reader, Type typeToConvert,
@@ -32,6 +22,33 @@ public class StringInterningConverter : JsonConverter<string> {
 }
 
 public static class JsonUtils {
+  private static readonly List<JsonConverter> customConverters = new List<JsonConverter>();
+
+  /// <summary>
+  /// Registers a custom JSON converter that will be added to all JsonSerializerOptions.
+  /// </summary>
+  /// <param name="converter">The custom converter to register</param>
+  public static void RegisterConverter(JsonConverter converter) {
+    if (converter != null && !customConverters.Contains(converter)) {
+      customConverters.Add(converter);
+    }
+  }
+
+  /// <summary>
+  /// Unregisters a custom JSON converter.
+  /// </summary>
+  /// <param name="converter">The converter to unregister</param>
+  public static void UnregisterConverter(JsonConverter converter) {
+    customConverters.Remove(converter);
+  }
+
+  /// <summary>
+  /// Clears all registered custom converters.
+  /// </summary>
+  public static void ClearCustomConverters() {
+    customConverters.Clear();
+  }
+
   public static JsonSerializerOptions GetJsonOptions() {
     var options = new JsonSerializerOptions {
       WriteIndented = true,
@@ -39,9 +56,15 @@ public static class JsonUtils {
       IgnoreReadOnlyProperties = true
     };
 
-    //options.Converters.Add(new JsonColorConverter());
+    // Add built-in converters
     options.Converters.Add(new StringInterningConverter());
     options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    
+    // Add any registered custom converters
+    foreach (var converter in customConverters) {
+      options.Converters.Add(converter);
+    }
+    
     return options;
   }
 

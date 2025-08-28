@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
-using ProfileExplorer.Core.UI;
 using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;

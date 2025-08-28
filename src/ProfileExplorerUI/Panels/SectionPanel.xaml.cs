@@ -35,8 +35,8 @@ using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Profile.Data;
 using PerformanceCounter = ProfileExplorer.Core.Profile.Data.PerformanceCounter;
 using ProfileExplorer.Core.Profile.CallTree;
-using ProfileExplorer.Core.UI;
 using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Diff;
 
 namespace ProfileExplorer.UI;
 
@@ -469,7 +469,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private bool isFunctionListVisible_;
   private bool isSectionListVisible_;
   private bool useProfileCallTree_;
-  private SectionSettings settings_;
+  private UISectionSettings settings_;
   private IRTextSummary summary_;
   private IRTextSummary otherSummary_;
   private List<IRTextSectionEx> sections_;
@@ -1123,7 +1123,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  public SectionSettings Settings {
+  public UISectionSettings Settings {
     get => settings_;
     set => settings_ = value;
   }
@@ -2373,7 +2373,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, SectionSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, UISectionSettings>(
       Settings.Clone(), FunctionList, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(Settings)) {
@@ -2389,7 +2389,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return HandleNewSettings(App.Settings.SectionSettings, false, true);
   }
 
-  private async Task HandleNewSettings(SectionSettings newSettings, bool commit, bool force = false) {
+  private async Task HandleNewSettings(UISectionSettings newSettings, bool commit, bool force = false) {
     if (commit) {
       App.Settings.SectionSettings = newSettings;
       App.SaveApplicationSettings();

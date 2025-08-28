@@ -13,7 +13,6 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
-using ProfileExplorer.Core.UI;
 using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
 using ProfileExplorerUI.Session;

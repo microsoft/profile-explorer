@@ -14,10 +14,8 @@ using ProfileExplorer.Core.Settings;
 using ProfileExplorer.UI;
 using ProfileExplorer.UI.Query;
 using ProfileExplorerUI.Session;
-/*using ProfileExplorer.UI.Query;
-using ProfileExplorer.UI.Compilers.Default;*/
 
-//namespace ProfileExplorer.UI.Compilers.LLVM;
+namespace ProfileExplorer.UI.Compilers.LLVM;
 
 public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   private LLVMCompilerIRInfo ir_;

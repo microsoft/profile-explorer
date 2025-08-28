@@ -48,7 +48,7 @@ public class FunctionMarkingSettings : SettingsBase {
 
       string markingsFile = App.GetFunctionMarkingsFilePath(App.Session.CompilerInfo.CompilerIRName);
 
-      if (!JsonUtils.DeserializeFromFile<FunctionMarkingSet>(markingsFile, out builtinMarking_)) {
+      if (!UIJsonUtils.DeserializeFromFile<FunctionMarkingSet>(markingsFile, out builtinMarking_)) {
         builtinMarking_ = new FunctionMarkingSet();
       }
 
@@ -115,11 +115,11 @@ public class FunctionMarkingSettings : SettingsBase {
 
   public bool SaveToFile(string filePath) {
     var markings = new Markings(CurrentSet, SavedSets);
-    return JsonUtils.SerializeToFile(markings, filePath);
+    return UIJsonUtils.SerializeToFile(markings, filePath);
   }
 
   public (bool, string) LoadFromFile(string filePath) {
-    if (!JsonUtils.DeserializeFromFile(filePath, out Markings data)) {
+    if (!UIJsonUtils.DeserializeFromFile(filePath, out Markings data)) {
       return (false, "Failed to read markings file");
     }
 

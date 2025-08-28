@@ -583,6 +583,9 @@ public partial class App : Application {
     AppStartTime = DateTime.UtcNow;
     base.OnStartup(e);
 
+    // Initialize UI-specific JSON converters
+    UIJsonUtils.Initialize();
+
     // Register UI-specific type converters for settings system
     RegisterSettingsTypeConverters();
 

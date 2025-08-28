@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows.Media;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
 using ProtoBuf;
 

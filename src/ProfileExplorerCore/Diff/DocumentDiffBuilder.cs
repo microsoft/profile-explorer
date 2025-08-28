@@ -10,7 +10,7 @@ using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorer.Core.UI;
+namespace ProfileExplorer.Core.Diff;
 
 public enum DiffImplementationKind {
   Internal,
@@ -44,13 +44,13 @@ public class DocumentDiffBuilder {
 
   public SideBySideDiffModel ComputeDiffs(string leftText, string rightText) {
     if (settings_.DiffImplementation == DiffImplementationKind.External) {
-      /*if (!string.IsNullOrEmpty(settings_.ExternalDiffAppPath)) {
+      if (!string.IsNullOrEmpty(settings_.ExternalDiffAppPath)) {
         var result = BeyondCompareDiffBuilder.ComputeDiffs(leftText, rightText, settings_.ExternalDiffAppPath);
 
         if (result != null) {
           return result;
         }
-      }*/
+      }
       throw new NotImplementedException();
 
       // Fall back to the internal diff engine if the external one failed.

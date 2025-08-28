@@ -4,6 +4,7 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Utilities;
 using ProtoBuf;

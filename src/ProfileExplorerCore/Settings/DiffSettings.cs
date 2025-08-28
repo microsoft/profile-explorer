@@ -3,7 +3,6 @@
 using System.ComponentModel;
 using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Session;
-using ProfileExplorer.Core.UI;
 using ProtoBuf;
 
 namespace ProfileExplorer.Core.Settings;
@@ -39,6 +38,10 @@ public class DiffSettings : SettingsBase {
   public bool ShowModifications { get; set; }
   [ProtoMember(12)][OptionValue(true)]
   public bool ShowMinorModifications { get; set; }
+
+  [ProtoMember(13)]
+  [OptionValue("")]
+  public string ExternalDiffAppPath { get; set; }
   public bool ShowAnyChanges => ShowInsertions || ShowDeletions || ShowModifications || ShowMinorModifications;
 
   public override void Reset() {
