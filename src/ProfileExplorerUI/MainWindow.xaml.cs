@@ -23,6 +23,7 @@ using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.UI.Compilers.ASM;
+using ProfileExplorer.UI.Compilers.LLVM;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Panels;

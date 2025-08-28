@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

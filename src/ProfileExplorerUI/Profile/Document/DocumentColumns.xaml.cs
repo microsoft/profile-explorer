@@ -13,6 +13,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Folding;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.OptionsPanels;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Document;
 

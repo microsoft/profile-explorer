@@ -24,6 +24,7 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;

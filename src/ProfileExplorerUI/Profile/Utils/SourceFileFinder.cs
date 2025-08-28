@@ -10,6 +10,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Document;
 

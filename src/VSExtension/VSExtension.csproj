@@ -153,6 +153,6 @@
 	  </Target>
 	  -->
   <ItemGroup>
-    <Protobuf Include="../ClientServer/DebugService.proto" />
+    <Protobuf Include="../GrpcLib/DebugService.proto" />
   </ItemGroup>
 </Project>

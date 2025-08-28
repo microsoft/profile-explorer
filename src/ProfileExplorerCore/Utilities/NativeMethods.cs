@@ -7,7 +7,7 @@ using System.Text;
 
 namespace ProfileExplorer.Core.Utilities;
 
-static class NativeMethods {
+public static class NativeMethods {
   // C++ function name demangling
   [Flags]
   public enum UnDecorateFlags {

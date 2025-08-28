@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
