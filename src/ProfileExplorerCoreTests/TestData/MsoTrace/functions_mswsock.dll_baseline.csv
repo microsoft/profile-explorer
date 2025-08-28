@@ -1,0 +1,4 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"1ADC0","1ADC0","mswsock.dll",0.0205,2.0000,0.0205,2.0000
+"14133","14133","mswsock.dll",0.0103,0.9995,0.0103,0.9995
+"B8FE","B8FE","mswsock.dll",0.0009,0.0862,0.0009,0.0862

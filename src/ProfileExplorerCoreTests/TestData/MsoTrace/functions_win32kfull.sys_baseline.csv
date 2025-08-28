@@ -1,0 +1,14 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"5F746","5F746","win32kfull.sys",0.0381,3.7132,0.0381,3.7132
+"1B49E8","1B49E8","win32kfull.sys",0.0217,2.1123,0.0217,2.1123
+"5F59D","5F59D","win32kfull.sys",0.0205,2.0000,0.0205,2.0000
+"14F4FD","14F4FD","win32kfull.sys",0.0161,1.5704,0.0161,1.5704
+"5F5A5","5F5A5","win32kfull.sys",0.0136,1.3223,0.0136,1.3223
+"5AFAF","5AFAF","win32kfull.sys",0.0121,1.1805,0.0121,1.1805
+"594F4","594F4","win32kfull.sys",0.0115,1.1159,0.0115,1.1159
+"CB0D3","CB0D3","win32kfull.sys",0.0114,1.1129,0.0114,1.1129
+"594C1","594C1","win32kfull.sys",0.0104,1.0180,0.0104,1.0180
+"2B57D","2B57D","win32kfull.sys",0.0104,1.0154,0.0104,1.0154
+"5F5EE","5F5EE","win32kfull.sys",0.0103,1.0056,0.0103,1.0056
+"5F5BD","5F5BD","win32kfull.sys",0.0099,0.9598,0.0099,0.9598
+"5F74E","5F74E","win32kfull.sys",0.0053,0.5176,0.0053,0.5176

@@ -1,0 +1,13 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"617BB","617BB","WdFilter.sys",0.0161,1.5718,0.0161,1.5718
+"5C1BA","5C1BA","WdFilter.sys",0.0135,1.3168,0.0135,1.3168
+"47260","47260","WdFilter.sys",0.0128,1.2434,0.0128,1.2434
+"4DECF","4DECF","WdFilter.sys",0.0127,1.2386,0.0127,1.2386
+"2BE7C","2BE7C","WdFilter.sys",0.0103,0.9998,0.0103,0.9998
+"2B5D0","2B5D0","WdFilter.sys",0.0102,0.9974,0.0102,0.9974
+"2B6B6","2B6B6","WdFilter.sys",0.0102,0.9974,0.0102,0.9974
+"2BEA5","2BEA5","WdFilter.sys",0.0102,0.9974,0.0102,0.9974
+"2BE88","2BE88","WdFilter.sys",0.0102,0.9945,0.0102,0.9945
+"2BD9B","2BD9B","WdFilter.sys",0.0102,0.9942,0.0102,0.9942
+"4BA31","4BA31","WdFilter.sys",0.0102,0.9932,0.0102,0.9932
+"486FB","486FB","WdFilter.sys",0.0029,0.2806,0.0029,0.2806

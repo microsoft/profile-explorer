@@ -364,6 +364,9 @@ MigrationBackup/
 src/.idea
 src/GrpcCppLib/ReleaseStaticLib
 
+# Include test data files (allow all file types in TestData folder)
+!/src/ProfileExplorerCoreTests/TestData/**
+
 # Include some pre-built binaries
 !/src/external/*
 !/src/external/arm64/*

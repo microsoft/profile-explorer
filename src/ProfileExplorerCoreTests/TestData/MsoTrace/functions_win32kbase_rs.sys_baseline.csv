@@ -1,0 +1,12 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"138EC","138EC","win32kbase_rs.sys",0.0205,2.0000,0.0205,2.0000
+"F8DE","F8DE","win32kbase_rs.sys",0.0205,2.0000,0.0205,2.0000
+"17E61","17E61","win32kbase_rs.sys",0.0198,1.9268,0.0198,1.9268
+"BE42","BE42","win32kbase_rs.sys",0.0149,1.4470,0.0149,1.4470
+"1419E","1419E","win32kbase_rs.sys",0.0142,1.3807,0.0142,1.3807
+"145E9","145E9","win32kbase_rs.sys",0.0137,1.3389,0.0137,1.3389
+"4BB3","4BB3","win32kbase_rs.sys",0.0103,1.0077,0.0103,1.0077
+"D831","D831","win32kbase_rs.sys",0.0102,0.9954,0.0102,0.9954
+"138B4","138B4","win32kbase_rs.sys",0.0102,0.9930,0.0102,0.9930
+"A0E4","A0E4","win32kbase_rs.sys",0.0100,0.9704,0.0100,0.9704
+"9C2D","9C2D","win32kbase_rs.sys",0.0068,0.6613,0.0068,0.6613

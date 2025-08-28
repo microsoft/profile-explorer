@@ -1,0 +1,4 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"272BC","272BC","ws2_32.dll",0.0308,2.9989,0.0308,2.9989
+"B590","B590","ws2_32.dll",0.0205,2.0000,0.0205,2.0000
+"D399","D399","ws2_32.dll",0.0205,2.0000,0.0205,2.0000
