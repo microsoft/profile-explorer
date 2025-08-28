@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Controls;
 
 namespace ProfileExplorer.UI.Document;

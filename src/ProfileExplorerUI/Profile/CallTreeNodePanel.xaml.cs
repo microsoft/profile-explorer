@@ -24,6 +24,7 @@ using VerticalAlignment = System.Windows.VerticalAlignment;
 using ProfileExplorer.Core.Profile.CallTree;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Profile;
 

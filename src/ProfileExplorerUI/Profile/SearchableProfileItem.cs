@@ -10,6 +10,7 @@ using System.Windows.Media;
 using HtmlAgilityPack;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 
