@@ -9,6 +9,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI;
 

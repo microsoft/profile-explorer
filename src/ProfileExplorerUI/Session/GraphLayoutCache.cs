@@ -6,6 +6,7 @@ using System.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

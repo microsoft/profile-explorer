@@ -4,22 +4,27 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
-using ProfileExplorer.Core.LLVM;
-using ProfileExplorer.UI.Binary;
+using ProfileExplorer.Core.Compilers.LLVM;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Diff;
 using ProfileExplorer.UI.Compilers.Default;
-using ProfileExplorer.UI.Diff;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.UI;
 using ProfileExplorer.UI.Query;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI.Compilers.LLVM;
 
-public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
+public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   private LLVMCompilerIRInfo ir_;
-  private ISession session_;
+  private IUISession session_;
   private DefaultNameProvider names_;
   private DefaultRemarkProvider remarks_;
   private DefaultSectionStyleProvider styles_;
 
-  public LLVMCompilerInfoProvider(ISession session) {
+  public LLVMCompilerInfoProvider(IUISession session) {
     session_ = session;
     ir_ = new LLVMCompilerIRInfo();
     styles_ = new DefaultSectionStyleProvider(this);
@@ -33,7 +38,7 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   public string OpenFileFilter =>
     "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.pex|Profile Explorer Session Files|*.pex|All Files|*.*";
   public string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
-  public ISession Session => session_;
+  public IUISession Session => session_;
   public ICompilerIRInfo IR => ir_;
   public INameProvider NameProvider => names_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
@@ -41,6 +46,8 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   public List<QueryDefinition> BuiltinQueries => new();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
+
+  ISession ICompilerInfoProvider.Session => Session;
 
   public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
     return new BasicBlockFoldingStrategy(function);
@@ -97,7 +104,7 @@ public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
+  public Task HandleLoadedDocument(IUILoadedDocument document, string modulePath) {
     return Task.CompletedTask;
   }
 

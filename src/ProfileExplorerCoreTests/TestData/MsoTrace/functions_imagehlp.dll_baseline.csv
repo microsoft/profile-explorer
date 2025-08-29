@@ -1,0 +1,6 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"2224","2224","imagehlp.dll",0.1148,11.1803,0.1148,11.1803
+"2230","2230","imagehlp.dll",0.0900,8.7674,0.0900,8.7674
+"222E","222E","imagehlp.dll",0.0306,2.9803,0.0306,2.9803
+"2206","2206","imagehlp.dll",0.0103,1.0080,0.0103,1.0080
+"220E","220E","imagehlp.dll",0.0102,0.9955,0.0102,0.9955

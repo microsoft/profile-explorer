@@ -8,6 +8,8 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Query;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 
@@ -31,7 +33,7 @@ class UnusedInstructionsTaskOptions : IFunctionTaskOptions {
 
 class UnusedInstructionsFunctionTask {
   public static bool MarkUnusedInstructions(FunctionIR function, IRDocument document, IFunctionTaskOptions options,
-                                            ISession session, CancelableTask cancelableTask) {
+                                            IUISession session, CancelableTask cancelableTask) {
     var taskOptions = options as UnusedInstructionsTaskOptions;
     var unusedInstr = new HashSet<InstructionIR>();
     var walker = new CFGBlockOrdering(function);

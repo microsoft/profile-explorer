@@ -7,8 +7,10 @@ using System.IO.Enumeration;
 using System.Threading.Tasks;
 using System.Windows;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Document;
 
@@ -23,10 +25,10 @@ public class SourceFileFinder {
 
   private SourceFileMapper sourceFileMapper_;
   private List<string> disabledSourceMappings_;
-  private ISession session_;
+  private IUISession session_;
   private bool disableOpenDialog_;
 
-  public SourceFileFinder(ISession session) {
+  public SourceFileFinder(IUISession session) {
     session_ = session;
   }
 

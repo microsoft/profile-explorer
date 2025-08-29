@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ProfileExplorer.UI.Windows;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -20,7 +21,7 @@ public partial class FunctionMarkingOptionsPanel : OptionsPanelBase {
   public override double DefaultHeight => 550;
   public override double DefaultWidth => 400;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (FunctionMarkingSettings)Settings;
     ReloadModuleList();

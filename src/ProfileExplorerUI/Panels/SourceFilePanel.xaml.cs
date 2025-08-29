@@ -10,13 +10,16 @@ using System.Windows.Data;
 using System.Windows.Input;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Binary;
 
 namespace ProfileExplorer.UI;
 
@@ -46,7 +49,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
   public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
   public bool HasInlinees => InlineeComboBox.Items.Count > 0;
 
-  public override ISession Session {
+  public override IUISession Session {
     get => base.Session;
     set {
       base.Session = value;
@@ -313,7 +316,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     sourceFileFinder_.SaveSettings(settings_.FinderSettings);
 
     byte[] data = Session.LoadPanelState(this, section_) as byte[];
-    var state = StateSerializer.Deserialize<ProfileIRDocument.SourceFileState>(data);
+    var state = UIStateSerializer.Deserialize<ProfileIRDocument.SourceFileState>(data);
 
     if (!sourceInfo.IsUnknown && failureReason == SourceFileFinder.FailureReason.None &&
         await ProfileTextView.LoadSourceFile(sourceInfo, section_, profileFilter, null, state)) {

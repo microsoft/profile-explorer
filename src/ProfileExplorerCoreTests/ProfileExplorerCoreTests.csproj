@@ -19,7 +19,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
+	  <ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="TestData\Symbols\MsoTrace\" />
 	</ItemGroup>
 
 </Project>

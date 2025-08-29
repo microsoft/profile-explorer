@@ -8,7 +8,11 @@ using System.Threading.Tasks;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Document.Renderers.Highlighters;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.Diff;
 

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -12,7 +13,7 @@ public partial class CallTreeOptionsPanel : OptionsPanelBase {
   public override double DefaultHeight => 450;
   public override double DefaultWidth => 400;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
   }
 

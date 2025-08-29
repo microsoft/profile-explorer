@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

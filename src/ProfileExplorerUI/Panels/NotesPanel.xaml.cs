@@ -86,7 +86,7 @@ public partial class NotesPanel : ToolPanelControl {
       object data = Session.LoadPanelState(this, section);
 
       if (data != null) {
-        var state = StateSerializer.Deserialize<NotesPanelState>(data, document.Function);
+        var state = UIStateSerializer.Deserialize<NotesPanelState>(data, document.Function);
         await TextView.SwitchText(state.Text, document.Function, section, document);
         showSectionText_ = state.ShowSectionNotes;
         FilterComboBox.SelectedIndex = showSectionText_ ? 1 : 0;
@@ -133,7 +133,7 @@ public partial class NotesPanel : ToolPanelControl {
     var state = new NotesPanelState();
     state.Text = TextView.Text;
     state.ShowSectionNotes = showSectionText_;
-    byte[] data = StateSerializer.Serialize(state, document.Function);
+    byte[] data = UIStateSerializer.Serialize(state, document.Function);
     Session.SavePanelState(data, this, section);
   }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Diagnostics;
+using ProfileExplorer.Core.IR.Tags;
 
 namespace ProfileExplorer.Core.IR;
 

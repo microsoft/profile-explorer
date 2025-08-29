@@ -6,6 +6,9 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -309,7 +312,7 @@ public sealed class FlameGraph {
 
     for (int k = stack.FrameCount - 1; k >= 0; k--) {
       var resolvedFrame = stack.StackFrames[k];
-
+      
       if (resolvedFrame.FrameDetails.Function == null) {
         continue;
       }

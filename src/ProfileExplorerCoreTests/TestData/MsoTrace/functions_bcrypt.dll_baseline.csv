@@ -1,0 +1,6 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"7520","7520","bcrypt.dll",0.0205,2.0000,0.0205,2.0000
+"7DA0","7DA0","bcrypt.dll",0.0134,1.3075,0.0134,1.3075
+"5530","5530","bcrypt.dll",0.0103,0.9992,0.0103,0.9992
+"80F8","80F8","bcrypt.dll",0.0102,0.9978,0.0102,0.9978
+"2586","2586","bcrypt.dll",0.0062,0.6022,0.0062,0.6022

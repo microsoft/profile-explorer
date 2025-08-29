@@ -2,14 +2,16 @@
 // Licensed under the MIT license.
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI.Query.Builtin;
 
 public class OperandSSAInfoQuery : IElementQuery {
-  private ISession session_;
-  public ISession Session => session_;
+  private IUISession session_;
+  public IUISession Session => session_;
 
-  public bool Initialize(ISession session) {
+  public bool Initialize(IUISession session) {
     session_ = session;
     return true;
   }

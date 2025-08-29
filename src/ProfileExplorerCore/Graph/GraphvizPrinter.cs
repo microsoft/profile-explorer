@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Graph;
 

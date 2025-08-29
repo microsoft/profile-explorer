@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

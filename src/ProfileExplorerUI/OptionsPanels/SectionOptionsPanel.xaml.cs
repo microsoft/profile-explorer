@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -12,7 +13,7 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   public override double DefaultHeight => 450;
   public override double DefaultWidth => 400;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
   }
 
@@ -26,17 +27,17 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   }
 
   private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = SectionSettings.DefaultCallStackPopupDuration;
+    ((UISectionSettings)Settings).CallStackPopupDuration = UISectionSettings.DefaultCallStackPopupDuration;
     ReloadSettings();
   }
 
   private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
+    ((UISectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
     ReloadSettings();
   }
 
   private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((SectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
+    ((UISectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
     ReloadSettings();
   }
 }

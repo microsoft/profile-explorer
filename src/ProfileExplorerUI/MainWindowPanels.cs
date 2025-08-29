@@ -17,10 +17,11 @@ using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Settings;
 using ProfileExplorer.UI.Windows;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI;
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, IUISession {
   public void UpdatePanelTitles() {
     RenameAllPanels();
   }

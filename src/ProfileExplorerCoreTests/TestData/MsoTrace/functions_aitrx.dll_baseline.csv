@@ -1,0 +1,10 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"4937F","4937F","aitrx.dll",0.0205,2.0000,0.0205,2.0000
+"B4413","B4413","aitrx.dll",0.0205,2.0000,0.0205,2.0000
+"B42CF","B42CF","aitrx.dll",0.0175,1.7096,0.0175,1.7096
+"B3B6C","B3B6C","aitrx.dll",0.0109,1.0594,0.0109,1.0594
+"B3EF6","B3EF6","aitrx.dll",0.0103,1.0055,0.0103,1.0055
+"21100","21100","aitrx.dll",0.0103,1.0009,0.0103,1.0009
+"B2D01","B2D01","aitrx.dll",0.0102,0.9979,0.0102,0.9979
+"B42CA","B42CA","aitrx.dll",0.0102,0.9939,0.0102,0.9939
+"B35B4","B35B4","aitrx.dll",0.0102,0.9931,0.0102,0.9931

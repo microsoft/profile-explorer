@@ -10,6 +10,8 @@ using System.Windows.Media;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI;
 

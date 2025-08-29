@@ -4,12 +4,15 @@ using System;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;
 
 class CallGraphUtils {
   public static Graph BuildCallGraphLayout(IRTextSummary summary, IRTextSection section,
-                                           LoadedDocument loadedDocument,
+                                           IUILoadedDocument loadedDocument,
                                            ICompilerInfoProvider compilerInfo,
                                            bool buildPartialGraph) {
     var cg = GenerateCallGraph(summary, section, loadedDocument,
@@ -18,7 +21,7 @@ class CallGraphUtils {
   }
 
   public static CallGraph BuildCallGraph(IRTextSummary summary, IRTextSection section,
-                                         LoadedDocument loadedDocument,
+                                         UILoadedDocument loadedDocument,
                                          ICompilerInfoProvider compilerInfo,
                                          bool buildPartialGraph = false) {
     return GenerateCallGraph(summary, section, loadedDocument,
@@ -47,7 +50,7 @@ class CallGraphUtils {
   }
 
   private static CallGraph GenerateCallGraph(IRTextSummary summary, IRTextSection section,
-                                             LoadedDocument loadedDocument,
+                                             IUILoadedDocument loadedDocument,
                                              ICompilerInfoProvider compilerInfo,
                                              bool buildPartialGraph) {
     var cg = new CallGraph(summary, loadedDocument.Loader, compilerInfo.IR);

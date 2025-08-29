@@ -10,6 +10,8 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 

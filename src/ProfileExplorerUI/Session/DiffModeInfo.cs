@@ -7,6 +7,7 @@ using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI;
 

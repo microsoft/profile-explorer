@@ -23,7 +23,7 @@ public class FunctionTaskOptionsSerializer {
         fields[property.Name] = property.GetValue(inputObject);
       }
 
-      return JsonUtils.SerializeToBytes(fields);
+      return UIJsonUtils.SerializeToBytes(fields);
     }
     catch (Exception ex) {
       return null;
@@ -32,7 +32,7 @@ public class FunctionTaskOptionsSerializer {
 
   public static IFunctionTaskOptions Deserialize(byte[] data, Type outputType) {
     try {
-      if (!JsonUtils.DeserializeFromBytes<Dictionary<string, object>>(data, out var state)) {
+      if (!UIJsonUtils.DeserializeFromBytes<Dictionary<string, object>>(data, out var state)) {
         return null;
       }
 

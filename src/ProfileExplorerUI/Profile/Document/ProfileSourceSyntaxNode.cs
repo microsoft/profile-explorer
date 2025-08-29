@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.SourceParser;
 
 namespace ProfileExplorer.UI.Profile.Document;

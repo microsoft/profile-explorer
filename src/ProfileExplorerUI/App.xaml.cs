@@ -11,6 +11,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shell;
 using System.Xml;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Settings;
 
 namespace ProfileExplorer.UI;
 
@@ -78,7 +80,7 @@ public partial class App : Application {
   public static bool IsFirstRun;
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
-  public static ISession Session;
+  public static IUISession Session;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;
   public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
@@ -292,7 +294,7 @@ public partial class App : Application {
 
       string path = GetSettingsFilePath();
       byte[] data = File.ReadAllBytes(path);
-      Settings = StateSerializer.Deserialize<ApplicationSettings>(data);
+      Settings = UIStateSerializer.Deserialize<ApplicationSettings>(data);
 
       // Do some basic sanity checks in case the settings file is incompatible.
       if (Settings.RecentFiles == null) {
@@ -314,7 +316,7 @@ public partial class App : Application {
 
   public static void SaveApplicationSettings() {
     try {
-      byte[] data = StateSerializer.Serialize(Settings);
+      byte[] data = UIStateSerializer.Serialize(Settings);
       CreateSettingsDirectory();
       string path = GetSettingsFilePath();
       File.WriteAllBytes(path, data);
@@ -581,6 +583,12 @@ public partial class App : Application {
     AppStartTime = DateTime.UtcNow;
     base.OnStartup(e);
 
+    // Initialize UI-specific JSON converters
+    UIJsonUtils.Initialize();
+
+    // Register UI-specific type converters for settings system
+    RegisterSettingsTypeConverters();
+
     if (!Debugger.IsAttached) {
       SetupExceptionHandling();
     }
@@ -601,6 +609,9 @@ public partial class App : Application {
       IsFirstRun = true;
     }
 
+    // Configure CoreSettingsProvider to use UI settings instead of defaults
+    CoreSettingsProvider.SetProvider(new UISettingsProvider());
+
     if (Settings.GeneralSettings.DisableHardwareRendering) {
       Trace.WriteLine($"Disable hardware rendering");
       RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
@@ -618,6 +629,11 @@ public partial class App : Application {
       var field = t.GetField("_menuDropAlignment", BindingFlags.NonPublic | BindingFlags.Static);
       field.SetValue(null, false);
     }
+  }
+
+  private void RegisterSettingsTypeConverters() {
+    // Register UI-specific type converters for the settings system
+    ProfileExplorer.Core.Settings.SettingsTypeRegistry.RegisterConverter(new ProfileExplorerUI.Settings.ColorSettingsConverter());
   }
 
   private void SetupJumplist() {

@@ -46,7 +46,7 @@ public interface IToolPanel {
   HandledEventKind HandledEvents { get; }
   bool SavesStateToFile { get; }
   bool IsUnloaded { get; }
-  ISession Session { get; set; }
+  IUISession Session { get; set; }
   IRDocument Document { get; set; }
   IRDocument BoundDocument { get; set; }
   bool IsPanelEnabled { get; set; }

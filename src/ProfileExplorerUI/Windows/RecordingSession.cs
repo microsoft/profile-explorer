@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

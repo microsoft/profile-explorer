@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorer.Core;
+namespace ProfileExplorer.Core.Parser;
 
 public interface IRSectionParser {
   void SkipCurrentToken();

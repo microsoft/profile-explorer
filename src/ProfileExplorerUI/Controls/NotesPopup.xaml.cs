@@ -22,7 +22,7 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
 
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
 
-  public ISession Session {
+  public IUISession Session {
     get => TextView.Session;
     set => TextView.Session = value;
   }
@@ -45,7 +45,7 @@ public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
   }
 
   public async Task SetText(string text, FunctionIR function, IRTextSection section,
-                            IRDocument associatedDocument, ISession session) {
+                            IRDocument associatedDocument, IUISession session) {
     await TextView.SetText(text, function, section, associatedDocument, session);
   }
 

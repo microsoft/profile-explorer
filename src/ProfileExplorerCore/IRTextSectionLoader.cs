@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using CSharpTest.Net.Collections;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
 
 namespace ProfileExplorer.Core;
 

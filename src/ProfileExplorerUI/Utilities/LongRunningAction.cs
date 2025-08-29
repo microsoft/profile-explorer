@@ -48,7 +48,7 @@ public static class LongRunningAction {
   public static async Task<T> Start<T>(Func<Task<T>> task, TimeSpan timeout,
                                        string timeoutStatusText,
                                        FrameworkElement timeoutDisabledControl,
-                                       ISession session) where T : class {
+                                       IUISession session) where T : class {
     return await Start<T>(task, timeout,
                           () => {
                             timeoutDisabledControl.IsEnabled = false;
@@ -63,7 +63,7 @@ public static class LongRunningAction {
   public static async Task Start(Func<Task> task, TimeSpan timeout,
                                  string timeoutStatusText,
                                  FrameworkElement timeoutDisabledControl,
-                                 ISession session) {
+                                 IUISession session) {
     await Start(task, timeout,
                 () => {
                   timeoutDisabledControl.IsEnabled = false;

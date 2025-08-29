@@ -3,7 +3,7 @@
 using System;
 using System.Diagnostics;
 
-namespace ProfileExplorer.Core;
+namespace ProfileExplorer.Core.Utilities;
 
 public struct Optional<T> : IEquatable<Optional<T>> {
   private T value_;

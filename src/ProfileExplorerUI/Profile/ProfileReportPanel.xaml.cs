@@ -2,19 +2,20 @@
 // Licensed under the MIT license.
 using System.Windows;
 using System.Windows.Data;
+using ProfileExplorer.Core.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 
 public partial class ProfileReportPanel : ToolPanelControl {
   private ProfileDataReport report_;
-  private ISession session_;
+  private IUISession session_;
 
-  public ProfileReportPanel(ISession session) {
+  public ProfileReportPanel(IUISession session) {
     InitializeComponent();
     session_ = session;
   }
 
-  public static void ShowReportWindow(ProfileDataReport report, ISession session,
+  public static void ShowReportWindow(ProfileDataReport report, IUISession session,
                                       ProfileDataReport.ModuleStatus selectedModule = null) {
     var panel = new ProfileReportPanel(session);
     panel.TitleSuffix = "Profile report";

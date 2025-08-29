@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Windows.Media;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Query;
 

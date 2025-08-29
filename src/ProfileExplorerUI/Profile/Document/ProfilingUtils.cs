@@ -15,6 +15,10 @@ using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile.Document;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -252,7 +256,7 @@ public static class ProfilingUtils {
   }
 
   public static async Task PopulateMarkedModulesMenu(MenuItem menu, FunctionMarkingSettings settings,
-                                                     ISession session, object triggerObject,
+                                                     IUISession session, object triggerObject,
                                                      Func<Task> changedHandler) {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
@@ -286,7 +290,7 @@ public static class ProfilingUtils {
   }
 
   public static async Task PopulateMarkedFunctionsMenu(MenuItem menu, FunctionMarkingSettings settings,
-                                                       ISession session, object triggerObject,
+                                                       IUISession session, object triggerObject,
                                                        Func<Task> changedHandler) {
     if (IsTopLevelSubmenu(triggerObject)) return;
 
@@ -490,7 +494,7 @@ public static class ProfilingUtils {
                                                    ISession session) {
     var nameProvider = session.CompilerInfo.NameProvider;
 
-    foreach (var loadedDoc in session.SessionState.Documents) {
+    foreach (var loadedDoc in session.Documents) {
       if (loadedDoc.Summary == null) {
         continue;
       }

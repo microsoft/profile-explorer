@@ -14,7 +14,7 @@ using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
-using TextLocation = ProfileExplorer.Core.TextLocation;
+using ProfileExplorer.Core.Utilities;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
@@ -49,7 +49,7 @@ public sealed class LightIRDocument : TextEditor {
   private CancelableTask updateHighlightingTask_;
   private DiffLineHighlighter diffHighlighter_;
   private IRDocumentPopupInstance previewPopup_;
-  private ISession session_;
+  private IUISession session_;
 
   public LightIRDocument() {
     lockObject_ = new object();
@@ -77,7 +77,7 @@ public sealed class LightIRDocument : TextEditor {
     Options.EnableHyperlinks = false;
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => session_;
     set {
       session_ = value;
@@ -436,7 +436,7 @@ public sealed class LightIRDocument : TextEditor {
 
     foreach (var result in searchResults) {
       int line = Document.GetLineByOffset(result.Offset).LineNumber;
-      var location = new TextLocation(result.Offset, line, 0);
+      var location = new ProfileExplorer.Core.TextLocation(result.Offset, line, 0);
       var element = new IRElement(location, result.Length);
       group.Add(element);
     }

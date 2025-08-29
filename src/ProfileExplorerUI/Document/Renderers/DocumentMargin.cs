@@ -141,7 +141,7 @@ public class DocumentMargin : AbstractMargin {
 
   public DocumentMarginState SaveState() {
     var marginState = new DocumentMarginState();
-    marginState.BlockGroups = StateSerializer.SaveElementGroupState(blockGroups_);
+    marginState.BlockGroups = UIStateSerializer.SaveElementGroupState(blockGroups_);
     marginState.BookmarkSegments = bookmarkSegments_.ToList();
     marginState.HoveredBookmark = hoveredBookmark_;
     marginState.SelectedBookmark = selectedBookmark_;
@@ -153,7 +153,7 @@ public class DocumentMargin : AbstractMargin {
       return; // Most likely a file from an older version of the app.
     }
 
-    blockGroups_ = StateSerializer.LoadElementGroupState(state.BlockGroups);
+    blockGroups_ = UIStateSerializer.LoadElementGroupState(state.BlockGroups);
     hoveredBookmark_ = state.HoveredBookmark;
     selectedBookmark_ = state.SelectedBookmark;
     bookmarkSegments_ = new TextSegmentCollection<BookmarkSegment>();

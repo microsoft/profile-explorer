@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ProfileExplorer.Core.IR;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public sealed class SourceLocationTag : ITag {
   public SourceLocationTag() { }

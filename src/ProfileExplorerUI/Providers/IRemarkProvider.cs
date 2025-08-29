@@ -3,6 +3,8 @@
 using System.Collections.Generic;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;
 
@@ -17,7 +19,7 @@ public interface IRRemarkProvider {
   bool LoadSettings();
   List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
 
-  List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document,
+  List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, IUILoadedDocument document,
                                  RemarkProviderOptions options, CancelableTask cancelableTask);
 
   List<Remark> ExtractRemarks(string text, FunctionIR function,

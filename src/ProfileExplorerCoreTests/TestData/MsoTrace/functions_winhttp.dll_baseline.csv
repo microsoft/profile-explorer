@@ -1,0 +1,8 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"10646","10646","winhttp.dll",0.0205,2.0000,0.0205,2.0000
+"2F400","2F400","winhttp.dll",0.0205,2.0000,0.0205,2.0000
+"3FD75","3FD75","winhttp.dll",0.0205,2.0000,0.0205,2.0000
+"4DF51","4DF51","winhttp.dll",0.0110,1.0730,0.0110,1.0730
+"54761","54761","winhttp.dll",0.0102,0.9955,0.0102,0.9955
+"7C5D1","7C5D1","winhttp.dll",0.0102,0.9933,0.0102,0.9933
+"170F4","170F4","winhttp.dll",0.0102,0.9899,0.0102,0.9899

@@ -24,6 +24,11 @@ using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Profile.Document;
 using ProfileExplorer.UI.Query;
 using ProtoBuf;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI;
 
@@ -90,7 +95,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool searchPanelVisible_;
   private SectionSearchResult searchResult_;
   private IRElement selectedBlock_;
-  private ISession session_;
+  private IUISession session_;
   private DocumentSettings settings_;
   private List<Remark> remarkList_;
   private RemarkContext activeRemarkContext_;
@@ -116,7 +121,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private ProfileHistoryManager historyManager_;
   private MenuItem[] viewMenuItems_;
 
-  public IRDocumentHost(ISession session) {
+  public IRDocumentHost(IUISession session) {
     InitializeComponent();
     DataContext = this;
     PassOutput.DataContext = this;
@@ -176,7 +181,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => session_;
     private set => session_ = value;
   }
@@ -464,7 +469,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     double verticalOffset = 0;
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
+      var state = UIStateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
       await TextView.LoadSavedSection(parsedSection, state.DocumentState);
       horizontalOffset = state.HorizontalOffset;
       verticalOffset = state.VerticalOffset;
@@ -1114,7 +1119,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     state.DocumentState = TextView.SaveState();
     state.HorizontalOffset = TextView.HorizontalOffset;
     state.VerticalOffset = TextView.VerticalOffset;
-    byte[] data = StateSerializer.Serialize(state, Function);
+    byte[] data = UIStateSerializer.Serialize(state, Function);
 
     Session.SaveDocumentState(data, section);
     Session.SetSectionAnnotationState(section, state.HasAnnotations);
@@ -2419,9 +2424,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private class DummyQuery : IElementQuery {
-    public ISession Session { get; }
+    public IUISession Session { get; }
 
-    public bool Initialize(ISession session) {
+    public bool Initialize(IUISession session) {
       return true;
     }
 

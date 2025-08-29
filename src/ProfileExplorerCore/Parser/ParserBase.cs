@@ -9,7 +9,7 @@ using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorer.Core;
+namespace ProfileExplorer.Core.Parser;
 
 public class ParserBase {
   protected readonly Lexer.Lexer lexer_ = new();

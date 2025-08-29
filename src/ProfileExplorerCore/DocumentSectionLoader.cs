@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core;
 

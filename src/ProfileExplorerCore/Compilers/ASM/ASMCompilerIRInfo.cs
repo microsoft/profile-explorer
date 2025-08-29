@@ -2,9 +2,11 @@
 // Licensed under the MIT license.
 using System;
 using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
 
-namespace ProfileExplorer.Core.ASM;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
   public ASMCompilerIRInfo(IRMode mode) {

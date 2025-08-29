@@ -6,8 +6,8 @@ using System.ComponentModel;
 namespace ProfileExplorer.UI.Query;
 
 public interface IElementQuery {
-  public ISession Session { get; }
-  public bool Initialize(ISession session);
+  public IUISession Session { get; }
+  public bool Initialize(IUISession session);
   public bool Execute(QueryData data);
 }
 
@@ -48,7 +48,7 @@ public class QueryDefinition : INotifyPropertyChanged {
 
   public event PropertyChangedEventHandler PropertyChanged;
 
-  public bool CreateQueryInstance(ISession session) {
+  public bool CreateQueryInstance(IUISession session) {
     if (queryInstance_ == null) {
       queryInstance_ = (IElementQuery)Activator.CreateInstance(queryType_);
       data_.Instance = queryInstance_;

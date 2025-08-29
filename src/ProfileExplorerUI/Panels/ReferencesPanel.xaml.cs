@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
@@ -539,7 +540,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
 
     InitializeFromDocument(document);
     object data = Session.LoadPanelState(this, section, document);
-    var state = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
+    var state = UIStateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
 
     if (state != null) {
       FindAllReferences(state.Element, !state.IsFindAll);
@@ -562,7 +563,7 @@ public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged 
     state.Element = Element;
     state.HasPinnedContent = HasPinnedContent;
     state.FilterKind = FilterKind;
-    byte[] data = StateSerializer.Serialize(state, document.Function);
+    byte[] data = UIStateSerializer.Serialize(state, document.Function);
     Session.SavePanelState(data, this, section, Document);
 
     ResetReferenceListView();

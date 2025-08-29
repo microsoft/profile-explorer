@@ -3,6 +3,7 @@
 using System;
 using System.Windows;
 using System.Windows.Media;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -326,8 +327,8 @@ public class ProfileDocumentMarkerSettings : SettingsBase {
   }
 
   public ProfileDocumentMarkerSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<ProfileDocumentMarkerSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<ProfileDocumentMarkerSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

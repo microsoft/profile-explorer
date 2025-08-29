@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
 namespace ProfileExplorer.Core.Analysis;
 

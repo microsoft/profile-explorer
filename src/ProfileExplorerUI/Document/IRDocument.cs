@@ -24,13 +24,17 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
-using TextLocation = ProfileExplorer.Core.TextLocation;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.Data;
 
 namespace ProfileExplorer.UI;
 
@@ -215,7 +219,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public List<BlockIR> Blocks => Function.Blocks;
   public BookmarkManager BookmarkManager => bookmarks_;
-  public ISession Session { get; private set; }
+  public IUISession Session { get; private set; }
   public FunctionIR Function { get; set; }
   public IRTextSection Section { get; set; }
   public ReadOnlyMemory<char> SectionText { get; set; }
@@ -260,7 +264,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     return line;
   }
 
-  public void Initialize(TextViewSettingsBase settings, ISession session) {
+  public void Initialize(TextViewSettingsBase settings, IUISession session) {
     Session = session;
     Settings = settings;
   }
@@ -1804,7 +1808,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   private IRElement CreateDummyElement(int offset, int length) {
     int line = Document.GetLineByOffset(offset).LineNumber;
-    var location = new TextLocation(offset, line, 0);
+    var location = new ProfileExplorer.Core.TextLocation(offset, line, 0);
     return new IRElement(location, length);
   }
 
@@ -3001,7 +3005,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     var refFinder = CreateReferenceFinder();
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
+      var state = UIStateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
       var markerState = state.DocumentState.MarkedHighlighter;
 
       if (markerState != null && markerState.Groups != null) {

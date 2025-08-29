@@ -4,7 +4,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Binary;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

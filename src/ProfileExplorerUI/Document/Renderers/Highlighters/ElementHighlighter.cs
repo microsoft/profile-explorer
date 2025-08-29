@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
@@ -138,7 +139,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
   }
 
   public ElementHighlighterState SaveState(FunctionIR function) {
-    return new ElementHighlighterState(StateSerializer.SaveElementGroupState(groups_));
+    return new ElementHighlighterState(UIStateSerializer.SaveElementGroupState(groups_));
   }
 
   public void LoadState(ElementHighlighterState state, FunctionIR function) {
@@ -146,7 +147,7 @@ public sealed class ElementHighlighter : IBackgroundRenderer {
       return; // Most likely a file from an older version of the app.
     }
 
-    groups_ = StateSerializer.LoadElementGroupState(state.Groups);
+    groups_ = UIStateSerializer.LoadElementGroupState(state.Groups);
     Version++;
   }
 

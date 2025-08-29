@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -18,7 +19,7 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
   public override double DefaultHeight => 450;
   public override double DefaultWidth => 400;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (SourceFileSettings)Settings;
     ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;

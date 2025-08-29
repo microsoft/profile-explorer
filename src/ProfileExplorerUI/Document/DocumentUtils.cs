@@ -15,6 +15,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Profile.Document;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI.Document;
 

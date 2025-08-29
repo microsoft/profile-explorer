@@ -10,6 +10,7 @@ using System.Windows;
 using ClosedXML.Excel;
 using HtmlAgilityPack;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
 namespace ProfileExplorer.UI.Document;
 

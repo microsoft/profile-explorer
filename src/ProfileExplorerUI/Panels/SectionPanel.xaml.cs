@@ -29,7 +29,14 @@ using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Panels;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
-using PerformanceCounter = ProfileExplorer.UI.Profile.PerformanceCounter;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Profile.Data;
+using PerformanceCounter = ProfileExplorer.Core.Profile.Data.PerformanceCounter;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Diff;
 
 namespace ProfileExplorer.UI;
 
@@ -462,7 +469,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
   private bool isFunctionListVisible_;
   private bool isSectionListVisible_;
   private bool useProfileCallTree_;
-  private SectionSettings settings_;
+  private UISectionSettings settings_;
   private IRTextSummary summary_;
   private IRTextSummary otherSummary_;
   private List<IRTextSectionEx> sections_;
@@ -1095,7 +1102,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public IRTextFunction CurrentFunction => currentFunction_;
   public bool HasAnnotatedSections => annotatedSections_.Count > 0;
-  public ICompilerInfoProvider CompilerInfo { get; set; }
+  public IUICompilerInfoProvider CompilerInfo { get; set; }
   public override ToolPanelKind PanelKind => ToolPanelKind.Section;
   public override bool SavesStateToFile => true;
 
@@ -1116,7 +1123,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
-  public SectionSettings Settings {
+  public UISectionSettings Settings {
     get => settings_;
     set => settings_ = value;
   }
@@ -2366,7 +2373,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, SectionSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, UISectionSettings>(
       Settings.Clone(), FunctionList, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(Settings)) {
@@ -2382,7 +2389,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     return HandleNewSettings(App.Settings.SectionSettings, false, true);
   }
 
-  private async Task HandleNewSettings(SectionSettings newSettings, bool commit, bool force = false) {
+  private async Task HandleNewSettings(UISectionSettings newSettings, bool commit, bool force = false) {
     if (commit) {
       App.Settings.SectionSettings = newSettings;
       App.SaveApplicationSettings();
@@ -3127,7 +3134,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     object data = Session.LoadPanelState(this, null);
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<SectionPanelState>(data);
+      var state = UIStateSerializer.Deserialize<SectionPanelState>(data);
 
       foreach (int sectionId in state.AnnotatedSections) {
         var section = summary_.GetSectionWithId(sectionId);
@@ -3318,7 +3325,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       ? ((IRTextFunctionEx)FunctionList.SelectedItem).Function.Number
       : 0;
 
-    byte[] data = StateSerializer.Serialize(state);
+    byte[] data = UIStateSerializer.Serialize(state);
     Session.SavePanelState(data, this, null);
   }
 

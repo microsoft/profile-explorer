@@ -1,0 +1,4 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"412F","412F","Wldap32.dll",0.0205,2.0000,0.0205,2.0000
+"C49B","C49B","Wldap32.dll",0.0205,2.0000,0.0205,2.0000
+"1838D","1838D","Wldap32.dll",0.0072,0.7034,0.0072,0.7034

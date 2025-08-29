@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -21,7 +22,7 @@ public partial class RemarkOptionsPanel : OptionsPanelBase {
     kindCheckboxes_.Add(TraceCheckbox);
   }
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
     PopulateCategoryList();
   }

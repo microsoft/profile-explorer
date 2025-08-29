@@ -1,0 +1,4 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"AF31","AF31","sechost.dll",0.0205,2.0000,0.0205,2.0000
+"CDB0","CDB0","sechost.dll",0.0205,2.0000,0.0205,2.0000
+"13EE0","13EE0","sechost.dll",0.0101,0.9804,0.0101,0.9804

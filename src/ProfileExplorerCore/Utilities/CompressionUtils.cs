@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace ProfileExplorer.Core;
+namespace ProfileExplorer.Core.Utilities;
 
 public static class CompressionUtils {
   public static byte[] Compress(byte[] data, CompressionLevel level = CompressionLevel.Fastest) {

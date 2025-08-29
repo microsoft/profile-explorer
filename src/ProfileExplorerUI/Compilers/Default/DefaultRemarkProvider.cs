@@ -9,7 +9,9 @@ using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Utilities;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 
@@ -157,7 +159,7 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
   }
 
   public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function,
-                                        LoadedDocument document, RemarkProviderOptions options,
+                                        IUILoadedDocument document, RemarkProviderOptions options,
                                         CancelableTask cancelableTask) {
     if (!settingsLoaded_) {
       return new List<Remark>(); // Failed to load settings, bail out.

@@ -9,18 +9,20 @@ using System.Windows.Input;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI.Panels;
 
 public partial class DocumentSearchPanel : DraggablePopup {
-  private ISession session_;
-  private LoadedDocument document_;
+  private IUISession session_;
+  private IUILoadedDocument document_;
   private CancelableTask searchTask_;
   private SearchInfo searchInfo_;
   private DocumentSearchInfo data_;
 
   public DocumentSearchPanel(Point position, double width, double height,
-                             UIElement referenceElement, ISession session, LoadedDocument document) {
+                             UIElement referenceElement, IUISession session, IUILoadedDocument document) {
     InitializeComponent();
     Initialize(position, width, height, referenceElement);
     PanelResizeGrip.ResizedControl = this;

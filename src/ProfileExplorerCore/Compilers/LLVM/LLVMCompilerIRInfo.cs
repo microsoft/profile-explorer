@@ -2,9 +2,11 @@
 // Licensed under the MIT license.
 using System;
 using ProfileExplorer.Core.Analysis;
+using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
 
-namespace ProfileExplorer.Core.LLVM;
+namespace ProfileExplorer.Core.Compilers.LLVM;
 
 public class LLVMCompilerIRInfo : ICompilerIRInfo {
   public IRMode Mode { get; set; }

@@ -1,0 +1,2 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"48160","48160","dxgi.dll",0.0102,0.9974,0.0102,0.9974

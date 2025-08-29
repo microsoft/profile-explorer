@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Graph;
 

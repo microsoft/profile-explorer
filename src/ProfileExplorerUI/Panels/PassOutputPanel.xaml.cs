@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.Document;
@@ -171,7 +172,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
 
   public override ToolPanelKind PanelKind => ToolPanelKind.PassOutput;
 
-  public override ISession Session {
+  public override IUISession Session {
     get => TextView.Session;
     set => TextView.Session = value;
   }
@@ -395,7 +396,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     object data = Session.LoadPanelState(this, section, Document);
 
     if (data != null) {
-      var state = StateSerializer.Deserialize<PassOutputPanelState>(data, document.Function);
+      var state = UIStateSerializer.Deserialize<PassOutputPanelState>(data, document.Function);
       await SwitchText(section, document.Function, document);
       ShowAfterOutput = state.ShowAfterOutput;
 
@@ -437,7 +438,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     state.CaretOffset = TextView.TextArea.Caret.Offset;
     state.VerticalOffset = TextView.VerticalOffset;
     state.HorizontalOffset = TextView.HorizontalOffset;
-    byte[] data = StateSerializer.Serialize(state, document.Function);
+    byte[] data = UIStateSerializer.Serialize(state, document.Function);
     Session.SavePanelState(data, this, section, Document);
   }
 

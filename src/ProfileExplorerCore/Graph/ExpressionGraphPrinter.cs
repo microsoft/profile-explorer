@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
 namespace ProfileExplorer.Core.Graph;
 

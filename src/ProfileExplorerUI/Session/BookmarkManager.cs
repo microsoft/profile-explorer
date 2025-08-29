@@ -2,7 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using ProfileExplorer.Core.Controls;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -46,11 +48,11 @@ public class BookmarkManager {
       SelectedIndex = selectedIndex_
     };
 
-    return StateSerializer.Serialize(bookmarkState, function);
+    return UIStateSerializer.Serialize(bookmarkState, function);
   }
 
   public void LoadState(byte[] data, FunctionIR function) {
-    var bookmarkState = StateSerializer.Deserialize<BookmarkManagerState>(data, function);
+    var bookmarkState = UIStateSerializer.Deserialize<BookmarkManagerState>(data, function);
     bookmarks_ = bookmarkState.Bookmarks ?? new List<Bookmark>();
     elementBookmarkMap_ =
       bookmarkState.ElementBookmarkMap?.ToDictionary<IRElementReference, IRElement, Bookmark>() ??

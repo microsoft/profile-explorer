@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Media;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI;
 

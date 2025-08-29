@@ -1,0 +1,8 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"FD30","FD30","xmllite.dll",0.0205,2.0000,0.0205,2.0000
+"DC45","DC45","xmllite.dll",0.0154,1.4975,0.0154,1.4975
+"DADC","DADC","xmllite.dll",0.0138,1.3490,0.0138,1.3490
+"14AE8","14AE8","xmllite.dll",0.0081,0.7934,0.0081,0.7934
+"14D2A","14D2A","xmllite.dll",0.0044,0.4307,0.0044,0.4307
+"10CE4","10CE4","xmllite.dll",0.0035,0.3379,0.0035,0.3379
+"1633A","1633A","xmllite.dll",0.0034,0.3327,0.3295,32.1016

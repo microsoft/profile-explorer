@@ -3,6 +3,7 @@
 using System.Windows;
 using System.Windows.Media;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI.Profile.Document;
 

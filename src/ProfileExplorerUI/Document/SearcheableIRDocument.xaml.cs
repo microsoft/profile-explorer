@@ -49,7 +49,7 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
     }
   }
 
-  public ISession Session {
+  public IUISession Session {
     get => TextView.Session;
     set => TextView.Session = value;
   }
@@ -86,7 +86,7 @@ public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged
   }
 
   public async Task SetText(string text, FunctionIR function, IRTextSection section,
-                            IRDocument associatedDocument, ISession session) {
+                            IRDocument associatedDocument, IUISession session) {
     TextView.Session = session;
     await TextView.SwitchText(text, function, section, associatedDocument);
   }

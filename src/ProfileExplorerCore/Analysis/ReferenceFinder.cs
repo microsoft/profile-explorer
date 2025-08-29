@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 
 //? TODO: Reference finding for symbols withou SSA can use the reachability graph
 //? to trim down the set of potential definitions. Useful in the text viewer for highlighting and goto def.

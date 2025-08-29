@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System.Windows.Media;
 using ProfileExplorer.Core.Graph;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -64,8 +65,8 @@ public class ExpressionGraphSettings : GraphSettings {
   }
 
   public ExpressionGraphSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<ExpressionGraphSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<ExpressionGraphSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

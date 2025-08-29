@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using ProfileExplorer.Core.Lexer;
 
-namespace ProfileExplorer.Core;
+namespace ProfileExplorer.Core.Parser;
 
 public class ParsingErrorHandler : IRParsingErrorHandler {
   public ParsingErrorHandler() {

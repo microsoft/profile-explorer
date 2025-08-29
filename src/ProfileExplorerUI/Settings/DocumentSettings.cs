@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows.Media;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -56,8 +57,8 @@ public class DocumentSettings : TextViewSettingsBase {
   }
 
   public DocumentSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<DocumentSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<DocumentSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

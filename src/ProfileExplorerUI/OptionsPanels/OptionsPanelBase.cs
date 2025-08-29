@@ -6,17 +6,19 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public interface IOptionsPanel {
   SettingsBase Settings { get; set; }
-  ISession Session { get; set; }
+  IUISession Session { get; set; }
   event EventHandler PanelClosed;
   event EventHandler PanelReset;
   event EventHandler SettingsChanged;
   event EventHandler<bool> StayOpenChanged;
-  void Initialize(FrameworkElement parent, SettingsBase settings, ISession session);
+  void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session);
   void PanelClosing();
   void PanelResetting();
   void PanelAfterReset();
@@ -34,7 +36,7 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
   public event EventHandler PanelReset;
   public event EventHandler SettingsChanged;
   public event EventHandler<bool> StayOpenChanged;
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
 
   public SettingsBase Settings {
     get => (SettingsBase)DataContext;
@@ -50,7 +52,7 @@ public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChang
     }
   }
 
-  public virtual void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public virtual void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     Parent = parent;
     Settings = settings;
     Session = session;

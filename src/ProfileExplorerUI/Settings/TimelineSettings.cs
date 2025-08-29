@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 using System.Windows.Media;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -53,8 +55,8 @@ public class TimelineSettings : SettingsBase {
   }
 
   public TimelineSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<TimelineSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<TimelineSettings>(serialized);
   }
 
   public override bool Equals(object obj) {

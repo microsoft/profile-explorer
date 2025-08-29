@@ -1,0 +1,15 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"E3129","E3129","WindowsCodecs.dll",0.0205,2.0000,0.0205,2.0000
+"30E76","30E76","WindowsCodecs.dll",0.0114,1.1112,0.0114,1.1112
+"1A8AC9","1A8AC9","WindowsCodecs.dll",0.0113,1.0974,0.0113,1.0974
+"30E15","30E15","WindowsCodecs.dll",0.0111,1.0831,0.0111,1.0831
+"30DE4","30DE4","WindowsCodecs.dll",0.0111,1.0781,0.0111,1.0781
+"1A8A71","1A8A71","WindowsCodecs.dll",0.0109,1.0656,0.0109,1.0656
+"41A62","41A62","WindowsCodecs.dll",0.0109,1.0621,0.0109,1.0621
+"9F3C3","9F3C3","WindowsCodecs.dll",0.0109,1.0595,0.0109,1.0595
+"3129B","3129B","WindowsCodecs.dll",0.0107,1.0472,0.0107,1.0472
+"311F0","311F0","WindowsCodecs.dll",0.0105,1.0190,0.0105,1.0190
+"A4402","A4402","WindowsCodecs.dll",0.0103,1.0082,0.0103,1.0082
+"1A8D09","1A8D09","WindowsCodecs.dll",0.0102,0.9901,0.0102,0.9901
+"41B83","41B83","WindowsCodecs.dll",0.0092,0.8930,0.0092,0.8930
+"30E79","30E79","WindowsCodecs.dll",0.0068,0.6646,0.0068,0.6646

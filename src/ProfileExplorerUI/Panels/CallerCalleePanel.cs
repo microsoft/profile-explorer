@@ -6,7 +6,7 @@ public class CallerCalleePanel : CallTreePanel {
   public CallerCalleePanel() {
   }
 
-  public CallerCalleePanel(ISession session) {
+  public CallerCalleePanel(IUISession session) {
     Session = session;
   }
 

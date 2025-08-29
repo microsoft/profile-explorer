@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Controls;
 
 namespace ProfileExplorer.UI.Document;
@@ -311,7 +312,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
   public FunctionIR Function { get; set; }
   public IRTextSection Section { get; set; }
 
-  public ISession Session {
+  public IUISession Session {
     get => RemarkTextView.Session;
     set => RemarkTextView.Session = value;
   }

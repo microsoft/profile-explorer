@@ -9,6 +9,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using ProfileExplorer.UI.Controls;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -30,7 +32,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
 
   public CallTreeNodePopup(ProfileCallTreeNode node, IFunctionProfileInfoProvider funcInfoProvider,
                            Point position, UIElement referenceElement,
-                           ISession session, bool canExpand = true) {
+                           IUISession session, bool canExpand = true) {
     InitializeComponent();
     Initialize(position, referenceElement);
     PanelResizeGrip.ResizedControl = this;
@@ -51,7 +53,7 @@ public partial class CallTreeNodePopup : DraggablePopup, INotifyPropertyChanged 
   }
 
   public double WindowScaling => App.Settings.GeneralSettings.WindowScaling;
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
 
   public ProfileCallTreeNodeEx CallTreeNode {
     get => nodeEx_;

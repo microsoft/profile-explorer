@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO.Enumeration;
 using System.Text.RegularExpressions;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

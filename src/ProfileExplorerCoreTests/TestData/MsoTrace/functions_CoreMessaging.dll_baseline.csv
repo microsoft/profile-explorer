@@ -1,0 +1,6 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"62608","62608","CoreMessaging.dll",0.0205,2.0000,0.0205,2.0000
+"6E100","6E100","CoreMessaging.dll",0.0205,2.0000,0.0205,2.0000
+"9F7D","9F7D","CoreMessaging.dll",0.0205,2.0000,0.0205,2.0000
+"1E340","1E340","CoreMessaging.dll",0.0104,1.0134,0.0104,1.0134
+"1E3FB","1E3FB","CoreMessaging.dll",0.0101,0.9845,0.0101,0.9845

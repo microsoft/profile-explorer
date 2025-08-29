@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 using System.Windows.Media;
 using ProfileExplorer.UI.Profile;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -87,8 +89,8 @@ public class FlameGraphSettings : SettingsBase {
   }
 
   public FlameGraphSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<FlameGraphSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<FlameGraphSettings>(serialized);
   }
 
   public void ResedCachedPalettes() {

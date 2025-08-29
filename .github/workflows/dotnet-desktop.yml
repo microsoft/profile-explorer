@@ -76,6 +76,12 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
 
+    # Execute unit tests for Core and UI projects
+    - name: Execute unit tests
+      run: |
+        dotnet test src\ProfileExplorerCoreTests\ProfileExplorerCoreTests.csproj
+        dotnet test src\ProfileExplorerUITests\ProfileExplorerUITests.csproj
+
     # Build the solution
     - name: Build debug
       run: dotnet publish -c "Debug"  src\ProfileExplorerUI\ProfileExplorerUI.csproj

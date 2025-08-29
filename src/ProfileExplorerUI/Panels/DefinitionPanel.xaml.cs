@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
+using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
 

@@ -1,0 +1,12 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"BCBE","BCBE","Windows.Security.Authentication.Web.Core.dll",0.0312,3.0407,0.0312,3.0407
+"4697E","4697E","Windows.Security.Authentication.Web.Core.dll",0.0205,2.0000,0.0205,2.0000
+"6AC5E","6AC5E","Windows.Security.Authentication.Web.Core.dll",0.0205,2.0000,0.0205,2.0000
+"E5010","E5010","Windows.Security.Authentication.Web.Core.dll",0.0205,2.0000,0.0205,2.0000
+"1B2DF","1B2DF","Windows.Security.Authentication.Web.Core.dll",0.0169,1.6437,2.4374,237.4791
+"15CB5","15CB5","Windows.Security.Authentication.Web.Core.dll",0.0129,1.2522,0.0129,1.2522
+"19EB0","19EB0","Windows.Security.Authentication.Web.Core.dll",0.0116,1.1320,0.0116,1.1320
+"41218","41218","Windows.Security.Authentication.Web.Core.dll",0.0107,1.0453,0.0107,1.0453
+"2B976","2B976","Windows.Security.Authentication.Web.Core.dll",0.0102,0.9933,0.0102,0.9933
+"A1A10","A1A10","Windows.Security.Authentication.Web.Core.dll",0.0099,0.9685,0.0099,0.9685
+"2BC75","2BC75","Windows.Security.Authentication.Web.Core.dll",0.0017,0.1663,0.0017,0.1663

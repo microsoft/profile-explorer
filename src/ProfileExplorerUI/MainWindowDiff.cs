@@ -10,10 +10,16 @@ using DiffPlex.DiffBuilder.Model;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Diff;
 using ProfileExplorer.UI.OptionsPanels;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Diff;
+using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI;
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, IUISession {
   private OptionsPanelHostPopup diffOptionsPanelHost_;
   private DateTime documentLoadStartTime_;
   private bool documentLoadProgressVisible_;
@@ -54,7 +60,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private async Task<(LoadedDocument, LoadedDocument)>
+  private async Task<(IUILoadedDocument, IUILoadedDocument)>
     OpenBaseDiffDocuments(string baseFilePath, string diffFilePath) {
     var (baseDoc, diffDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
@@ -88,10 +94,10 @@ public partial class MainWindow : Window, ISession {
     await SwapDiffedDocuments();
   }
 
-  private async Task<(LoadedDocument, LoadedDocument)>
+  private async Task<(IUILoadedDocument, IUILoadedDocument)>
     OpenBaseDiffIRDocumentsImpl(string baseFilePath, string diffFilePath) {
-    LoadedDocument baseResult = null;
-    LoadedDocument diffResult = null;
+    IUILoadedDocument baseResult = null;
+    IUILoadedDocument diffResult = null;
 
     try {
       await EndSession();
@@ -117,7 +123,7 @@ public partial class MainWindow : Window, ISession {
     return (baseResult, diffResult);
   }
 
-  private async Task<(LoadedDocument, LoadedDocument)>
+  private async Task<(IUILoadedDocument, IUILoadedDocument)>
     LoadBinaryBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath,
                                   string diffModuleName) {
     await SwitchBinaryCompilerTarget(baseFilePath);
@@ -141,7 +147,7 @@ public partial class MainWindow : Window, ISession {
     return (null, null);
   }
 
-  private async Task<(LoadedDocument, LoadedDocument)>
+  private async Task<(IUILoadedDocument, IUILoadedDocument)>
     LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
     var baseTask =
       Task.Run(() => LoadDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
@@ -162,7 +168,7 @@ public partial class MainWindow : Window, ISession {
     return (null, null);
   }
 
-  private async Task<(LoadedDocument, LoadedDocument)>
+  private async Task<(IUILoadedDocument, IUILoadedDocument)>
     OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
     //? HACK: Set the module name of both docs to be the same,
     //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
@@ -725,7 +731,7 @@ public partial class MainWindow : Window, ISession {
 
   private async Task<(string, IRTextSection)>
     SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
-                                  LoadedDocument otherDocument) {
+                                  IUILoadedDocument otherDocument) {
     if (sessionState_.DiffDocument != null) {
       // When two documents are compared, try to pick
       // the other section from that other document.
@@ -746,7 +752,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private IRTextSection FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
+  private IRTextSection FindDiffDocumentSection(IRTextSection section, IUILoadedDocument diffDoc) {
     return SectionPanel.FindDiffDocumentSection(section);
   }
 
@@ -829,14 +835,14 @@ public partial class MainWindow : Window, ISession {
     diffOptionsPanelHost_.PanelReset -= DiffOptionsPanel_PanelReset;
     diffOptionsPanelHost_.SettingsChanged -= DiffOptionsPanel_SettingsChanged;
 
-    var newSettings = (DiffSettings)diffOptionsPanelHost_.Settings;
+    var newSettings = (UIDiffSettings)diffOptionsPanelHost_.Settings;
     await HandleNewDiffSettings(newSettings, true);
 
     diffOptionsPanelHost_ = null;
     diffOptionsVisible_ = false;
   }
 
-  private async Task HandleNewDiffSettings(DiffSettings newSettings, bool commit, bool force = false) {
+  private async Task HandleNewDiffSettings(UIDiffSettings newSettings, bool commit, bool force = false) {
     if (force || !newSettings.Equals(App.Settings.DiffSettings)) {
       bool hasHandlingChanges = App.Settings.DiffSettings.HasDiffHandlingChanges(newSettings);
       App.Settings.DiffSettings = newSettings;
@@ -849,13 +855,13 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void DiffOptionsPanel_PanelReset(object sender, EventArgs e) {
-    var newSettings = new DiffSettings();
+    var newSettings = new UIDiffSettings();
     diffOptionsPanelHost_.Settings = newSettings;
     await HandleNewDiffSettings(newSettings, true);
   }
 
   private async void DiffOptionsPanel_SettingsChanged(object sender, EventArgs e) {
-    var newSettings = (DiffSettings)diffOptionsPanelHost_.Settings;
+    var newSettings = (UIDiffSettings)diffOptionsPanelHost_.Settings;
 
     if (newSettings != null) {
       await HandleNewDiffSettings(newSettings, false);

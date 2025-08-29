@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows.Media;
+using ProfileExplorer.Core.Settings;
 using ProtoBuf;
 
 namespace ProfileExplorer.UI;
@@ -59,8 +60,8 @@ public class CallTreeNodeSettings : SettingsBase {
   }
 
   public CallTreeNodeSettings Clone() {
-    byte[] serialized = StateSerializer.Serialize(this);
-    return StateSerializer.Deserialize<CallTreeNodeSettings>(serialized);
+    byte[] serialized = UIStateSerializer.Serialize(this);
+    return UIStateSerializer.Deserialize<CallTreeNodeSettings>(serialized);
   }
 
   [ProtoAfterDeserialization]

@@ -17,9 +17,14 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.SourceParser;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Document;
 using ProtoBuf;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.IR.Tags;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.CallTree;
 
 namespace ProfileExplorer.UI.Profile.Document;
 
@@ -71,7 +76,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
     };
   }
 
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
   public IRTextSection Section => TextView.Section;
 
   public ProfileSampleFilter ProfileFilter {
@@ -1174,7 +1179,7 @@ public partial class ProfileIRDocument : UserControl, INotifyPropertyChanged {
       VerticalOffset = TextView.VerticalOffset,
       AssemblyFoldingStates = SaveFoldingsState()
     };
-    byte[] data = StateSerializer.Serialize(state);
+    byte[] data = UIStateSerializer.Serialize(state);
     Session.SavePanelState(data, panel, Section);
   }
 

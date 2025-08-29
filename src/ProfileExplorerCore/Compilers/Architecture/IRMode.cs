@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-namespace ProfileExplorer.Core;
+namespace ProfileExplorer.Core.Compilers.Architecture;
 
 public enum IRMode {
   Default,

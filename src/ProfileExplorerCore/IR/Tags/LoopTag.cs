@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using ProfileExplorer.Core.Analysis;
 
-namespace ProfileExplorer.Core.IR;
+namespace ProfileExplorer.Core.IR.Tags;
 
 public sealed class LoopBlockTag : ITag {
   public LoopBlockTag(Loop parentLoop, int nestingLevel = 0) {

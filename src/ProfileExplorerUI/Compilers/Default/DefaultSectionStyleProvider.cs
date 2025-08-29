@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

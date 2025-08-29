@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System.Windows;
 using Microsoft.Win32;
+using ProfileExplorer.Core.Diff;
 using ProfileExplorer.UI.Diff;
 
 namespace ProfileExplorer.UI.OptionsPanels;

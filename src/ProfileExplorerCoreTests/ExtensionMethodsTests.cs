@@ -3,7 +3,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorerCoreTests;
+namespace ProfileExplorer.CoreTests;
 
 [TestClass]
 public class ExtensionMethodsTests {

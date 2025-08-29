@@ -8,6 +8,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:optionsPanels="clr-namespace:ProfileExplorer.UI.OptionsPanels"
   xmlns:profile="clr-namespace:ProfileExplorer.UI.Profile"
+  xmlns:profileData="clr-namespace:ProfileExplorer.Core.Profile.Data;assembly=ProfileExplorerCore"
   xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
   Title="Load profile trace"
   Width="900"
@@ -157,7 +158,7 @@
                   x:Name="StartAppRadioButton"
                   Margin="8,6,8,0"
                   Content="Start application"
-                  IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
+                  IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profileData:ProfileSessionKind.StartProcess}}"
                   IsEnabled="{Binding InputControlsEnabled}"
                   ToolTip="Start a new process and record only its profile" />
                 <RadioButton
@@ -165,7 +166,7 @@
                   Margin="8,6,8,0"
                   Click="AttachRadioButton_Click"
                   Content="Attach to process"
-                  IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.AttachToProcess}}"
+                  IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profileData:ProfileSessionKind.AttachToProcess}}"
                   IsEnabled="{Binding InputControlsEnabled}"
                   ToolTip="Attach and profile an already running process" />
                 <RadioButton
@@ -173,7 +174,7 @@
                   Margin="8,4,8,0"
                   Click="SystemWideRadioButton_Click"
                   Content="System-wide"
-                  IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
+                  IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profileData:ProfileSessionKind.SystemWide}}"
                   IsEnabled="{Binding InputControlsEnabled}"
                   ToolTip="Profiles all applications running on the current machine" />
                 <Separator

@@ -50,7 +50,7 @@ public class FunctionTaskDefinition {
            taskInfo_.TargetCompilerIR == compilerIR;
   }
 
-  public IFunctionTask CreateInstance(ISession session) {
+  public IFunctionTask CreateInstance(IUISession session) {
     var actionInstance = (IFunctionTask)Activator.CreateInstance(taskType_);
 
     if (!actionInstance.Initialize(session, taskInfo_, optionalData_)) {

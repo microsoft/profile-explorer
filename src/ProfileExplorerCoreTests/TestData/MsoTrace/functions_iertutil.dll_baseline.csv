@@ -1,0 +1,7 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"342FD","342FD","iertutil.dll",0.0205,2.0000,0.0205,2.0000
+"A615","A615","iertutil.dll",0.0205,2.0000,0.0205,2.0000
+"246A9","246A9","iertutil.dll",0.0203,1.9827,0.0203,1.9827
+"1DA84","1DA84","iertutil.dll",0.0149,1.4523,0.0149,1.4523
+"3F16D","3F16D","iertutil.dll",0.0103,1.0035,0.0103,1.0035
+"793F","793F","iertutil.dll",0.0101,0.9858,0.0101,0.9858

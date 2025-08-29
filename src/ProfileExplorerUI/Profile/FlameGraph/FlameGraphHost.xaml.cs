@@ -13,6 +13,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Controls;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Data;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -55,7 +58,7 @@ public partial class FlameGraphHost : UserControl, IFunctionProfileInfoProvider,
     ShowNodePanel = true;
   }
 
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
   public FlameGraph FlameGraph => GraphViewer.FlameGraph;
   public List<FlameGraphNode> SelectedNodes => GraphViewer.SelectedNodes;
   public bool UseAnimations => App.Settings.GeneralSettings.UseAnimations;

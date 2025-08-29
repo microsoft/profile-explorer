@@ -6,7 +6,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.Collections;
 
-namespace ProfileExplorerCoreTests;
+namespace ProfileExplorer.CoreTests;
 
 public struct TestObject {
   public int a, b, c, d;

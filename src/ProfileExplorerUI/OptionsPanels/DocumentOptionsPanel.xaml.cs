@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Xml;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -27,7 +28,7 @@ public partial class DocumentOptionsPanel : OptionsPanelBase {
   public override double DefaultHeight => 470;
   public bool SyntaxFileChanged { get; set; }
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, ISession session) {
+  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     base.Initialize(parent, settings, session);
     settings_ = (DocumentSettings)Settings;
     ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;

@@ -1,0 +1,11 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"9BB16","9BB16","wininet.dll",0.0314,3.0549,0.0314,3.0549
+"1CC5FB","1CC5FB","wininet.dll",0.0307,2.9944,0.0307,2.9944
+"3B1F8","3B1F8","wininet.dll",0.0300,2.9262,0.0300,2.9262
+"613B7","613B7","wininet.dll",0.0205,2.0000,0.0205,2.0000
+"66500","66500","wininet.dll",0.0205,2.0000,0.0205,2.0000
+"9F26C","9F26C","wininet.dll",0.0205,2.0000,0.0205,2.0000
+"A0E59","A0E59","wininet.dll",0.0205,2.0000,0.0205,2.0000
+"736DC","736DC","wininet.dll",0.0103,1.0036,0.0103,1.0036
+"AA950","AA950","wininet.dll",0.0103,1.0018,0.0103,1.0018
+"4B72C","4B72C","wininet.dll",0.0101,0.9889,0.0101,0.9889

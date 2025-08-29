@@ -1,0 +1,4 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"86DB","86DB","Windows.StateRepositoryCore.dll",0.0102,0.9952,0.0102,0.9952
+"74BF","74BF","Windows.StateRepositoryCore.dll",0.0102,0.9906,0.0102,0.9906
+"CED0","CED0","Windows.StateRepositoryCore.dll",0.0051,0.4997,0.0051,0.4997

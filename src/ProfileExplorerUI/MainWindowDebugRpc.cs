@@ -13,10 +13,12 @@ using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.UI.DebugServer;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI;
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, IUISession {
   private DebugServer.DebugService debugService_;
   private Dictionary<ElementIteratorId, IRElement> debugCurrentIteratorElement_;
   private StackFrame debugCurrentStackFrame_;
@@ -471,7 +473,7 @@ public partial class MainWindow : Window, ISession {
         await EndSession();
 
         FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
-        var result = new LoadedDocument("Debug session", "", Guid.NewGuid());
+        var result = new UILoadedDocument("Debug session", "", Guid.NewGuid());
         debugSections_ = new DebugSectionLoader(compilerInfo_.IR);
         debugSummary_ = debugSections_.LoadDocument(null);
         result.Loader = debugSections_;

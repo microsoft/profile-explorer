@@ -18,18 +18,26 @@ using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.IR.Tags;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorerUI.Session;
+using System.Linq;
+using ProfileExplorer.Core.Compilers.ASM;
 
 namespace ProfileExplorer.UI;
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, IUISession {
   private SemaphoreSlim SessionLoadCompleted = new(1);
   public bool SilentMode { get; set; }
-  public ICompilerInfoProvider CompilerInfo => compilerInfo_;
+  public IUICompilerInfoProvider CompilerInfo => compilerInfo_;
   public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
   public bool IsInDiffMode => sessionState_.SectionDiffState.IsEnabled;
   public bool IsInTwoDocumentsDiffMode => sessionState_.IsInTwoDocumentsDiffMode;
@@ -58,11 +66,15 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
+  ICompilerInfoProvider ISession.CompilerInfo => CompilerInfo;
+
+  public IReadOnlyList<ILoadedDocument> Documents => sessionState_.Documents;
+
   public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) {
     return sessionState_.FindFunctionWithId(funcNumber, summaryId);
   }
 
-  public async Task<LoadedDocument> OpenSessionDocument(string filePath) {
+  public async Task<IUILoadedDocument> OpenSessionDocument(string filePath) {
     try {
       await EndSession();
       UpdateUIBeforeReadSession(filePath);
@@ -107,7 +119,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind,
-                                          ICompilerInfoProvider compilerInfo) {
+                                          IUICompilerInfoProvider compilerInfo) {
     await Dispatcher.InvokeAsync(async () => {
       UpdateUIBeforeLoadDocument("profile");
       await SwitchCompilerTarget(compilerInfo);
@@ -119,8 +131,8 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<bool> SetupNewSession(LoadedDocument mainDocument,
-                                          List<LoadedDocument> otherDocuments,
+  public async Task<bool> SetupNewSession(IUILoadedDocument mainDocument,
+                                          List<IUILoadedDocument> otherDocuments,
                                           ProfileData profileData) {
     await Dispatcher.InvokeAsync(async () => {
       sessionState_.MainDocument = mainDocument;
@@ -141,8 +153,8 @@ public partial class MainWindow : Window, ISession {
     return true;
   }
 
-  public async Task<LoadedDocument>
-    LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
+  public async Task<IUILoadedDocument>
+    LoadProfileBinaryDocument(string filePath, string modulePath, ProfileExplorer.Core.Binary.IDebugInfoProvider debugInfo) {
     return await Task.Run(async () => {
         var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
         var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
@@ -491,8 +503,8 @@ public partial class MainWindow : Window, ISession {
     SetApplicationProgress(false, double.NaN);
   }
 
-  private async Task<LoadedDocument> OpenDocument(string filePath) {
-    LoadedDocument loadedDoc = null;
+  private async Task<IUILoadedDocument> OpenDocument(string filePath) {
+    IUILoadedDocument loadedDoc = null;
     bool failed = false;
     bool isProfilingFile = false;
 
@@ -568,7 +580,7 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
+  private async Task<IUILoadedDocument> OpenBinaryDocument(string filePath) {
     await SwitchBinaryCompilerTarget(filePath);
     var result = await OpenIRDocument(filePath, filePath, LoadBinaryDocument);
 
@@ -611,8 +623,8 @@ public partial class MainWindow : Window, ISession {
                                         });
   }
 
-  private async Task<LoadedDocument>
-    InitializeFromLoadedSession(SessionState state, Dictionary<Guid, LoadedDocument> idToDocumentMap) {
+  private async Task<IUILoadedDocument>
+    InitializeFromLoadedSession(SessionState state, Dictionary<Guid, IUILoadedDocument> idToDocumentMap) {
     sessionState_.Info.Notes = state.Info.Notes;
     int index = 0;
 
@@ -752,9 +764,9 @@ public partial class MainWindow : Window, ISession {
     docHostInfo.HostParent.Children.Remove(docHostInfo.Host);
   }
 
-  private async Task<LoadedDocument> OpenIRDocument(string filePath, string modulePath,
+  private async Task<IUILoadedDocument> OpenIRDocument(string filePath, string modulePath,
                                                     Func<string, string, Guid, ProgressInfoHandler,
-                                                      Task<LoadedDocument>> loadFunc) {
+                                                      Task<IUILoadedDocument>> loadFunc) {
     try {
       await EndSession();
       await BeginSessionStateChange();
@@ -852,7 +864,7 @@ public partial class MainWindow : Window, ISession {
     }), DispatcherPriority.Render);
   }
 
-  private async Task SetupOpenedIRDocument(SessionKind sessionKind, LoadedDocument result) {
+  private async Task SetupOpenedIRDocument(SessionKind sessionKind, IUILoadedDocument result) {
     StartSession(result.FilePath, sessionKind);
     sessionState_.RegisterLoadedDocument(result);
     sessionState_.MainDocument = result;
@@ -880,25 +892,25 @@ public partial class MainWindow : Window, ISession {
     return false;
   }
 
-  private async Task SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
+  private async Task SetupOpenedDiffIRDocument(string diffFilePath, IUILoadedDocument result) {
     sessionState_.RegisterLoadedDocument(result);
     sessionState_.EnterTwoDocumentDiffMode(result);
     await SetupPanels();
     //await ShowSectionPanelDiffs(result);
   }
 
-  private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
+  private async Task<IUILoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
                                                   ProgressInfoHandler progressHandler) {
     return await LoadDocument(filePath, modulePath, id, progressHandler,
                               new DocumentSectionLoader(filePath, compilerInfo_.IR));
   }
 
-  private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
+  private async Task<IUILoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                         ProgressInfoHandler progressHandler) {
     return await LoadBinaryDocument(filePath, modulePath, id, null, progressHandler).ConfigureAwait(false);
   }
 
-  private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
+  private async Task<IUILoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                         IDebugInfoProvider debugInfo,
                                                         ProgressInfoHandler progressHandler) {
     var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
@@ -916,12 +928,12 @@ public partial class MainWindow : Window, ISession {
     return result;
   }
 
-  private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
+  private async Task<IUILoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
                                                   ProgressInfoHandler progressHandler,
                                                   IRTextSectionLoader loader) {
     try {
       var result = await Task.Run(() => {
-        var result = new LoadedDocument(filePath, modulePath, id);
+        var result = new UILoadedDocument(filePath, modulePath, id);
         result.Loader = loader;
         result.Summary = result.Loader.LoadDocument(progressHandler);
         return result;
@@ -936,10 +948,10 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private LoadedDocument LoadDocument(byte[] data, string filePath, string modulePath, Guid id,
+  private UILoadedDocument LoadDocument(byte[] data, string filePath, string modulePath, Guid id,
                                       ProgressInfoHandler progressHandler) {
     try {
-      var result = new LoadedDocument(filePath, modulePath, id);
+      var result = new UILoadedDocument(filePath, modulePath, id);
       result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
       result.Summary = result.Loader.LoadDocument(progressHandler);
       return result;
@@ -950,17 +962,17 @@ public partial class MainWindow : Window, ISession {
     }
   }
 
-  private async Task<LoadedDocument> LoadSessionDocument(SessionState state) {
+  private async Task<IUILoadedDocument> LoadSessionDocument(SessionState state) {
     try {
       if (!string.IsNullOrEmpty(state.Info.IRName)) {
         await SwitchCompilerTarget(state.Info.IRName, state.Info.IRMode);
       }
 
       StartSession(state.Info.FilePath, SessionKind.FileSession);
-      var idToDocumentMap = new Dictionary<Guid, LoadedDocument>();
+      var idToDocumentMap = new Dictionary<Guid, IUILoadedDocument>();
 
       foreach (var docState in state.Documents) {
-        LoadedDocument result = null;
+        IUILoadedDocument result = null;
 
         if (docState.DocumentText != null && docState.DocumentText.Length > 0) {
           result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath,
@@ -974,7 +986,7 @@ public partial class MainWindow : Window, ISession {
         }
         else if (!string.IsNullOrEmpty(docState.ModuleName)) {
           // Fake document used by profiling to represent missing binaries.
-          result = LoadedDocument.CreateDummyDocument(docState.ModuleName, docState.Id);
+          result = UILoadedDocument.CreateDummyDocument(docState.ModuleName, docState.Id);
         }
 
         if (result == null) {
@@ -1596,7 +1608,7 @@ public partial class MainWindow : Window, ISession {
   }
 
   private async void DocumentState_DocumentChangedEvent(object sender, EventArgs e) {
-    var loadedDoc = (LoadedDocument)sender;
+    var loadedDoc = (UILoadedDocument)sender;
     var eventTime = DateTime.UtcNow;
 
     // Queue for later, when the application gets focus back.
@@ -1763,5 +1775,42 @@ public partial class MainWindow : Window, ISession {
   private void CanExecuteDocumentCommand(object sender, CanExecuteRoutedEventArgs e) {
     e.CanExecute = IsSessionStarted;
     e.Handled = true;
+  }
+
+  public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
+    return sessionState_.FindLoadedDocument(func);
+  }
+
+  public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
+    return new UI.Compilers.ASM.ASMUICompilerInfoProvider(mode, this);
+  }
+
+  public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
+    return new UILoadedDocument(filePath, modulePath, id);
+  }
+
+  public ILoadedDocument CreateDummyDocument(string name) {
+    return UILoadedDocument.CreateDummyDocument(name);
+  }
+
+  public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
+    if (compilerInfo is IUICompilerInfoProvider uICompilerInfo) {
+      return await StartNewSession(sessionName, sessionKind, uICompilerInfo);
+    }
+
+    return false;
+  }
+
+  public async Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData) {
+    if (mainDocument is IUILoadedDocument uIMainDocument &&
+        otherDocuments.All(doc => doc is IUILoadedDocument uIDoc)) {
+      return await SetupNewSession(uIMainDocument, otherDocuments.Cast<IUILoadedDocument>().ToList(), profileData);
+    }
+
+    return false;
+  }
+
+  async Task<ILoadedDocument> ISession.LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
+    return await LoadProfileBinaryDocument(filePath, modulePath, debugInfo);
   }
 }

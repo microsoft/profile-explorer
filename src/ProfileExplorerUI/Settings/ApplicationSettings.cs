@@ -12,6 +12,9 @@ using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Query;
 using ProfileExplorer.UI.Settings;
 using ProtoBuf;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI;
 
@@ -40,9 +43,9 @@ public class ApplicationSettings {
   [ProtoMember(9)]
   public RemarkSettings RemarkSettings { get; set; }
   [ProtoMember(10)]
-  public DiffSettings DiffSettings { get; set; }
+  public UIDiffSettings DiffSettings { get; set; }
   [ProtoMember(11)]
-  public SectionSettings SectionSettings { get; set; }
+  public UISectionSettings SectionSettings { get; set; }
   [ProtoMember(12)]
   public List<string> RecentTextSearches { get; set; }
   [ProtoMember(13)]
@@ -231,8 +234,8 @@ public class ApplicationSettings {
     FlowGraphSettings ??= new FlowGraphSettings();
     ExpressionGraphSettings ??= new ExpressionGraphSettings();
     RemarkSettings ??= new RemarkSettings();
-    DiffSettings ??= new DiffSettings();
-    SectionSettings ??= new SectionSettings();
+    DiffSettings ??= new UIDiffSettings();
+    SectionSettings ??= new UISectionSettings();
     FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
     ProfileOptions ??= new ProfileDataProviderOptions();
     SymbolSettings ??= new SymbolFileSourceSettings();

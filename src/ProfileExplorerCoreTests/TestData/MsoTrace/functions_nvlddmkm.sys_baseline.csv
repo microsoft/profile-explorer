@@ -1,0 +1,11 @@
+Name,Address,Module,SelfTimePercentage,SelfTimeMs,TotalTimePercentage,TotalTimeMs
+"10FB29","10FB29","nvlddmkm.sys",0.0433,4.2205,0.0433,4.2205
+"127ECD","127ECD","nvlddmkm.sys",0.0205,2.0000,0.0205,2.0000
+"84752","84752","nvlddmkm.sys",0.0205,2.0000,0.0205,2.0000
+"BBE8A4","BBE8A4","nvlddmkm.sys",0.0205,2.0000,0.0205,2.0000
+"120F16","120F16","nvlddmkm.sys",0.0125,1.2221,0.0125,1.2221
+"130228","130228","nvlddmkm.sys",0.0103,1.0051,0.0103,1.0051
+"4F0EA4","4F0EA4","nvlddmkm.sys",0.0100,0.9771,0.0100,0.9771
+"1275DE","1275DE","nvlddmkm.sys",0.0099,0.9673,0.0099,0.9673
+"59B7DD","59B7DD","nvlddmkm.sys",0.0063,0.6139,0.0063,0.6139
+"137490","137490","nvlddmkm.sys",0.0014,0.1384,0.0014,0.1384

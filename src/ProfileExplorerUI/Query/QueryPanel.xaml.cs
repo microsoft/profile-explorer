@@ -80,7 +80,7 @@ public partial class QueryPanel : DraggablePopup, INotifyPropertyChanged {
   private bool isActivePanel_;
 
   public QueryPanel(Point position, double width, double height,
-                    UIElement referenceElement, ISession session) {
+                    UIElement referenceElement, IUISession session) {
     InitializeComponent();
     Initialize(position, width, height, referenceElement);
     PanelResizeGrip.ResizedControl = this;
@@ -105,7 +105,7 @@ public partial class QueryPanel : DraggablePopup, INotifyPropertyChanged {
     DataContext = this;
   }
 
-  public ISession Session { get; set; }
+  public IUISession Session { get; set; }
 
   public string PanelTitle {
     get => panelTitle_;

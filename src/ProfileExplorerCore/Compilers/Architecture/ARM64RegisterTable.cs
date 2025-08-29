@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-namespace ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR;
+
+namespace ProfileExplorer.Core.Compilers.Architecture;
 
 public enum ARM64Register {
 }

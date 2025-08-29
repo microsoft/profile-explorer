@@ -7,14 +7,15 @@ using AvalonDock.Layout;
 using ProfileExplorer.Core;
 using ProfileExplorer.UI.Profile;
 using ProtoBuf;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Providers;
+using ProfileExplorerUI.Session;
+using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorer.UI;
-
-public enum SessionKind {
-  Default = 0,
-  FileSession = 1,
-  DebugSession = 2
-}
 
 [ProtoContract(SkipConstructor = true)]
 public class SessionInfo {
@@ -74,7 +75,7 @@ public class OpenSectionState {
 [ProtoContract]
 public class SessionState {
   [ProtoMember(1)]
-  public List<LoadedDocumentState> Documents;
+  public List<IUILoadedDocumentState> Documents;
   [ProtoMember(2)]
   public List<PanelObjectPairState> GlobalPanelStates;
   [ProtoMember(3)]
@@ -93,7 +94,7 @@ public class SessionState {
   public byte[] ProfileState;
 
   public SessionState() {
-    Documents = new List<LoadedDocumentState>();
+    Documents = new List<IUILoadedDocumentState>();
     GlobalPanelStates = new List<PanelObjectPairState>();
     OpenSections = new List<OpenSectionState>();
     Info = new SessionInfo();
@@ -183,7 +184,7 @@ public class BaseDiffSectionGroup {
 public class SessionStateManager : IDisposable {
   // {IR section ID -> list [{panel ID, state}]}
   private object lockObject_;
-  private List<LoadedDocument> documents_;
+  private List<IUILoadedDocument> documents_;
   private Dictionary<ToolPanelKind, object> globalPanelStates_;
   private Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>> diffPanelStates_;
   private List<CancelableTask> pendingTasks_;
@@ -196,7 +197,7 @@ public class SessionStateManager : IDisposable {
     compilerInfo_ = compilerInfo;
     Info = new SessionInfo(filePath, sessionKind, compilerInfo.CompilerIRName, compilerInfo.IR.Mode);
     Info.Notes = "";
-    documents_ = new List<LoadedDocument>();
+    documents_ = new List<IUILoadedDocument>();
     globalPanelStates_ = new Dictionary<ToolPanelKind, object>();
     diffPanelStates_ = new Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>>();
     pendingTasks_ = new List<CancelableTask>();
@@ -208,9 +209,9 @@ public class SessionStateManager : IDisposable {
   }
 
   public SessionInfo Info { get; set; }
-  public List<LoadedDocument> Documents => documents_;
-  public LoadedDocument MainDocument { get; set; }
-  public LoadedDocument DiffDocument { get; set; }
+  public List<IUILoadedDocument> Documents => documents_;
+  public IUILoadedDocument MainDocument { get; set; }
+  public IUILoadedDocument DiffDocument { get; set; }
   public List<DocumentHostInfo> DocumentHosts { get; set; }
   public ProfileData ProfileData { get; set; }
   public ProfileFilterState ProfileFilter { get; set; }
@@ -231,12 +232,12 @@ public class SessionStateManager : IDisposable {
   public static Task<SessionState> DeserializeSession(byte[] data) {
     return Task.Run(() => {
       byte[] decompressedData = CompressionUtils.Decompress(data);
-      var state = StateSerializer.Deserialize<SessionState>(decompressedData);
+      var state = UIStateSerializer.Deserialize<SessionState>(decompressedData);
       return state;
     });
   }
 
-  public void EnterTwoDocumentDiffMode(LoadedDocument diffDocument) {
+  public void EnterTwoDocumentDiffMode(IUILoadedDocument diffDocument) {
     DiffDocument = diffDocument;
     SyncDiffedDocuments = true;
   }
@@ -246,7 +247,7 @@ public class SessionStateManager : IDisposable {
     SyncDiffedDocuments = false;
   }
 
-  public void RegisterLoadedDocument(LoadedDocument docInfo) {
+  public void RegisterLoadedDocument(IUILoadedDocument docInfo) {
     documents_.Add(docInfo);
 
     if (!Info.IsFileSession && !Info.IsDebugSession) {
@@ -256,22 +257,22 @@ public class SessionStateManager : IDisposable {
     }
   }
 
-  public void RemoveLoadedDocuemnt(LoadedDocument document) {
+  public void RemoveLoadedDocuemnt(IUILoadedDocument document) {
     document.ChangeDocumentWatcherState(false);
     documents_.Remove(document);
   }
 
-  public LoadedDocument FindLoadedDocument(IRTextSection section) {
+  public IUILoadedDocument FindLoadedDocument(IRTextSection section) {
     var summary = section.ParentFunction.ParentSummary;
     return documents_.Find(item => item.Summary == summary);
   }
 
-  public LoadedDocument FindLoadedDocument(IRTextFunction func) {
+  public IUILoadedDocument FindLoadedDocument(IRTextFunction func) {
     var summary = func.ParentSummary;
     return documents_.Find(item => item.Summary == summary);
   }
 
-  public LoadedDocument FindLoadedDocument(IRTextSummary summary) {
+  public IUILoadedDocument FindLoadedDocument(IRTextSummary summary) {
     return documents_.Find(item => item.Summary == summary);
   }
 
@@ -396,7 +397,7 @@ public class SessionStateManager : IDisposable {
     }
 
     return Task.Run(() => {
-      byte[] data = StateSerializer.Serialize(state);
+      byte[] data = UIStateSerializer.Serialize(state);
       byte[] compressedData = CompressionUtils.Compress(data);
       return compressedData;
     });

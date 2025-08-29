@@ -9,16 +9,24 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Binary;
 using ProfileExplorer.UI.Compilers;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorer.UI.Profile;
 using ProfileExplorer.UI.Windows;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Profile.Timeline;
 
 namespace ProfileExplorer.UI;
 
-public partial class MainWindow : Window, ISession {
+public partial class MainWindow : Window, IUISession {
   private CancelableTaskInstance updateProfileTask_ = new();
   private ProfileData.ProcessingResult allThreadsProfile_;
   private ProfileFilterState profileFilter_;
@@ -41,13 +49,18 @@ public partial class MainWindow : Window, ISession {
                                           ProfileDataReport report,
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
+    Trace.WriteLine($"LoadProfileData: Starting profile data loading for {profileFilePath}");
     var sw = Stopwatch.StartNew();
     using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
 
+    Trace.WriteLine($"LoadProfileData: LoadTraceAsync completed, result is {(result != null ? "NOT NULL" : "NULL")}");
+    Trace.WriteLine($"LoadProfileData: IsSessionStarted = {IsSessionStarted}");
+    
     if (!IsSessionStarted) {
+      Trace.WriteLine($"LoadProfileData: ERROR - Session not started, returning false");
       return false;
     }
 
@@ -56,6 +69,10 @@ public partial class MainWindow : Window, ISession {
       sessionState_.ProfileData = result;
       UpdateWindowTitle();
       UnloadProfilingDebugInfo();
+      Trace.WriteLine($"LoadProfileData: Successfully set profile data in session");
+    }
+    else {
+      Trace.WriteLine($"LoadProfileData: ERROR - LoadTraceAsync returned null result");
     }
 
     Trace.WriteLine($"Done profile load and setup: {sw}, {sw.ElapsedMilliseconds} ms");

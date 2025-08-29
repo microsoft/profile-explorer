@@ -3,6 +3,8 @@
 using System;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.Parser;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI.Compilers.Default;
 

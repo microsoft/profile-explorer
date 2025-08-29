@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 using System;
 
-namespace ProfileExplorer.Core.LLVM;
+namespace ProfileExplorer.Core.Compilers.LLVM;
 
 public sealed class LLVMSectionReader : SectionReaderBase, IDisposable {
   private const string SectionStartLine = "*** IR Dump ";
