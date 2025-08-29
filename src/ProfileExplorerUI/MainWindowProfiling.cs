@@ -23,6 +23,7 @@ using ProfileExplorer.Core.Profile.CallTree;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Profile.Timeline;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.UI;
 
@@ -51,7 +52,7 @@ public partial class MainWindow : Window, IUISession {
                                           CancelableTask cancelableTask) {
     Trace.WriteLine($"LoadProfileData: Starting profile data loading for {profileFilePath}");
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(this);
+    using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
@@ -87,7 +88,7 @@ public partial class MainWindow : Window, IUISession {
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(this);
+    using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
     var result = await provider.LoadTraceAsync(data, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);

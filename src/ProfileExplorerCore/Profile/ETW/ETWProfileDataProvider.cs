@@ -41,6 +41,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
   private ISession session_;
+  private IBinaryFileFinder binaryFileFinder_;
+  private IDebugFileFinder debugFileFinder_;
+  private IDebugInfoProviderFactory debugInfoProviderFactory_;
   private ProfileData profileData_;
   private object lockObject_;
   private object[] imageLocks_;
@@ -48,9 +51,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private HashSet<ProfileImage> rejectedDebugModules_;
   private int currentSampleIndex_;
 
-  public ETWProfileDataProvider(ISession session) {
-    session_ = session;
+  public ETWProfileDataProvider(IBinaryFileFinder binaryFileFinder, IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
     profileData_ = new ProfileData();
+    binaryFileFinder_ = binaryFileFinder;
+    debugFileFinder_ = debugFileFinder;
+    debugInfoProviderFactory_ = debugInfoProviderFactory;
 
     // Data structs used for module loading.
     lockObject_ = new object();
@@ -951,7 +956,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           DebugFileSearchResult result;
 
           try {
-            result = await session_.CompilerInfo.FindDebugInfoFileAsync(symbolFile, symbolSettings);
+            result = await debugFileFinder_.FindDebugInfoFileAsync(symbolFile, symbolSettings);
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -969,7 +974,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           DebugFileSearchResult result;
 
           try {
-            result = session_.CompilerInfo.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+            result = debugFileFinder_.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -1019,7 +1024,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
                                                    SymbolFileSourceSettings symbolSettings) {
     var totalSw = Stopwatch.StartNew();
-    var imageModule = new ProfileModuleBuilder(report_, session_);
+    var imageModule = new ProfileModuleBuilder(report_, new BinaryFileFinder(), new DebugInfoProviderFactory());
     IDebugInfoProvider imageDebugInfo = null;
 
     Trace.WriteLine($"CreateModuleBuilderAsync: Starting for module {image.ModuleName}");
@@ -1061,7 +1066,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         // Time spent on debug info file lookup
         var debugFileSw = Stopwatch.StartNew();
-        var debugInfoFile = GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
+        var debugInfoFile = await GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
                                              image, rawProfile, processId, symbolSettings);
         var debugFileTime = debugFileSw.Elapsed;
 
@@ -1106,18 +1111,18 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  private DebugFileSearchResult GetDebugInfoFile(BinaryFileSearchResult binaryFile,
+  private async Task<DebugFileSearchResult> GetDebugInfoFile(BinaryFileSearchResult binaryFile,
                                                  ProfileImage image, RawProfileData rawProfile, int processId,
                                                  SymbolFileSourceSettings symbolSettings) {
     if (binaryFile is {Found: true}) {
-      return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
+      return await debugFileFinder_.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings);
     }
     else {
       // Try to use ETL info if binary not available.
       var symbolFile = rawProfile.GetDebugFileForImage(image, processId);
 
       if (symbolFile != null) {
-        return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
+        return await debugFileFinder_.FindDebugInfoFileAsync(symbolFile, symbolSettings);
       }
     }
 

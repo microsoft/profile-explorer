@@ -21,15 +21,18 @@ public sealed class ProfileModuleBuilder {
   private static volatile int FuncCreated;
 #endif
   private ISession session_;
+  private IBinaryFileFinder binaryFileFinder_;
+  private IDebugInfoProviderFactory debugInfoProviderFactory_;
   private BinaryFileDescriptor binaryInfo_;
   private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
 
-  public ProfileModuleBuilder(ProfileDataReport report, ISession session) {
+  public ProfileModuleBuilder(ProfileDataReport report, IBinaryFileFinder binaryFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
     report_ = report;
-    session_ = session;
+    binaryFileFinder_ = binaryFileFinder;
+    debugInfoProviderFactory_ = debugInfoProviderFactory;
     functionMap_ = new ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)>();
     lock_ = new ReaderWriterLockSlim();
   }
@@ -113,7 +116,7 @@ public sealed class ProfileModuleBuilder {
       return false;
     }
 
-    DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
+    DebugInfo = debugInfoProviderFactory_.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
     HasDebugInfo = DebugInfo != null;
 
     if (HasDebugInfo) {
@@ -132,7 +135,7 @@ public sealed class ProfileModuleBuilder {
   public async Task<BinaryFileSearchResult> FindBinaryFilePath(SymbolFileSourceSettings settings) {
     // Use the symbol server to locate the image,
     // this will also attempt to download it if not found locally.
-    return await session_.CompilerInfo.FindBinaryFileAsync(binaryInfo_, settings).ConfigureAwait(false);
+    return await binaryFileFinder_.FindBinaryFileAsync(binaryInfo_, settings).ConfigureAwait(false);
   }
 
   public (IRTextFunction Function, FunctionDebugInfo DebugInfo)

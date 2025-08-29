@@ -149,7 +149,7 @@ public class BaseSession : ISession
 
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(this);
+    using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
