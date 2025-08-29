@@ -206,8 +206,7 @@ public static class TestDataHelper {
         var binaryFiles = new List<string>();
         var binariesDir = BinariesPath;
         if (Directory.Exists(binariesDir)) {
-          binaryFiles.AddRange(Directory.GetFiles(binariesDir, "*.*")
-            .Where(f => !Path.GetExtension(f).Equals(".pdb", StringComparison.OrdinalIgnoreCase)));
+          binaryFiles.AddRange(Directory.GetFiles(binariesDir, "*.*"));
         }
         return binaryFiles;
       }
