@@ -95,8 +95,8 @@ public static class TestDataHelper {
   /// <param name="requiredBinaryFiles">List of required binary files</param>
   /// <returns>True if all files exist, false otherwise</returns>
   public static bool ValidateTestCase(string testCaseName, string traceFileName = "trace.etl", 
-                                     string[] requiredSymbolFiles = null, 
-                                     string[] requiredBinaryFiles = null) {
+                                     string[]? requiredSymbolFiles = null, 
+                                     string[]? requiredBinaryFiles = null) {
     // Check trace file
     var tracePath = GetTracePath(testCaseName, traceFileName);
     if (!File.Exists(tracePath)) {
