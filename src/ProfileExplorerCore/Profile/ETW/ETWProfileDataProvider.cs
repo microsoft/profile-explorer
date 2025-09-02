@@ -44,6 +44,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private static ProfileModuleBuilder prevProfileModuleBuilder_;
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
+  private ICompilerIRInfo compilerIRInfo_;
+  private INameProvider nameProvider_;
   private IBinaryFileFinder binaryFileFinder_;
   private IDebugFileFinder debugFileFinder_;
   private IDebugInfoProviderFactory debugInfoProviderFactory_;
@@ -58,8 +60,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   public event SetupNewSessionHandler SetupNewSessionRequested;
   public event StartNewSessionHandler StartNewSessionRequested;
 
-  public ETWProfileDataProvider(IBinaryFileFinder binaryFileFinder, IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
+  public ETWProfileDataProvider(ICompilerIRInfo compilerIRInfo, INameProvider nameProvider, IBinaryFileFinder binaryFileFinder, IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
     profileData_ = new ProfileData();
+    compilerIRInfo_ = compilerIRInfo;
+    nameProvider_ = nameProvider;
     binaryFileFinder_ = binaryFileFinder;
     debugFileFinder_ = debugFileFinder;
     debugInfoProviderFactory_ = debugInfoProviderFactory;
@@ -1030,7 +1034,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
                                                    SymbolFileSourceSettings symbolSettings) {
     var totalSw = Stopwatch.StartNew();
-    var imageModule = new ProfileModuleBuilder(report_, new ASMBinaryFileFinder(), new ASMDebugInfoProviderFactory());
+    var imageModule = new ProfileModuleBuilder(report_, binaryFileFinder_, debugFileFinder_, debugInfoProviderFactory_, 
+                                               compilerIRInfo_, nameProvider_);
     IDebugInfoProvider imageDebugInfo = null;
 
     Trace.WriteLine($"CreateModuleBuilderAsync: Starting for module {image.ModuleName}");

@@ -118,22 +118,6 @@ public partial class MainWindow : Window, IUISession {
     return false;
   }
 
-  public async Task<ILoadedDocument>
-    LoadProfileBinaryDocument(string filePath, string modulePath, ProfileExplorer.Core.Binary.IDebugInfoProvider debugInfo) {
-    return await Task.Run(async () => {
-        var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
-        var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
-
-        if (result != null) {
-          result.BinaryFile = BinaryFileSearchResult.Success(filePath);
-          result.DebugInfo = debugInfo;
-        }
-
-        return result;
-      }).
-      ConfigureAwait(false);
-  }
-
   public async Task<IRDocumentHost>
     OpenDocumentSectionAsync(OpenSectionEventArgs args) {
     return await OpenDocumentSectionAsync(args, args.TargetDocument);
@@ -883,7 +867,8 @@ public partial class MainWindow : Window, IUISession {
   private async Task<ILoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                         IDebugInfoProvider debugInfo,
                                                         ProgressInfoHandler progressHandler) {
-    var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
+    var loader = new DisassemblerSectionLoader(filePath, compilerInfo_.IR, debugInfo, compilerInfo_.DebugFileFinder,
+                                               compilerInfo_.DebugInfoProviderFactory, compilerInfo_.NameProvider);
     var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
 
     if (result != null) {
@@ -909,7 +894,6 @@ public partial class MainWindow : Window, IUISession {
         return result;
       });
 
-      await compilerInfo_.HandleLoadedDocument(result, modulePath);
       return result;
     }
     catch (Exception ex) {
@@ -1761,9 +1745,5 @@ public partial class MainWindow : Window, IUISession {
 
   public ILoadedDocument CreateDummyDocument(string name) {
     return LoadedDocument.CreateDummyDocument(name);
-  }
-
-  async Task<ILoadedDocument> ISession.LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
-    return await LoadProfileBinaryDocument(filePath, modulePath, debugInfo);
   }
 }

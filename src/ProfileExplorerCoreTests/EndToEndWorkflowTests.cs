@@ -253,7 +253,8 @@ public class EndToEndWorkflowTests {
     var binaryFileFinder = new ASMBinaryFileFinder();
     var debugFileFinder = new ASMDebugFileFinder();
     var debugInfoProviderFactory = new ASMDebugInfoProviderFactory();
-    var dataProvider = new ETWProfileDataProvider(binaryFileFinder, debugFileFinder, debugInfoProviderFactory);
+    var dataProvider = new ETWProfileDataProvider(compilerInfo_.IR, compilerInfo_.NameProvider, compilerInfo_.BinaryFileFinder,
+      compilerInfo_.DebugFileFinder, compilerInfo_.DebugInfoProviderFactory);
     var processIds = new List<int> { targetProcessId };
     var report = new ProfileDataReport();
 

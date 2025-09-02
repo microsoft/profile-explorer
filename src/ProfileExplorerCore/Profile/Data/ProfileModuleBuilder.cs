@@ -20,19 +20,26 @@ public sealed class ProfileModuleBuilder {
   private static volatile int FuncFoundByFuncAddressLocked;
   private static volatile int FuncCreated;
 #endif
-  private ISession session_;
   private IBinaryFileFinder binaryFileFinder_;
+  private IDebugFileFinder debugFileFinder_;
   private IDebugInfoProviderFactory debugInfoProviderFactory_;
+  private ICompilerIRInfo compilerIrInfo_;
+  private INameProvider nameProvider_;
   private BinaryFileDescriptor binaryInfo_;
   private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
 
-  public ProfileModuleBuilder(ProfileDataReport report, IBinaryFileFinder binaryFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
+  public ProfileModuleBuilder(ProfileDataReport report, IBinaryFileFinder binaryFileFinder, 
+                              IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory,
+                              ICompilerIRInfo compilerIrInfo, INameProvider nameProvider) {
     report_ = report;
     binaryFileFinder_ = binaryFileFinder;
+    debugFileFinder_ = debugFileFinder;
     debugInfoProviderFactory_ = debugInfoProviderFactory;
+    compilerIrInfo_ = compilerIrInfo;
+    nameProvider_ = nameProvider;
     functionMap_ = new ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)>();
     lock_ = new ReaderWriterLockSlim();
   }
@@ -67,8 +74,10 @@ public sealed class ProfileModuleBuilder {
       return true; // Try to continue just with debug info.
     }
 
-    var loadedDoc = await session_.LoadProfileBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).
-      ConfigureAwait(false);
+    // Create a DisassemblerSectionLoader and LoadedDocument directly instead of calling through session
+    var loader = new DisassemblerSectionLoader(binFile.FilePath, compilerIrInfo_, debugInfo, debugFileFinder_, 
+                                               debugInfoProviderFactory_, nameProvider_, false);
+    var loadedDoc = await CreateLoadedDocument(binFile.FilePath, binaryInfo.ImageName, loader).ConfigureAwait(false);
 
     if (loadedDoc == null) {
       Trace.TraceWarning($"Failed to load document for image {imageName}");
@@ -76,6 +85,9 @@ public sealed class ProfileModuleBuilder {
       CreateDummyDocument(binaryInfo);
       return false;
     }
+
+    loadedDoc.BinaryFile = BinaryFileSearchResult.Success(binFile.FilePath);
+    loadedDoc.DebugInfo = debugInfo;
 
 #if DEBUG
     Trace.TraceWarning($"  Loaded document for image {imageName}");
@@ -231,5 +243,22 @@ public sealed class ProfileModuleBuilder {
     // AddPlaceholderFunction will populate it.
     ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
     Summary = ModuleDocument.Summary;
+  }
+
+  private async Task<ILoadedDocument> CreateLoadedDocument(string filePath, string modulePath, IRTextSectionLoader loader) {
+    try {
+      var result = await Task.Run(async () => {
+        var result = new LoadedDocument(filePath, modulePath, Guid.NewGuid());
+        result.Loader = loader;
+        result.Summary = await result.Loader.LoadDocument(null);
+        return result;
+      });
+
+      return result;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to load document {filePath}: {ex}");
+      return null;
+    }
   }
 }

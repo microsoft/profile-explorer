@@ -89,48 +89,10 @@ public class BaseSession : ISession
     FunctionAnalysisCache.ResetCache();
   }
 
-  private void RegisterLoadedDocument(ILoadedDocument docInfo) {
-    documents_.Add(docInfo);
-  }
-
-  public async Task<ILoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null) {
-    return await Task.Run(async () => {
-      var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
-      var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
-
-      if (result != null) {
-        result.BinaryFile = BinaryFileSearchResult.Success(filePath);
-        result.DebugInfo = debugInfo;
-      }
-
-      return result;
-    }).
-      ConfigureAwait(false);
-  }
-
-  private async Task<ILoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
-                                                  ProgressInfoHandler progressHandler,
-                                                  IRTextSectionLoader loader) {
-    try {
-      var result = await Task.Run(async () => {
-        var result = CreateLoadedDocument(filePath, modulePath, id);
-        result.Loader = loader;
-        result.Summary = await result.Loader.LoadDocument(progressHandler);
-        return result;
-      });
-
-      //await compilerInfo_.HandleLoadedDocument(result, modulePath);
-      return result;
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to load document {filePath}: {ex}");
-      return null;
-    }
-  }
-
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(new ASMBinaryFileFinder(), new ASMDebugFileFinder(), new ASMDebugInfoProviderFactory());
+    using var provider = new ETWProfileDataProvider(compilerInfo_.IR, compilerInfo_.NameProvider, compilerInfo_.BinaryFileFinder,
+      compilerInfo_.DebugFileFinder, compilerInfo_.DebugInfoProviderFactory);
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);

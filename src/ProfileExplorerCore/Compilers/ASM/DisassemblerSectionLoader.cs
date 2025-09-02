@@ -13,19 +13,23 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private string binaryFilePath_;
   private Disassembler disassembler_;
   private IDebugInfoProvider debugInfo_;
-  private ICompilerInfoProvider compilerInfo_;
+  private IDebugFileFinder debugFileFinder_;
+  private IDebugInfoProviderFactory debugInfoProviderFactory_;
+  private INameProvider nameProvider_;
   private Dictionary<IRTextFunction, FunctionDebugInfo> funcToDebugInfoMap_;
   private bool isManagedImage_;
   private bool preloadFunctions_;
   private DebugFileSearchResult debugInfoFile_;
   private bool resolveCallTargetNames_;
 
-  public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo,
-                                   IDebugInfoProvider debugInfo, bool preloadFunctions = true) {
-    Initialize(compilerInfo.IR, false);
+  public DisassemblerSectionLoader(string binaryFilePath, ICompilerIRInfo compilerIrInfo, IDebugInfoProvider debugInfo, IDebugFileFinder debugFileFinder,
+    IDebugInfoProviderFactory debugInfoProviderFactory, INameProvider nameProvider, bool preloadFunctions = true) {
+    Initialize(compilerIrInfo, false);
     binaryFilePath_ = binaryFilePath;
-    compilerInfo_ = compilerInfo;
     debugInfo_ = debugInfo;
+    debugFileFinder_ = debugFileFinder;
+    debugInfoProviderFactory_ = debugInfoProviderFactory;
+    nameProvider_ = nameProvider;
     preloadFunctions_ = preloadFunctions;
     isManagedImage_ = debugInfo != null;
     summary_ = new IRTextSummary();
@@ -73,8 +77,8 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     if (debugInfo_ == null) {
       if (preloadFunctions_) {
         // When opening in non-profiling mode, lookup the debug info now.
-        debugInfoFile_ = await compilerInfo_.DebugFileFinder.FindDebugInfoFileAsync(binaryFilePath_);
-        debugInfo_ = compilerInfo_.DebugInfoProviderFactory.CreateDebugInfoProvider(debugInfoFile_);
+        debugInfoFile_ = await debugFileFinder_.FindDebugInfoFileAsync(binaryFilePath_);
+        debugInfo_ = debugInfoProviderFactory_.CreateDebugInfoProvider(debugInfoFile_);
       }
 
       if (debugInfo_ == null) {
@@ -115,13 +119,13 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     if (!isManagedImage_) {
       // This preloads all code sections in the binary.
       disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_,
-                                                   compilerInfo_.NameProvider.FormatFunctionName);
+                                                   nameProvider_.FormatFunctionName);
       return true;
     }
 
     // For managed code, the code data is found on each function.
     if (debugInfo_.LoadDebugInfo(null)) {
-      disassembler_ = Disassembler.CreateForMachine(debugInfo_, compilerInfo_.NameProvider.FormatFunctionName);
+      disassembler_ = Disassembler.CreateForMachine(debugInfo_, nameProvider_.FormatFunctionName);
       return true;
     }
 

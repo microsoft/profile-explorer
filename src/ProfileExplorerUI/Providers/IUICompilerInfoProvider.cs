@@ -25,6 +25,5 @@ public interface IUICompilerInfoProvider : ICompilerInfoProvider {
   List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
 
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
-  Task HandleLoadedDocument(ILoadedDocument document, string modulePath);
   IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
 }

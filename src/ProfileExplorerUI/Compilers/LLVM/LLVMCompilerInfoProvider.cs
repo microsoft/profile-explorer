@@ -85,10 +85,6 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public Task HandleLoadedDocument(ILoadedDocument document, string modulePath) {
-    return Task.CompletedTask;
-  }
-
   public Task ReloadSettings() {
     return Task.CompletedTask;
   }
