@@ -43,8 +43,6 @@ public interface IUISession : ISession {
   IRTextSummary MainDocumentSummary { get; }
   IRTextSummary DiffDocumentSummary { get; }
   ProfileFilterState ProfileFilter { get; set; }
-  Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, IUICompilerInfoProvider compilerInfo);
-  Task<bool> SetupNewSession(IUILoadedDocument mainDocument, List<IUILoadedDocument> otherDocuments, ProfileData profileData);
   IRTextSummary GetDocumentSummary(IRTextSection section);
   IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId);
   IRDocument FindAssociatedDocument(IToolPanel panel);
@@ -94,7 +92,7 @@ public interface IUISession : ISession {
   void RegisterDetachedPanel(DraggablePopup panel);
   void UnregisterDetachedPanel(DraggablePopup panel);
   Task<bool> SaveSessionDocument(string filePath);
-  Task<IUILoadedDocument> OpenSessionDocument(string filePath);
+  Task<ILoadedDocument> OpenSessionDocument(string filePath);
 
 
   Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function);

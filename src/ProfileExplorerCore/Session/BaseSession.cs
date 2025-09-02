@@ -64,14 +64,6 @@ public class BaseSession : ISession
       return LoadedDocument.CreateDummyDocument(name);
     }
 
-  public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
-    await SwitchCompilerTarget(compilerInfo);
-
-    StartSession(sessionName, sessionKind);
-
-    return true;
-  }
-
   private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
     await EndSession();
     compilerInfo_ = compilerInfo;
@@ -95,17 +87,6 @@ public class BaseSession : ISession
     documents_.Clear();
 
     FunctionAnalysisCache.ResetCache();
-  }
-
-  public async Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData) {
-    mainDocument_ = mainDocument;
-    RegisterLoadedDocument(mainDocument);
-
-    foreach (var loadedDoc in otherDocuments) {
-      RegisterLoadedDocument(loadedDoc);
-    }
-
-    return true;
   }
 
   private void RegisterLoadedDocument(ILoadedDocument docInfo) {

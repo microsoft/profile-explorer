@@ -17,13 +17,10 @@ namespace ProfileExplorer.UI;
 
 [ProtoContract]
 public class UILoadedDocumentState : LoadedDocumentState, IUILoadedDocumentState {
-  // Inherited properties from LoadedDocumentState (ProtoMember 1�7, 9)
-  // Add new property for panel states:
-  [ProtoMember(8)]
-  public List<Tuple<int, PanelObjectPairState>> PanelStates { get; set; }
+  // Inherited properties from LoadedDocumentState (ProtoMember 1–7, 9)
+  // Panel states are now managed by PanelStateManager and stored in SessionState.
 
   public UILoadedDocumentState() : base() {
-    PanelStates = new List<Tuple<int, PanelObjectPairState>>();
   }
 
   public UILoadedDocumentState(Guid id) : this() {
@@ -105,16 +102,8 @@ public class UILoadedDocument : LoadedDocument, IUILoadedDocument {
                                                      sectionState.Value as byte[]));
     }
 
-    foreach (var panelState in PanelStates) {
-      foreach (var panelStatePair in panelState.Value) {
-        if (panelStatePair.Panel.SavesStateToFile) {
-          state.PanelStates.Add(new Tuple<int, PanelObjectPairState>(
-                                  panelState.Key.Id,
-                                  new PanelObjectPairState(panelStatePair.Panel.PanelKind,
-                                                           panelStatePair.StateObject)));
-        }
-      }
-    }
+    // Panel states are now managed by PanelStateManager in SessionStateManager.
+    // The serialization of panel states is handled separately.
 
     // Used by profiling to represent missing binaries.
     foreach (var func in summary_.Functions) {

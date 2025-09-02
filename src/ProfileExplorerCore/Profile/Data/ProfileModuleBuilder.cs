@@ -229,7 +229,7 @@ public sealed class ProfileModuleBuilder {
   private void CreateDummyDocument(BinaryFileDescriptor binaryInfo) {
     // Create a dummy document to represent the module,
     // AddPlaceholderFunction will populate it.
-    ModuleDocument = session_.CreateDummyDocument(binaryInfo.ImageName);
+    ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
     Summary = ModuleDocument.Summary;
   }
 }

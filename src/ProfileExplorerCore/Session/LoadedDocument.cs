@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Profile.Utils;
 using ProfileExplorer.Core.Providers;
@@ -41,6 +43,7 @@ public class LoadedDocumentState : ILoadedDocumentState {
 
 public class LoadedDocument : ILoadedDocument {
   public Dictionary<IRTextSection, object> SectionStates;
+  private FileSystemWatcher documentWatcher_;
   private IRTextSummary summary_;
   private bool disposed_;
 
@@ -76,6 +79,8 @@ public class LoadedDocument : ILoadedDocument {
   public bool BinaryFileExists => BinaryFile is {Found: true};
   public bool HasSymbolFileInfo => SymbolFileInfo != null;
   public string FileName => Utils.TryGetFileName(FilePath);
+
+  public event EventHandler DocumentChanged;
 
   public void Dispose() {
     Dispose(true);
@@ -119,6 +124,26 @@ public class LoadedDocument : ILoadedDocument {
     return SectionStates.TryGetValue(section, out object stateObject) ? stateObject : null;
   }
 
+  public void SetupDocumentWatcher() {
+    try {
+      string fileDir = Path.GetDirectoryName(FilePath);
+      string fileName = Path.GetFileName(FilePath);
+      documentWatcher_ = new FileSystemWatcher(fileDir, fileName);
+      documentWatcher_.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+      documentWatcher_.Changed += DocumentWatcher_Changed;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to setup document watcher for file {FilePath}: {ex.Message}");
+      documentWatcher_ = null;
+    }
+  }
+
+  public void ChangeDocumentWatcherState(bool enabled) {
+    if (documentWatcher_ != null) {
+      documentWatcher_.EnableRaisingEvents = enabled;
+    }
+  }
+
   public virtual ILoadedDocumentState SerializeDocument() {
     var state = new LoadedDocumentState(Id) {
       ModuleName = ModuleName, FilePath = FilePath, BinaryFile = BinaryFile,
@@ -139,11 +164,23 @@ public class LoadedDocument : ILoadedDocument {
     return state;
   }
 
+  private void DocumentWatcher_Changed(object sender, FileSystemEventArgs e) {
+    if (e.ChangeType != WatcherChangeTypes.Changed) {
+      return;
+    }
+
+    DocumentChanged?.Invoke(this, EventArgs.Empty);
+  }
+
   protected virtual void Dispose(bool disposing) {
     if (!disposed_) {
+      if (disposing) {
+        documentWatcher_?.Dispose();
+      }
       Loader?.Dispose();
       Loader = null;
       Summary = null;
+      documentWatcher_ = null;
       disposed_ = true;
     }
   }

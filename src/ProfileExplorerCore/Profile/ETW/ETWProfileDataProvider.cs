@@ -21,6 +21,10 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Profile.ETW;
 
+// Event delegates for session callbacks
+public delegate Task SetupNewSessionHandler(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData);
+public delegate Task StartNewSessionHandler(string sessionName, SessionKind sessionKind, IRMode irMode);
+
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
   private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
@@ -40,7 +44,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private static ProfileModuleBuilder prevProfileModuleBuilder_;
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
-  private ISession session_;
   private IBinaryFileFinder binaryFileFinder_;
   private IDebugFileFinder debugFileFinder_;
   private IDebugInfoProviderFactory debugInfoProviderFactory_;
@@ -50,6 +53,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private ConcurrentDictionary<int, ProfileModuleBuilder> imageModuleMap_;
   private HashSet<ProfileImage> rejectedDebugModules_;
   private int currentSampleIndex_;
+
+  // Events for session lifecycle callbacks
+  public event SetupNewSessionHandler SetupNewSessionRequested;
+  public event StartNewSessionHandler StartNewSessionRequested;
 
   public ETWProfileDataProvider(IBinaryFileFinder binaryFileFinder, IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
     profileData_ = new ProfileData();
@@ -325,16 +332,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (exeDocument == null) {
           Trace.WriteLine($"LoadTraceAsync: WARNING - Failed to find main EXE document for {imageName}");
-          exeDocument = session_.CreateLoadedDocument(string.Empty, string.Empty, Guid.Empty);
+          exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
           exeDocument.Summary = new IRTextSummary(string.Empty);
         }
         else {
           Trace.WriteLine($"LoadTraceAsync: Using exe document {exeDocument.ModuleName} with {otherDocuments.Count} other documents");
         }
 
-        Trace.WriteLine($"LoadTraceAsync: Calling session_.SetupNewSession");
-        await session_.SetupNewSession(exeDocument, otherDocuments, profileData_).ConfigureAwait(false);
-        Trace.WriteLine($"LoadTraceAsync: Completed session_.SetupNewSession");
+        Trace.WriteLine($"LoadTraceAsync: Calling SetupNewSessionRequested event");
+        await SetupNewSessionRequested?.Invoke(exeDocument, otherDocuments, profileData_);
+        Trace.WriteLine($"LoadTraceAsync: Completed SetupNewSessionRequested event");
       }
       else {
         Trace.WriteLine($"LoadTraceAsync: ERROR - Main processing task returned false (failed)");
@@ -901,8 +908,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
 #endif
 
-    await session_.StartNewSession(mainImageName, SessionKind.FileSession,
-      session_.CreateCompilerInfoProvider(irMode)).ConfigureAwait(false);
+    await StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, irMode);
 
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.

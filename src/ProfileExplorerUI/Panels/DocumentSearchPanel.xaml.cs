@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.UI.Controls;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.Core.Utilities;
@@ -16,13 +17,13 @@ namespace ProfileExplorer.UI.Panels;
 
 public partial class DocumentSearchPanel : DraggablePopup {
   private IUISession session_;
-  private IUILoadedDocument document_;
+  private ILoadedDocument document_;
   private CancelableTask searchTask_;
   private SearchInfo searchInfo_;
   private DocumentSearchInfo data_;
 
   public DocumentSearchPanel(Point position, double width, double height,
-                             UIElement referenceElement, IUISession session, IUILoadedDocument document) {
+                             UIElement referenceElement, IUISession session, ILoadedDocument document) {
     InitializeComponent();
     Initialize(position, width, height, referenceElement);
     PanelResizeGrip.ResizedControl = this;

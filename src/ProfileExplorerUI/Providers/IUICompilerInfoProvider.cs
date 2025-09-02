@@ -9,6 +9,7 @@ using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorerUI.Session;
 using ProtoBuf;
@@ -24,6 +25,6 @@ public interface IUICompilerInfoProvider : ICompilerInfoProvider {
   List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
 
   Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
-  Task HandleLoadedDocument(IUILoadedDocument document, string modulePath);
+  Task HandleLoadedDocument(ILoadedDocument document, string modulePath);
   IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
 }

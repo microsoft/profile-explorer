@@ -8,6 +8,7 @@ using ProfileExplorer.Core.Session;
 
 namespace ProfileExplorerUI.Session;
 
-public interface IUILoadedDocumentState : ILoadedDocumentState{
-  List<Tuple<int, PanelObjectPairState>> PanelStates { get; set; }
+public interface IUILoadedDocumentState : ILoadedDocumentState {
+  // This interface is being removed as part of the refactoring.
+  // Panel states are now managed by PanelStateManager and stored in SessionState.
 }

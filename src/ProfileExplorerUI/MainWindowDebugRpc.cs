@@ -473,7 +473,7 @@ public partial class MainWindow : Window, IUISession {
         await EndSession();
 
         FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
-        var result = new UILoadedDocument("Debug session", "", Guid.NewGuid());
+        var result = new LoadedDocument("Debug session", "", Guid.NewGuid());
         debugSections_ = new DebugSectionLoader(compilerInfo_.IR);
         debugSummary_ = debugSections_.LoadDocument(null);
         result.Loader = debugSections_;

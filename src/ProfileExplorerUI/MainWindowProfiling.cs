@@ -24,6 +24,9 @@ using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Profile.Timeline;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.UI.Compilers.ASM;
 
 namespace ProfileExplorer.UI;
 
@@ -53,6 +56,11 @@ public partial class MainWindow : Window, IUISession {
     Trace.WriteLine($"LoadProfileData: Starting profile data loading for {profileFilePath}");
     var sw = Stopwatch.StartNew();
     using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
+    
+    // Subscribe to events to replace the old session callbacks
+    provider.SetupNewSessionRequested += OnSetupNewSessionRequested;
+    provider.StartNewSessionRequested += OnStartNewSessionRequested;
+    
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
@@ -89,6 +97,11 @@ public partial class MainWindow : Window, IUISession {
                                           CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
     using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
+    
+    // Subscribe to events to replace the old session callbacks
+    provider.SetupNewSessionRequested += OnSetupNewSessionRequested;
+    provider.StartNewSessionRequested += OnStartNewSessionRequested;
+    
     var result = await provider.LoadTraceAsync(data, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
@@ -885,5 +898,39 @@ public partial class MainWindow : Window, IUISession {
       },
       () => markingOptionsPanelPopup_ = null,
       positionAdjustment, true);
+  }
+
+  // Event handlers for ETWProfileDataProvider events to replace session callbacks
+  private async Task OnSetupNewSessionRequested(ILoadedDocument mainDocument,
+                                                List<ILoadedDocument> otherDocuments,
+                                                ProfileData profileData) {
+    await Dispatcher.InvokeAsync(async () => {
+      sessionState_.MainDocument = mainDocument;
+      sessionState_.RegisterLoadedDocument(mainDocument);
+
+      foreach (var loadedDoc in otherDocuments) {
+        sessionState_.RegisterLoadedDocument(loadedDoc);
+      }
+
+      // For profiling sessions, setup the UI is done
+      // after the profiling window closes.
+      if (profileData == null) {
+        UpdateWindowTitle();
+        await SetupPanels();
+      }
+    });
+  }
+
+  private async Task OnStartNewSessionRequested(string sessionName, SessionKind sessionKind, IRMode irMode) {
+    await Dispatcher.InvokeAsync(async () => {
+      UpdateUIBeforeLoadDocument("profile");
+      
+      // Create the UI compiler info provider using the provided IRMode
+      var compilerInfo = new ASMUICompilerInfoProvider(irMode, this);
+      await SwitchCompilerTarget(compilerInfo);
+
+      StartSession(sessionName, sessionKind);
+      UpdateUIAfterLoadDocument();
+    });
   }
 }

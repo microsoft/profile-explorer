@@ -104,7 +104,7 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public Task HandleLoadedDocument(IUILoadedDocument document, string modulePath) {
+  public Task HandleLoadedDocument(ILoadedDocument document, string modulePath) {
     return Task.CompletedTask;
   }
 

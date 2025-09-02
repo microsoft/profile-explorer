@@ -38,7 +38,7 @@ public class ASMUICompilerInfoProvider : ASMCompilerInfoProvider, IUICompilerInf
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
 
-  public virtual Task HandleLoadedDocument(IUILoadedDocument document, string modulePath) {
+  public virtual Task HandleLoadedDocument(ILoadedDocument document, string modulePath) {
     return Task.CompletedTask;
   }
 

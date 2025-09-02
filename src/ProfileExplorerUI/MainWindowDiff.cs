@@ -60,7 +60,7 @@ public partial class MainWindow : Window, IUISession {
     }
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     OpenBaseDiffDocuments(string baseFilePath, string diffFilePath) {
     var (baseDoc, diffDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
@@ -94,10 +94,10 @@ public partial class MainWindow : Window, IUISession {
     await SwapDiffedDocuments();
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     OpenBaseDiffIRDocumentsImpl(string baseFilePath, string diffFilePath) {
-    IUILoadedDocument baseResult = null;
-    IUILoadedDocument diffResult = null;
+    ILoadedDocument baseResult = null;
+    ILoadedDocument diffResult = null;
 
     try {
       await EndSession();
@@ -123,7 +123,7 @@ public partial class MainWindow : Window, IUISession {
     return (baseResult, diffResult);
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     LoadBinaryBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath,
                                   string diffModuleName) {
     await SwitchBinaryCompilerTarget(baseFilePath);
@@ -147,7 +147,7 @@ public partial class MainWindow : Window, IUISession {
     return (null, null);
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
     var baseTask =
       Task.Run(() => LoadDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
@@ -168,7 +168,7 @@ public partial class MainWindow : Window, IUISession {
     return (null, null);
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
     //? HACK: Set the module name of both docs to be the same,
     //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
@@ -731,7 +731,7 @@ public partial class MainWindow : Window, IUISession {
 
   private async Task<(string, IRTextSection)>
     SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
-                                  IUILoadedDocument otherDocument) {
+                                  ILoadedDocument otherDocument) {
     if (sessionState_.DiffDocument != null) {
       // When two documents are compared, try to pick
       // the other section from that other document.
@@ -752,7 +752,7 @@ public partial class MainWindow : Window, IUISession {
     }
   }
 
-  private IRTextSection FindDiffDocumentSection(IRTextSection section, IUILoadedDocument diffDoc) {
+  private IRTextSection FindDiffDocumentSection(IRTextSection section, ILoadedDocument diffDoc) {
     return SectionPanel.FindDiffDocumentSection(section);
   }
 

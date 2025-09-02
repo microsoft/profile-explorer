@@ -8,9 +8,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.ETW;
 using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
@@ -248,7 +250,10 @@ public class EndToEndWorkflowTests {
     Console.WriteLine($"\n=== Step 3: Loading trace data for process {targetProcessId} ===");
     
     var session = new BaseSession();
-    var dataProvider = new ETWProfileDataProvider(session);
+    var binaryFileFinder = new BinaryFileFinder();
+    var debugFileFinder = new DebugFileFinder();
+    var debugInfoProviderFactory = new DebugInfoProviderFactory();
+    var dataProvider = new ETWProfileDataProvider(binaryFileFinder, debugFileFinder, debugInfoProviderFactory);
     var processIds = new List<int> { targetProcessId };
     var report = new ProfileDataReport();
 

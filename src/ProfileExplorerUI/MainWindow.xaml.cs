@@ -18,6 +18,7 @@ using AutoUpdaterDotNET;
 using AvalonDock;
 using AvalonDock.Layout;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
@@ -507,7 +508,7 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     }
   }
 
-  private async Task ShowSectionPanelDiffs(IUILoadedDocument result) {
+  private async Task ShowSectionPanelDiffs(ILoadedDocument result) {
     await SectionPanel.AnalyzeDocumentDiffs();
     await SectionPanel.RefreshDocumentsDiffs();
   }
