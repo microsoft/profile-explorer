@@ -1030,7 +1030,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
                                                    SymbolFileSourceSettings symbolSettings) {
     var totalSw = Stopwatch.StartNew();
-    var imageModule = new ProfileModuleBuilder(report_, new BinaryFileFinder(), new DebugInfoProviderFactory());
+    var imageModule = new ProfileModuleBuilder(report_, new ASMBinaryFileFinder(), new ASMDebugInfoProviderFactory());
     IDebugInfoProvider imageDebugInfo = null;
 
     Trace.WriteLine($"CreateModuleBuilderAsync: Starting for module {image.ModuleName}");

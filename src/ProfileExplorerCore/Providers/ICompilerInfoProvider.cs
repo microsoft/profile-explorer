@@ -19,6 +19,9 @@ public interface ICompilerInfoProvider {
   ISession Session { get; }
   ICompilerIRInfo IR { get; }
   INameProvider NameProvider { get; }
+  IBinaryFileFinder BinaryFileFinder { get; }
+  IDebugFileFinder DebugFileFinder { get; }
+  IDebugInfoProviderFactory DebugInfoProviderFactory { get; }
   string OpenFileFilter { get; }
   string OpenDebugFileFilter { get; }
   Task ReloadSettings();
@@ -28,17 +31,7 @@ public interface ICompilerInfoProvider {
 
   IDiffInputFilter CreateDiffInputFilter();
   IDiffOutputFilter CreateDiffOutputFilter();
-  IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
   Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
-  DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
-  DebugFileSearchResult FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
-  Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null);
-
-  Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
-                                                     SymbolFileSourceSettings settings = null);
-
-  Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                   SymbolFileSourceSettings settings = null);
 }
 
 [ProtoContract]

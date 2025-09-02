@@ -55,7 +55,7 @@ public partial class MainWindow : Window, IUISession {
                                           CancelableTask cancelableTask) {
     Trace.WriteLine($"LoadProfileData: Starting profile data loading for {profileFilePath}");
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
+    using var provider = new ETWProfileDataProvider(new ASMBinaryFileFinder(), new ASMDebugFileFinder(), new ASMDebugInfoProviderFactory());
     
     // Subscribe to events to replace the old session callbacks
     provider.SetupNewSessionRequested += OnSetupNewSessionRequested;
@@ -96,7 +96,7 @@ public partial class MainWindow : Window, IUISession {
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
+    using var provider = new ETWProfileDataProvider(new ASMBinaryFileFinder(), new ASMDebugFileFinder(), new ASMDebugInfoProviderFactory());
     
     // Subscribe to events to replace the old session callbacks
     provider.SetupNewSessionRequested += OnSetupNewSessionRequested;

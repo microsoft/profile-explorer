@@ -112,10 +112,10 @@ public class BaseSession : ISession
                                                   ProgressInfoHandler progressHandler,
                                                   IRTextSectionLoader loader) {
     try {
-      var result = await Task.Run(() => {
+      var result = await Task.Run(async () => {
         var result = CreateLoadedDocument(filePath, modulePath, id);
         result.Loader = loader;
-        result.Summary = result.Loader.LoadDocument(progressHandler);
+        result.Summary = await result.Loader.LoadDocument(progressHandler);
         return result;
       });
 
@@ -130,7 +130,7 @@ public class BaseSession : ISession
 
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(new BinaryFileFinder(), new DebugFileFinder(), new DebugInfoProviderFactory());
+    using var provider = new ETWProfileDataProvider(new ASMBinaryFileFinder(), new ASMDebugFileFinder(), new ASMDebugInfoProviderFactory());
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);

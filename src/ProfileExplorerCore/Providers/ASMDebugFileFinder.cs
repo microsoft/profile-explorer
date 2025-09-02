@@ -7,7 +7,7 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Providers;
 
-public class DebugFileFinder : IDebugFileFinder {
+public class ASMDebugFileFinder : IDebugFileFinder {
   public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null) {
     using var info = new PEBinaryInfoProvider(imagePath);
 

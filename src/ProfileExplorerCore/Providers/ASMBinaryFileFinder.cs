@@ -7,7 +7,7 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Providers;
 
-public class BinaryFileFinder : IBinaryFileFinder {
+public class ASMBinaryFileFinder : IBinaryFileFinder {
   public async Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null) {
     if (settings == null) {
       // Make sure the binary directory is also included in the symbol search.

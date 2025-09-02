@@ -902,10 +902,10 @@ public partial class MainWindow : Window, IUISession {
                                                   ProgressInfoHandler progressHandler,
                                                   IRTextSectionLoader loader) {
     try {
-      var result = await Task.Run(() => {
+      var result = await Task.Run(async () => {
         var result = new LoadedDocument(filePath, modulePath, id);
         result.Loader = loader;
-        result.Summary = result.Loader.LoadDocument(progressHandler);
+        result.Summary = await result.Loader.LoadDocument(progressHandler);
         return result;
       });
 
@@ -918,12 +918,12 @@ public partial class MainWindow : Window, IUISession {
     }
   }
 
-  private ILoadedDocument LoadDocument(byte[] data, string filePath, string modulePath, Guid id,
+  private async Task<ILoadedDocument> LoadDocument(byte[] data, string filePath, string modulePath, Guid id,
                                       ProgressInfoHandler progressHandler) {
     try {
       var result = new LoadedDocument(filePath, modulePath, id);
       result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
-      result.Summary = result.Loader.LoadDocument(progressHandler);
+      result.Summary = await result.Loader.LoadDocument(progressHandler);
       return result;
     }
     catch (Exception ex) {

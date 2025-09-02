@@ -7,7 +7,7 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Providers;
 
-public class DebugInfoProviderFactory : IDebugInfoProviderFactory {
+public class ASMDebugInfoProviderFactory : IDebugInfoProviderFactory {
   private static readonly Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();
 
   public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {

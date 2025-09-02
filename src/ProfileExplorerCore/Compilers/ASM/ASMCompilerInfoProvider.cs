@@ -19,10 +19,16 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private readonly ISession session_;
   private readonly ASMNameProvider names_ = new();
   private readonly ASMCompilerIRInfo ir_;
+  private readonly IBinaryFileFinder binaryFileFinder_;
+  private readonly IDebugFileFinder debugFileFinder_;
+  private readonly IDebugInfoProviderFactory debugInfoProviderFactory_;
 
   public ASMCompilerInfoProvider(IRMode mode, ISession session) {
     session_ = session;
     ir_ = new ASMCompilerIRInfo(mode);
+    binaryFileFinder_ = new ASMBinaryFileFinder();
+    debugFileFinder_ = new ASMDebugFileFinder();
+    debugInfoProviderFactory_ = new ASMDebugInfoProviderFactory();
   }
 
   public virtual string CompilerIRName => "ASM";
@@ -34,6 +40,9 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public ISession Session => session_;
   public ICompilerIRInfo IR => ir_;
   public INameProvider NameProvider => names_;
+  public IBinaryFileFinder BinaryFileFinder => binaryFileFinder_;
+  public IDebugFileFinder DebugFileFinder => debugFileFinder_;
+  public IDebugInfoProviderFactory DebugInfoProviderFactory => debugInfoProviderFactory_;
 
   public virtual Task HandleLoadedDocument(ILoadedDocument document, string modulePath) {
     return Task.CompletedTask;
@@ -73,7 +82,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     if (loadedDoc.DebugInfoFileExists) {
-      var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
+      var debugInfo = DebugInfoProviderFactory.CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
 
       if (debugInfo != null) {
         lock (loadedDoc) {
@@ -98,100 +107,6 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
 
   //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider,
   //? probably inside SessionState
-  public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
-    if (!debugFile.Found) {
-      return null;
-    }
-
-    lock (this) {
-      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
-        return provider;
-      }
-
-      var newProvider = new PDBDebugInfoProvider(CoreSettingsProvider.SymbolSettings);
-
-      if (newProvider.LoadDebugInfo(debugFile, provider)) {
-        loadedDebugInfo_[debugFile] = newProvider;
-        provider?.Dispose();
-        return newProvider;
-      }
-
-      return null;
-    }
-  }
-
-  public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath,
-                                                                  SymbolFileSourceSettings settings = null) {
-    using var info = new PEBinaryInfoProvider(imagePath);
-
-    if (!info.Initialize()) {
-      return Utils.LocateDebugInfoFile(imagePath, ".json");
-    }
-
-    switch (info.BinaryFileInfo.FileKind) {
-      case BinaryFileKind.Native: {
-        if (settings == null) {
-          // Make sure the binary directory is also included in the symbol search.
-          settings = CoreSettingsProvider.SymbolSettings.Clone();
-          settings.InsertSymbolPath(imagePath);
-        }
-
-        return await FindDebugInfoFileAsync(info.SymbolFileInfo, settings).ConfigureAwait(false);
-      }
-    }
-
-    return DebugFileSearchResult.None;
-  }
-
-  public DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null) {
-    using var info = new PEBinaryInfoProvider(imagePath);
-
-    if (!info.Initialize()) {
-      return Utils.LocateDebugInfoFile(imagePath, ".json");
-    }
-
-    switch (info.BinaryFileInfo.FileKind) {
-      case BinaryFileKind.Native: {
-        if (settings == null) {
-          // Make sure the binary directory is also included in the symbol search.
-          settings = CoreSettingsProvider.SymbolSettings;
-          settings.InsertSymbolPath(imagePath);
-        }
-
-        return FindDebugInfoFile(info.SymbolFileInfo, settings);
-      }
-    }
-
-    return DebugFileSearchResult.None;
-  }
-
-  public async Task<DebugFileSearchResult>
-    FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
-    if (settings == null) {
-      settings = CoreSettingsProvider.SymbolSettings;
-    }
-
-    return await PDBDebugInfoProvider.LocateDebugInfoFileAsync(symbolFile, settings).ConfigureAwait(false);
-  }
-
-  public DebugFileSearchResult
-    FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null) {
-    if (settings == null) {
-      settings = CoreSettingsProvider.SymbolSettings;
-    }
-
-    return PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, settings);
-  }
-
-  public async Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                                SymbolFileSourceSettings settings = null) {
-    if (settings == null) {
-      // Make sure the binary directory is also included in the symbol search.
-      settings = CoreSettingsProvider.SymbolSettings.Clone();
-    }
-
-    return await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, settings).ConfigureAwait(false);
-  }
 
   public Task ReloadSettings() {
     return Task.CompletedTask;

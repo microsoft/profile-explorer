@@ -67,14 +67,14 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     InitializeDisassembler();
   }
 
-  public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
+  public async override Task<IRTextSummary> LoadDocument(ProgressInfoHandler progressHandler) {
     progressHandler?.Invoke(null, new SectionReaderProgressInfo(true));
 
     if (debugInfo_ == null) {
       if (preloadFunctions_) {
         // When opening in non-profiling mode, lookup the debug info now.
-        debugInfoFile_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_);
-        debugInfo_ = compilerInfo_.CreateDebugInfoProvider(debugInfoFile_);
+        debugInfoFile_ = await compilerInfo_.DebugFileFinder.FindDebugInfoFileAsync(binaryFilePath_);
+        debugInfo_ = compilerInfo_.DebugInfoProviderFactory.CreateDebugInfoProvider(debugInfoFile_);
       }
 
       if (debugInfo_ == null) {
