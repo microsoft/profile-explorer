@@ -64,35 +64,16 @@ public class BaseSession : ISession
       return LoadedDocument.CreateDummyDocument(name);
     }
 
-  private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
-    await EndSession();
-    compilerInfo_ = compilerInfo;
-    await compilerInfo_.ReloadSettings();
-  }
-
-  private void StartSession(string filePath, SessionKind sessionKind) {
-    documentLoadTask_ = new CancelableTaskInstance(false, RegisterCancelableTask,
-                                                   UnregisterCancelableTask);
-    compilerInfo_.ReloadSettings();
-  }
-
-  private async Task EndSession(bool showStartPage = true) {
-    // Wait for any pending tasks to complete.
-    await CancelPendingTasks();
-
-    foreach (var docInfo in documents_) {
-      docInfo.Dispose();
-    }
-
-    documents_.Clear();
-
-    FunctionAnalysisCache.ResetCache();
-  }
-
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(compilerInfo_.IR, compilerInfo_.NameProvider, compilerInfo_.BinaryFileFinder,
-      compilerInfo_.DebugFileFinder, compilerInfo_.DebugInfoProviderFactory);
+    
+    // Initialize with a default compiler info provider
+    if (compilerInfo_ == null) {
+      compilerInfo_ = CreateCompilerInfoProvider(IRMode.Default);
+    }
+    
+    using var provider = new ETWProfileDataProvider(compilerInfo_);
+    
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
@@ -132,19 +113,6 @@ public class BaseSession : ISession
     foreach (var task in tasks) {
       task.Cancel();
       await task.WaitToCompleteAsync();
-    }
-  }
-
-
-  private void RegisterCancelableTask(CancelableTask task) {
-    lock (lockObject_) {
-      pendingTasks_.Add(task);
-    }
-  }
-
-  private void UnregisterCancelableTask(CancelableTask task) {
-    lock (lockObject_) {
-      pendingTasks_.Remove(task);
     }
   }
 }

@@ -31,15 +31,13 @@ public sealed class ProfileModuleBuilder {
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
 
-  public ProfileModuleBuilder(ProfileDataReport report, IBinaryFileFinder binaryFileFinder, 
-                              IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory,
-                              ICompilerIRInfo compilerIrInfo, INameProvider nameProvider) {
+  public ProfileModuleBuilder(ProfileDataReport report, ICompilerInfoProvider compilerInfoProvider) {
     report_ = report;
-    binaryFileFinder_ = binaryFileFinder;
-    debugFileFinder_ = debugFileFinder;
-    debugInfoProviderFactory_ = debugInfoProviderFactory;
-    compilerIrInfo_ = compilerIrInfo;
-    nameProvider_ = nameProvider;
+    binaryFileFinder_ = compilerInfoProvider.BinaryFileFinder;
+    debugFileFinder_ = compilerInfoProvider.DebugFileFinder;
+    debugInfoProviderFactory_ = compilerInfoProvider.DebugInfoProviderFactory;
+    compilerIrInfo_ = compilerInfoProvider.IR;
+    nameProvider_ = compilerInfoProvider.NameProvider;
     functionMap_ = new ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)>();
     lock_ = new ReaderWriterLockSlim();
   }

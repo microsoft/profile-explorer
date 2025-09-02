@@ -16,6 +16,7 @@ using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Core.Compilers.ASM;
 
 namespace ProfileExplorer.CoreTests;
 
@@ -250,15 +251,10 @@ public class EndToEndWorkflowTests {
     Console.WriteLine($"\n=== Step 3: Loading trace data for process {targetProcessId} ===");
     
     var session = new BaseSession();
-    var binaryFileFinder = new ASMBinaryFileFinder();
-    var debugFileFinder = new ASMDebugFileFinder();
-    var debugInfoProviderFactory = new ASMDebugInfoProviderFactory();
-    var dataProvider = new ETWProfileDataProvider(compilerInfo_.IR, compilerInfo_.NameProvider, compilerInfo_.BinaryFileFinder,
-      compilerInfo_.DebugFileFinder, compilerInfo_.DebugInfoProviderFactory);
     var processIds = new List<int> { targetProcessId };
     var report = new ProfileDataReport();
 
-    var profileData = await dataProvider.LoadTraceAsync(
+    bool loadResult = await session.LoadProfileData(
       testCase.TracePath, 
       processIds, 
       options, 
@@ -269,7 +265,10 @@ public class EndToEndWorkflowTests {
       }, 
       cancelableTask);
 
-    Assert.IsNotNull(profileData, "Failed to load profile data");
+    Assert.IsTrue(loadResult, "Failed to load profile data");
+    
+    var profileData = session.ProfileData;
+    Assert.IsNotNull(profileData, "Profile data is null after successful load");
     Console.WriteLine("Data processing completed successfully");
 
     // Step 4: Get module baseline data

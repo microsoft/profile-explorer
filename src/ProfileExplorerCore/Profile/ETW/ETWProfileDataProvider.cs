@@ -44,11 +44,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private static ProfileModuleBuilder prevProfileModuleBuilder_;
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
-  private ICompilerIRInfo compilerIRInfo_;
-  private INameProvider nameProvider_;
-  private IBinaryFileFinder binaryFileFinder_;
-  private IDebugFileFinder debugFileFinder_;
-  private IDebugInfoProviderFactory debugInfoProviderFactory_;
+  private ICompilerInfoProvider compilerInfoProvider_;
   private ProfileData profileData_;
   private object lockObject_;
   private object[] imageLocks_;
@@ -60,13 +56,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   public event SetupNewSessionHandler SetupNewSessionRequested;
   public event StartNewSessionHandler StartNewSessionRequested;
 
-  public ETWProfileDataProvider(ICompilerIRInfo compilerIRInfo, INameProvider nameProvider, IBinaryFileFinder binaryFileFinder, IDebugFileFinder debugFileFinder, IDebugInfoProviderFactory debugInfoProviderFactory) {
+  public ETWProfileDataProvider(ICompilerInfoProvider compilerInfoProvider) {
     profileData_ = new ProfileData();
-    compilerIRInfo_ = compilerIRInfo;
-    nameProvider_ = nameProvider;
-    binaryFileFinder_ = binaryFileFinder;
-    debugFileFinder_ = debugFileFinder;
-    debugInfoProviderFactory_ = debugInfoProviderFactory;
+    compilerInfoProvider_ = compilerInfoProvider;
 
     // Data structs used for module loading.
     lockObject_ = new object();
@@ -344,7 +336,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         Trace.WriteLine($"LoadTraceAsync: Calling SetupNewSessionRequested event");
-        await SetupNewSessionRequested?.Invoke(exeDocument, otherDocuments, profileData_);
+        await (SetupNewSessionRequested?.Invoke(exeDocument, otherDocuments, profileData_) ?? Task.CompletedTask);
         Trace.WriteLine($"LoadTraceAsync: Completed SetupNewSessionRequested event");
       }
       else {
@@ -912,7 +904,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
 #endif
 
-    await StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, irMode);
+    await (StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, irMode) ?? Task.CompletedTask);
 
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
@@ -966,7 +958,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           DebugFileSearchResult result;
 
           try {
-            result = await debugFileFinder_.FindDebugInfoFileAsync(symbolFile, symbolSettings);
+            result = await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(symbolFile, symbolSettings);
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -984,7 +976,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           DebugFileSearchResult result;
 
           try {
-            result = debugFileFinder_.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+            result = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -1034,8 +1026,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
                                                    SymbolFileSourceSettings symbolSettings) {
     var totalSw = Stopwatch.StartNew();
-    var imageModule = new ProfileModuleBuilder(report_, binaryFileFinder_, debugFileFinder_, debugInfoProviderFactory_, 
-                                               compilerIRInfo_, nameProvider_);
+    var imageModule = new ProfileModuleBuilder(report_, compilerInfoProvider_);
     IDebugInfoProvider imageDebugInfo = null;
 
     Trace.WriteLine($"CreateModuleBuilderAsync: Starting for module {image.ModuleName}");
@@ -1126,14 +1117,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                  ProfileImage image, RawProfileData rawProfile, int processId,
                                                  SymbolFileSourceSettings symbolSettings) {
     if (binaryFile is {Found: true}) {
-      return await debugFileFinder_.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings);
+      return await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings);
     }
     else {
       // Try to use ETL info if binary not available.
       var symbolFile = rawProfile.GetDebugFileForImage(image, processId);
 
       if (symbolFile != null) {
-        return await debugFileFinder_.FindDebugInfoFileAsync(symbolFile, symbolSettings);
+        return await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(symbolFile, symbolSettings);
       }
     }
 
