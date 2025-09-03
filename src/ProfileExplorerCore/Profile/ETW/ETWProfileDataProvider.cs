@@ -23,7 +23,7 @@ namespace ProfileExplorer.Core.Profile.ETW;
 
 // Event delegates for session callbacks
 public delegate Task SetupNewSessionHandler(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData);
-public delegate Task StartNewSessionHandler(string sessionName, SessionKind sessionKind, IRMode irMode);
+public delegate Task StartNewSessionHandler(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
@@ -56,9 +56,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   public event SetupNewSessionHandler SetupNewSessionRequested;
   public event StartNewSessionHandler StartNewSessionRequested;
 
-  public ETWProfileDataProvider(ICompilerInfoProvider compilerInfoProvider) {
+  public ETWProfileDataProvider() {
     profileData_ = new ProfileData();
-    compilerInfoProvider_ = compilerInfoProvider;
 
     // Data structs used for module loading.
     lockObject_ = new object();
@@ -904,7 +903,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
 #endif
 
-    await (StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, irMode) ?? Task.CompletedTask);
+    compilerInfoProvider_ = new ASMCompilerInfoProvider(irMode);
+    await (StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, compilerInfoProvider_) ?? Task.CompletedTask);
 
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.

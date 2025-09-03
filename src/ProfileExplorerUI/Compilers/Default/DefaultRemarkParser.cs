@@ -11,8 +11,8 @@ namespace ProfileExplorer.UI.Compilers.Default;
 public class DefaultRemarkParser {
   private IRSectionParser parser_;
 
-  public DefaultRemarkParser(ICompilerInfoProvider compilerInfo) {
-    parser_ = compilerInfo.IR.CreateSectionParser(null);
+  public DefaultRemarkParser(ICompilerIRInfo irInfo) {
+    parser_ = irInfo.CreateSectionParser(null);
   }
 
   public static string ExtractValueNumber(IRElement element, string prefix) {

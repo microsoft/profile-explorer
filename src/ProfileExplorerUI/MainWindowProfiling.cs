@@ -55,7 +55,7 @@ public partial class MainWindow : Window, IUISession {
                                           CancelableTask cancelableTask) {
     Trace.WriteLine($"LoadProfileData: Starting profile data loading for {profileFilePath}");
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(compilerInfo_);
+    using var provider = new ETWProfileDataProvider();
     
     // Subscribe to events to replace the old session callbacks
     provider.SetupNewSessionRequested += OnSetupNewSessionRequested;
@@ -96,7 +96,7 @@ public partial class MainWindow : Window, IUISession {
                                           ProfileLoadProgressHandler progressCallback,
                                           CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(compilerInfo_);
+    using var provider = new ETWProfileDataProvider();
     
     // Subscribe to events to replace the old session callbacks
     provider.SetupNewSessionRequested += OnSetupNewSessionRequested;
@@ -923,12 +923,11 @@ public partial class MainWindow : Window, IUISession {
     });
   }
 
-  private async Task OnStartNewSessionRequested(string sessionName, SessionKind sessionKind, IRMode irMode) {
+  private async Task OnStartNewSessionRequested(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
     await Dispatcher.InvokeAsync(async () => {
       UpdateUIBeforeLoadDocument("profile");
       
       // Create the UI compiler info provider using the provided IRMode
-      var compilerInfo = new ASMUICompilerInfoProvider(irMode);
       await SwitchCompilerTarget(compilerInfo);
 
       StartSession(sessionName, sessionKind);

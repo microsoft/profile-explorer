@@ -31,6 +31,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   }
 
   public virtual string CompilerIRName => "ASM";
+  public virtual CompilerIRKind CompilerIRKind => CompilerIRKind.ASM;
   public virtual string CompilerDisplayName => "ASM " + ir_.Mode;
   public virtual string OpenFileFilter =>
     "ASM, Binary, Trace Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys;*.etl|All Files|*.*";

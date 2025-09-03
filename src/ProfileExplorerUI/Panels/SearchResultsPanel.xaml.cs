@@ -118,7 +118,7 @@ public class SearchResultInfo {
         return true;
       }
 
-      if (Session.CompilerInfo.SectionStyleProvider.IsMarkedSection(Section, out var markedName)) {
+      if (Session.SectionStyleProvider.IsMarkedSection(Section, out var markedName)) {
         isMarked_ = true;
         textColor_ = ColorBrushes.GetBrush(markedName.TextColor);
       }

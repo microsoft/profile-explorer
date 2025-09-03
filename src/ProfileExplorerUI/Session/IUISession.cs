@@ -19,6 +19,7 @@ using ProfileExplorer.UI.Query;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorerUI.Session;
+using ProfileExplorer.UI.Providers;
 
 namespace ProfileExplorer.UI;
 
@@ -30,7 +31,10 @@ public enum DuplicatePanelKind {
 }
 
 public interface IUISession : ISession {
-  new IUICompilerInfoProvider CompilerInfo { get; }
+  ISectionStyleProvider SectionStyleProvider { get; }
+  IRRemarkProvider RemarkProvider { get; }
+  IBlockFoldingStrategyProvider BlockFoldingStrategyProvider { get; }
+  ILoadedSectionHandler LoadedSectionHandler { get; }
   IRDocument CurrentDocument { get; }
   IRTextSection CurrentDocumentSection { get; }
   List<IRDocument> OpenDocuments { get; }

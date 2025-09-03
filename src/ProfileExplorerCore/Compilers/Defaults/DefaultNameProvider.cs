@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorer.UI.Compilers.Default;
+namespace ProfileExplorer.Core.Compilers.Default;
 
 public enum FilteredSectionNameKind {
   TrimPrefix,
@@ -46,8 +47,8 @@ public sealed class DefaultNameProvider : INameProvider {
   }
 
   public bool IsDemanglingSupported => true;
-  public bool IsDemanglingEnabled => IsDemanglingSupported && App.Settings.SectionSettings.ShowDemangledNames;
-  public FunctionNameDemanglingOptions GlobalDemanglingOptions => App.Settings.SectionSettings.DemanglingOptions;
+  public bool IsDemanglingEnabled => IsDemanglingSupported && CoreSettingsProvider.SectionSettings.ShowDemangledNames;
+  public FunctionNameDemanglingOptions GlobalDemanglingOptions => CoreSettingsProvider.SectionSettings.DemanglingOptions;
 
   public string GetSectionName(IRTextSection section, bool includeNumber) {
     string sectionName = section.Name;

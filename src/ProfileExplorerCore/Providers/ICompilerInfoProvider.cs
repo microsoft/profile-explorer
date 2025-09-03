@@ -14,6 +14,7 @@ namespace ProfileExplorer.Core.Providers;
 
 public interface ICompilerInfoProvider {
   string CompilerIRName { get; }
+  CompilerIRKind CompilerIRKind { get; }
   string CompilerDisplayName { get; }
   string DefaultSyntaxHighlightingFile { get; }
   string OpenFileFilter { get; }

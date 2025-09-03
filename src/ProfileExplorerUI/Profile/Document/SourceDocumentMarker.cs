@@ -12,6 +12,8 @@ using ProfileExplorer.Core.IR;
 using ProfileExplorer.UI.Document;
 using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core;
+using System.CodeDom.Compiler;
 
 namespace ProfileExplorer.UI.Profile;
 
@@ -19,11 +21,13 @@ public class SourceDocumentMarker {
   private const int FunctionNameMaxLength = 80;
   private static readonly string SourceOverlayTag = "SourceTag";
   private SourceDocumentMarkerSettings settings_;
-  private ICompilerInfoProvider irInfo_;
+  private ICompilerIRInfo irInfo_;
+  private INameProvider nameProvider_;
 
-  public SourceDocumentMarker(SourceDocumentMarkerSettings settings, ICompilerInfoProvider ir) {
+  public SourceDocumentMarker(SourceDocumentMarkerSettings settings, ICompilerInfoProvider compilerInfo) {
     settings_ = settings;
-    irInfo_ = ir;
+    irInfo_ = compilerInfo.IR;
+    nameProvider_ = compilerInfo.NameProvider ;
   }
 
   public async Task Mark(IRDocument document, FunctionIR function) {
@@ -90,7 +94,7 @@ public class SourceDocumentMarker {
             var inlinee = inlinees[inlinees.Count - k - 1]; // Append backwards.
 
             if (!inlineeFrameMap.TryGetValue(inlinee, out var inlineeText)) {
-              string inlineeName = irInfo_.NameProvider.FormatFunctionName(inlinee.Function);
+              string inlineeName = nameProvider_.FormatFunctionName(inlinee.Function);
 
               inlineeText = new ValueTuple<string, string>();
               inlineeText.Title = $"{inlineeName}:{inlinees[k].Line}";
@@ -155,8 +159,8 @@ public class SourceDocumentMarker {
 
   private void MarkCallInstruction(InstructionIR instr, IRDocument document,
                                    Dictionary<int, OperandIR> lineToOperandMap) {
-    if (irInfo_.IR.IsCallInstruction(instr) &&
-        irInfo_.IR.GetCallTarget(instr) is OperandIR callTargetOp &&
+    if (irInfo_.IsCallInstruction(instr) &&
+        irInfo_.GetCallTarget(instr) is OperandIR callTargetOp &&
         callTargetOp.HasName) {
       // Mark only functions whose code is available in the session.
       if (DocumentUtils.FindCallTargetSection(callTargetOp, document.Section, document.Session) != null) {

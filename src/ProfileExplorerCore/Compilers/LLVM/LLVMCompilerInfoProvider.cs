@@ -9,19 +9,13 @@ using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Diff;
-using ProfileExplorer.UI.Compilers.Default;
-using ProfileExplorer.Core.Settings;
-using ProfileExplorer.UI;
-using ProfileExplorer.UI.Query;
-using ProfileExplorerUI.Session;
+using ProfileExplorer.Core.Compilers.Default;
 
-namespace ProfileExplorer.UI.Compilers.LLVM;
+namespace ProfileExplorer.Core.Compilers.LLVM;
 
-public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
+public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
   private LLVMCompilerIRInfo ir_;
   private DefaultNameProvider names_;
-  private DefaultRemarkProvider remarks_;
-  private DefaultSectionStyleProvider styles_;
   private readonly IBinaryFileFinder binaryFileFinder_;
   private readonly IDebugFileFinder debugFileFinder_;
   private readonly IDebugInfoProviderFactory debugInfoProviderFactory_;
@@ -29,16 +23,15 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
 
   public LLVMCompilerInfoProvider() {
     ir_ = new LLVMCompilerIRInfo();
-    styles_ = new DefaultSectionStyleProvider(this);
     names_ = new DefaultNameProvider();
-    remarks_ = new DefaultRemarkProvider(this);
     binaryFileFinder_ = new LLVMBinaryFileFinder();
     debugFileFinder_ = new LLVMDebugFileFinder();
     debugInfoProviderFactory_ = new LLVMDebugInfoProviderFactory();
-  diffFilterProvider_ = new LLVMDiffFilterProvider();
+    diffFilterProvider_ = new LLVMDiffFilterProvider();
   }
 
   public string CompilerIRName => "LLVM";
+  public CompilerIRKind CompilerIRKind => CompilerIRKind.LLVM;
   public string CompilerDisplayName => "LLVM";
   public string DefaultSyntaxHighlightingFile => "LLVM";
   public string OpenFileFilter =>
@@ -50,20 +43,6 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   public IDebugFileFinder DebugFileFinder => debugFileFinder_;
   public IDebugInfoProviderFactory DebugInfoProviderFactory => debugInfoProviderFactory_;
   public IDiffFilterProvider DiffFilterProvider => diffFilterProvider_;
-  public ISectionStyleProvider SectionStyleProvider => styles_;
-  public IRRemarkProvider RemarkProvider => remarks_;
-  public List<QueryDefinition> BuiltinQueries => new();
-  public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
-  public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
-
-  public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-    return new BasicBlockFoldingStrategy(function);
-  }
-
-  private sealed class LLVMDiffFilterProvider : IDiffFilterProvider {
-    public IDiffInputFilter CreateDiffInputFilter() => null;
-    public IDiffOutputFilter CreateDiffOutputFilter() => new DefaultDiffOutputFilter();
-  }
 
   public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
                                                 ILoadedDocument loadedDoc, FunctionDebugInfo funcDebugInfo) {
@@ -71,10 +50,4 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     //loopGraph.FindLoops();
     return true;
   }
-
-  public Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
-    return Task.CompletedTask;
-  }
-
-  // ReloadSettings removed
 }

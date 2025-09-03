@@ -32,13 +32,18 @@ using ProfileExplorerUI.Session;
 using System.Linq;
 using ProfileExplorer.Core.Compilers.ASM;
 using ProfileExplorer.UI.Compilers.ASM;
+using ProfileExplorer.UI.Providers;
 
 namespace ProfileExplorer.UI;
 
 public partial class MainWindow : Window, IUISession {
   private SemaphoreSlim SessionLoadCompleted = new(1);
   public bool SilentMode { get; set; }
-  public IUICompilerInfoProvider CompilerInfo => compilerInfo_;
+  public ICompilerInfoProvider CompilerInfo => compilerInfo_;
+  public ISectionStyleProvider SectionStyleProvider => sectionStyleProvider_;
+  public IRRemarkProvider RemarkProvider => remarkProvider_;
+  public IBlockFoldingStrategyProvider BlockFoldingStrategyProvider => blockFoldingStrategyProvider_;
+  public ILoadedSectionHandler LoadedSectionHandler => loadedSectionHandler_;
   public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
   public bool IsInDiffMode => sessionState_.SectionDiffState.IsEnabled;
   public bool IsInTwoDocumentsDiffMode => sessionState_.IsInTwoDocumentsDiffMode;

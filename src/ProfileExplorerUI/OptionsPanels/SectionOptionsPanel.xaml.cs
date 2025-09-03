@@ -23,7 +23,7 @@ public partial class SectionOptionsPanel : OptionsPanelBase {
   }
 
   private void ReloadButton_Click(object sender, RoutedEventArgs e) {
-    Session.CompilerInfo.SectionStyleProvider.LoadSettings();
+    Session.SectionStyleProvider.LoadSettings();
   }
 
   private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {

@@ -35,13 +35,12 @@ public class BaseSession : ISession
 
   public BaseSession()
   {
-    compilerInfo_ = new ASMCompilerInfoProvider(IRMode.Default);
     profileData_ = null;
     documents_ = new List<ILoadedDocument>();
   }
 
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {    
-    using var provider = new ETWProfileDataProvider(compilerInfo_);
+    using var provider = new ETWProfileDataProvider();
     
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,

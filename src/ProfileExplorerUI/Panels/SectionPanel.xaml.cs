@@ -1102,7 +1102,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
   public IRTextFunction CurrentFunction => currentFunction_;
   public bool HasAnnotatedSections => annotatedSections_.Count > 0;
-  public IUICompilerInfoProvider CompilerInfo { get; set; }
+  public ICompilerInfoProvider CompilerInfo { get; set; }
   public override ToolPanelKind PanelKind => ToolPanelKind.Section;
   public override bool SavesStateToFile => true;
 
@@ -1407,7 +1407,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       sectionExtMap_[section] = sectionEx;
       sections.Add(sectionEx);
 
-      if (CompilerInfo.SectionStyleProvider.IsMarkedSection(section, out var markedName)) {
+      if (Session.SectionStyleProvider.IsMarkedSection(section, out var markedName)) {
         if (settings_.ColorizeSectionNames) {
           sectionEx.IsMarked = true;
           sectionEx.TextColor = ColorBrushes.GetBrush(markedName.TextColor);

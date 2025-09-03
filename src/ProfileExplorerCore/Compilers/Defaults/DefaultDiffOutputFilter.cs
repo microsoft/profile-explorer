@@ -7,7 +7,7 @@ using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
 using ProfileExplorer.Core.Settings;
 
-namespace ProfileExplorer.UI.Compilers.Default;
+namespace ProfileExplorer.Core.Compilers.Default;
 
 public sealed class DefaultDiffOutputFilter : IDiffOutputFilter {
   private DiffSettings settings_;

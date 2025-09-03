@@ -19,25 +19,11 @@ using ProfileExplorerUI.Session;
 
 namespace ProfileExplorer.UI.Compilers.ASM;
 
-public class ASMUICompilerInfoProvider : ASMCompilerInfoProvider, IUICompilerInfoProvider {
-  private readonly DummySectionStyleProvider styles_ = new();
-  private readonly DefaultRemarkProvider remarks_;
-  private readonly IUISession uI_Session;
+public class ASMLoadedSectionHandler : ILoadedSectionHandler {
+  private ICompilerInfoProvider compilerInfo_;
 
-  public ASMUICompilerInfoProvider(IRMode mode)
-    : base(mode)
-    {
-    remarks_ = new DefaultRemarkProvider(this);
-  }
-
-  public ISectionStyleProvider SectionStyleProvider => styles_;
-  public IRRemarkProvider RemarkProvider => remarks_;
-  public List<QueryDefinition> BuiltinQueries => new();
-  public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
-  public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
-
-  public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-    return new BasicBlockFoldingStrategy(function);
+  public ASMLoadedSectionHandler(ICompilerInfoProvider compilerInfo) {
+    compilerInfo_ = compilerInfo;
   }
 
   public async Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
@@ -46,7 +32,7 @@ public class ASMUICompilerInfoProvider : ASMCompilerInfoProvider, IUICompilerInf
     CreateBlockLabelOverlays(document, function);
 
     // Annotate instrs. with source line numbers if debug info is available.
-    var sourceMarker = new SourceDocumentMarker(App.Settings.DocumentSettings.SourceMarkerSettings, this);
+    var sourceMarker = new SourceDocumentMarker(App.Settings.DocumentSettings.SourceMarkerSettings, compilerInfo_);
     await sourceMarker.Mark(document, function);
   }
 
