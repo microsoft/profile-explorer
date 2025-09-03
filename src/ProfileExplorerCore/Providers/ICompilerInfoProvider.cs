@@ -16,7 +16,6 @@ public interface ICompilerInfoProvider {
   string CompilerIRName { get; }
   string CompilerDisplayName { get; }
   string DefaultSyntaxHighlightingFile { get; }
-  ISession Session { get; }
   ICompilerIRInfo IR { get; }
   INameProvider NameProvider { get; }
   IBinaryFileFinder BinaryFileFinder { get; }
@@ -27,11 +26,10 @@ public interface ICompilerInfoProvider {
   Task ReloadSettings();
 
   Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
-                                   FunctionDebugInfo funcDebugInfo = null);
+                                   ILoadedDocument loadedDoc, FunctionDebugInfo funcDebugInfo = null);
 
   IDiffInputFilter CreateDiffInputFilter();
   IDiffOutputFilter CreateDiffOutputFilter();
-  Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
 }
 
 [ProtoContract]

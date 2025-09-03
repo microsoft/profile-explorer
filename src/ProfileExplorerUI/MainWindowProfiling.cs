@@ -436,7 +436,9 @@ public partial class MainWindow : Window, IUISession {
   }
 
   public async Task<IDebugInfoProvider> GetDebugInfoProvider(IRTextFunction function) {
-    return await CompilerInfo.GetOrCreateDebugInfoProvider(function).ConfigureAwait(false);
+    var loadedDoc = FindLoadedDocument(function);
+
+    return CompilerInfo.DebugInfoProviderFactory.GetOrCreateDebugInfoProvider(function, loadedDoc);
   }
 
   public async Task<bool> FunctionMarkingChanged(ToolPanelKind sourcePanelKind) {

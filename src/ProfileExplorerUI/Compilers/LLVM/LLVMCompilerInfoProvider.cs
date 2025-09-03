@@ -19,7 +19,6 @@ namespace ProfileExplorer.UI.Compilers.LLVM;
 
 public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   private LLVMCompilerIRInfo ir_;
-  private IUISession session_;
   private DefaultNameProvider names_;
   private DefaultRemarkProvider remarks_;
   private DefaultSectionStyleProvider styles_;
@@ -27,8 +26,7 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   private readonly IDebugFileFinder debugFileFinder_;
   private readonly IDebugInfoProviderFactory debugInfoProviderFactory_;
 
-  public LLVMCompilerInfoProvider(IUISession session) {
-    session_ = session;
+  public LLVMCompilerInfoProvider() {
     ir_ = new LLVMCompilerIRInfo();
     styles_ = new DefaultSectionStyleProvider(this);
     names_ = new DefaultNameProvider();
@@ -44,7 +42,6 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   public string OpenFileFilter =>
     "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.pex|Profile Explorer Session Files|*.pex|All Files|*.*";
   public string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
-  public IUISession Session => session_;
   public ICompilerIRInfo IR => ir_;
   public INameProvider NameProvider => names_;
   public IBinaryFileFinder BinaryFileFinder => binaryFileFinder_;
@@ -55,8 +52,6 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   public List<QueryDefinition> BuiltinQueries => new();
   public List<FunctionTaskDefinition> BuiltinFunctionTasks => new();
   public List<FunctionTaskDefinition> ScriptFunctionTasks => new();
-
-  ISession ICompilerInfoProvider.Session => Session;
 
   public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
     return new BasicBlockFoldingStrategy(function);
@@ -70,12 +65,8 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     return new DefaultDiffOutputFilter();
   }
 
-  public async Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function) {
-    return null;
-  }
-
   public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
-                                                FunctionDebugInfo funcDebugInfo) {
+                                                ILoadedDocument loadedDoc, FunctionDebugInfo funcDebugInfo) {
     //? TODO: var loopGraph = new LoopGraph(function);
     //loopGraph.FindLoops();
     return true;

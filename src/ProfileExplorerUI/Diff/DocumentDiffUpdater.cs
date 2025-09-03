@@ -12,6 +12,7 @@ using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.Diff;
@@ -175,14 +176,14 @@ public class DocumentDiffUpdater {
   }
 
   public async Task ReparseDiffedFunction(DiffMarkingResult diffResult,
-                                          IRTextSection originalSection) {
+                                          IRTextSection originalSection, ILoadedDocument loadedDoc) {
     try {
       var errorHandler = compilerInfo_.IR.CreateParsingErrorHandler();
       var sectionParser = compilerInfo_.IR.CreateSectionParser(errorHandler);
       diffResult.DiffFunction = sectionParser.ParseSection(originalSection, diffResult.DiffText);
 
       if (diffResult.DiffFunction != null) {
-        await compilerInfo_.AnalyzeLoadedFunction(diffResult.DiffFunction, originalSection);
+        await compilerInfo_.AnalyzeLoadedFunction(diffResult.DiffFunction, originalSection, loadedDoc);
       }
       else {
         Trace.TraceWarning("Failed re-parsing diffed section\n");

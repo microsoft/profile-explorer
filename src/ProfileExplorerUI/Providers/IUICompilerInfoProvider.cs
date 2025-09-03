@@ -17,7 +17,6 @@ using ProtoBuf;
 namespace ProfileExplorer.UI;
 
 public interface IUICompilerInfoProvider : ICompilerInfoProvider {
-  new IUISession Session { get; }
   ISectionStyleProvider SectionStyleProvider { get; }
   IRRemarkProvider RemarkProvider { get; }
   List<QueryDefinition> BuiltinQueries { get; }

@@ -17,6 +17,7 @@ using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.Compilers.Architecture;
 
 namespace ProfileExplorer.CoreTests;
 
@@ -249,10 +250,12 @@ public class EndToEndWorkflowTests {
 
     // Step 3: Load trace data for the target process
     Console.WriteLine($"\n=== Step 3: Loading trace data for process {targetProcessId} ===");
-    
-    var session = new BaseSession();
+
+    using var provider = new ETWProfileDataProvider(new ASMCompilerInfoProvider(IRMode.Default));
     var processIds = new List<int> { targetProcessId };
     var report = new ProfileDataReport();
+
+    
 
     bool loadResult = await session.LoadProfileData(
       testCase.TracePath, 

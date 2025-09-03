@@ -8,14 +8,15 @@ using System.Windows;
 using System.Windows.Input;
 using DiffPlex.DiffBuilder.Model;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Diff;
-using ProfileExplorer.UI.OptionsPanels;
-using ProfileExplorer.Core.Utilities;
-using ProfileExplorer.Core.Session;
-using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Diff;
+using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorerUI.Session;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ProfileExplorer.UI;
 
@@ -429,7 +430,8 @@ public partial class MainWindow : Window, IUISession {
     return Task.Run(async () => {
       var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
                                          isRightDoc, filteredInput, diffStats);
-      await diffUpdater.ReparseDiffedFunction(result, section);
+      var loadedDoc = FindLoadedDocument(section.ParentFunction);
+      await diffUpdater.ReparseDiffedFunction(result, section, loadedDoc);
       return result;
     });
   }
@@ -440,7 +442,8 @@ public partial class MainWindow : Window, IUISession {
 
     return Task.Run(async () => {
       var result = diffUpdater.CreateNoDiffDocument(text);
-      await diffUpdater.ReparseDiffedFunction(result, section);
+      var loadedDoc = FindLoadedDocument(section.ParentFunction);
+      await diffUpdater.ReparseDiffedFunction(result, section, loadedDoc);
       return result;
     });
   }

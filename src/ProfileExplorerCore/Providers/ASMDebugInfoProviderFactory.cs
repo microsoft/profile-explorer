@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System.Collections.Generic;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 
@@ -30,5 +31,30 @@ public class ASMDebugInfoProviderFactory : IDebugInfoProviderFactory {
 
       return null;
     }
+  }
+
+  public IDebugInfoProvider GetOrCreateDebugInfoProvider(IRTextFunction function, ILoadedDocument loadedDoc) {
+    lock (loadedDoc) {
+      if (loadedDoc.DebugInfo != null) {
+        return loadedDoc.DebugInfo;
+      }
+    }
+
+    if (!loadedDoc.DebugInfoFileExists) {
+      return null;
+    }
+
+    if (loadedDoc.DebugInfoFileExists) {
+      var debugInfo = CreateDebugInfoProvider(loadedDoc.DebugInfoFile);
+
+      if (debugInfo != null) {
+        lock (loadedDoc) {
+          loadedDoc.DebugInfo = debugInfo;
+          return debugInfo;
+        }
+      }
+    }
+
+    return null;
   }
 }

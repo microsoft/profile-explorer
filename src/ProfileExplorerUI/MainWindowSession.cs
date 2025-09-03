@@ -138,7 +138,8 @@ public partial class MainWindow : Window, IUISession {
 
       if (parsedSection != null && parsedSection.Function != null) {
         var funcDebugInfo = ProfileData?.GetFunctionProfile(section.ParentFunction)?.FunctionDebugInfo;
-        await compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section, funcDebugInfo);
+        var loadedDoc = FindLoadedDocument(section.ParentFunction);
+        await compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section, loadedDoc, funcDebugInfo);
         addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
         return parsedSection;
       }
