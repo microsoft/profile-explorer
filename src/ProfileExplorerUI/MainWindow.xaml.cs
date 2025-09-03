@@ -998,7 +998,6 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private async Task SwitchCompilerTarget(IUICompilerInfoProvider compilerInfo) {
     await EndSession();
     compilerInfo_ = compilerInfo;
-    await compilerInfo_.ReloadSettings();
     App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
     SetupMainWindowCompilerTarget();
   }
@@ -1011,15 +1010,15 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     //? TODO: Use a list of registered IRs
     switch (name) {
       case "LLVM": {
-        await SwitchCompilerTarget(new LLVMCompilerInfoProvider(this));
+        await SwitchCompilerTarget(new LLVMCompilerInfoProvider());
         break;
       }
       case "ASM": {
-        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(irMode, this));
+    await SwitchCompilerTarget(new ASMUICompilerInfoProvider(irMode));
         break;
       }
       default: {
-        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(IRMode.x86_64, this));
+        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(IRMode.x86_64));
         break;
       }
     }

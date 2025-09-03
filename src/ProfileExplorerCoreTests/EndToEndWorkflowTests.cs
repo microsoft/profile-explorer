@@ -251,13 +251,13 @@ public class EndToEndWorkflowTests {
     // Step 3: Load trace data for the target process
     Console.WriteLine($"\n=== Step 3: Loading trace data for process {targetProcessId} ===");
 
-    using var provider = new ETWProfileDataProvider(new ASMCompilerInfoProvider(IRMode.Default));
+  var session = new BaseSession();
     var processIds = new List<int> { targetProcessId };
     var report = new ProfileDataReport();
 
     
 
-    bool loadResult = await session.LoadProfileData(
+  bool loadResult = await session.LoadProfileData(
       testCase.TracePath, 
       processIds, 
       options, 

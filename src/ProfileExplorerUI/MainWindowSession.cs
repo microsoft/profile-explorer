@@ -31,6 +31,7 @@ using ProfileExplorer.Core.Binary;
 using ProfileExplorerUI.Session;
 using System.Linq;
 using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.UI.Compilers.ASM;
 
 namespace ProfileExplorer.UI;
 
@@ -162,7 +163,7 @@ public partial class MainWindow : Window, IUISession {
   }
 
   public async Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
-    await CompilerInfo.ReloadSettings();
+  // CompilerInfo no longer exposes ReloadSettings.
 
     foreach (var docHostInfo in sessionState_.DocumentHosts) {
       if (docHostInfo.DocumentHost.TextView != document) {
@@ -184,8 +185,7 @@ public partial class MainWindow : Window, IUISession {
     // Reload UI settings.
     OnPropertyChanged(nameof(WindowScaling));
 
-    // Reload compiler provider settings.
-    await CompilerInfo.ReloadSettings();
+  // Compiler provider no longer exposes ReloadSettings.
 
     if (!IsSessionStarted) {
       return;
@@ -671,7 +671,7 @@ public partial class MainWindow : Window, IUISession {
     documentLoadTask_ = new CancelableTaskInstance(false, SessionState.RegisterCancelableTask,
                                                    SessionState.UnregisterCancelableTask);
     ClearGraphLayoutCache();
-    compilerInfo_.ReloadSettings();
+  // Compiler provider no longer exposes ReloadSettings.
 
     DiffModeButton.IsEnabled = true;
     HideStartPage();
@@ -1737,7 +1737,7 @@ public partial class MainWindow : Window, IUISession {
   }
 
   public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
-    return new UI.Compilers.ASM.ASMUICompilerInfoProvider(mode, this);
+    return new ASMUICompilerInfoProvider(mode);
   }
 
   public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {

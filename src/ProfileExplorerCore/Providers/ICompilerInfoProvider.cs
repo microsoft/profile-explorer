@@ -16,20 +16,17 @@ public interface ICompilerInfoProvider {
   string CompilerIRName { get; }
   string CompilerDisplayName { get; }
   string DefaultSyntaxHighlightingFile { get; }
+  string OpenFileFilter { get; }
+  string OpenDebugFileFilter { get; }
   ICompilerIRInfo IR { get; }
   INameProvider NameProvider { get; }
   IBinaryFileFinder BinaryFileFinder { get; }
   IDebugFileFinder DebugFileFinder { get; }
   IDebugInfoProviderFactory DebugInfoProviderFactory { get; }
-  string OpenFileFilter { get; }
-  string OpenDebugFileFilter { get; }
-  Task ReloadSettings();
-
+  IDiffFilterProvider DiffFilterProvider { get; }
+ 
   Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
                                    ILoadedDocument loadedDoc, FunctionDebugInfo funcDebugInfo = null);
-
-  IDiffInputFilter CreateDiffInputFilter();
-  IDiffOutputFilter CreateDiffOutputFilter();
 }
 
 [ProtoContract]

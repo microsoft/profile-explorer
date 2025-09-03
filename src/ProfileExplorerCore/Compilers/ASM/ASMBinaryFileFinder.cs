@@ -2,10 +2,11 @@
 // Licensed under the MIT license.
 using System.Threading.Tasks;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorer.Core.Providers;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public class ASMBinaryFileFinder : IBinaryFileFinder {
   public async Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile, SymbolFileSourceSettings settings = null) {

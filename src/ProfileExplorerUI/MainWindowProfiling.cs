@@ -928,7 +928,7 @@ public partial class MainWindow : Window, IUISession {
       UpdateUIBeforeLoadDocument("profile");
       
       // Create the UI compiler info provider using the provided IRMode
-      var compilerInfo = new ASMUICompilerInfoProvider(irMode, this);
+      var compilerInfo = new ASMUICompilerInfoProvider(irMode);
       await SwitchCompilerTarget(compilerInfo);
 
       StartSession(sessionName, sessionKind);

@@ -20,12 +20,14 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   private readonly IBinaryFileFinder binaryFileFinder_;
   private readonly IDebugFileFinder debugFileFinder_;
   private readonly IDebugInfoProviderFactory debugInfoProviderFactory_;
+  private readonly IDiffFilterProvider diffFilterProvider_;
 
   public ASMCompilerInfoProvider(IRMode mode) {
     ir_ = new ASMCompilerIRInfo(mode);
     binaryFileFinder_ = new ASMBinaryFileFinder();
     debugFileFinder_ = new ASMDebugFileFinder();
     debugInfoProviderFactory_ = new ASMDebugInfoProviderFactory();
+    diffFilterProvider_ = new ASMDiffFilterProvider(this);
   }
 
   public virtual string CompilerIRName => "ASM";
@@ -39,6 +41,7 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
   public IBinaryFileFinder BinaryFileFinder => binaryFileFinder_;
   public IDebugFileFinder DebugFileFinder => debugFileFinder_;
   public IDebugInfoProviderFactory DebugInfoProviderFactory => debugInfoProviderFactory_;
+  public IDiffFilterProvider DiffFilterProvider => diffFilterProvider_;
 
   public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section, ILoadedDocument loadedDoc, FunctionDebugInfo funcDebugInfo) {
     // Annotate the instructions with debug info (line numbers, source files)
@@ -57,19 +60,5 @@ public class ASMCompilerInfoProvider : ICompilerInfoProvider {
     }
 
     return true;
-  }
-
-  public IDiffInputFilter CreateDiffInputFilter() {
-    var filter = new ASMDiffInputFilter();
-    filter.Initialize(CoreSettingsProvider.DiffSettings, IR);
-    return filter;
-  }
-
-  public IDiffOutputFilter CreateDiffOutputFilter() {
-    return new BasicDiffOutputFilter();
-  }
-
-  public Task ReloadSettings() {
-    return Task.CompletedTask;
   }
 }

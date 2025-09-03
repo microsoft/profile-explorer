@@ -6,7 +6,7 @@ using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorer.UI.Compilers.LLVM;
+namespace ProfileExplorer.Core.Compilers.LLVM;
 
 public class LLVMDebugFileFinder : IDebugFileFinder {
   public async Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null) {

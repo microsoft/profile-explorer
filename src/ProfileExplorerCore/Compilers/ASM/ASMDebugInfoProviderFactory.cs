@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Collections.Generic;
+using ProfileExplorer.Core;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 
-namespace ProfileExplorer.Core.Providers;
+namespace ProfileExplorer.Core.Compilers.ASM;
 
 public class ASMDebugInfoProviderFactory : IDebugInfoProviderFactory {
   private static readonly Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();

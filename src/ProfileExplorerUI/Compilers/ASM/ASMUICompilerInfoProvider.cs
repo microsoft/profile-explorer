@@ -24,14 +24,12 @@ public class ASMUICompilerInfoProvider : ASMCompilerInfoProvider, IUICompilerInf
   private readonly DefaultRemarkProvider remarks_;
   private readonly IUISession uI_Session;
 
-  public ASMUICompilerInfoProvider(IRMode mode, IUISession session)
-    : base(mode, session) 
+  public ASMUICompilerInfoProvider(IRMode mode)
+    : base(mode)
     {
-    uI_Session = session;
     remarks_ = new DefaultRemarkProvider(this);
   }
 
-  public new IUISession Session => uI_Session;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
   public List<QueryDefinition> BuiltinQueries => new();

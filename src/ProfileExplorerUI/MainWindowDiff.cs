@@ -500,9 +500,9 @@ public partial class MainWindow : Window, IUISession {
     DiffMarkingResult rightDiffResult;
 
     // Create the diff filter that will post-process the diff results.
-    var leftDiffInputFilter = compilerInfo_.CreateDiffInputFilter();
-    var rightDiffInputFilter = compilerInfo_.CreateDiffInputFilter();
-    var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+  var leftDiffInputFilter = compilerInfo_.DiffFilterProvider?.CreateDiffInputFilter();
+  var rightDiffInputFilter = compilerInfo_.DiffFilterProvider?.CreateDiffInputFilter();
+  var diffFilter = compilerInfo_.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
     // Fairly often the text is identical, don't do the diffing for such cases.
@@ -607,7 +607,7 @@ public partial class MainWindow : Window, IUISession {
     // in the doc. hosts once back on the UI thread.
     var leftDiffStats = new DiffStatistics();
     var rightDiffStats = new DiffStatistics();
-    var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+  var diffFilter = compilerInfo_.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
     var leftMarkTask = MarkSectionDiffs(leftDocument.Section, leftText, rightText,
@@ -897,7 +897,7 @@ public partial class MainWindow : Window, IUISession {
     var diff = await Task.Run(() => diffBuilder.ComputeDiffs(prevText, currentText));
 
     var diffStats = new DiffStatistics();
-    var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+  var diffFilter = compilerInfo_.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
     var diffResult = await MarkSectionDiffs(section, prevText, currentText,

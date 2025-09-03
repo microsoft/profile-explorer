@@ -25,6 +25,7 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   private readonly IBinaryFileFinder binaryFileFinder_;
   private readonly IDebugFileFinder debugFileFinder_;
   private readonly IDebugInfoProviderFactory debugInfoProviderFactory_;
+  private readonly IDiffFilterProvider diffFilterProvider_;
 
   public LLVMCompilerInfoProvider() {
     ir_ = new LLVMCompilerIRInfo();
@@ -34,6 +35,7 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     binaryFileFinder_ = new LLVMBinaryFileFinder();
     debugFileFinder_ = new LLVMDebugFileFinder();
     debugInfoProviderFactory_ = new LLVMDebugInfoProviderFactory();
+  diffFilterProvider_ = new LLVMDiffFilterProvider();
   }
 
   public string CompilerIRName => "LLVM";
@@ -47,6 +49,7 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
   public IBinaryFileFinder BinaryFileFinder => binaryFileFinder_;
   public IDebugFileFinder DebugFileFinder => debugFileFinder_;
   public IDebugInfoProviderFactory DebugInfoProviderFactory => debugInfoProviderFactory_;
+  public IDiffFilterProvider DiffFilterProvider => diffFilterProvider_;
   public ISectionStyleProvider SectionStyleProvider => styles_;
   public IRRemarkProvider RemarkProvider => remarks_;
   public List<QueryDefinition> BuiltinQueries => new();
@@ -57,12 +60,9 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     return new BasicBlockFoldingStrategy(function);
   }
 
-  public IDiffInputFilter CreateDiffInputFilter() {
-    return null;
-  }
-
-  public IDiffOutputFilter CreateDiffOutputFilter() {
-    return new DefaultDiffOutputFilter();
+  private sealed class LLVMDiffFilterProvider : IDiffFilterProvider {
+    public IDiffInputFilter CreateDiffInputFilter() => null;
+    public IDiffOutputFilter CreateDiffOutputFilter() => new DefaultDiffOutputFilter();
   }
 
   public async Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
@@ -76,7 +76,5 @@ public class LLVMCompilerInfoProvider : IUICompilerInfoProvider {
     return Task.CompletedTask;
   }
 
-  public Task ReloadSettings() {
-    return Task.CompletedTask;
-  }
+  // ReloadSettings removed
 }

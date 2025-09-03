@@ -53,7 +53,7 @@ public class BaseSession : ISession
     }
 
     public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
-      return new ASMCompilerInfoProvider(mode, this);
+      return new ASMCompilerInfoProvider(mode);
     }
 
     public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
