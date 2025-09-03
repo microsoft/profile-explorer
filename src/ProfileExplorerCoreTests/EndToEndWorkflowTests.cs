@@ -252,10 +252,8 @@ public class EndToEndWorkflowTests {
     Console.WriteLine($"\n=== Step 3: Loading trace data for process {targetProcessId} ===");
 
   var session = new BaseSession();
-    var processIds = new List<int> { targetProcessId };
-    var report = new ProfileDataReport();
-
-    
+  var processIds = new List<int> { targetProcessId };
+  var report = new ProfileDataReport();
 
   bool loadResult = await session.LoadProfileData(
       testCase.TracePath, 

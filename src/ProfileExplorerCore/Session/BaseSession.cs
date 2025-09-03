@@ -25,36 +25,22 @@ public enum SessionKind {
 }
 public class BaseSession : ISession
 {
-    private ICompilerInfoProvider compilerInfo_;
-  private CancelableTaskInstance documentLoadTask_;
-
-  private object lockObject_;
+  private ICompilerInfoProvider compilerInfo_;
+  private ProfileData profileData_;
   private List<ILoadedDocument> documents_;
-  private List<CancelableTask> pendingTasks_;
-  private ILoadedDocument mainDocument_;
 
   public ICompilerInfoProvider CompilerInfo => compilerInfo_;
-    public ProfileData ProfileData { get; private set; }
+  public ProfileData ProfileData => profileData_;
+  public IReadOnlyList<ILoadedDocument> Documents => documents_;
 
-    public IReadOnlyList<ILoadedDocument> Documents => documents_;
-
-    public BaseSession()
-    {
-    lockObject_ = new object();
+  public BaseSession()
+  {
+    compilerInfo_ = new ASMCompilerInfoProvider(IRMode.Default);
+    profileData_ = null;
     documents_ = new List<ILoadedDocument>();
-    pendingTasks_ = new List<CancelableTask>();
+  }
 
-      compilerInfo_ = null;
-    }
-
-  public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
-    var sw = Stopwatch.StartNew();
-    
-    // Initialize with a default compiler info provider
-    if (compilerInfo_ == null) {
-      compilerInfo_ = new ASMCompilerInfoProvider(IRMode.Default);
-    }
-    
+  public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {    
     using var provider = new ETWProfileDataProvider(compilerInfo_);
     
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
@@ -63,12 +49,10 @@ public class BaseSession : ISession
 
     if (result != null) {
       result.Report = report;
-      ProfileData = result;
+      profileData_ = result;
       UnloadProfilingDebugInfo();
     }
 
-    Trace.WriteLine($"Done profile load and setup: {sw}, {sw.ElapsedMilliseconds} ms");
-    Trace.Flush();
     return result != null;
   }
 
