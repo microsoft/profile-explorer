@@ -47,29 +47,12 @@ public class BaseSession : ISession
       compilerInfo_ = null;
     }
 
-    public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
-      var summary = func.ParentSummary;
-      return documents_.Find(item => item.Summary == summary);
-    }
-
-    public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
-      return new ASMCompilerInfoProvider(mode);
-    }
-
-    public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
-      return new LoadedDocument(filePath, modulePath, id);
-    }
-
-    public ILoadedDocument CreateDummyDocument(string name) {
-      return LoadedDocument.CreateDummyDocument(name);
-    }
-
   public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
     var sw = Stopwatch.StartNew();
     
     // Initialize with a default compiler info provider
     if (compilerInfo_ == null) {
-      compilerInfo_ = CreateCompilerInfoProvider(IRMode.Default);
+      compilerInfo_ = new ASMCompilerInfoProvider(IRMode.Default);
     }
     
     using var provider = new ETWProfileDataProvider(compilerInfo_);
@@ -101,18 +84,5 @@ public class BaseSession : ISession
         debugInfo.Unload();
       }
     });
-  }
-
-  public async Task CancelPendingTasks() {
-    List<CancelableTask> tasks;
-
-    lock (lockObject_) {
-      tasks = pendingTasks_.CloneList();
-    }
-
-    foreach (var task in tasks) {
-      task.Cancel();
-      await task.WaitToCompleteAsync();
-    }
   }
 }

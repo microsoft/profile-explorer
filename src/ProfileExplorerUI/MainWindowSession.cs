@@ -1732,19 +1732,7 @@ public partial class MainWindow : Window, IUISession {
     e.Handled = true;
   }
 
-  public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
+  private ILoadedDocument FindLoadedDocument(IRTextFunction func) {
     return sessionState_.FindLoadedDocument(func);
-  }
-
-  public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
-    return new ASMUICompilerInfoProvider(mode);
-  }
-
-  public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
-    return new LoadedDocument(filePath, modulePath, id);
-  }
-
-  public ILoadedDocument CreateDummyDocument(string name) {
-    return LoadedDocument.CreateDummyDocument(name);
   }
 }

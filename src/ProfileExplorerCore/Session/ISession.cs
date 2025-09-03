@@ -18,11 +18,5 @@ public interface ISession {
   ProfileData ProfileData { get; }
   IReadOnlyList<ILoadedDocument> Documents { get; }
 
-  ILoadedDocument FindLoadedDocument(IRTextFunction func);
-
-  ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode);
-  ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id);
-  ILoadedDocument CreateDummyDocument(string name);
-
   Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask);
 }
