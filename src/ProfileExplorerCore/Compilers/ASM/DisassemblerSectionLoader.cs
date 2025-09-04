@@ -22,14 +22,14 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private DebugFileSearchResult debugInfoFile_;
   private bool resolveCallTargetNames_;
 
-  public DisassemblerSectionLoader(string binaryFilePath, ICompilerIRInfo compilerIrInfo, IDebugInfoProvider debugInfo, IDebugFileFinder debugFileFinder,
-    IDebugInfoProviderFactory debugInfoProviderFactory, INameProvider nameProvider, bool preloadFunctions = true) {
-    Initialize(compilerIrInfo, false);
+  public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo, IDebugInfoProvider debugInfo
+    , bool preloadFunctions = true) {
+    Initialize(compilerInfo.IR, false);
     binaryFilePath_ = binaryFilePath;
     debugInfo_ = debugInfo;
-    debugFileFinder_ = debugFileFinder;
-    debugInfoProviderFactory_ = debugInfoProviderFactory;
-    nameProvider_ = nameProvider;
+    debugFileFinder_ = compilerInfo.DebugFileFinder;
+    debugInfoProviderFactory_ = compilerInfo.DebugInfoProviderFactory;
+    nameProvider_ = compilerInfo.NameProvider;
     preloadFunctions_ = preloadFunctions;
     isManagedImage_ = debugInfo != null;
     summary_ = new IRTextSummary();

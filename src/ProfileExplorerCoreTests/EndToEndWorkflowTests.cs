@@ -280,7 +280,7 @@ public class EndToEndWorkflowTests {
   /// Test method to generate or regenerate baseline CSV files for a test case.
   /// This should be run whenever you need to create new baselines or update existing ones.
   /// </summary>
-  //[Ignore] // Remove to save baselines
+  [Ignore] // Remove to save baselines
   [DataTestMethod]
   [DynamicData(nameof(GetTestCaseData), DynamicDataSourceType.Method)]
   public async Task GenerateBaseline_ForTestCase(string testCaseName) {
