@@ -19,4 +19,6 @@ public interface ISession {
   IReadOnlyList<ILoadedDocument> Documents { get; }
 
   Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask);
+
+  Task<ParsedIRTextSection> LoadAndParseSection(IRTextSection section);
 }

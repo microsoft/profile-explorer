@@ -123,9 +123,10 @@ public partial class MainWindow : Window, IUISession {
 
     return false;
   }
-
+  
   public async Task<IRDocumentHost>
-    OpenDocumentSectionAsync(OpenSectionEventArgs args) {
+    OpenDocumentSectionAsync(OpenSectionEventArgs args)
+  {
     return await OpenDocumentSectionAsync(args, args.TargetDocument);
   }
 

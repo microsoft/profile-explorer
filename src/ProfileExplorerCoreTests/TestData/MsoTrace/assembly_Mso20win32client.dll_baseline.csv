@@ -1,0 +1,273 @@
+FunctionName,AssemblyText
+"Mso::Experiment::EcsNS::Private::SortByParameterGroups","180032C3C:    mov  qword ptr [rsp + 0x18], rbx
+180032C41:    push  rbp
+180032C42:    push  rsi
+180032C43:    push  rdi
+180032C44:    push  r12
+180032C46:    push  r13
+180032C48:    push  r14
+180032C4A:    push  r15
+180032C4C:    lea  rbp, [rsp - 0x27]
+180032C51:    sub  rsp, 0xc0
+180032C58:    mov  rax, qword ptr [rip + 0x81fda1]
+180032C5F:    xor  rax, rsp
+180032C62:    mov  qword ptr [rbp + 0x17], rax
+180032C66:    mov  rdi, rdx
+180032C69:    mov  qword ptr [rbp - 0x59], rdx
+180032C6D:    xor  r12d, r12d
+180032C70:    cmp  qword ptr [rdx], r12
+180032C73:    je  0x180032f19
+180032C79:    mov  r15, qword ptr [rcx]
+180032C7C:    mov  rsi, qword ptr [rcx + 8]
+180032C80:    mov  qword ptr [rbp - 0x49], rsi
+180032C84:    cmp  r15, rsi
+180032C87:    je  0x180032f19
+180032C8D:    mov  qword ptr [rbp - 0x69], r12
+180032C91:    mov  qword ptr [rbp - 0x61], r12
+180032C95:    mov  ecx, 0x50
+180032C9A:    call  void * __ptr64 __cdecl std::_Allocate<16,struct std::_Default_allocate_traits>(unsigned __int64)
+180032C9F:    mov  qword ptr [rax], rax
+180032CA2:    mov  qword ptr [rax + 8], rax
+180032CA6:    mov  qword ptr [rax + 0x10], rax
+180032CAA:    mov  word ptr [rax + 0x18], 0x101
+180032CB0:    mov  qword ptr [rbp - 0x69], rax
+180032CB4:    mov  r13, qword ptr [r15]
+180032CB7:    mov  rax, qword ptr [r15 + 8]
+180032CBB:    mov  qword ptr [rbp - 0x51], rax
+180032CBF:    cmp  r13, rax
+180032CC2:    je  0x180032f5b
+180032CC8:    mov  rdx, r13
+180032CCB:    lea  rcx, [rbp - 9]
+180032CCF:    call  __cdecl std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >(class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const & __ptr64) __ptr64
+180032CD4:    lea  r9, [rbp - 9]
+180032CD8:    mov  r11, qword ptr [rbp - 9]
+180032CDC:    cmp  qword ptr [rbp + 0xf], 7
+180032CE1:    cmova  r9, r11
+180032CE5:    lea  rcx, [rbp - 9]
+180032CE9:    cmova  rcx, r11
+180032CED:    mov  rax, qword ptr [rbp + 7]
+180032CF1:    lea  r8, [rcx + rax*2]
+180032CF5:    lea  rdx, [rbp - 9]
+180032CF9:    cmova  rdx, r11
+180032CFD:    mov  rax, qword ptr [rip + 0x58b674]
+180032D04:    mov  qword ptr [rsp + 0x20], rax
+180032D09:    lea  rcx, [rbp - 0x41]
+180032D0D:    call  class std::_String_iterator<class std::_String_val<struct std::_Simple_types<wchar_t> > > __cdecl std::transform<class std::_String_iterator<class std::_String_val<struct std::_Simple_types<wchar_t> > >,class std::_String_iterator<class std::_String_val<struct std::_Simple_types<wchar_t> > >,int (__cdecl*)(int)>(class std::_String_iterator<class std::_String_val<struct std::_Simple_types<wchar_t> > >,class std::_String_iterator<class std::_String_val<struct std::_Simple_types<wchar_t> > >,class std::_String_iterator<class std::_String_val<struct std::_Simple_types<wchar_t> > >,int (__cdecl*)(int))
+180032D12:    mov  rax, qword ptr [rdi]
+180032D15:    mov  rbx, qword ptr [rax + 0x18]
+180032D19:    mov  rbx, qword ptr [rbx]
+180032D1C:    mov  rax, qword ptr [rdi]
+180032D1F:    cmp  rbx, qword ptr [rax + 0x18]
+180032D23:    je  0x180032f40
+180032D29:    lea  r14, [rbx + 0x20]
+180032D2D:    xorps  xmm0, xmm0
+180032D30:    movups  xmmword ptr [rbp - 0x29], xmm0
+180032D34:    mov  qword ptr [rbp - 0x19], r12
+180032D38:    mov  qword ptr [rbp - 0x11], r12
+180032D3C:    mov  rdi, qword ptr [r14 + 0x10]
+180032D40:    cmp  qword ptr [r14 + 0x18], 7
+180032D45:    jbe  0x180032d4a
+180032D47:    mov  r14, qword ptr [r14]
+180032D4A:    movabs  rax, 0x7ffffffffffffffe
+180032D54:    cmp  rdi, rax
+180032D57:    ja  0x180032f03
+180032D5D:    cmp  rdi, 7
+180032D61:    jbe  0x180032d9c
+180032D63:    mov  rsi, rdi
+180032D66:    or  rsi, 7
+180032D6A:    cmp  rsi, rax
+180032D6D:    ja  0x180032f11
+180032D73:    mov  eax, 0xa
+180032D78:    cmp  rsi, rax
+180032D7B:    cmovb  rsi, rax
+180032D7F:    lea  rcx, [rsi + 1]
+180032D83:    movabs  rax, 0x7fffffffffffffff
+180032D8D:    cmp  rcx, rax
+180032D90:    jbe  0x180032e7a
+180032D96:    call  void __cdecl std::_Throw_bad_array_new_length(void)
+180032D9B:    int3  
+180032D9C:    mov  qword ptr [rbp - 0x19], rdi
+180032DA0:    mov  edx, 7
+180032DA5:    mov  qword ptr [rbp - 0x11], rdx
+180032DA9:    movups  xmm0, xmmword ptr [r14]
+180032DAD:    movups  xmmword ptr [rbp - 0x29], xmm0
+180032DB1:    lea  r14, [rbp - 0x29]
+180032DB5:    movq  rcx, xmm0
+180032DBA:    lea  rax, [rbp - 0x29]
+180032DBE:    cmp  rdx, 7
+180032DC2:    cmova  rax, rcx
+180032DC6:    lea  r12, [rax + rdi*2]
+180032DCA:    lea  rsi, [rbp - 0x29]
+180032DCE:    cmova  rsi, rcx
+180032DD2:    cmp  rsi, r12
+180032DD5:    je  0x180032dfd
+180032DD7:    sub  r14, rsi
+180032DDA:    movzx  ecx, word ptr [rsi]
+180032DDD:    call  qword ptr [rip + 0x58b595]
+180032DE3:    mov  word ptr [rsi + r14], ax
+180032DE8:    add  rsi, 2
+180032DEC:    cmp  rsi, r12
+180032DEF:    jne  0x180032dda
+180032DF1:    mov  rdx, qword ptr [rbp - 0x11]
+180032DF5:    mov  rdi, qword ptr [rbp - 0x19]
+180032DF9:    mov  rcx, qword ptr [rbp - 0x29]
+180032DFD:    lea  rax, [rbp - 9]
+180032E01:    cmp  qword ptr [rbp + 0xf], 7
+180032E06:    cmova  rax, qword ptr [rbp - 9]
+180032E0B:    lea  r9, [rbp - 0x29]
+180032E0F:    cmp  rdx, 7
+180032E13:    cmova  r9, rcx
+180032E17:    xor  r12d, r12d
+180032E1A:    cmp  rdi, qword ptr [rbp + 7]
+180032E1E:    je  0x18003300c
+180032E24:    cmp  rdx, 7
+180032E28:    jbe  0x180032e43
+180032E2A:    lea  rax, [rdx*2 + 2]
+180032E32:    mov  rdx, rcx
+180032E35:    cmp  rax, 0x1000
+180032E3B:    jae  0x180032e62
+180032E3D:    call  qword ptr [rip + 0x58b3ad]
+180032E43:    mov  rcx, qword ptr [rbx + 0x10]
+180032E47:    cmp  byte ptr [rcx + 0x19], r12b
+180032E4B:    jne  0x180032feb
+180032E51:    call  struct std::_Tree_node<struct std::pair<unsigned __int64 const ,class std::map<unsigned __int64,struct Syzygy::Cluster,struct std::less<unsigned __int64>,class std::allocator<struct std::pair<unsigned __int64 const ,struct Syzygy::Cluster> > > >,void * __ptr64> * __ptr64 __cdecl std::_Tree_val<struct std::_Tree_simple_types<struct std::pair<unsigned __int64 const ,class std::map<unsigned __int64,struct Syzygy::Cluster,struct std::less<unsigned __int64>,class std::allocator<struct std::pair<unsigned __int64 const ,struct Syzygy::Cluster> > > > > >::_Min(struct std::_Tree_node<struct std::pair<unsigned __int64 const ,class std::map<unsigned __int64,struct Syzygy::Cluster,struct std::less<unsigned __int64>,class std::allocator<struct std::pair<unsigned __int64 const ,struct Syzygy::Cluster> > > >,void * __ptr64> * __ptr64)
+180032E56:    mov  rbx, rax
+180032E59:    mov  rdi, qword ptr [rbp - 0x59]
+180032E5D:    jmp  0x180032D1C
+180032E62:    mov  rcx, qword ptr [rcx - 8]
+180032E66:    sub  rdx, rcx
+180032E69:    lea  rax, [rdx - 8]
+180032E6D:    cmp  rax, 0x1f
+180032E71:    jbe  0x180032e3d
+180032E73:    call  qword ptr [rip + 0x58b397]
+180032E79:    int3  
+180032E7A:    add  rcx, rcx
+180032E7D:    je  0x180032fe3
+180032E83:    cmp  rcx, 0x1000
+180032E8A:    jb  0x180032ef1
+180032E8C:    lea  rax, [rcx + 0x27]
+180032E90:    cmp  rax, rcx
+180032E93:    jbe  0x180032d96
+180032E99:    mov  rcx, rax
+180032E9C:    call  void __cdecl std::_Hash_vec<class std::allocator<class std::_List_unchecked_const_iterator<class std::_List_val<struct std::_List_simple_types<class Mso::Persistent<class Mso::AnyType> > >,struct std::_Iterator_base0> > >::_Assign_grow(unsigned __int64,class std::_List_unchecked_const_iterator<class std::_List_val<struct std::_List_simple_types<class Mso::Persistent<class Mso::AnyType> > >,struct std::_Iterator_base0>) __ptr64
+180032EA1:    mov  rcx, rax
+180032EA4:    test  rax, rax
+180032EA7:    je  0x180032e73
+180032EA9:    add  rax, 0x27
+180032EAD:    and  rax, 0xffffffffffffffe0
+180032EB1:    mov  qword ptr [rax - 8], rcx
+180032EB5:    mov  qword ptr [rbp - 0x29], rax
+180032EB9:    mov  qword ptr [rbp - 0x19], rdi
+180032EBD:    mov  qword ptr [rbp - 0x11], rsi
+180032EC1:    lea  r8, [rdi*2 + 2]
+180032EC9:    mov  rdx, r14
+180032ECC:    mov  rcx, rax
+180032ECF:    call  memcpy
+180032ED4:    lea  r14, [rbp - 0x29]
+180032ED8:    mov  rcx, qword ptr [rbp - 0x29]
+180032EDC:    mov  rdx, qword ptr [rbp - 0x11]
+180032EE0:    cmp  rdx, 7
+180032EE4:    cmova  r14, rcx
+180032EE8:    mov  rdi, qword ptr [rbp - 0x19]
+180032EEC:    jmp  0x180032DBA
+180032EF1:    call  qword ptr [rip + 0x58b2f1]
+180032EF7:    test  rax, rax
+180032EFA:    jne  0x180032eb5
+180032EFC:    call  qword ptr [rip + 0x58ab2e]
+180032F02:    int3  
+180032F03:    lea  rcx, [rip + 0x706a2e]
+180032F0A:    call  qword ptr [rip + 0x58ab50]
+180032F10:    int3  
+180032F11:    mov  rsi, rax
+180032F14:    jmp  0x180032D7F
+180032F19:    mov  rcx, qword ptr [rbp + 0x17]
+180032F1D:    xor  rcx, rsp
+180032F20:    call  __security_check_cookie
+180032F25:    mov  rbx, qword ptr [rsp + 0x110]
+180032F2D:    add  rsp, 0xc0
+180032F34:    pop  r15
+180032F36:    pop  r14
+180032F38:    pop  r13
+180032F3A:    pop  r12
+180032F3C:    pop  rdi
+180032F3D:    pop  rsi
+180032F3E:    pop  rbp
+180032F3F:    ret  
+180032F40:    lea  rcx, [rbp - 9]
+180032F44:    call  __cdecl Mso::Collections::KeyValue<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,enum Mso::Authentication::FederationProvider::ConfigurationProviderCode>::~KeyValue<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,enum Mso::Authentication::FederationProvider::ConfigurationProviderCode>(void) __ptr64
+180032F49:    add  r13, 0x20
+180032F4D:    cmp  r13, qword ptr [rbp - 0x51]
+180032F51:    jne  0x180032cc8
+180032F57:    mov  rsi, qword ptr [rbp - 0x49]
+180032F5B:    cmp  qword ptr [rbp - 0x61], r12
+180032F5F:    jbe  0x180032f9d
+180032F61:    mov  rdi, qword ptr [rdi]
+180032F64:    mov  rbx, qword ptr [rdi + 8]
+180032F68:    cmp  rbx, qword ptr [rdi + 0x10]
+180032F6C:    je  0x180032fd2
+180032F6E:    mov  qword ptr [rbx], r12
+180032F71:    mov  qword ptr [rbx + 8], r12
+180032F75:    call  __cdecl std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > >::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > >(class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > const & __ptr64) __ptr64
+180032F7A:    mov  qword ptr [rbx], rax
+180032F7D:    mov  rcx, qword ptr [rbp - 0x69]
+180032F81:    mov  qword ptr [rbx], rcx
+180032F84:    mov  qword ptr [rbp - 0x69], rax
+180032F88:    mov  rcx, qword ptr [rbx + 8]
+180032F8C:    mov  rax, qword ptr [rbp - 0x61]
+180032F90:    mov  qword ptr [rbx + 8], rax
+180032F94:    mov  qword ptr [rbp - 0x61], rcx
+180032F98:    add  qword ptr [rdi + 8], 0x10
+180032F9D:    mov  r8, qword ptr [rbp - 0x69]
+180032FA1:    mov  r8, qword ptr [r8 + 8]
+180032FA5:    lea  rdx, [rbp - 0x69]
+180032FA9:    lea  rcx, [rbp - 0x69]
+180032FAD:    call  void __cdecl std::_Tree_val<struct std::_Tree_simple_types<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > >::_Erase_tree<class std::allocator<struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> > >(class std::allocator<struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> > & __ptr64,struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> * __ptr64) __ptr64
+180032FB2:    mov  rcx, qword ptr [rbp - 0x69]
+180032FB6:    call  qword ptr [rip + 0x58b234]
+180032FBC:    add  r15, 0x18
+180032FC0:    cmp  r15, rsi
+180032FC3:    je  0x180032f19
+180032FC9:    mov  rdi, qword ptr [rbp - 0x59]
+180032FCD:    jmp  0x180032C8D
+180032FD2:    lea  r8, [rbp - 0x69]
+180032FD6:    mov  rdx, rbx
+180032FD9:    mov  rcx, rdi
+180032FDC:    call  class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > * __ptr64 __cdecl std::vector<class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > >,class std::allocator<class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > > >::_Emplace_reallocate<class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > >(class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > * __ptr64 const,class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > && __ptr64) __ptr64
+180032FE1:    jmp  0x180032F9D
+180032FE3:    mov  rax, r12
+180032FE6:    jmp  0x180032EB5
+180032FEB:    mov  rax, qword ptr [rbx + 8]
+180032FEF:    cmp  byte ptr [rax + 0x19], r12b
+180032FF3:    jne  0x180032e56
+180032FF9:    cmp  rbx, qword ptr [rax + 0x10]
+180032FFD:    jne  0x180032e56
+180033003:    mov  rbx, rax
+180033006:    mov  rax, qword ptr [rax + 8]
+18003300A:    jmp  0x180032FEF
+18003300C:    test  rdi, rdi
+18003300F:    je  0x180033030
+180033011:    mov  r8, rdi
+180033014:    mov  rdx, rax
+180033017:    mov  rcx, r9
+18003301A:    call  wmemcmp
+18003301F:    test  eax, eax
+180033021:    je  0x180033030
+180033023:    mov  rdx, qword ptr [rbp - 0x11]
+180033027:    mov  rcx, qword ptr [rbp - 0x29]
+18003302B:    jmp  0x180032E24
+180033030:    lea  r9, [rbx + 0x40]
+180033034:    lea  r8, [rbx + 0x20]
+180033038:    lea  rdx, [rbp - 0x39]
+18003303C:    lea  rcx, [rbp - 0x69]
+180033040:    call  struct std::pair<struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> * __ptr64,bool> __cdecl std::_Tree<class std::_Tmap_traits<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> >,0> >::_Emplace<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const & __ptr64,class Mso::AnyType & __ptr64>(class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const & __ptr64,class Mso::AnyType & __ptr64) __ptr64
+180033045:    mov  rdi, qword ptr [rbp - 0x59]
+180033049:    mov  rcx, qword ptr [rdi]
+18003304C:    add  rcx, 0x18
+180033050:    mov  rdx, rbx
+180033053:    call  int __cdecl Mso::Experiment::ABConfigsCollection::MergeGroupedFeature(class std::map<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class Mso::AnyType,struct std::less<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > >,class std::allocator<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType> > > const & __ptr64,enum Mso::Experiment::ConfigSource const & __ptr64,bool) __ptr64
+180033058:    mov  rdx, rax
+18003305B:    call  void __cdecl std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64>::_Freenode<class std::allocator<struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> > >(class std::allocator<struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> > & __ptr64,struct std::_Tree_node<struct std::pair<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> > const ,class Mso::AnyType>,void * __ptr64> * __ptr64)
+180033060:    lea  rcx, [rbp - 0x29]
+180033064:    call  __cdecl Mso::Collections::KeyValue<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,enum Mso::Authentication::FederationProvider::ConfigurationProviderCode>::~KeyValue<class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,enum Mso::Authentication::FederationProvider::ConfigurationProviderCode>(void) __ptr64
+180033069:    jmp  0x180032F40
+"
