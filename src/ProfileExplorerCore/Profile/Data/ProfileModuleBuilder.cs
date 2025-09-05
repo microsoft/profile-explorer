@@ -20,6 +20,7 @@ public sealed class ProfileModuleBuilder {
   private static volatile int FuncFoundByFuncAddressLocked;
   private static volatile int FuncCreated;
 #endif
+  private ICompilerInfoProvider compilerInfo_;
   private IBinaryFileFinder binaryFileFinder_;
   private IDebugFileFinder debugFileFinder_;
   private IDebugInfoProviderFactory debugInfoProviderFactory_;
@@ -33,6 +34,7 @@ public sealed class ProfileModuleBuilder {
 
   public ProfileModuleBuilder(ProfileDataReport report, ICompilerInfoProvider compilerInfoProvider) {
     report_ = report;
+    compilerInfo_ = compilerInfoProvider;
     binaryFileFinder_ = compilerInfoProvider.BinaryFileFinder;
     debugFileFinder_ = compilerInfoProvider.DebugFileFinder;
     debugInfoProviderFactory_ = compilerInfoProvider.DebugInfoProviderFactory;
@@ -73,8 +75,7 @@ public sealed class ProfileModuleBuilder {
     }
 
     // Create a DisassemblerSectionLoader and LoadedDocument directly instead of calling through session
-    var loader = new DisassemblerSectionLoader(binFile.FilePath, compilerIrInfo_, debugInfo, debugFileFinder_, 
-                                               debugInfoProviderFactory_, nameProvider_, false);
+    var loader = new DisassemblerSectionLoader(binFile.FilePath, compilerInfo_, debugInfo, false);
     var loadedDoc = await CreateLoadedDocument(binFile.FilePath, binaryInfo.ImageName, loader).ConfigureAwait(false);
 
     if (loadedDoc == null) {
