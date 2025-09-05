@@ -874,8 +874,7 @@ public partial class MainWindow : Window, IUISession {
   private async Task<ILoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                         IDebugInfoProvider debugInfo,
                                                         ProgressInfoHandler progressHandler) {
-    var loader = new DisassemblerSectionLoader(filePath, compilerInfo_.IR, debugInfo, compilerInfo_.DebugFileFinder,
-                                               compilerInfo_.DebugInfoProviderFactory, compilerInfo_.NameProvider);
+    var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
     var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
 
     if (result != null) {
