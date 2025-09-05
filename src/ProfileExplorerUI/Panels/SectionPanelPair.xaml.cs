@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.UI;
@@ -36,7 +37,7 @@ public partial class SectionPanelPair : ToolPanelControl {
     DiffPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
   }
 
-  public IUICompilerInfoProvider CompilerInfo {
+  public ICompilerInfoProvider CompilerInfo {
     get => MainPanel.CompilerInfo;
     set {
       MainPanel.CompilerInfo = value;

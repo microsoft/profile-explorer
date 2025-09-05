@@ -18,6 +18,7 @@ using AutoUpdaterDotNET;
 using AvalonDock;
 using AvalonDock.Layout;
 using ProfileExplorer.Core;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Graph;
 using ProfileExplorer.Core.IR;
@@ -35,6 +36,9 @@ using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Profile.Processing;
 using ProfileExplorer.Core.Compilers.ASM;
 using ProfileExplorerUI.Session;
+using ProfileExplorer.UI.Providers;
+using ProfileExplorer.UI.Compilers.Default;
+using ProfileExplorer.Core.Compilers.LLVM;
 
 namespace ProfileExplorer.UI;
 
@@ -72,7 +76,11 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private bool appIsActivated_;
   private DispatcherTimer autoSaveTimer_;
   private Dictionary<string, DateTime> changedDocuments_;
-  private IUICompilerInfoProvider compilerInfo_;
+  private ICompilerInfoProvider compilerInfo_;
+  private ISectionStyleProvider sectionStyleProvider_;
+  private IRRemarkProvider remarkProvider_;
+  private ILoadedSectionHandler loadedSectionHandler_;
+  private IBlockFoldingStrategyProvider blockFoldingStrategyProvider_;
   private MainWindowState fullScreenRestoreState_;
   private Dictionary<GraphKind, GraphLayoutCache> graphLayout_;
   private bool ignoreDiffModeButtonEvent_;
@@ -507,7 +515,7 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     }
   }
 
-  private async Task ShowSectionPanelDiffs(IUILoadedDocument result) {
+  private async Task ShowSectionPanelDiffs(ILoadedDocument result) {
     await SectionPanel.AnalyzeDocumentDiffs();
     await SectionPanel.RefreshDocumentsDiffs();
   }
@@ -994,10 +1002,25 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     AlwaysOnTopButton.IsChecked = state;
   }
 
-  private async Task SwitchCompilerTarget(IUICompilerInfoProvider compilerInfo) {
+  private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
     await EndSession();
     compilerInfo_ = compilerInfo;
-    await compilerInfo_.ReloadSettings();
+    remarkProvider_ = new DefaultRemarkProvider(compilerInfo);
+    blockFoldingStrategyProvider_ = new BasicBlockFoldingStrategyProvider();
+
+    switch (compilerInfo.CompilerIRKind) {
+      case CompilerIRKind.ASM:
+        sectionStyleProvider_ = new DummySectionStyleProvider();
+        loadedSectionHandler_ = new ASMLoadedSectionHandler(compilerInfo);
+        break;
+      case CompilerIRKind.LLVM:
+        sectionStyleProvider_ = new DefaultSectionStyleProvider(compilerInfo);
+        loadedSectionHandler_ = new LLVMLoadedSectionHandler();
+        break;
+      default:
+        throw new NotSupportedException($"Unsupported compiler IR kind: {compilerInfo.CompilerIRKind}");
+    }
+    
     App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
     SetupMainWindowCompilerTarget();
   }
@@ -1007,22 +1030,22 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   }
 
   private async Task SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {
-    //? TODO: Use a list of registered IRs
-    switch (name) {
-      case "LLVM": {
-        await SwitchCompilerTarget(new LLVMCompilerInfoProvider(this));
-        break;
-      }
-      case "ASM": {
-        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(irMode, this));
-        break;
-      }
-      default: {
-        await SwitchCompilerTarget(new ASMUICompilerInfoProvider(IRMode.x86_64, this));
-        break;
+    if (Enum.TryParse<CompilerIRKind>(name, out var compilerKind)) {
+      switch (compilerKind) {
+        case CompilerIRKind.LLVM: {
+          await SwitchCompilerTarget(new LLVMCompilerInfoProvider());
+          break;
+        }
+        case CompilerIRKind.ASM: {
+          await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode));
+          break;
+        }
       }
     }
-
+    else {
+      await SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.x86_64));
+    }
+ 
     App.Settings.SwitchDefaultCompilerIR(compilerInfo_.CompilerIRName, irMode);
     App.SaveApplicationSettings();
   }

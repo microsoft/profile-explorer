@@ -436,7 +436,7 @@ public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged
 
     // Append all remarks in the context to the result list.
     var items = new List<Tuple<TreeViewItem, int>>();
-    var highlightingList = Session.CompilerInfo.RemarkProvider.RemarkTextHighlighting;
+    var highlightingList = Session.RemarkProvider.RemarkTextHighlighting;
     Tuple<object, int, int> prevRemark = null;
 
     foreach (var item in inputItems) {

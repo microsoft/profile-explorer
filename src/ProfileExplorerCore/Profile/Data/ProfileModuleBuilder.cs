@@ -20,16 +20,26 @@ public sealed class ProfileModuleBuilder {
   private static volatile int FuncFoundByFuncAddressLocked;
   private static volatile int FuncCreated;
 #endif
-  private ISession session_;
+  private ICompilerInfoProvider compilerInfo_;
+  private IBinaryFileFinder binaryFileFinder_;
+  private IDebugFileFinder debugFileFinder_;
+  private IDebugInfoProviderFactory debugInfoProviderFactory_;
+  private ICompilerIRInfo compilerIrInfo_;
+  private INameProvider nameProvider_;
   private BinaryFileDescriptor binaryInfo_;
   private ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)> functionMap_;
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
   private SymbolFileSourceSettings symbolSettings_;
 
-  public ProfileModuleBuilder(ProfileDataReport report, ISession session) {
+  public ProfileModuleBuilder(ProfileDataReport report, ICompilerInfoProvider compilerInfoProvider) {
     report_ = report;
-    session_ = session;
+    compilerInfo_ = compilerInfoProvider;
+    binaryFileFinder_ = compilerInfoProvider.BinaryFileFinder;
+    debugFileFinder_ = compilerInfoProvider.DebugFileFinder;
+    debugInfoProviderFactory_ = compilerInfoProvider.DebugInfoProviderFactory;
+    compilerIrInfo_ = compilerInfoProvider.IR;
+    nameProvider_ = compilerInfoProvider.NameProvider;
     functionMap_ = new ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)>();
     lock_ = new ReaderWriterLockSlim();
   }
@@ -64,8 +74,9 @@ public sealed class ProfileModuleBuilder {
       return true; // Try to continue just with debug info.
     }
 
-    var loadedDoc = await session_.LoadProfileBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).
-      ConfigureAwait(false);
+    // Create a DisassemblerSectionLoader and LoadedDocument directly instead of calling through session
+    var loader = new DisassemblerSectionLoader(binFile.FilePath, compilerInfo_, debugInfo, false);
+    var loadedDoc = await CreateLoadedDocument(binFile.FilePath, binaryInfo.ImageName, loader).ConfigureAwait(false);
 
     if (loadedDoc == null) {
       Trace.TraceWarning($"Failed to load document for image {imageName}");
@@ -73,6 +84,9 @@ public sealed class ProfileModuleBuilder {
       CreateDummyDocument(binaryInfo);
       return false;
     }
+
+    loadedDoc.BinaryFile = BinaryFileSearchResult.Success(binFile.FilePath);
+    loadedDoc.DebugInfo = debugInfo;
 
 #if DEBUG
     Trace.TraceWarning($"  Loaded document for image {imageName}");
@@ -113,7 +127,7 @@ public sealed class ProfileModuleBuilder {
       return false;
     }
 
-    DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
+    DebugInfo = debugInfoProviderFactory_.CreateDebugInfoProvider(ModuleDocument.DebugInfoFile);
     HasDebugInfo = DebugInfo != null;
 
     if (HasDebugInfo) {
@@ -132,7 +146,7 @@ public sealed class ProfileModuleBuilder {
   public async Task<BinaryFileSearchResult> FindBinaryFilePath(SymbolFileSourceSettings settings) {
     // Use the symbol server to locate the image,
     // this will also attempt to download it if not found locally.
-    return await session_.CompilerInfo.FindBinaryFileAsync(binaryInfo_, settings).ConfigureAwait(false);
+    return await binaryFileFinder_.FindBinaryFileAsync(binaryInfo_, settings).ConfigureAwait(false);
   }
 
   public (IRTextFunction Function, FunctionDebugInfo DebugInfo)
@@ -226,7 +240,24 @@ public sealed class ProfileModuleBuilder {
   private void CreateDummyDocument(BinaryFileDescriptor binaryInfo) {
     // Create a dummy document to represent the module,
     // AddPlaceholderFunction will populate it.
-    ModuleDocument = session_.CreateDummyDocument(binaryInfo.ImageName);
+    ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
     Summary = ModuleDocument.Summary;
+  }
+
+  private async Task<ILoadedDocument> CreateLoadedDocument(string filePath, string modulePath, IRTextSectionLoader loader) {
+    try {
+      var result = await Task.Run(async () => {
+        var result = new LoadedDocument(filePath, modulePath, Guid.NewGuid());
+        result.Loader = loader;
+        result.Summary = await result.Loader.LoadDocument(null);
+        return result;
+      });
+
+      return result;
+    }
+    catch (Exception ex) {
+      Trace.TraceError($"Failed to load document {filePath}: {ex}");
+      return null;
+    }
   }
 }

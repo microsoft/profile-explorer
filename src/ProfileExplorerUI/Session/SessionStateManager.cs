@@ -75,7 +75,7 @@ public class OpenSectionState {
 [ProtoContract]
 public class SessionState {
   [ProtoMember(1)]
-  public List<IUILoadedDocumentState> Documents;
+  public List<ILoadedDocumentState> Documents;
   [ProtoMember(2)]
   public List<PanelObjectPairState> GlobalPanelStates;
   [ProtoMember(3)]
@@ -92,13 +92,16 @@ public class SessionState {
   public DiffModeState SectionDiffState;
   [ProtoMember(9)]
   public byte[] ProfileState;
+  [ProtoMember(10)]
+  public Dictionary<Guid, List<Tuple<int, PanelObjectPairState>>> DocumentPanelStates;
 
   public SessionState() {
-    Documents = new List<IUILoadedDocumentState>();
+    Documents = new List<ILoadedDocumentState>();
     GlobalPanelStates = new List<PanelObjectPairState>();
     OpenSections = new List<OpenSectionState>();
     Info = new SessionInfo();
     SectionDiffState = new DiffModeState();
+    DocumentPanelStates = new Dictionary<Guid, List<Tuple<int, PanelObjectPairState>>>();
   }
 }
 
@@ -146,47 +149,12 @@ public class SessionSettings {
   public bool AutoReloadDocument { get; set; }
 }
 
-public class PanelObjectPair {
-  public PanelObjectPair(IToolPanel panel, object stateObject) {
-    Panel = panel;
-    StateObject = stateObject;
-  }
-
-  public IToolPanel Panel { get; set; }
-  public object StateObject { get; set; }
-}
-
-public class BaseDiffSectionGroup {
-  public BaseDiffSectionGroup(IRTextSection baseSection,
-                              IRTextSection diffSection,
-                              IRTextSection stateSection) {
-    BaseSection = baseSection;
-    DiffSection = diffSection;
-    StateSection = stateSection;
-  }
-
-  public IRTextSection BaseSection { get; set; }
-  public IRTextSection DiffSection { get; set; }
-  public IRTextSection StateSection { get; set; }
-
-  public override bool Equals(object obj) {
-    return obj is BaseDiffSectionGroup group &&
-           EqualityComparer<IRTextSection>.Default.Equals(BaseSection, group.BaseSection) &&
-           EqualityComparer<IRTextSection>.Default.Equals(DiffSection, group.DiffSection) &&
-           EqualityComparer<IRTextSection>.Default.Equals(StateSection, group.StateSection);
-  }
-
-  public override int GetHashCode() {
-    return HashCode.Combine(BaseSection, DiffSection, StateSection);
-  }
-}
-
 public class SessionStateManager : IDisposable {
   // {IR section ID -> list [{panel ID, state}]}
   private object lockObject_;
-  private List<IUILoadedDocument> documents_;
+  private List<ILoadedDocument> documents_;
   private Dictionary<ToolPanelKind, object> globalPanelStates_;
-  private Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>> diffPanelStates_;
+  private PanelStateManager panelStateManager_;
   private List<CancelableTask> pendingTasks_;
   private ICompilerInfoProvider compilerInfo_;
   private bool watchDocumentChanges_;
@@ -197,9 +165,9 @@ public class SessionStateManager : IDisposable {
     compilerInfo_ = compilerInfo;
     Info = new SessionInfo(filePath, sessionKind, compilerInfo.CompilerIRName, compilerInfo.IR.Mode);
     Info.Notes = "";
-    documents_ = new List<IUILoadedDocument>();
+    documents_ = new List<ILoadedDocument>();
     globalPanelStates_ = new Dictionary<ToolPanelKind, object>();
-    diffPanelStates_ = new Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>>();
+    panelStateManager_ = new PanelStateManager();
     pendingTasks_ = new List<CancelableTask>();
     DocumentHosts = new List<DocumentHostInfo>();
     SectionDiffState = new DiffModeInfo();
@@ -209,9 +177,9 @@ public class SessionStateManager : IDisposable {
   }
 
   public SessionInfo Info { get; set; }
-  public List<IUILoadedDocument> Documents => documents_;
-  public IUILoadedDocument MainDocument { get; set; }
-  public IUILoadedDocument DiffDocument { get; set; }
+  public List<ILoadedDocument> Documents => documents_;
+  public ILoadedDocument MainDocument { get; set; }
+  public ILoadedDocument DiffDocument { get; set; }
   public List<DocumentHostInfo> DocumentHosts { get; set; }
   public ProfileData ProfileData { get; set; }
   public ProfileFilterState ProfileFilter { get; set; }
@@ -237,7 +205,7 @@ public class SessionStateManager : IDisposable {
     });
   }
 
-  public void EnterTwoDocumentDiffMode(IUILoadedDocument diffDocument) {
+  public void EnterTwoDocumentDiffMode(ILoadedDocument diffDocument) {
     DiffDocument = diffDocument;
     SyncDiffedDocuments = true;
   }
@@ -247,7 +215,7 @@ public class SessionStateManager : IDisposable {
     SyncDiffedDocuments = false;
   }
 
-  public void RegisterLoadedDocument(IUILoadedDocument docInfo) {
+  public void RegisterLoadedDocument(ILoadedDocument docInfo) {
     documents_.Add(docInfo);
 
     if (!Info.IsFileSession && !Info.IsDebugSession) {
@@ -257,22 +225,24 @@ public class SessionStateManager : IDisposable {
     }
   }
 
-  public void RemoveLoadedDocuemnt(IUILoadedDocument document) {
+  public void RemoveLoadedDocuemnt(ILoadedDocument document) {
     document.ChangeDocumentWatcherState(false);
+    document.DocumentChanged -= DocumentWatcher_Changed;
+    panelStateManager_.RemoveDocumentPanelStates(document.Id);
     documents_.Remove(document);
   }
 
-  public IUILoadedDocument FindLoadedDocument(IRTextSection section) {
+  public ILoadedDocument FindLoadedDocument(IRTextSection section) {
     var summary = section.ParentFunction.ParentSummary;
     return documents_.Find(item => item.Summary == summary);
   }
 
-  public IUILoadedDocument FindLoadedDocument(IRTextFunction func) {
+  public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
     var summary = func.ParentSummary;
     return documents_.Find(item => item.Summary == summary);
   }
 
-  public IUILoadedDocument FindLoadedDocument(IRTextSummary summary) {
+  public ILoadedDocument FindLoadedDocument(IRTextSummary summary) {
     return documents_.Find(item => item.Summary == summary);
   }
 
@@ -302,42 +272,19 @@ public class SessionStateManager : IDisposable {
     //? after the section is unloaded, increasing memory usage more and more
     //? when switching sections
     var docInfo = FindLoadedDocument(section);
-    docInfo.SavePanelState(stateObject, panel, section);
+    panelStateManager_.SavePanelState(stateObject, panel, docInfo, section);
   }
 
   public void SaveDiffModePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
-    var group = new BaseDiffSectionGroup(SectionDiffState.LeftSection,
-                                         SectionDiffState.RightSection, section);
-
-    if (!diffPanelStates_.TryGetValue(group, out var list)) {
-      list = new List<PanelObjectPair>();
-      diffPanelStates_.Add(group, list);
-    }
-
-    var state = list.Find(item => item.Panel == panel);
-
-    if (state != null) {
-      state.StateObject = stateObject;
-    }
-    else {
-      list.Add(new PanelObjectPair(panel, stateObject));
-    }
+    panelStateManager_.SaveDiffModePanelState(stateObject, panel, section);
   }
 
   public object LoadDiffModePanelState(IToolPanel panel, IRTextSection section) {
-    var group = new BaseDiffSectionGroup(SectionDiffState.LeftSection,
-                                         SectionDiffState.RightSection, section);
-
-    if (diffPanelStates_.TryGetValue(group, out var list)) {
-      var state = list.Find(item => item.Panel == panel);
-      return state?.StateObject;
-    }
-
-    return null;
+    return panelStateManager_.LoadDiffModePanelState(panel, section);
   }
 
   public void ClearDiffModePanelState() {
-    diffPanelStates_.Clear();
+    panelStateManager_.ClearDiffModePanelState();
   }
 
   public object LoadPanelState(IToolPanel panel, IRTextSection section) {
@@ -346,7 +293,7 @@ public class SessionStateManager : IDisposable {
     }
 
     var docInfo = FindLoadedDocument(section);
-    return docInfo.LoadPanelState(panel, section);
+    return panelStateManager_.LoadPanelState(panel, docInfo, section);
   }
 
   public void SaveDocumentState(object stateObject, IRTextSection section) {
@@ -367,6 +314,12 @@ public class SessionStateManager : IDisposable {
     foreach (var docInfo in documents_) {
       var docState = docInfo.SerializeDocument();
       state.Documents.Add(docState);
+      
+      // Add panel states for this document
+      var panelStates = panelStateManager_.SerializePanelStatesForDocument(docInfo);
+      if (panelStates.Count > 0) {
+        state.DocumentPanelStates[docInfo.Id] = panelStates;
+      }
 
       if (docInfo == MainDocument) {
         state.MainDocumentId = docState.Id;

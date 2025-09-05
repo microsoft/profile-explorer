@@ -14,31 +14,20 @@ namespace ProfileExplorer.Core.Providers;
 
 public interface ICompilerInfoProvider {
   string CompilerIRName { get; }
+  CompilerIRKind CompilerIRKind { get; }
   string CompilerDisplayName { get; }
   string DefaultSyntaxHighlightingFile { get; }
-  ISession Session { get; }
-  ICompilerIRInfo IR { get; }
-  INameProvider NameProvider { get; }
   string OpenFileFilter { get; }
   string OpenDebugFileFilter { get; }
-  Task ReloadSettings();
-
+  ICompilerIRInfo IR { get; }
+  INameProvider NameProvider { get; }
+  IBinaryFileFinder BinaryFileFinder { get; }
+  IDebugFileFinder DebugFileFinder { get; }
+  IDebugInfoProviderFactory DebugInfoProviderFactory { get; }
+  IDiffFilterProvider DiffFilterProvider { get; }
+ 
   Task<bool> AnalyzeLoadedFunction(FunctionIR function, IRTextSection section,
-                                   FunctionDebugInfo funcDebugInfo = null);
-
-  IDiffInputFilter CreateDiffInputFilter();
-  IDiffOutputFilter CreateDiffOutputFilter();
-  IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile);
-  Task<IDebugInfoProvider> GetOrCreateDebugInfoProvider(IRTextFunction function);
-  DebugFileSearchResult FindDebugInfoFile(string imagePath, SymbolFileSourceSettings settings = null);
-  DebugFileSearchResult FindDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceSettings settings = null);
-  Task<DebugFileSearchResult> FindDebugInfoFileAsync(string imagePath, SymbolFileSourceSettings settings = null);
-
-  Task<DebugFileSearchResult> FindDebugInfoFileAsync(SymbolFileDescriptor symbolFile,
-                                                     SymbolFileSourceSettings settings = null);
-
-  Task<BinaryFileSearchResult> FindBinaryFileAsync(BinaryFileDescriptor binaryFile,
-                                                   SymbolFileSourceSettings settings = null);
+                                   ILoadedDocument loadedDoc, FunctionDebugInfo funcDebugInfo = null);
 }
 
 [ProtoContract]

@@ -5,16 +5,18 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
+using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.Architecture;
+using ProfileExplorer.Core.Compilers.ASM;
+using ProfileExplorer.Core.IR;
+using ProfileExplorer.Core.IR.Tags;
 using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.ETW;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
-using System.Collections.Generic;
-using ProfileExplorer.Core.Compilers.ASM;
-using ProfileExplorer.Core.Compilers.Architecture;
-using ProfileExplorer.Core.Profile.ETW;
-using ProfileExplorer.Core.Analysis;
+using static System.Collections.Specialized.BitVector32;
 
 namespace ProfileExplorer.Core.Session;
 
@@ -25,144 +27,82 @@ public enum SessionKind {
 }
 public class BaseSession : ISession
 {
-    private ICompilerInfoProvider compilerInfo_;
-  private CancelableTaskInstance documentLoadTask_;
-
-  private object lockObject_;
+  private ICompilerInfoProvider compilerInfo_;
+  private ProfileData profileData_;
   private List<ILoadedDocument> documents_;
-  private List<CancelableTask> pendingTasks_;
-  private ILoadedDocument mainDocument_;
 
   public ICompilerInfoProvider CompilerInfo => compilerInfo_;
-    public ProfileData ProfileData { get; private set; }
+  public ProfileData ProfileData => profileData_;
+  public IReadOnlyList<ILoadedDocument> Documents => documents_;
 
-    public IReadOnlyList<ILoadedDocument> Documents => documents_;
-
-    public BaseSession()
-    {
-    lockObject_ = new object();
+  public BaseSession()
+  {
+    profileData_ = null;
     documents_ = new List<ILoadedDocument>();
-    pendingTasks_ = new List<CancelableTask>();
-
-      compilerInfo_ = null;
-    }
-
-    public ILoadedDocument FindLoadedDocument(IRTextFunction func) {
-      var summary = func.ParentSummary;
-      return documents_.Find(item => item.Summary == summary);
-    }
-
-    public ICompilerInfoProvider CreateCompilerInfoProvider(IRMode mode) {
-      return new ASMCompilerInfoProvider(mode, this);
-    }
-
-    public ILoadedDocument CreateLoadedDocument(string filePath, string modulePath, Guid id) {
-      return new LoadedDocument(filePath, modulePath, id);
-    }
-
-    public ILoadedDocument CreateDummyDocument(string name) {
-      return LoadedDocument.CreateDummyDocument(name);
-    }
-
-  public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
-    await SwitchCompilerTarget(compilerInfo);
-
-    StartSession(sessionName, sessionKind);
-
-    return true;
   }
 
-  private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
-    await EndSession();
-    compilerInfo_ = compilerInfo;
-    await compilerInfo_.ReloadSettings();
-  }
+  public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {    
+    using var provider = new ETWProfileDataProvider();
 
-  private void StartSession(string filePath, SessionKind sessionKind) {
-    documentLoadTask_ = new CancelableTaskInstance(false, RegisterCancelableTask,
-                                                   UnregisterCancelableTask);
-    compilerInfo_.ReloadSettings();
-  }
+    provider.SetupNewSessionRequested += OnSetupNewSessionRequested;
+    provider.StartNewSessionRequested += OnStartNewSessionRequested;
 
-  private async Task EndSession(bool showStartPage = true) {
-    // Wait for any pending tasks to complete.
-    await CancelPendingTasks();
-
-    foreach (var docInfo in documents_) {
-      docInfo.Dispose();
-    }
-
-    documents_.Clear();
-
-    FunctionAnalysisCache.ResetCache();
-  }
-
-  public async Task<bool> SetupNewSession(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData) {
-    mainDocument_ = mainDocument;
-    RegisterLoadedDocument(mainDocument);
-
-    foreach (var loadedDoc in otherDocuments) {
-      RegisterLoadedDocument(loadedDoc);
-    }
-
-    return true;
-  }
-
-  private void RegisterLoadedDocument(ILoadedDocument docInfo) {
-    documents_.Add(docInfo);
-  }
-
-  public async Task<ILoadedDocument> LoadProfileBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null) {
-    return await Task.Run(async () => {
-      var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, false);
-      var result = await LoadDocument(filePath, modulePath, Guid.NewGuid(), null, loader);
-
-      if (result != null) {
-        result.BinaryFile = BinaryFileSearchResult.Success(filePath);
-        result.DebugInfo = debugInfo;
-      }
-
-      return result;
-    }).
-      ConfigureAwait(false);
-  }
-
-  private async Task<ILoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
-                                                  ProgressInfoHandler progressHandler,
-                                                  IRTextSectionLoader loader) {
-    try {
-      var result = await Task.Run(() => {
-        var result = CreateLoadedDocument(filePath, modulePath, id);
-        result.Loader = loader;
-        result.Summary = result.Loader.LoadDocument(progressHandler);
-        return result;
-      });
-
-      //await compilerInfo_.HandleLoadedDocument(result, modulePath);
-      return result;
-    }
-    catch (Exception ex) {
-      Trace.TraceError($"Failed to load document {filePath}: {ex}");
-      return null;
-    }
-  }
-
-  public async Task<bool> LoadProfileData(string profileFilePath, List<int> processIds, ProfileDataProviderOptions options, SymbolFileSourceSettings symbolSettings, ProfileDataReport report, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
-    var sw = Stopwatch.StartNew();
-    using var provider = new ETWProfileDataProvider(this);
     var result = await provider.LoadTraceAsync(profileFilePath, processIds,
                                                options, symbolSettings,
                                                report, progressCallback, cancelableTask);
 
     if (result != null) {
       result.Report = report;
-      ProfileData = result;
+      profileData_ = result;
       UnloadProfilingDebugInfo();
     }
 
-    Trace.WriteLine($"Done profile load and setup: {sw}, {sw.ElapsedMilliseconds} ms");
-    Trace.Flush();
     return result != null;
+  }
+
+  private async Task OnStartNewSessionRequested(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
+    compilerInfo_ = compilerInfo;
+  }
+
+  private async Task OnSetupNewSessionRequested(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData) {
+    documents_.Add(mainDocument);
+    documents_.AddRange(otherDocuments);
+  }
+
+  public async Task<ParsedIRTextSection> LoadAndParseSection(IRTextSection section) {
+    var summary = section.ParentFunction.ParentSummary;
+    var docInfo = FindLoadedDocument(section);
+
+    // This shouldn't happen if document was loaded properly...
+    if (docInfo == null || docInfo.Loader == null) {
+      Trace.WriteLine($"Failed LoadAndParseSection for function {section.ParentFunction.Name}");
+      return null;
+    }
+
+    var parsedSection = docInfo.Loader.LoadSection(section);
+
+    if (parsedSection != null && parsedSection.Function != null) {
+      var funcDebugInfo = ProfileData?.GetFunctionProfile(section.ParentFunction)?.FunctionDebugInfo;
+      var loadedDoc = FindLoadedDocument(section.ParentFunction);
+      await compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section, loadedDoc, funcDebugInfo);
+      return parsedSection;
+    }
+
+    string placeholderText = "Could not find function code";
+    var dummyFunc = new FunctionIR(section.ParentFunction.Name);
+    return new ParsedIRTextSection(section, placeholderText.AsMemory(), dummyFunc) {
+      LoadFailed = true
+    };
+  }
+
+  private ILoadedDocument FindLoadedDocument(IRTextSection section) {
+    var summary = section.ParentFunction.ParentSummary;
+    return documents_.Find(item => item.Summary == summary);
+  }
+
+  private ILoadedDocument FindLoadedDocument(IRTextFunction func) {
+    var summary = func.ParentSummary;
+    return documents_.Find(item => item.Summary == summary);
   }
 
   private void UnloadProfilingDebugInfo() {
@@ -177,31 +117,5 @@ public class BaseSession : ISession
         debugInfo.Unload();
       }
     });
-  }
-
-  public async Task CancelPendingTasks() {
-    List<CancelableTask> tasks;
-
-    lock (lockObject_) {
-      tasks = pendingTasks_.CloneList();
-    }
-
-    foreach (var task in tasks) {
-      task.Cancel();
-      await task.WaitToCompleteAsync();
-    }
-  }
-
-
-  private void RegisterCancelableTask(CancelableTask task) {
-    lock (lockObject_) {
-      pendingTasks_.Add(task);
-    }
-  }
-
-  private void UnregisterCancelableTask(CancelableTask task) {
-    lock (lockObject_) {
-      pendingTasks_.Remove(task);
-    }
   }
 }

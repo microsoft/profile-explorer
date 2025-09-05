@@ -30,7 +30,7 @@ public sealed class DocumentSectionLoader : IRTextSectionLoader {
     documentReader_ = irInfo.CreateSectionReader(textData);
   }
 
-  public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
+  public async override Task<IRTextSummary> LoadDocument(ProgressInfoHandler progressHandler) {
     var tasks = new List<Task>();
 
     var result = documentReader_.GenerateSummary(progressHandler, (reader, sectionInfo) => {

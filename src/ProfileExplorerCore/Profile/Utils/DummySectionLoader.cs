@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace ProfileExplorer.Core.Profile.Utils;
 
 public sealed class DummySectionLoader : IRTextSectionLoader {
-  public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
+  public async override Task<IRTextSummary> LoadDocument(ProgressInfoHandler progressHandler) {
     return null;
   }
 

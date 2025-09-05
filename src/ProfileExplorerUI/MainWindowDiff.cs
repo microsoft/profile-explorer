@@ -8,14 +8,15 @@ using System.Windows;
 using System.Windows.Input;
 using DiffPlex.DiffBuilder.Model;
 using ProfileExplorer.Core;
-using ProfileExplorer.UI.Diff;
-using ProfileExplorer.UI.OptionsPanels;
-using ProfileExplorer.Core.Utilities;
-using ProfileExplorer.Core.Session;
-using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Diff;
 using ProfileExplorer.Core.Document.Renderers.Highlighters;
+using ProfileExplorer.Core.Session;
+using ProfileExplorer.Core.Settings;
+using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.UI.Diff;
+using ProfileExplorer.UI.OptionsPanels;
 using ProfileExplorerUI.Session;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ProfileExplorer.UI;
 
@@ -60,7 +61,7 @@ public partial class MainWindow : Window, IUISession {
     }
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     OpenBaseDiffDocuments(string baseFilePath, string diffFilePath) {
     var (baseDoc, diffDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
@@ -94,10 +95,10 @@ public partial class MainWindow : Window, IUISession {
     await SwapDiffedDocuments();
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     OpenBaseDiffIRDocumentsImpl(string baseFilePath, string diffFilePath) {
-    IUILoadedDocument baseResult = null;
-    IUILoadedDocument diffResult = null;
+    ILoadedDocument baseResult = null;
+    ILoadedDocument diffResult = null;
 
     try {
       await EndSession();
@@ -123,7 +124,7 @@ public partial class MainWindow : Window, IUISession {
     return (baseResult, diffResult);
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     LoadBinaryBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath,
                                   string diffModuleName) {
     await SwitchBinaryCompilerTarget(baseFilePath);
@@ -147,7 +148,7 @@ public partial class MainWindow : Window, IUISession {
     return (null, null);
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
     var baseTask =
       Task.Run(() => LoadDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
@@ -168,7 +169,7 @@ public partial class MainWindow : Window, IUISession {
     return (null, null);
   }
 
-  private async Task<(IUILoadedDocument, IUILoadedDocument)>
+  private async Task<(ILoadedDocument, ILoadedDocument)>
     OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
     //? HACK: Set the module name of both docs to be the same,
     //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
@@ -429,7 +430,8 @@ public partial class MainWindow : Window, IUISession {
     return Task.Run(async () => {
       var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
                                          isRightDoc, filteredInput, diffStats);
-      await diffUpdater.ReparseDiffedFunction(result, section);
+      var loadedDoc = FindLoadedDocument(section.ParentFunction);
+      await diffUpdater.ReparseDiffedFunction(result, section, loadedDoc);
       return result;
     });
   }
@@ -440,7 +442,8 @@ public partial class MainWindow : Window, IUISession {
 
     return Task.Run(async () => {
       var result = diffUpdater.CreateNoDiffDocument(text);
-      await diffUpdater.ReparseDiffedFunction(result, section);
+      var loadedDoc = FindLoadedDocument(section.ParentFunction);
+      await diffUpdater.ReparseDiffedFunction(result, section, loadedDoc);
       return result;
     });
   }
@@ -497,9 +500,9 @@ public partial class MainWindow : Window, IUISession {
     DiffMarkingResult rightDiffResult;
 
     // Create the diff filter that will post-process the diff results.
-    var leftDiffInputFilter = compilerInfo_.CreateDiffInputFilter();
-    var rightDiffInputFilter = compilerInfo_.CreateDiffInputFilter();
-    var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+  var leftDiffInputFilter = compilerInfo_.DiffFilterProvider?.CreateDiffInputFilter();
+  var rightDiffInputFilter = compilerInfo_.DiffFilterProvider?.CreateDiffInputFilter();
+  var diffFilter = compilerInfo_.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
     // Fairly often the text is identical, don't do the diffing for such cases.
@@ -604,7 +607,7 @@ public partial class MainWindow : Window, IUISession {
     // in the doc. hosts once back on the UI thread.
     var leftDiffStats = new DiffStatistics();
     var rightDiffStats = new DiffStatistics();
-    var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+  var diffFilter = compilerInfo_.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
     var leftMarkTask = MarkSectionDiffs(leftDocument.Section, leftText, rightText,
@@ -731,7 +734,7 @@ public partial class MainWindow : Window, IUISession {
 
   private async Task<(string, IRTextSection)>
     SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
-                                  IUILoadedDocument otherDocument) {
+                                  ILoadedDocument otherDocument) {
     if (sessionState_.DiffDocument != null) {
       // When two documents are compared, try to pick
       // the other section from that other document.
@@ -752,7 +755,7 @@ public partial class MainWindow : Window, IUISession {
     }
   }
 
-  private IRTextSection FindDiffDocumentSection(IRTextSection section, IUILoadedDocument diffDoc) {
+  private IRTextSection FindDiffDocumentSection(IRTextSection section, ILoadedDocument diffDoc) {
     return SectionPanel.FindDiffDocumentSection(section);
   }
 
@@ -894,7 +897,7 @@ public partial class MainWindow : Window, IUISession {
     var diff = await Task.Run(() => diffBuilder.ComputeDiffs(prevText, currentText));
 
     var diffStats = new DiffStatistics();
-    var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+  var diffFilter = compilerInfo_.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
     var diffResult = await MarkSectionDiffs(section, prevText, currentText,

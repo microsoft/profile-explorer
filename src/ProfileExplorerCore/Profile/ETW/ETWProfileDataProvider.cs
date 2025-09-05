@@ -21,6 +21,10 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Profile.ETW;
 
+// Event delegates for session callbacks
+public delegate Task SetupNewSessionHandler(ILoadedDocument mainDocument, List<ILoadedDocument> otherDocuments, ProfileData profileData);
+public delegate Task StartNewSessionHandler(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
+
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
   private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
@@ -40,7 +44,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private static ProfileModuleBuilder prevProfileModuleBuilder_;
   private ProfileDataProviderOptions options_;
   private ProfileDataReport report_;
-  private ISession session_;
+  private ICompilerInfoProvider compilerInfoProvider_;
   private ProfileData profileData_;
   private object lockObject_;
   private object[] imageLocks_;
@@ -48,8 +52,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private HashSet<ProfileImage> rejectedDebugModules_;
   private int currentSampleIndex_;
 
-  public ETWProfileDataProvider(ISession session) {
-    session_ = session;
+  // Events for session lifecycle callbacks
+  public event SetupNewSessionHandler SetupNewSessionRequested;
+  public event StartNewSessionHandler StartNewSessionRequested;
+
+  public ETWProfileDataProvider() {
     profileData_ = new ProfileData();
 
     // Data structs used for module loading.
@@ -320,16 +327,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (exeDocument == null) {
           Trace.WriteLine($"LoadTraceAsync: WARNING - Failed to find main EXE document for {imageName}");
-          exeDocument = session_.CreateLoadedDocument(string.Empty, string.Empty, Guid.Empty);
+          exeDocument = new LoadedDocument(string.Empty, string.Empty, Guid.Empty);
           exeDocument.Summary = new IRTextSummary(string.Empty);
         }
         else {
           Trace.WriteLine($"LoadTraceAsync: Using exe document {exeDocument.ModuleName} with {otherDocuments.Count} other documents");
         }
 
-        Trace.WriteLine($"LoadTraceAsync: Calling session_.SetupNewSession");
-        await session_.SetupNewSession(exeDocument, otherDocuments, profileData_).ConfigureAwait(false);
-        Trace.WriteLine($"LoadTraceAsync: Completed session_.SetupNewSession");
+        Trace.WriteLine($"LoadTraceAsync: Calling SetupNewSessionRequested event");
+        await (SetupNewSessionRequested?.Invoke(exeDocument, otherDocuments, profileData_) ?? Task.CompletedTask);
+        Trace.WriteLine($"LoadTraceAsync: Completed SetupNewSessionRequested event");
       }
       else {
         Trace.WriteLine($"LoadTraceAsync: ERROR - Main processing task returned false (failed)");
@@ -896,8 +903,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
 #endif
 
-    await session_.StartNewSession(mainImageName, SessionKind.FileSession,
-      session_.CreateCompilerInfoProvider(irMode)).ConfigureAwait(false);
+    compilerInfoProvider_ = new ASMCompilerInfoProvider(irMode);
+    await (StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, compilerInfoProvider_) ?? Task.CompletedTask);
 
     // Locate the needed debug files, in parallel. This will download them
     // from the symbol server if not yet on local machine and enabled.
@@ -951,7 +958,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           DebugFileSearchResult result;
 
           try {
-            result = await session_.CompilerInfo.FindDebugInfoFileAsync(symbolFile, symbolSettings);
+            result = await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(symbolFile, symbolSettings);
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -969,7 +976,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           DebugFileSearchResult result;
 
           try {
-            result = session_.CompilerInfo.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+            result = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -1019,7 +1026,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
                                                    SymbolFileSourceSettings symbolSettings) {
     var totalSw = Stopwatch.StartNew();
-    var imageModule = new ProfileModuleBuilder(report_, session_);
+    var imageModule = new ProfileModuleBuilder(report_, compilerInfoProvider_);
     IDebugInfoProvider imageDebugInfo = null;
 
     Trace.WriteLine($"CreateModuleBuilderAsync: Starting for module {image.ModuleName}");
@@ -1061,7 +1068,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         // Time spent on debug info file lookup
         var debugFileSw = Stopwatch.StartNew();
-        var debugInfoFile = GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
+        var debugInfoFile = await GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
                                              image, rawProfile, processId, symbolSettings);
         var debugFileTime = debugFileSw.Elapsed;
 
@@ -1106,18 +1113,18 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
   }
 
-  private DebugFileSearchResult GetDebugInfoFile(BinaryFileSearchResult binaryFile,
+  private async Task<DebugFileSearchResult> GetDebugInfoFile(BinaryFileSearchResult binaryFile,
                                                  ProfileImage image, RawProfileData rawProfile, int processId,
                                                  SymbolFileSourceSettings symbolSettings) {
     if (binaryFile is {Found: true}) {
-      return session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath, symbolSettings);
+      return await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings);
     }
     else {
       // Try to use ETL info if binary not available.
       var symbolFile = rawProfile.GetDebugFileForImage(image, processId);
 
       if (symbolFile != null) {
-        return session_.CompilerInfo.FindDebugInfoFile(symbolFile, symbolSettings);
+        return await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(symbolFile, symbolSettings);
       }
     }
 

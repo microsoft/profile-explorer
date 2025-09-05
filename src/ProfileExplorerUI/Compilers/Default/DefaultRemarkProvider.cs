@@ -10,6 +10,7 @@ using ProfileExplorer.Core;
 using ProfileExplorer.Core.Analysis;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorerUI.Session;
 
@@ -19,7 +20,8 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
   private const string MetadataStartString = "/// remark:";
   private const string RemarkContextStartString = "context_start";
   private const string RemarkContextEndString = "context_end";
-  private ICompilerInfoProvider compilerInfo_;
+  private string compilerIRName_;
+  private ICompilerIRInfo irInfo_;
   private List<RemarkCategory> categories_;
   private List<RemarkSectionBoundary> boundaries_;
   private List<RemarkTextHighlighting> highlighting_;
@@ -27,14 +29,15 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
   private bool settingsLoaded_;
 
   public DefaultRemarkProvider(ICompilerInfoProvider compilerInfo) {
-    compilerInfo_ = compilerInfo;
+    compilerIRName_ = compilerInfo.CompilerIRName;
+    irInfo_ = compilerInfo.IR;
     categories_ = new List<RemarkCategory>();
     boundaries_ = new List<RemarkSectionBoundary>();
     highlighting_ = new List<RemarkTextHighlighting>();
     settingsLoaded_ = LoadSettings();
   }
 
-  public string SettingsFilePath => App.GetRemarksDefinitionFilePath(compilerInfo_.CompilerIRName);
+  public string SettingsFilePath => App.GetRemarksDefinitionFilePath(compilerIRName_);
 
   public List<RemarkCategory> RemarkCategories {
     get {
@@ -159,7 +162,7 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
   }
 
   public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function,
-                                        IUILoadedDocument document, RemarkProviderOptions options,
+                                        ILoadedDocument document, RemarkProviderOptions options,
                                         CancelableTask cancelableTask) {
     if (!settingsLoaded_) {
       return new List<Remark>(); // Failed to load settings, bail out.
@@ -227,14 +230,14 @@ public sealed class DefaultRemarkProvider : IRRemarkProvider {
                                          RemarkContextState state,
                                          CancelableTask cancelableTask) {
     var similarValueFinder = new SimilarValueFinder(function);
-    var refFinder = new ReferenceFinder(function, compilerInfo_.IR);
+    var refFinder = new ReferenceFinder(function, irInfo_);
 
     // The split lines don't include the endline, but considering
     // the \r \n is needed to get the proper document offset.
     int newLineLength = Environment.NewLine.Length;
     int lineStartOffset = 0;
-    var lineParser = new DefaultRemarkParser(compilerInfo_);
-    var parser = new DefaultRemarkParser(compilerInfo_);
+    var lineParser = new DefaultRemarkParser(irInfo_);
+    var parser = new DefaultRemarkParser(irInfo_);
 
     //? TODO: For many lines, must be split in chunks and parallelized,
     //? it can take 5-7s even on 30-40k instruction functs, which is not that uncommon...

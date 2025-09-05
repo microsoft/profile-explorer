@@ -46,7 +46,7 @@ public abstract class IRTextSectionLoader : IDisposable {
   }
 
   public event EventHandler<bool> SectionPreprocessingCompleted;
-  public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
+  public abstract Task<IRTextSummary> LoadDocument(ProgressInfoHandler progressHandler);
   public abstract string GetDocumentOutputText();
   public abstract byte[] GetDocumentTextBytes();
   public abstract ParsedIRTextSection LoadSection(IRTextSection section);

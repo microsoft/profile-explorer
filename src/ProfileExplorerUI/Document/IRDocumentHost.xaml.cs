@@ -1444,7 +1444,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
-    var remarkProvider = Session.CompilerInfo.RemarkProvider;
+    var remarkProvider = Session.RemarkProvider;
 
     return await Task.Run(() => {
       var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,

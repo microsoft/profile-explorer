@@ -626,7 +626,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
     SetupBlockFolding();
 
     if (analyzeFunction) {
-      await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+      await Session.LoadedSectionHandler.HandleLoadedSection(this, Function, Section);
     }
 
     return true;
@@ -1080,7 +1080,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     UninstallBlockFolding();
     folding_ = FoldingManager.Install(TextArea);
-    var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
+    var foldingStrategy = Session.BlockFoldingStrategyProvider.CreateFoldingStrategy(Function);
     foldingStrategy.UpdateFoldings(folding_, Document);
     SetupBlockFoldingEvents(folding_.AllFoldings);
   }
@@ -2989,7 +2989,7 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
     // Do compiler-specific document work.
     if (!isSourceCode) {
-      await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+      await Session.LoadedSectionHandler.HandleLoadedSection(this, Function, Section);
     }
 
     UpdateHighlighting();

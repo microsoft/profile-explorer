@@ -127,8 +127,8 @@ public class DocumentDiffBuilder {
             return new DocumentDiffResult(leftSection, rightSection, null, false);
           }
 
-          var leftInputFilter = irInfo.CreateDiffInputFilter();
-          var rightInputFilter = irInfo.CreateDiffInputFilter();
+          var leftInputFilter = irInfo.DiffFilterProvider?.CreateDiffInputFilter();
+          var rightInputFilter = irInfo.DiffFilterProvider?.CreateDiffInputFilter();
 
           if (leftInputFilter == null || rightInputFilter == null) {
             return new DocumentDiffResult(leftSection, rightSection, null, true);
@@ -159,8 +159,8 @@ public class DocumentDiffBuilder {
           string leftText = leftDocLoader.GetSectionText(leftSection, false);
           string rightText = rightDocLoader.GetSectionText(rightSection, false);
 
-          var leftInputFilter = irInfo.CreateDiffInputFilter();
-          var rightInputFilter = irInfo.CreateDiffInputFilter();
+          var leftInputFilter = irInfo.DiffFilterProvider?.CreateDiffInputFilter();
+          var rightInputFilter = irInfo.DiffFilterProvider?.CreateDiffInputFilter();
 
           if (leftInputFilter != null && rightInputFilter != null) {
             var leftResult = leftInputFilter.FilterInputText(leftText);

@@ -335,7 +335,7 @@ public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged 
     var diff = await Task.Run(() => diffBuilder.ComputeDiffs(otherText, text));
 
     var diffStats = new DiffStatistics();
-    var diffFilter = Session.CompilerInfo.CreateDiffOutputFilter();
+  var diffFilter = Session.CompilerInfo.DiffFilterProvider?.CreateDiffOutputFilter();
     diffFilter.Initialize(App.Settings.DiffSettings, Session.CompilerInfo.IR);
     var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, Session.CompilerInfo);
     var diffResult = await Task.Run(() => diffUpdater.MarkDiffs(otherText, text, diff.NewText, diff.OldText,

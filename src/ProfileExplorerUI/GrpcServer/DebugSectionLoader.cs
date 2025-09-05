@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Utilities;
 
@@ -20,7 +21,7 @@ public class DebugSectionLoader : IRTextSectionLoader {
     sectionTextMap_ = new Dictionary<IRTextSection, CompressedString>();
   }
 
-  public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
+  public async override Task<IRTextSummary> LoadDocument(ProgressInfoHandler progressHandler) {
     return summary_ ??= new IRTextSummary();
   }
 

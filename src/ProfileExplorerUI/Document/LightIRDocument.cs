@@ -394,7 +394,7 @@ public sealed class LightIRDocument : TextEditor {
 
   private List<IRElement> ExtractTextOperands(string text, FunctionIR function, CancelableTask cancelableTask) {
     var elements = new List<IRElement>();
-    var remarkProvider = Session.CompilerInfo.RemarkProvider;
+    var remarkProvider = Session.RemarkProvider;
     var options = new RemarkProviderOptions {
       FindOperandRemarks = false,
       IgnoreOverlappingOperandRemarks = true

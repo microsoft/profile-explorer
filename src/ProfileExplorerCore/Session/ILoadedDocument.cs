@@ -28,6 +28,10 @@ public interface ILoadedDocument : IDisposable {
   bool HasSymbolFileInfo { get; }
   string FileName { get; }
 
+  public event EventHandler DocumentChanged;
+  public void SetupDocumentWatcher();
+  public void ChangeDocumentWatcherState(bool enabled);
+
   public void AddDummyFunctions(List<string> funcNames);
   IRTextFunction AddDummyFunction(string name);
   void SaveSectionState(object stateObject, IRTextSection section);
