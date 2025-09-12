@@ -81,3 +81,27 @@ Direct backend calls (`MainWindow.LoadProfileData`) are available but may bypass
 
 ---
 Generated: 2025-09-12
+
+## MCP Server Integration Recommendation (Succinct)
+Preferred approach: separate `ProfileExplorer.Mcp` project + thin UI adapter.
+
+Summary:
+- Create new project `src/ProfileExplorer.Mcp/` (class library) with: protocol contracts, transport (stdio or named pipe), dispatcher loop, command handlers.
+- Define minimal `IMcpActionExecutor` (load profile, open function, apply/clear filter). Avoid exposing entire `IUISession`.
+- In UI project add `McpActionExecutor` adapter wrapping `MainWindow` (`Dispatcher.InvokeAsync` for UI work), implementing `IMcpActionExecutor`.
+- Initialize server in `App.OnStartup` after showing `MainWindow` gated by env var (e.g. `PROFILE_EXPLORER_ENABLE_MCP`).
+- Testing: headless unit tests against protocol layer using a mock executor.
+- Extension: new MCP action => add method to interface + adapter + handler (keeps changes localized).
+
+Rationale: maximizes separation & testability; prevents protocol layer from depending on WPF; single adapter centralizes thread marshaling.
+
+Fallback (if new project not allowed): embed under `ProfileExplorerUI/Mcp/` folder—higher coupling, use only if project addition is blocked.
+
+Not recommended: placing server in core/session layers (would leak UI threading concerns and broaden responsibilities).
+
+Minimal next steps:
+1. Add project & baseline contracts.
+2. Implement server loop + basic commands (load profile, open function, apply filter, clear filter).
+3. Add adapter + startup flag.
+4. Add unit tests (command -> mock executor) & log errors as structured responses.
+5. Document command schema (`mcp-protocol.md`).
