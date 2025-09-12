@@ -10,35 +10,13 @@ namespace ProfileExplorer.Mcp
     public interface IMcpActionExecutor
     {
         /// <summary>
-        /// Open the Profiling menu and Load Profile dialog in the main window
-        /// Corresponds to: Executing AppCommand.LoadProfile
+        /// Opens a trace file and loads the specified process in one complete operation
+        /// This combines all the UI entry points into a single streamlined action
         /// </summary>
-        /// <returns>Task that completes when the dialog is opened</returns>
-        Task<bool> OpenLoadProfileDialogAsync();
-
-        /// <summary>
-        /// Set the profile file path in the Load Profile dialog
-        /// Corresponds to: Setting ProfileLoadWindow.ProfileFilePath property
-        /// </summary>
-        /// <param name="profileFilePath">Path to the profile trace file</param>
-        /// <returns>Task that completes when the path is set and processes are enumerated</returns>
-        Task<bool> SetProfileFilePathAsync(string profileFilePath);
-
-        /// <summary>
-        /// Select process(es) in the process list for profile loading
-        /// Corresponds to: Selecting items in ProcessList, triggering ProcessList_OnSelectionChanged
-        /// </summary>
-        /// <param name="processIds">Array of process IDs to select</param>
-        /// <returns>Task that completes when processes are selected</returns>
-        Task<bool> SelectProcessesAsync(int[] processIds);
-
-        /// <summary>
-        /// Execute the profile load operation
-        /// Corresponds to: LoadButton_Click or MainWindow.LoadProfileData backend call
-        /// </summary>
-        /// <param name="useBackendDirectly">If true, use MainWindow.LoadProfileData directly; if false, simulate LoadButton_Click</param>
-        /// <returns>Task that completes when the profile is loaded</returns>
-        Task<bool> ExecuteProfileLoadAsync(bool useBackendDirectly = true);
+        /// <param name="profileFilePath">Path to the ETL trace file to open</param>
+        /// <param name="processId">Process ID to select and load from the trace</param>
+        /// <returns>Task that completes when the trace is fully loaded</returns>
+        Task<bool> OpenTraceAsync(string profileFilePath, int processId);
 
         /// <summary>
         /// Get the current status of the Profile Explorer UI

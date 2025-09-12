@@ -31,36 +31,9 @@ namespace ProfileExplorer.Mcp
     /// Mock implementation of IMcpActionExecutor for testing purposes
     /// Implements the 4 documented UI entry points for testing
     /// </summary>
-    public class MockMcpActionExecutor : IMcpActionExecutor
-    {
-        public Task<bool> OpenLoadProfileDialogAsync()
-        {
-            Console.WriteLine("Mock: OpenLoadProfileDialog called - would execute AppCommand.LoadProfile");
-            return Task.FromResult(true);
-        }
-
-        public Task<bool> SetProfileFilePathAsync(string profileFilePath)
-        {
-            Console.WriteLine($"Mock: SetProfileFilePath called with path='{profileFilePath}' - would set ProfileLoadWindow.ProfileFilePath and enumerate processes");
-            return Task.FromResult(true);
-        }
-
-        public Task<bool> SelectProcessesAsync(int[] processIds)
-        {
-            Console.WriteLine($"Mock: SelectProcesses called with processIds=[{string.Join(", ", processIds)}] - would select items in ProcessList");
-            return Task.FromResult(true);
-        }
-
-        public Task<bool> ExecuteProfileLoadAsync(bool useBackendDirectly = true)
-        {
-            if (useBackendDirectly)
-            {
-                Console.WriteLine("Mock: ExecuteProfileLoad called with backend=true - would call MainWindow.LoadProfileData directly");
-            }
-            else
-            {
-                Console.WriteLine("Mock: ExecuteProfileLoad called with backend=false - would simulate LoadButton_Click");
-            }
+    public class MockMcpActionExecutor : IMcpActionExecutor {
+        public Task<bool> OpenTraceAsync(string profileFilePath, int processId) {
+            Console.WriteLine("Mock: OpenTraceAsync called");
             return Task.FromResult(true);
         }
 
