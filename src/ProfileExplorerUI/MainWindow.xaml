@@ -886,6 +886,36 @@
                 UseLayoutRounding="True" />
             </Button>
           </Border>
+
+          <Border
+            HorizontalAlignment="Left"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            BorderBrush="Transparent"
+            BorderThickness="0,0,1,0">
+            <Button
+              x:Name="TestMcpButton"
+              Padding="4,2,4,2"
+              VerticalAlignment="Center"
+              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+              BorderBrush="{x:Null}"
+              Click="TestMcpLoadProfile_Click"
+              FontSize="10"
+              FontWeight="Medium"
+              ToolTip="Test MCP Load Profile Dialog">
+              <StackPanel Orientation="Horizontal">
+                <Image
+                  Width="12"
+                  Height="12"
+                  Margin="0,0,2,0"
+                  VerticalAlignment="Center"
+                  SnapsToDevicePixels="True"
+                  Source="{StaticResource FolderIcon}"
+                  UseLayoutRounding="True" />
+                <TextBlock Text="Test MCP" FontSize="10" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Border>
+
           <Border
             x:Name="ProfileMarkingHost"
             Background="#F7EFCD"

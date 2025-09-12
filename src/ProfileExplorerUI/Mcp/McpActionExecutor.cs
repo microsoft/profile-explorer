@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Mcp;
 
@@ -26,9 +27,15 @@ namespace ProfileExplorer.UI.Mcp
         {
             return await dispatcher.InvokeAsync(() =>
             {
-                // TODO: Implement actual UI automation
-                // AppCommand.LoadProfile.Execute(null, mainWindow);
-                return true;
+                try
+                {
+                    AppCommand.LoadProfile.Execute(null, mainWindow);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
             });
         }
 

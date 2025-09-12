@@ -99,6 +99,7 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private DocumentSearchPanel documentSearchPanel_;
   private bool initialDockLayoutRestored_;
   private bool profileControlsVisible;
+  private UI.Mcp.McpActionExecutor mcpActionExecutor_;
 
   public MainWindow() {
     InitializeComponent();
@@ -111,6 +112,7 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     SetupGraphLayoutCache();
     SetupEvents();
     DataContext = this;
+    mcpActionExecutor_ = new UI.Mcp.McpActionExecutor(this);
   }
 
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
@@ -1102,6 +1104,19 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
 
   private void CheckUpdatesMenu_Click(object sender, RoutedEventArgs e) {
     CheckForUpdate();
+  }
+
+  private async void TestMcpLoadProfile_Click(object sender, RoutedEventArgs e) {
+    try {
+      bool result = await mcpActionExecutor_.OpenLoadProfileDialogAsync();
+      string message = result ? "MCP Load Profile dialog opened successfully!" : "Failed to open MCP Load Profile dialog.";
+      MessageBox.Show(message, "MCP Test Result", MessageBoxButton.OK, 
+                      result ? MessageBoxImage.Information : MessageBoxImage.Error);
+    }
+    catch (Exception ex) {
+      MessageBox.Show($"Error testing MCP Load Profile: {ex.Message}", "MCP Test Error", 
+                      MessageBoxButton.OK, MessageBoxImage.Error);
+    }
   }
 
   private class MainWindowState {
