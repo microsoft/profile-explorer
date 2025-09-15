@@ -1120,6 +1120,25 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     }
   }
 
+  private async void TestFunctionAssembly_Click(object sender, RoutedEventArgs e) {
+    try {
+      string functionName = "Mso::Experiment::EcsNS::Private::SortByParameterGroups";
+      string assembly = await mcpActionExecutor_.GetFunctionAssemblyAsync(functionName);
+      
+      if (!string.IsNullOrEmpty(assembly)) {
+        MessageBox.Show($"Successfully retrieved assembly for function '{functionName}':\n\n{assembly.Substring(0, Math.Min(assembly.Length, 500))}...", 
+                        "MCP Function Assembly Test Result", MessageBoxButton.OK, MessageBoxImage.Information);
+      } else {
+        MessageBox.Show($"No assembly found for function '{functionName}'.", 
+                        "MCP Function Assembly Test Result", MessageBoxButton.OK, MessageBoxImage.Warning);
+      }
+    }
+    catch (Exception ex) {
+      MessageBox.Show($"Error testing MCP Function Assembly: {ex.Message}", "MCP Test Error", 
+                      MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+  }
+
   private class MainWindowState {
     public MainWindowState(MainWindow window) {
       CurrentResizeMode = window.ResizeMode;

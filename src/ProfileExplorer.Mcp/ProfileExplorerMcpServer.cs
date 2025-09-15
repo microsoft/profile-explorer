@@ -105,6 +105,65 @@ namespace ProfileExplorer.Mcp
 
         #endregion
 
+        #region Function Assembly Tool
+
+        [McpServerTool, Description("Get assembly code for a specific function by double-clicking on it in the Summary pane")]
+        public static async Task<string> GetFunctionAssembly(string functionName)
+        {
+            if (string.IsNullOrWhiteSpace(functionName))
+                throw new ArgumentException("Function name cannot be empty", nameof(functionName));
+
+            try
+            {
+                if (_executor == null)
+                {
+                    throw new InvalidOperationException("MCP action executor is not initialized");
+                }
+
+                string assemblyContent = await _executor.GetFunctionAssemblyAsync(functionName);
+                
+                if (assemblyContent == null)
+                {
+                    var notFoundResult = new
+                    {
+                        Action = "GetFunctionAssembly",
+                        FunctionName = functionName,
+                        Status = "NotFound",
+                        Description = "Function not found in the current summary or assembly could not be retrieved",
+                        Timestamp = DateTime.UtcNow
+                    };
+                    return System.Text.Json.JsonSerializer.Serialize(notFoundResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
+
+                var result = new
+                {
+                    Action = "GetFunctionAssembly",
+                    FunctionName = functionName,
+                    Status = "Success",
+                    Assembly = assemblyContent,
+                    Description = "Successfully retrieved assembly code for the function",
+                    Timestamp = DateTime.UtcNow
+                };
+
+                return System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            catch (Exception ex)
+            {
+                var errorResult = new
+                {
+                    Action = "GetFunctionAssembly",
+                    FunctionName = functionName,
+                    Status = "Error",
+                    Error = ex.Message,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+        }
+
+        #endregion
+
         #region Help Tool
 
         [McpServerTool, Description("Get help information about available MCP commands")]
@@ -114,7 +173,7 @@ namespace ProfileExplorer.Mcp
             {
                 ServerName = "Profile Explorer MCP Server",
                 Version = "1.0.0",
-                Description = "Simplified MCP server for Profile Explorer - opens and loads traces in one operation",
+                Description = "Simplified MCP server for Profile Explorer - opens and loads traces and retrieves function assembly",
                 AvailableCommands = new[]
                 {
                     new { 
@@ -123,18 +182,34 @@ namespace ProfileExplorer.Mcp
                         Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processId (int) - Process ID to select and load from the trace"
                     },
                     new { 
+                        Name = "GetFunctionAssembly", 
+                        Description = "Get assembly code for a specific function by double-clicking on it in the Summary pane", 
+                        Parameters = "functionName (string) - Name of the function to retrieve assembly for (supports partial matching)"
+                    },
+                    new { 
                         Name = "GetHelp", 
                         Description = "Get help information about available MCP commands", 
                         Parameters = "none" 
                     }
                 },
-                Example = new
+                Examples = new object[]
                 {
-                    Description = "Load a trace file and select a specific process",
-                    Command = "OpenTrace",
-                    Parameters = new {
-                        profileFilePath = @"C:\traces\sample.etl",
-                        processId = 1234
+                    new
+                    {
+                        Description = "Load a trace file and select a specific process",
+                        Command = "OpenTrace",
+                        Parameters = new {
+                            profileFilePath = @"C:\traces\sample.etl",
+                            processId = 1234
+                        }
+                    },
+                    new
+                    {
+                        Description = "Get assembly code for a function",
+                        Command = "GetFunctionAssembly",
+                        Parameters = new {
+                            functionName = "main"
+                        }
                     }
                 },
                 Timestamp = DateTime.UtcNow

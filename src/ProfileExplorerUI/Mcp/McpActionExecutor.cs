@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -313,6 +314,196 @@ namespace ProfileExplorer.UI.Mcp
                     LastUpdated = DateTime.UtcNow
                 };
             });
+        }
+
+        public async Task<string> GetFunctionAssemblyAsync(string functionName)
+        {
+            try
+            {
+                // Step 1: Find the SectionPanel that contains the function list
+                var sectionPanel = await dispatcher.InvokeAsync(() =>
+                {
+                    return mainWindow.FindName("SectionPanel") as ProfileExplorer.UI.SectionPanelPair ??
+                           mainWindow.FindPanel(ProfileExplorer.UI.ToolPanelKind.Section) as ProfileExplorer.UI.SectionPanelPair;
+                });
+
+                if (sectionPanel == null)
+                {
+                    return null; // Section panel not found
+                }
+
+                // Step 2: Get the main section panel (not the diff panel)
+                var mainSectionPanel = await dispatcher.InvokeAsync(() => sectionPanel.MainPanel);
+                if (mainSectionPanel == null)
+                {
+                    return null;
+                }
+
+                // Step 3: Find the function in the function list
+                var functionFound = await dispatcher.InvokeAsync(() =>
+                {
+                    var functionListControl = mainSectionPanel.FindName("FunctionList") as System.Windows.Controls.ListView;
+                    if (functionListControl?.ItemsSource != null)
+                    {
+                        try
+                        {
+                            // Search through the function list to find the matching function
+                            foreach (var item in functionListControl.ItemsSource)
+                            {
+                                if (item is ProfileExplorer.UI.IRTextFunctionEx functionEx)
+                                {
+                                    // Check if the function name matches
+                                    if (functionEx.ToolTip == functionName)
+                                    {
+                                        // Select the function
+                                        functionListControl.SelectedItems.Clear();
+                                        functionListControl.SelectedItems.Add(functionEx);
+                                        functionListControl.ScrollIntoView(functionEx);
+
+                                        // Programmatically trigger the double-click event
+                                        var method = mainSectionPanel.GetType().GetMethod("FunctionDoubleClick",
+                                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                        if (method != null)
+                                        {
+                                            // Create a ListViewItem to simulate the sender
+                                            var listViewItem = functionListControl.ItemContainerGenerator.ContainerFromItem(functionEx)
+                                                as System.Windows.Controls.ListViewItem;
+                                            if (listViewItem != null)
+                                            {
+                                                listViewItem.Content = functionEx;
+                                                var mouseEventArgs = new System.Windows.Input.MouseButtonEventArgs(
+                                                    System.Windows.Input.Mouse.PrimaryDevice,
+                                                    Environment.TickCount,
+                                                    System.Windows.Input.MouseButton.Left)
+                                                {
+                                                    RoutedEvent = System.Windows.Controls.Control.MouseDoubleClickEvent
+                                                };
+                                                method.Invoke(mainSectionPanel, new object[] { listViewItem, mouseEventArgs });
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            return false;
+                        }
+                    }
+                    return false;
+                });
+
+                if (!functionFound)
+                {
+                    return null; // Function not found in the list
+                }
+
+                // Add a delay to let the UI process the double-click and open the document
+                await Task.Delay(250);
+
+                // Step 4: Wait for the assembly document to be opened
+                var assemblyDocument = await WaitForAssemblyDocumentAsync(TimeSpan.FromSeconds(10));
+                if (assemblyDocument == null)
+                {
+                    return null; // Timeout waiting for assembly document
+                }
+
+                // Step 5: Retrieve the assembly content from the document
+                var assemblyContent = await dispatcher.InvokeAsync(() =>
+                {
+                    return assemblyDocument.TextView.Text;
+                });
+
+                return assemblyContent;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Waits for a new assembly document to be opened after the function double-click.
+        /// Simplified approach: just wait for any document with assembly content to appear.
+        /// </summary>
+        private async Task<ProfileExplorer.UI.IRDocumentHost> WaitForAssemblyDocumentAsync(TimeSpan timeout)
+        {
+            var startTime = DateTime.UtcNow;
+
+            // Simple approach: continuously check all open documents for assembly content
+            while (DateTime.UtcNow - startTime < timeout)
+            {
+                var assemblyDocument = await dispatcher.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        if (mainWindow is ProfileExplorer.UI.IUISession session)
+                        {
+                            var openDocs = session.OpenDocuments;
+
+                            // Check each document for assembly content
+                            foreach (var document in openDocs)
+                            {
+                                if (document?.Text != null && !string.IsNullOrEmpty(document.Text))
+                                {
+                                    var text = document.Text;
+                                    
+                                    // Enhanced assembly detection with more patterns
+                                    bool hasAssemblyInstructions = text.Contains("mov ") || text.Contains("call ") || 
+                                        text.Contains("ret") || text.Contains("push ") || text.Contains("pop ") || 
+                                        text.Contains("jmp ") || text.Contains("add ") || text.Contains("sub ") || 
+                                        text.Contains("lea ") || text.Contains("cmp ") || text.Contains("test ") ||
+                                        text.Contains("xor ") || text.Contains("and ") || text.Contains("or ");
+                                    
+                                    // Also check for register patterns and memory addresses
+                                    bool hasAssemblyPatterns = text.Contains("rax") || text.Contains("rbx") || 
+                                        text.Contains("rcx") || text.Contains("rdx") || text.Contains("rsp") ||
+                                        text.Contains("rbp") || text.Contains("eax") || text.Contains("ebx") ||
+                                        (text.Contains("[") && text.Contains("]")); // Memory addressing
+
+                                    if (hasAssemblyInstructions || hasAssemblyPatterns)
+                                    {
+                                        // Found a document with assembly content, find its IRDocumentHost
+                                        var sessionStateField = mainWindow.GetType().GetField("sessionState_", 
+                                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                        if (sessionStateField?.GetValue(mainWindow) is object sessionState)
+                                        {
+                                            var documentHostsProperty = sessionState.GetType().GetProperty("DocumentHosts");
+                                            if (documentHostsProperty?.GetValue(sessionState) is System.Collections.IList documentHosts)
+                                            {
+                                                foreach (var hostInfo in documentHosts)
+                                                {
+                                                    var documentHostProperty = hostInfo.GetType().GetProperty("DocumentHost");
+                                                    var docHost = documentHostProperty?.GetValue(hostInfo) as ProfileExplorer.UI.IRDocumentHost;
+                                                    if (docHost?.TextView == document)
+                                                    {
+                                                        return docHost;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // If there's any exception, continue searching
+                    }
+                    return null;
+                });
+
+                if (assemblyDocument != null)
+                {
+                    return assemblyDocument;
+                }
+
+                await Task.Delay(200); // Check every 200ms
+            }
+
+            return null; // Timeout
         }
     }
 }

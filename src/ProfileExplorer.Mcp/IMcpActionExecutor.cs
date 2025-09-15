@@ -23,6 +23,14 @@ namespace ProfileExplorer.Mcp
         /// </summary>
         /// <returns>Status information about the current state</returns>
         Task<ProfilerStatus> GetStatusAsync();
+
+        /// <summary>
+        /// Opens a function's assembly by double-clicking on it in the Summary pane,
+        /// waits for the assembly pane to open, and retrieves the assembly content
+        /// </summary>
+        /// <param name="functionName">Name of the function to open</param>
+        /// <returns>Task that completes with the assembly content, or null if function not found</returns>
+        Task<string> GetFunctionAssemblyAsync(string functionName);
     }
 
     /// <summary>

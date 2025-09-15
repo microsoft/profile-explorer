@@ -49,5 +49,20 @@ namespace ProfileExplorer.Mcp
                 LastUpdated = DateTime.UtcNow
             });
         }
+
+        public Task<string> GetFunctionAssemblyAsync(string functionName)
+        {
+            Console.WriteLine($"Mock: GetFunctionAssemblyAsync called with functionName: {functionName}");
+            return Task.FromResult($@"Mock assembly for function {functionName}:
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 0x10
+    call sub_401000
+    mov eax, 0
+    add rsp, 0x10
+    pop rbp
+    ret");
+        }
     }
 }
