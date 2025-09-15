@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Mcp;
 using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI.Mcp
 {
@@ -400,7 +401,7 @@ namespace ProfileExplorer.UI.Mcp
                 }
 
                 // Add a delay to let the UI process the double-click and open the document
-                await Task.Delay(250);
+                await Task.Delay(500); // Increased delay to allow more time for document and timing data loading
 
                 // Step 4: Wait for the assembly document to be opened
                 var assemblyDocument = await WaitForAssemblyDocumentAsync(TimeSpan.FromSeconds(10));
@@ -409,13 +410,118 @@ namespace ProfileExplorer.UI.Mcp
                     return null; // Timeout waiting for assembly document
                 }
 
-                // Step 5: Retrieve the assembly content from the document
-                var assemblyContent = await dispatcher.InvokeAsync(() =>
+                // Step 4.5: Wait for timing information to be available
+                var timingDataAvailable = await WaitForTimingDataAsync(assemblyDocument, TimeSpan.FromSeconds(15));
+                
+                // Step 5: Retrieve the assembly content and timing information from the document
+                var assemblyContentWithTiming = await dispatcher.InvokeAsync(() =>
                 {
-                    return assemblyDocument.TextView.Text;
+                    var assemblyText = assemblyDocument.TextView.Text;
+                    var columnData = assemblyDocument.TextView.ProfileColumnData;
+                    
+                    if (columnData == null || !columnData.HasData)
+                    {
+                        // No timing information available, return just the assembly text
+                        return assemblyText;
+                    }
+                    
+                    // Extract timing information and combine with assembly text
+                    var lines = assemblyText.Split('\n');
+                    var result = new System.Text.StringBuilder();
+                    var function = assemblyDocument.TextView.Function;
+                    
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        var line = lines[i];
+                        
+                        // Try to get timing information for this line by finding the IR element
+                        // Line numbers in TextLocation are 0-based, but we're iterating 0-based as well
+                        IRElement elementAtLine = null;
+                        string timePercentage = null;
+                        string timeValue = null;
+                        
+                        if (function != null)
+                        {
+                            // Find elements that correspond to this line
+                            foreach (var block in function.Blocks)
+                            {
+                                foreach (var tuple in block.Tuples)
+                                {
+                                    if (tuple.TextLocation.Line == i) // Both are 0-based
+                                    {
+                                        elementAtLine = tuple;
+                                        break;
+                                    }
+                                }
+                                if (elementAtLine != null) break;
+                            }
+                        }
+                        
+                        if (elementAtLine != null)
+                        {
+                            var rowValue = columnData.GetValues(elementAtLine);
+                            if (rowValue != null)
+                            {
+                                // Extract Time(%) and Time(ms) information
+                                foreach (var columnValue in rowValue.ColumnValues)
+                                {
+                                    var column = columnValue.Key;
+                                    var value = columnValue.Value;
+                                    
+                                    // Check for time percentage column
+                                    if (column.Title.Contains("Time (%)") || column.ColumnName.Contains("TimePercentage"))
+                                    {
+                                        timePercentage = value.Text;
+                                    }
+                                    // Check for time value column
+                                    else if (column.Title.Contains("Time (") || column.ColumnName.Contains("Time"))
+                                    {
+                                        timeValue = value.Text;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Build the complete line with timing information on the same line
+                        result.Append(line);
+                        
+                        // Append timing information if available, aligned to the right on the same line
+                        if (!string.IsNullOrEmpty(timePercentage) || !string.IsNullOrEmpty(timeValue))
+                        {
+                            // Calculate padding to align timing info to the right (assuming 100-character width)
+                            const int TargetWidth = 100;
+                            int currentLength = line.Length;
+                            int timingInfoLength = 15; // Approximate length of timing info
+                            if (!string.IsNullOrEmpty(timePercentage)) timingInfoLength += timePercentage.Length + 12; // "Time(%): " + value
+                            if (!string.IsNullOrEmpty(timeValue)) timingInfoLength += timeValue.Length + 8; // "Time: " + value
+                            if (!string.IsNullOrEmpty(timePercentage) && !string.IsNullOrEmpty(timeValue)) timingInfoLength += 2; // ", "
+                            
+                            int paddingNeeded = Math.Max(2, TargetWidth - currentLength - timingInfoLength);
+                            
+                            result.Append(new string(' ', paddingNeeded));
+                            result.Append("[");
+                            if (!string.IsNullOrEmpty(timePercentage))
+                            {
+                                result.Append($"Time(%): {timePercentage}");
+                            }
+                            if (!string.IsNullOrEmpty(timeValue))
+                            {
+                                if (!string.IsNullOrEmpty(timePercentage))
+                                    result.Append(", ");
+                                result.Append($"Time: {timeValue}");
+                            }
+                            result.Append("]");
+                        }
+                        
+                        // Add line break only at the end, after timing info is added
+                        if (i < lines.Length - 1)
+                            result.AppendLine();
+                    }
+                    
+                    return result.ToString();
                 });
 
-                return assemblyContent;
+                return assemblyContentWithTiming;
             }
             catch (Exception)
             {
@@ -504,6 +610,68 @@ namespace ProfileExplorer.UI.Mcp
             }
 
             return null; // Timeout
+        }
+
+        /// <summary>
+        /// Waits for timing data to be available in the assembly document.
+        /// The ProfileColumnData might not be immediately available after the document opens.
+        /// </summary>
+        private async Task<bool> WaitForTimingDataAsync(ProfileExplorer.UI.IRDocumentHost documentHost, TimeSpan timeout)
+        {
+            var startTime = DateTime.UtcNow;
+            
+            while (DateTime.UtcNow - startTime < timeout)
+            {
+                var hasTimingData = await dispatcher.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        var columnData = documentHost.TextView?.ProfileColumnData;
+                        if (columnData != null && columnData.HasData)
+                        {
+                            // Additionally check if we can actually get timing values from at least one element
+                            var function = documentHost.TextView.Function;
+                            if (function != null)
+                            {
+                                // Try to find at least one element with timing data
+                                foreach (var block in function.Blocks)
+                                {
+                                    foreach (var tuple in block.Tuples)
+                                    {
+                                        var rowValue = columnData.GetValues(tuple);
+                                        if (rowValue?.ColumnValues != null && rowValue.ColumnValues.Any())
+                                        {
+                                            // Check if any column contains timing information
+                                            foreach (var columnValue in rowValue.ColumnValues)
+                                            {
+                                                var column = columnValue.Key;
+                                                if (column.Title.Contains("Time") || column.ColumnName.Contains("Time"))
+                                                {
+                                                    return true; // Found timing data
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
+                
+                if (hasTimingData)
+                {
+                    return true;
+                }
+                
+                await Task.Delay(500); // Check every 500ms - timing data loading can take a bit longer
+            }
+            
+            return false; // Timeout - proceed without timing data
         }
     }
 }
