@@ -631,7 +631,7 @@
                     <GridViewColumn
                       Width="150"
                       DisplayMemberBinding="{Binding Process.Name}">
-                      <GridViewColumnHeader Content="Process" />
+                      <GridViewColumnHeader Name="ProcessNameColumn" Content="Process" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                           <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -642,7 +642,7 @@
                     <GridViewColumn
                       Width="80"
                       DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
-                      <GridViewColumnHeader Content="Weight" />
+                      <GridViewColumnHeader Name="WeightPercentageColumn" Content="Weight" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                           <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -653,7 +653,7 @@
                     <GridViewColumn
                       Width="80"
                       DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
-                      <GridViewColumnHeader Content="Duration" />
+                      <GridViewColumnHeader Name="DurationColumn" Content="Duration" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                           <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -664,7 +664,7 @@
                     <GridViewColumn
                       Width="70"
                       DisplayMemberBinding="{Binding Process.ProcessId}">
-                      <GridViewColumnHeader Content="Process ID" />
+                      <GridViewColumnHeader Name="ProcessIdColumn" Content="Process ID" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                           <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -675,7 +675,7 @@
                     <GridViewColumn
                       Width="150"
                       DisplayMemberBinding="{Binding Process.CommandLine}">
-                      <GridViewColumnHeader Content="Command line" />
+                      <GridViewColumnHeader Name="ProcessCommandLineColumn" Content="Command line" />
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
                           <Setter Property="HorizontalContentAlignment" Value="Left" />
