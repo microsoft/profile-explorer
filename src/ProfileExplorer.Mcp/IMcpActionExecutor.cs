@@ -14,9 +14,9 @@ namespace ProfileExplorer.Mcp
         /// This combines all the UI entry points into a single streamlined action
         /// </summary>
         /// <param name="profileFilePath">Path to the ETL trace file to open</param>
-        /// <param name="processId">Process ID to select and load from the trace</param>
+        /// <param name="processIdentifier">Process ID (e.g., "1234") or process name (e.g., "chrome.exe", "POWERPNT") to select and load from the trace</param>
         /// <returns>Task that completes when the trace is fully loaded</returns>
-        Task<bool> OpenTraceAsync(string profileFilePath, int processId);
+        Task<bool> OpenTraceAsync(string profileFilePath, string processIdentifier);
 
         /// <summary>
         /// Get the current status of the Profile Explorer UI

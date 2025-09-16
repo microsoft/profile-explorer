@@ -33,8 +33,8 @@ namespace ProfileExplorer.Mcp
     /// Implements the 4 documented UI entry points for testing
     /// </summary>
     public class MockMcpActionExecutor : IMcpActionExecutor {
-        public Task<bool> OpenTraceAsync(string profileFilePath, int processId) {
-            Console.WriteLine("Mock: OpenTraceAsync called");
+        public Task<bool> OpenTraceAsync(string profileFilePath, string processIdentifier) {
+            Console.WriteLine($"Mock: OpenTraceAsync called with process identifier: {processIdentifier}");
             return Task.FromResult(true);
         }
 

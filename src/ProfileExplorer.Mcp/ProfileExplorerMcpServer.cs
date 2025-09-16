@@ -58,14 +58,14 @@ namespace ProfileExplorer.Mcp
 
         #region Simplified MCP Tool
 
-        [McpServerTool, Description("Open and load a trace file with a specific process in one complete operation")]
-        public static async Task<string> OpenTrace(string profileFilePath, int processId)
+        [McpServerTool, Description("Open and load a trace file with a specific process by name or ID in one complete operation")]
+        public static async Task<string> OpenTrace(string profileFilePath, string processNameOrId)
         {
             if (string.IsNullOrWhiteSpace(profileFilePath))
                 throw new ArgumentException("Profile file path cannot be empty", nameof(profileFilePath));
 
-            if (processId <= 0)
-                throw new ArgumentException("Process ID must be a positive integer", nameof(processId));
+            if (string.IsNullOrWhiteSpace(processNameOrId))
+                throw new ArgumentException("Process name or ID cannot be empty", nameof(processNameOrId));
 
             try
             {
@@ -74,15 +74,15 @@ namespace ProfileExplorer.Mcp
                     throw new InvalidOperationException("MCP action executor is not initialized");
                 }
 
-                bool success = await _executor.OpenTraceAsync(profileFilePath, processId);
+                bool success = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
                 
                 var result = new
                 {
                     Action = "OpenTrace",
                     ProfileFilePath = profileFilePath,
-                    ProcessId = processId,
+                    ProcessNameOrId = processNameOrId,
                     Status = success ? "Success" : "Failed",
-                    Description = "Opened Profile Explorer, loaded trace file, selected process, and executed profile load",
+                    Description = $"Opened Profile Explorer, loaded trace file, selected process '{processNameOrId}', and executed profile load",
                     Timestamp = DateTime.UtcNow
                 };
 
@@ -94,7 +94,7 @@ namespace ProfileExplorer.Mcp
                 {
                     Action = "OpenTrace",
                     ProfileFilePath = profileFilePath,
-                    ProcessId = processId,
+                    ProcessNameOrId = processNameOrId,
                     Status = "Error",
                     Error = ex.Message,
                     Timestamp = DateTime.UtcNow
@@ -179,8 +179,8 @@ namespace ProfileExplorer.Mcp
                 {
                     new { 
                         Name = "OpenTrace", 
-                        Description = "Open and load a trace file with a specific process in one complete operation", 
-                        Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processId (int) - Process ID to select and load from the trace"
+                        Description = "Open and load a trace file with a specific process by name or ID in one complete operation", 
+                        Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processNameOrId (string) - Process name (e.g., 'chrome.exe', 'POWERPNT') or process ID (e.g., '1234') to select and load from the trace"
                     },
                     new { 
                         Name = "GetFunctionAssembly", 
@@ -197,11 +197,20 @@ namespace ProfileExplorer.Mcp
                 {
                     new
                     {
-                        Description = "Load a trace file and select a specific process",
+                        Description = "Load a trace file and select a specific process by ID",
                         Command = "OpenTrace",
                         Parameters = new {
                             profileFilePath = @"C:\traces\sample.etl",
-                            processId = 1234
+                            processNameOrId = "1234"
+                        }
+                    },
+                    new
+                    {
+                        Description = "Load a trace file and select a specific process by partial name",
+                        Command = "OpenTrace",
+                        Parameters = new {
+                            profileFilePath = @"C:\traces\sample.etl",
+                            processNameOrId = "POWERPNT"
                         }
                     },
                     new
