@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -107,7 +108,7 @@ namespace ProfileExplorer.Mcp
 
         #region Function Assembly Tool
 
-        [McpServerTool, Description("Get assembly code for a specific function by double-clicking on it in the Summary pane")]
+        [McpServerTool, Description("Get assembly code for a specific function by double-clicking on it in the Summary pane, and save it to a file for later contextual reference by Copilot")]
         public static async Task<string> GetFunctionAssembly(string functionName)
         {
             if (string.IsNullOrWhiteSpace(functionName))
@@ -120,9 +121,9 @@ namespace ProfileExplorer.Mcp
                     throw new InvalidOperationException("MCP action executor is not initialized");
                 }
 
-                string assemblyContent = await _executor.GetFunctionAssemblyAsync(functionName);
+                string filePath = await _executor.GetFunctionAssemblyToFileAsync(functionName);
                 
-                if (assemblyContent == null)
+                if (filePath == null)
                 {
                     var notFoundResult = new
                     {
@@ -140,8 +141,8 @@ namespace ProfileExplorer.Mcp
                     Action = "GetFunctionAssembly",
                     FunctionName = functionName,
                     Status = "Success",
-                    Assembly = assemblyContent,
-                    Description = "Successfully retrieved assembly code for the function",
+                    FilePath = filePath,
+                    Description = $"Successfully retrieved assembly code for the function and saved to {filePath}",
                     Timestamp = DateTime.UtcNow
                 };
 
@@ -183,7 +184,7 @@ namespace ProfileExplorer.Mcp
                     },
                     new { 
                         Name = "GetFunctionAssembly", 
-                        Description = "Get assembly code for a specific function by double-clicking on it in the Summary pane", 
+                        Description = "Get assembly code for a specific function by double-clicking on it in the Summary pane, and save it to a file for later contextual reference by Copilot",
                         Parameters = "functionName (string) - Name of the function to retrieve assembly for (supports partial matching)"
                     },
                     new { 
@@ -205,7 +206,7 @@ namespace ProfileExplorer.Mcp
                     },
                     new
                     {
-                        Description = "Get assembly code for a function",
+                        Description = "Get assembly code for a function and save to file",
                         Command = "GetFunctionAssembly",
                         Parameters = new {
                             functionName = "main"

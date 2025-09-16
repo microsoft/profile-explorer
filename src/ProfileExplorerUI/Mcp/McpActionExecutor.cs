@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -305,19 +306,94 @@ namespace ProfileExplorer.UI.Mcp
         {
             return await dispatcher.InvokeAsync(() =>
             {
-                // TODO: Implement actual status retrieval
-                return new ProfilerStatus
+                try
                 {
-                    IsProfileLoaded = false,
-                    CurrentProfilePath = null,
-                    LoadedProcesses = Array.Empty<int>(),
-                    ActiveFilters = Array.Empty<string>(),
-                    LastUpdated = DateTime.UtcNow
-                };
+                    var sessionState = mainWindow.SessionState;
+                    var profileData = sessionState?.ProfileData;
+                    var report = profileData?.Report; // This is the ProfileDataReport with all the info
+
+                    // Check if we have profile data loaded
+                    bool isProfileLoaded = profileData != null && report != null;
+                    string currentProfilePath = null;
+                    int[] loadedProcesses = Array.Empty<int>();
+                    string[] activeFilters = Array.Empty<string>();
+                    string currentProcessName = null;
+                    int? currentProcessId = null;
+
+                    if (isProfileLoaded && report != null)
+                    {
+                        // Get trace file path and duration from ProfileDataReport.TraceInfo
+                        currentProfilePath = report.TraceInfo?.TraceFilePath;
+
+                        // Get process information from ProfileDataReport.Process (main process)
+                        if (report.Process != null)
+                        {
+                            currentProcessName = report.Process.Name;
+                            currentProcessId = report.Process.ProcessId;
+                        }
+
+                        // Get all running processes from ProfileDataReport.RunningProcesses
+                        if (report.RunningProcesses?.Count > 0)
+                        {
+                            loadedProcesses = report.RunningProcesses
+                                .Select(p => p.Process.ProcessId)  // ProcessSummary.Process.ProcessId
+                                .ToArray();
+                        }
+
+                        // Get active filter information from session state
+                        var filterList = new List<string>();
+                        var profileFilter = sessionState?.ProfileFilter;
+                        
+                        if (profileFilter != null)
+                        {
+                            if (profileFilter.HasFilter)
+                            {
+                                filterList.Add("Has active filter");
+                            }
+                            
+                            if (profileFilter.HasThreadFilter)
+                            {
+                                filterList.Add($"Thread filter: {profileFilter.ThreadFilterText}");
+                            }
+                            
+                            if (profileFilter.FilteredTime != TimeSpan.Zero)
+                            {
+                                filterList.Add($"Filtered time: {profileFilter.FilteredTime}");
+                            }
+                        }
+
+                        activeFilters = filterList.ToArray();
+                    }
+
+                    return new ProfilerStatus
+                    {
+                        IsProfileLoaded = isProfileLoaded,
+                        CurrentProfilePath = currentProfilePath,
+                        LoadedProcesses = loadedProcesses,
+                        ActiveFilters = activeFilters,
+                        CurrentProcessName = currentProcessName,
+                        CurrentProcessId = currentProcessId,
+                        LastUpdated = DateTime.UtcNow
+                    };
+                }
+                catch (Exception)
+                {
+                    // Return safe defaults if anything goes wrong
+                    return new ProfilerStatus
+                    {
+                        IsProfileLoaded = false,
+                        CurrentProfilePath = null,
+                        LoadedProcesses = Array.Empty<int>(),
+                        ActiveFilters = Array.Empty<string>(),
+                        CurrentProcessName = null,
+                        CurrentProcessId = null,
+                        LastUpdated = DateTime.UtcNow
+                    };
+                }
             });
         }
 
-        public async Task<string> GetFunctionAssemblyAsync(string functionName)
+        private async Task<string> GetFunctionAssemblyAsync(string functionName)
         {
             try
             {
@@ -672,6 +748,125 @@ namespace ProfileExplorer.UI.Mcp
             }
             
             return false; // Timeout - proceed without timing data
+        }
+
+        public async Task<string> GetFunctionAssemblyToFileAsync(string functionName)
+        {
+            try
+            {
+                // Get the assembly content first
+                string assemblyContent = await GetFunctionAssemblyAsync(functionName);
+                
+                if (assemblyContent == null)
+                {
+                    return null; // Function not found
+                }
+
+                // Get the current process name from the loaded session
+                string processName = await GetCurrentProcessNameAsync();
+
+                // Create the tmp directory path
+                string currentDirectory = Directory.GetCurrentDirectory();
+                string srcPath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "..", "src"));
+                string tmpDirectory = Path.Combine(srcPath, "tmp");
+                
+                // Ensure the tmp directory exists
+                Directory.CreateDirectory(tmpDirectory);
+                
+                // Sanitize the names for file system compatibility
+                string sanitizedProcessName = SanitizeFileName(processName);
+                string sanitizedFunctionName = SanitizeFileName(functionName);
+                
+                // Create the file name
+                string fileName = $"{sanitizedProcessName}-{sanitizedFunctionName}.asm";
+                string filePath = Path.Combine(tmpDirectory, fileName);
+                
+                // Write the assembly content to the file
+                await File.WriteAllTextAsync(filePath, assemblyContent);
+
+                return filePath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get the current process name from the loaded session
+        /// </summary>
+        private async Task<string> GetCurrentProcessNameAsync()
+        {
+            try
+            {
+                var status = await GetStatusAsync();
+                
+                // Use the current process name if available
+                if (!string.IsNullOrEmpty(status.CurrentProcessName))
+                {
+                    return status.CurrentProcessName;
+                }
+                
+                // Use the current process ID if available
+                if (status.CurrentProcessId.HasValue)
+                {
+                    return $"process-{status.CurrentProcessId.Value}";
+                }
+                
+                // Try to extract process name from loaded processes
+                if (status.LoadedProcesses?.Length > 0)
+                {
+                    return $"process-{status.LoadedProcesses[0]}";
+                }
+                
+                // If we have a profile path, try to extract a meaningful name from it
+                if (!string.IsNullOrEmpty(status.CurrentProfilePath))
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(status.CurrentProfilePath);
+                    return !string.IsNullOrEmpty(fileName) ? fileName : "trace";
+                }
+                
+                return "unknown";
+            }
+            catch
+            {
+                return "unknown";
+            }
+        }
+
+        /// <summary>
+        /// Sanitize a string to be safe for use as a file name
+        /// </summary>
+        private static string SanitizeFileName(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return "unknown";
+                
+            // Remove or replace invalid file name characters
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            string sanitized = fileName;
+            
+            foreach (char invalidChar in invalidChars)
+            {
+                sanitized = sanitized.Replace(invalidChar, '_');
+            }
+            
+            // Also replace some common problematic characters
+            sanitized = sanitized.Replace(':', '_')
+                                 .Replace('<', '_')
+                                 .Replace('>', '_')
+                                 .Replace('*', '_')
+                                 .Replace('?', '_')
+                                 .Replace('|', '_')
+                                 .Replace('"', '_');
+            
+            // Limit length to avoid very long file names
+            if (sanitized.Length > 100)
+            {
+                sanitized = sanitized.Substring(0, 100);
+            }
+            
+            return sanitized;
         }
     }
 }

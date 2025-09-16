@@ -25,12 +25,11 @@ namespace ProfileExplorer.Mcp
         Task<ProfilerStatus> GetStatusAsync();
 
         /// <summary>
-        /// Opens a function's assembly by double-clicking on it in the Summary pane,
-        /// waits for the assembly pane to open, and retrieves the assembly content
+        /// Gets a function's assembly and saves it to a file in the tmp directory
         /// </summary>
-        /// <param name="functionName">Name of the function to open</param>
-        /// <returns>Task that completes with the assembly content, or null if function not found</returns>
-        Task<string> GetFunctionAssemblyAsync(string functionName);
+        /// <param name="functionName">Name of the function to retrieve assembly for</param>
+        /// <returns>Task that completes with the file path where assembly was saved, or null if function not found</returns>
+        Task<string> GetFunctionAssemblyToFileAsync(string functionName);
     }
 
     /// <summary>
@@ -42,6 +41,8 @@ namespace ProfileExplorer.Mcp
         public string? CurrentProfilePath { get; set; }
         public int[] LoadedProcesses { get; set; } = Array.Empty<int>();
         public string[] ActiveFilters { get; set; } = Array.Empty<string>();
+        public string? CurrentProcessName { get; set; }
+        public int? CurrentProcessId { get; set; }
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 }

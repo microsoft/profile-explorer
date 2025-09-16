@@ -1123,7 +1123,7 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private async void TestFunctionAssembly_Click(object sender, RoutedEventArgs e) {
     try {
       string functionName = "Mso::Experiment::EcsNS::Private::SortByParameterGroups";
-      string assembly = await mcpActionExecutor_.GetFunctionAssemblyAsync(functionName);
+      string assembly = await mcpActionExecutor_.GetFunctionAssemblyToFileAsync(functionName);
       
       if (!string.IsNullOrEmpty(assembly)) {
         MessageBox.Show($"Successfully retrieved assembly for function '{functionName}':\n\n{assembly.Substring(0, Math.Min(assembly.Length, 500))}...", 

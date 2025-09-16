@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using ProfileExplorer.Mcp;
 
@@ -50,8 +51,7 @@ namespace ProfileExplorer.Mcp
             });
         }
 
-        public Task<string> GetFunctionAssemblyAsync(string functionName)
-        {
+        public Task<string> GetFunctionAssemblyAsync(string functionName) {
             Console.WriteLine($"Mock: GetFunctionAssemblyAsync called with functionName: {functionName}");
             return Task.FromResult($@"Mock assembly for function {functionName}:
 main:
@@ -63,6 +63,87 @@ main:
     add rsp, 0x10
     pop rbp
     ret");
+        }
+        
+        public Task<string> GetFunctionAssemblyToFileAsync(string functionName)
+        {
+            Console.WriteLine($"Mock: GetFunctionAssemblyToFileAsync called with functionName: {functionName}");
+            
+            try
+            {
+                // Create the assembly content
+                string assemblyContent = $@"Mock assembly for function {functionName}:
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 0x10
+    call sub_401000
+    mov eax, 0
+    add rsp, 0x10
+    pop rbp
+    ret";
+
+                // Create the tmp directory path (same logic as real implementation)
+                string currentDirectory = Directory.GetCurrentDirectory();
+                string srcPath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "..", "src"));
+                string tmpDirectory = Path.Combine(srcPath, "tmp");
+                
+                // Ensure the tmp directory exists
+                Directory.CreateDirectory(tmpDirectory);
+                
+                // Sanitize the function name for file system compatibility
+                string sanitizedFunctionName = SanitizeFileName(functionName);
+                
+                // Create the file name (using "mock-process" as process name)
+                string fileName = $"mock-process-{sanitizedFunctionName}.asm";
+                string filePath = Path.Combine(tmpDirectory, fileName);
+                
+                // Write the assembly content to the file
+                File.WriteAllText(filePath, assemblyContent);
+                
+                Console.WriteLine($"Mock: Assembly written to {filePath}");
+                return Task.FromResult(filePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Mock: Error writing assembly file: {ex.Message}");
+                return Task.FromResult<string>(null);
+            }
+        }
+        
+        /// <summary>
+        /// Sanitize a string to be safe for use as a file name (for mock implementation)
+        /// </summary>
+        private static string SanitizeFileName(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return "unknown";
+                
+            // Remove or replace invalid file name characters
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            string sanitized = fileName;
+            
+            foreach (char invalidChar in invalidChars)
+            {
+                sanitized = sanitized.Replace(invalidChar, '_');
+            }
+            
+            // Also replace some common problematic characters
+            sanitized = sanitized.Replace(':', '_')
+                                 .Replace('<', '_')
+                                 .Replace('>', '_')
+                                 .Replace('*', '_')
+                                 .Replace('?', '_')
+                                 .Replace('|', '_')
+                                 .Replace('"', '_');
+            
+            // Limit length to avoid very long file names
+            if (sanitized.Length > 100)
+            {
+                sanitized = sanitized.Substring(0, 100);
+            }
+            
+            return sanitized;
         }
     }
 }
