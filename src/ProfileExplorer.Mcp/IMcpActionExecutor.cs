@@ -15,8 +15,8 @@ namespace ProfileExplorer.Mcp
         /// </summary>
         /// <param name="profileFilePath">Path to the ETL trace file to open</param>
         /// <param name="processIdentifier">Process ID (e.g., "1234") or process name (e.g., "chrome.exe", "POWERPNT") to select and load from the trace</param>
-        /// <returns>Task that completes when the trace is fully loaded</returns>
-        Task<bool> OpenTraceAsync(string profileFilePath, string processIdentifier);
+        /// <returns>Task that completes when the trace is fully loaded, with detailed result information</returns>
+        Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier);
 
         /// <summary>
         /// Get the current status of the Profile Explorer UI
@@ -29,7 +29,32 @@ namespace ProfileExplorer.Mcp
         /// </summary>
         /// <param name="functionName">Name of the function to retrieve assembly for</param>
         /// <returns>Task that completes with the file path where assembly was saved, or null if function not found</returns>
-        Task<string> GetFunctionAssemblyToFileAsync(string functionName);
+        Task<string?> GetFunctionAssemblyToFileAsync(string functionName);
+    }
+
+    /// <summary>
+    /// Result of an OpenTrace operation
+    /// </summary>
+    public class OpenTraceResult
+    {
+        public bool Success { get; set; }
+        public OpenTraceFailureReason FailureReason { get; set; } = OpenTraceFailureReason.None;
+        public string? ErrorMessage { get; set; }
+        public string[]? AvailableProcesses { get; set; }
+    }
+
+    /// <summary>
+    /// Specific reasons why an OpenTrace operation might fail
+    /// </summary>
+    public enum OpenTraceFailureReason
+    {
+        None,
+        FileNotFound,
+        ProcessNotFound,
+        TraceLoadTimeout,
+        ProcessListLoadTimeout,
+        UIError,
+        UnknownError
     }
 
     /// <summary>

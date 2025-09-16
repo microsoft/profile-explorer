@@ -30,14 +30,30 @@ namespace ProfileExplorer.UI.Mcp
             this.dispatcher = mainWindow.Dispatcher;
         }
 
-        public async Task<bool> OpenTraceAsync(string profileFilePath, string processIdentifier)
+        public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier)
         {
+            // Validate file exists first
+            if (!File.Exists(profileFilePath))
+            {
+                return new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.FileNotFound,
+                    ErrorMessage = $"Trace file not found: {profileFilePath}"
+                };
+            }
+
             // Try to parse as a process ID first
             if (int.TryParse(processIdentifier, out int processId))
             {
                 if (processId <= 0)
                 {
-                    throw new ArgumentException("Process ID must be a positive integer.", nameof(processIdentifier));
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.UnknownError,
+                        ErrorMessage = "Process ID must be a positive integer."
+                    };
                 }
                 return await OpenTraceByProcessIdAsync(profileFilePath, processId);
             }
@@ -46,7 +62,7 @@ namespace ProfileExplorer.UI.Mcp
             return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
         }
 
-        private async Task<bool> OpenTraceByProcessIdAsync(string profileFilePath, int processId)
+        private async Task<OpenTraceResult> OpenTraceByProcessIdAsync(string profileFilePath, int processId)
         {
             // Execute the command in the background since ShowDialog() blocks
             var task = Task.Run(() =>
@@ -58,7 +74,12 @@ namespace ProfileExplorer.UI.Mcp
             var profileLoadWindow = await WaitForWindowAsync<ProfileExplorer.UI.ProfileLoadWindow>(TimeSpan.FromSeconds(5));
             if (profileLoadWindow == null)
             {
-                return false;
+                return new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.UIError,
+                    ErrorMessage = "Failed to open profile load dialog window"
+                };
             }
             
             try
@@ -84,7 +105,12 @@ namespace ProfileExplorer.UI.Mcp
                 bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
                 if (!processListLoaded)
                 {
-                    return false; // Timeout or error loading process list
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                        ErrorMessage = "Timeout while loading process list from trace file"
+                    };
                 }
                 
                 // Step 4: Additional verification that ItemsSource is actually populated
@@ -92,10 +118,18 @@ namespace ProfileExplorer.UI.Mcp
                 var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
                 if (!verificationResult)
                 {
-                    return false; // ItemsSource still not available after additional wait
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                        ErrorMessage = "Process list failed to load properly"
+                    };
                 }
                 
-                // Step 5: Select the specified process from the process list
+                // Step 5: Get available processes for error reporting
+                var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
+                
+                // Step 6: Select the specified process from the process list
                 // Use retry logic in case there are still brief timing issues
                 bool processSelected = false;
                 for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++)
@@ -145,10 +179,16 @@ namespace ProfileExplorer.UI.Mcp
                 
                 if (!processSelected)
                 {
-                    return false; // Process not found or ItemsSource still null
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.ProcessNotFound,
+                        ErrorMessage = $"Process with ID {processId} not found in trace file",
+                        AvailableProcesses = availableProcesses
+                    };
                 }
                 
-                // Step 6: Execute the profile load (click Load button)
+                // Step 7: Execute the profile load (click Load button)
                 await dispatcher.InvokeAsync(() =>
                 {
                     var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
@@ -159,15 +199,20 @@ namespace ProfileExplorer.UI.Mcp
                     }
                 });
                 
-                return true;
+                return new OpenTraceResult { Success = true };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                return new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.UnknownError,
+                    ErrorMessage = $"Unexpected error: {ex.Message}"
+                };
             }
         }
 
-        private async Task<bool> OpenTraceByProcessNameAsync(string profileFilePath, string processIdentifier)
+        private async Task<OpenTraceResult> OpenTraceByProcessNameAsync(string profileFilePath, string processIdentifier)
         {
             // Execute the command in the background since ShowDialog() blocks
             var task = Task.Run(() =>
@@ -179,7 +224,12 @@ namespace ProfileExplorer.UI.Mcp
             var profileLoadWindow = await WaitForWindowAsync<ProfileExplorer.UI.ProfileLoadWindow>(TimeSpan.FromSeconds(5));
             if (profileLoadWindow == null)
             {
-                return false;
+                return new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.UIError,
+                    ErrorMessage = "Failed to open profile load dialog window"
+                };
             }
             
             try
@@ -205,17 +255,30 @@ namespace ProfileExplorer.UI.Mcp
                 bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
                 if (!processListLoaded)
                 {
-                    return false; // Timeout or error loading process list
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                        ErrorMessage = "Timeout while loading process list from trace file"
+                    };
                 }
                 
                 // Step 4: Additional verification that ItemsSource is actually populated
                 var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
                 if (!verificationResult)
                 {
-                    return false; // ItemsSource still not available after additional wait
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                        ErrorMessage = "Process list failed to load properly"
+                    };
                 }
                 
-                // Step 5: Select the specified process by name from the process list
+                // Step 5: Get available processes for error reporting
+                var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
+                
+                // Step 6: Select the specified process by name from the process list
                 bool processSelected = false;
                 for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++)
                 {
@@ -283,7 +346,13 @@ namespace ProfileExplorer.UI.Mcp
                 
                 if (!processSelected)
                 {
-                    return false; // Process not found or ItemsSource still null
+                    return new OpenTraceResult
+                    {
+                        Success = false,
+                        FailureReason = OpenTraceFailureReason.ProcessNotFound,
+                        ErrorMessage = $"Process '{processIdentifier}' not found in trace file",
+                        AvailableProcesses = availableProcesses
+                    };
                 }
                 
                 // Step 6: Execute the profile load (click Load button)
@@ -297,11 +366,16 @@ namespace ProfileExplorer.UI.Mcp
                     }
                 });
                 
-                return true;
+                return new OpenTraceResult { Success = true };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                return new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.UnknownError,
+                    ErrorMessage = $"Unexpected error: {ex.Message}"
+                };
             }
         }
 
@@ -904,7 +978,7 @@ namespace ProfileExplorer.UI.Mcp
             return false; // Timeout - proceed without timing data
         }
 
-        public async Task<string> GetFunctionAssemblyToFileAsync(string functionName)
+        public async Task<string?> GetFunctionAssemblyToFileAsync(string functionName)
         {
             try
             {
@@ -1021,6 +1095,39 @@ namespace ProfileExplorer.UI.Mcp
             }
             
             return sanitized;
+        }
+
+        /// <summary>
+        /// Get a list of available processes from the trace for error reporting
+        /// </summary>
+        private async Task<string[]> GetAvailableProcessesAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
+        {
+            try
+            {
+                return await dispatcher.InvokeAsync(() =>
+                {
+                    var processListControl = profileLoadWindow.FindName("ProcessList") as System.Windows.Controls.ListView;
+                    if (processListControl?.ItemsSource != null)
+                    {
+                        try
+                        {
+                            var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
+                            return processSummaries
+                                .Select(p => $"{p.Process.Name} (ID: {p.Process.ProcessId})")
+                                .ToArray();
+                        }
+                        catch
+                        {
+                            return Array.Empty<string>();
+                        }
+                    }
+                    return Array.Empty<string>();
+                });
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
         }
     }
 }

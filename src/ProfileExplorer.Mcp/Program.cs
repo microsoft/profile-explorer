@@ -33,9 +33,9 @@ namespace ProfileExplorer.Mcp
     /// Implements the 4 documented UI entry points for testing
     /// </summary>
     public class MockMcpActionExecutor : IMcpActionExecutor {
-        public Task<bool> OpenTraceAsync(string profileFilePath, string processIdentifier) {
+        public Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier) {
             Console.WriteLine($"Mock: OpenTraceAsync called with process identifier: {processIdentifier}");
-            return Task.FromResult(true);
+            return Task.FromResult(new OpenTraceResult { Success = true });
         }
 
         public Task<ProfilerStatus> GetStatusAsync()
@@ -65,7 +65,7 @@ main:
     ret");
         }
         
-        public Task<string> GetFunctionAssemblyToFileAsync(string functionName)
+        public Task<string?> GetFunctionAssemblyToFileAsync(string functionName)
         {
             Console.WriteLine($"Mock: GetFunctionAssemblyToFileAsync called with functionName: {functionName}");
             
@@ -102,12 +102,12 @@ main:
                 File.WriteAllText(filePath, assemblyContent);
                 
                 Console.WriteLine($"Mock: Assembly written to {filePath}");
-                return Task.FromResult(filePath);
+                return Task.FromResult<string?>(filePath);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Mock: Error writing assembly file: {ex.Message}");
-                return Task.FromResult<string>(null);
+                return Task.FromResult<string?>(null);
             }
         }
         

@@ -74,19 +74,36 @@ namespace ProfileExplorer.Mcp
                     throw new InvalidOperationException("MCP action executor is not initialized");
                 }
 
-                bool success = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
                 
-                var result = new
+                if (result.Success)
                 {
-                    Action = "OpenTrace",
-                    ProfileFilePath = profileFilePath,
-                    ProcessNameOrId = processNameOrId,
-                    Status = success ? "Success" : "Failed",
-                    Description = $"Opened Profile Explorer, loaded trace file, selected process '{processNameOrId}', and executed profile load",
-                    Timestamp = DateTime.UtcNow
-                };
-
-                return System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    var successResult = new
+                    {
+                        Action = "OpenTrace",
+                        ProfileFilePath = profileFilePath,
+                        ProcessNameOrId = processNameOrId,
+                        Status = "Success",
+                        Description = $"Successfully opened Profile Explorer, loaded trace file, selected process '{processNameOrId}', and executed profile load",
+                        Timestamp = DateTime.UtcNow
+                    };
+                    return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
+                else
+                {
+                    var failureResult = new
+                    {
+                        Action = "OpenTrace",
+                        ProfileFilePath = profileFilePath,
+                        ProcessNameOrId = processNameOrId,
+                        Status = "Failed",
+                        FailureReason = result.FailureReason.ToString(),
+                        Description = result.ErrorMessage ?? "Unknown failure",
+                        AvailableProcesses = result.AvailableProcesses ?? Array.Empty<string>(),
+                        Timestamp = DateTime.UtcNow
+                    };
+                    return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
             }
             catch (Exception ex)
             {

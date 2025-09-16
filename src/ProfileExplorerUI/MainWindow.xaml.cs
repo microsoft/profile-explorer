@@ -1109,10 +1109,11 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private async void TestMcpLoadProfile_Click(object sender, RoutedEventArgs e) {
     try {
 
-      bool result = await mcpActionExecutor_.OpenTraceAsync(@"D:\OneDrive - Microsoft\Documents\My Documents\Tracing\trace.etl", "34376");
-      string message = result ? "MCP Load Profile dialog opened successfully!" : "Failed to open MCP Load Profile dialog.";
+      var result = await mcpActionExecutor_.OpenTraceAsync(@"D:\OneDrive - Microsoft\Documents\My Documents\Tracing\trace.etl", "34376");
+      string message = result.Success ? "MCP Load Profile dialog opened successfully!" : 
+                       $"Failed to open MCP Load Profile dialog: {result.ErrorMessage}";
       MessageBox.Show(message, "MCP Test Result", MessageBoxButton.OK, 
-                      result ? MessageBoxImage.Information : MessageBoxImage.Error);
+                      result.Success ? MessageBoxImage.Information : MessageBoxImage.Error);
     }
     catch (Exception ex) {
       MessageBox.Show($"Error testing MCP Load Profile: {ex.Message}", "MCP Test Error", 
