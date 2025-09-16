@@ -1073,7 +1073,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       ProcessSortField.Weight => processX.Weight.CompareTo(processY.Weight),
       ProcessSortField.Duration => processX.Duration.CompareTo(processY.Duration),
       ProcessSortField.ProcessId => processX.Process.ProcessId.CompareTo(processY.Process.ProcessId),
-      ProcessSortField.CommandLine => string.Compare(processX.Process.CommandLine ?? "", processY.Process.CommandLine ?? "", StringComparison.OrdinalIgnoreCase),
+      ProcessSortField.CommandLine => string.Compare(processX.Process.CommandLine, processY.Process.CommandLine, StringComparison.OrdinalIgnoreCase),
       _ => 0
     };
 
