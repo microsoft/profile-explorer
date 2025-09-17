@@ -963,7 +963,7 @@ public class McpActionExecutor : IMcpActionExecutor
         }
     }
 
-    public async Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null)
+    public async Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null, int? topCount = null)
     {
         // Validate file exists first
         if (!File.Exists(profileFilePath))
@@ -1005,6 +1005,24 @@ public class McpActionExecutor : IMcpActionExecutor
                 processes = processes
                     .Where(p => p.WeightPercentage >= minWeightPercentage.Value)
                     .ToArray();
+            }
+            
+            // Apply top N filtering if specified
+            if (topCount.HasValue)
+            {
+                if (topCount < 1) {
+                    return new GetAvailableProcessesResult {
+                        Success = false,
+                        ErrorMessage = "topCount must be a positive integer."
+                    };
+                }
+                // Sort by weight percentage descending and take top N
+                if (processes.Length > topCount.Value) {
+                    processes = processes
+                    .OrderByDescending(p => p.WeightPercentage)
+                    .Take(topCount.Value)
+                    .ToArray();
+                }
             }
             
             // Close the profile load window since we're just extracting process info

@@ -147,9 +147,9 @@ ret";
         return sanitized;
     }
 
-    public Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null)
+    public Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null, int? topCount = null)
     {
-        Console.WriteLine($"Mock: GetAvailableProcessesAsync called with profileFilePath: {profileFilePath}, minWeightPercentage: {minWeightPercentage}");
+        Console.WriteLine($"Mock: GetAvailableProcessesAsync called with profileFilePath: {profileFilePath}, minWeightPercentage: {minWeightPercentage}, topCount: {topCount}");
         
         // Return mock process list with weight percentages
         var mockProcesses = new ProcessInfo[]
@@ -192,6 +192,16 @@ ret";
         {
             filteredProcesses = mockProcesses
                 .Where(p => p.WeightPercentage >= minWeightPercentage.Value)
+                .ToArray();
+        }
+        
+        // Apply top N filtering if specified
+        if (topCount.HasValue)
+        {
+            // Sort by weight percentage descending and take top N
+            filteredProcesses = filteredProcesses
+                .OrderByDescending(p => p.WeightPercentage)
+                .Take(topCount.Value)
                 .ToArray();
         }
 

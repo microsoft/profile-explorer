@@ -36,8 +36,9 @@ public interface IMcpActionExecutor
     /// </summary>
     /// <param name="profileFilePath">Path to the ETL trace file to analyze</param>
     /// <param name="minWeightPercentage">Optional minimum weight percentage to filter processes (e.g., 1.0 for processes with >= 1% weight)</param>
+    /// <param name="topCount">Optional number to limit results to the top N heaviest processes (e.g., 10 for top 10 heaviest processes)</param>
     /// <returns>Task that completes with the list of available processes in the trace file</returns>
-    Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null);
+    Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null, int? topCount = null);
 }
 
 /// <summary>

@@ -183,8 +183,8 @@ public static class ProfileExplorerTools
 
     #region Get Available Processes Tool
 
-    [McpServerTool, Description("Get the list of available processes from a trace file")]
-    public static async Task<string> GetAvailableProcesses(string profileFilePath, double? minWeightPercentage = null)
+    [McpServerTool, Description("Get the list of available processes from a trace file with optional weight filtering")]
+    public static async Task<string> GetAvailableProcesses(string profileFilePath, double? minWeightPercentage = null, int? topCount = null)
     {
         if (string.IsNullOrWhiteSpace(profileFilePath))
             throw new ArgumentException("Profile file path cannot be empty", nameof(profileFilePath));
@@ -196,7 +196,7 @@ public static class ProfileExplorerTools
                 throw new InvalidOperationException("MCP action executor is not initialized");
             }
 
-            GetAvailableProcessesResult result = await _executor.GetAvailableProcessesAsync(profileFilePath);
+            GetAvailableProcessesResult result = await _executor.GetAvailableProcessesAsync(profileFilePath, minWeightPercentage, topCount);
             
             if (result.Success)
             {
@@ -215,6 +215,7 @@ public static class ProfileExplorerTools
                     ProfileFilePath = profileFilePath,
                     Status = "Success",
                     MinWeightPercentage = Math.Round(minWeightPercentage ?? 0, 2),
+                    TopCount = topCount,
                     TotalProcessCount = result.Processes.Length,
                     FilteredProcessCount = filteredProcesses.Length,
                     Processes = filteredProcesses.Select(p => new
@@ -227,9 +228,7 @@ public static class ProfileExplorerTools
                         WeightPercentage = Math.Round(p.WeightPercentage, 2),
                         Duration = p.Duration.ToString()
                     }).ToArray(),
-                    Description = minWeightPercentage.HasValue 
-                        ? $"Successfully retrieved {filteredProcesses.Length} processes (filtered from {result.Processes.Length} total) with weight >= {minWeightPercentage}%"
-                        : $"Successfully retrieved {result.Processes.Length} processes from trace file",
+                    Description = GetFilterDescription(minWeightPercentage, topCount, result.Processes.Length, filteredProcesses.Length),
                     Instruction = "If the user requests to open a process using an ambiguous term (like 'defender', 'office', 'browser', etc.) that could match multiple processes from this list, you MUST ask the user to clarify which specific process they want instead of choosing one yourself. Present the matching options and let the user decide. Only proceed with OpenTrace if the user has explicitly specified an exact process name or ID, or if there is only one clear match.",
                     Timestamp = DateTime.UtcNow
                 };
@@ -260,6 +259,26 @@ public static class ProfileExplorerTools
             };
 
             return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+    }
+
+    private static string GetFilterDescription(double? minWeightPercentage, int? topCount, int totalCount, int filteredCount)
+    {
+        if (minWeightPercentage.HasValue && topCount.HasValue)
+        {
+            return $"Successfully retrieved top {topCount} processes (from {totalCount} total) with weight >= {minWeightPercentage}%, sorted by weight percentage";
+        }
+        else if (minWeightPercentage.HasValue)
+        {
+            return $"Successfully retrieved {filteredCount} processes (filtered from {totalCount} total) with weight >= {minWeightPercentage}%";
+        }
+        else if (topCount.HasValue)
+        {
+            return $"Successfully retrieved top {Math.Min(topCount.Value, totalCount)} heaviest processes (from {totalCount} total), sorted by weight percentage";
+        }
+        else
+        {
+            return $"Successfully retrieved {totalCount} processes from trace file";
         }
     }
 
@@ -338,8 +357,8 @@ public static class ProfileExplorerTools
             {
                 new { 
                     Name = "GetAvailableProcesses", 
-                    Description = "Get the list of available processes from a trace file with optional weight filtering", 
-                    Parameters = "profileFilePath (string) - Path to the ETL trace file to analyze for available processes, minWeightPercentage (double, optional) - Minimum weight percentage to filter processes (e.g., 1.0 for processes with >= 1% weight)"
+                    Description = "Get the list of available processes from a trace file with optional weight filtering and top N limiting", 
+                    Parameters = "profileFilePath (string) - Path to the ETL trace file to analyze for available processes, minWeightPercentage (double, optional) - Minimum weight percentage to filter processes (e.g., 1.0 for processes with >= 1% weight), topCount (int, optional) - Limit results to top N heaviest processes (e.g., 10 for top 10 heaviest processes)"
                 },
                 new { 
                     Name = "OpenTrace", 
@@ -383,6 +402,25 @@ public static class ProfileExplorerTools
                     Parameters = new {
                         profileFilePath = @"C:\traces\sample.etl",
                         minWeightPercentage = 5.0
+                    }
+                },
+                new
+                {
+                    Description = "Get top 10 heaviest processes by CPU usage",
+                    Command = "GetAvailableProcesses",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl",
+                        topCount = 10
+                    }
+                },
+                new
+                {
+                    Description = "Get top 5 heaviest processes with at least 1% CPU usage",
+                    Command = "GetAvailableProcesses",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl",
+                        minWeightPercentage = 1.0,
+                        topCount = 5
                     }
                 },
                 new
