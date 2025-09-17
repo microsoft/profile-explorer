@@ -1,0 +1,25 @@
+<Window x:Class="MvvmLabApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MvvmLabApp"
+        mc:Ignorable="d"
+        Title="MVVM Lab" Height="450" Width="800">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Vertical" Width="220" Margin="0,0,10,0">
+            <TextBlock Text="Panels" FontWeight="Bold" />
+            <ListBox x:Name="PanelList" DisplayMemberPath="Title" Height="150" />
+            <Button x:Name="OpenPopupButton" Content="Open Selected Panel Popup" Margin="0,10,0,0" Height="30" />
+            <Separator/>
+            <Button x:Name="ShowCounterInlineButton" Content="Show Counter Inline" Height="30" />
+        </StackPanel>
+        <Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Padding="8" CornerRadius="4">
+            <ContentControl x:Name="InlineHost" />
+        </Border>
+    </Grid>
+</Window>
