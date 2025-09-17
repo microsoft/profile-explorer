@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using ProfileExplorer.Mcp;
 
@@ -146,11 +147,11 @@ ret";
         return sanitized;
     }
 
-    public Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath)
+    public Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null)
     {
-        Console.WriteLine($"Mock: GetAvailableProcessesAsync called with profileFilePath: {profileFilePath}");
+        Console.WriteLine($"Mock: GetAvailableProcessesAsync called with profileFilePath: {profileFilePath}, minWeightPercentage: {minWeightPercentage}");
         
-        // Return mock process list
+        // Return mock process list with weight percentages
         var mockProcesses = new ProcessInfo[]
         {
             new ProcessInfo
@@ -158,28 +159,46 @@ ret";
                 ProcessId = 1234,
                 Name = "chrome",
                 ImageFileName = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                CommandLine = "\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --type=browser"
+                CommandLine = "\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --type=browser",
+                WeightPercentage = 25.5,
+                Weight = TimeSpan.FromSeconds(10.2),
+                Duration = TimeSpan.FromSeconds(30)
             },
             new ProcessInfo
             {
                 ProcessId = 5678,
                 Name = "notepad",
                 ImageFileName = "C:\\Windows\\System32\\notepad.exe",
-                CommandLine = "notepad.exe sample.txt"
+                CommandLine = "notepad.exe sample.txt",
+                WeightPercentage = 5.3,
+                Weight = TimeSpan.FromSeconds(2.1),
+                Duration = TimeSpan.FromSeconds(30)
             },
             new ProcessInfo
             {
                 ProcessId = 9999,
                 Name = "MyApp",
                 ImageFileName = "C:\\MyApp\\MyApp.exe",
-                CommandLine = "MyApp.exe --debug --verbose"
+                CommandLine = "MyApp.exe --debug --verbose",
+                WeightPercentage = 0.8,
+                Weight = TimeSpan.FromSeconds(0.3),
+                Duration = TimeSpan.FromSeconds(30)
             }
         };
+
+        // Apply weight filtering if specified
+        var filteredProcesses = mockProcesses;
+        if (minWeightPercentage.HasValue)
+        {
+            filteredProcesses = mockProcesses
+                .Where(p => p.WeightPercentage >= minWeightPercentage.Value)
+                .ToArray();
+        }
 
         return Task.FromResult(new GetAvailableProcessesResult
         {
             Success = true,
-            Processes = mockProcesses
+            Processes = filteredProcesses
         });
     }
 }

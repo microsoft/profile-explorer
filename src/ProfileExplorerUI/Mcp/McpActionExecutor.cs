@@ -963,7 +963,7 @@ public class McpActionExecutor : IMcpActionExecutor
         }
     }
 
-    public async Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath)
+    public async Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null)
     {
         // Validate file exists first
         if (!File.Exists(profileFilePath))
@@ -990,6 +990,22 @@ public class McpActionExecutor : IMcpActionExecutor
 
             // Extract process information from the loaded trace
             var processes = await ExtractProcessInfoAsync(loadResult.ProfileLoadWindow);
+            
+            // Apply weight filtering if specified
+            if (minWeightPercentage.HasValue)
+            {
+                if (minWeightPercentage < 0 || minWeightPercentage > 100)
+                {
+                    return new GetAvailableProcessesResult
+                    {
+                        Success = false,
+                        ErrorMessage = "minWeightPercentage must be nonnegative, between 0 and 100."
+                    };
+                }
+                processes = processes
+                    .Where(p => p.WeightPercentage >= minWeightPercentage.Value)
+                    .ToArray();
+            }
             
             // Close the profile load window since we're just extracting process info
             await dispatcher.InvokeAsync(() =>
@@ -1109,7 +1125,10 @@ public class McpActionExecutor : IMcpActionExecutor
                             ProcessId = p.Process.ProcessId,
                             Name = p.Process.Name ?? string.Empty,
                             ImageFileName = p.Process.ImageFileName,
-                            CommandLine = p.Process.CommandLine
+                            CommandLine = p.Process.CommandLine,
+                            Weight = p.Weight,
+                            WeightPercentage = p.WeightPercentage,
+                            Duration = p.Duration
                         }).ToArray();
                     }
                     catch

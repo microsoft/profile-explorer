@@ -184,7 +184,7 @@ public static class ProfileExplorerTools
     #region Get Available Processes Tool
 
     [McpServerTool, Description("Get the list of available processes from a trace file")]
-    public static async Task<string> GetAvailableProcesses(string profileFilePath)
+    public static async Task<string> GetAvailableProcesses(string profileFilePath, double? minWeightPercentage = null)
     {
         if (string.IsNullOrWhiteSpace(profileFilePath))
             throw new ArgumentException("Profile file path cannot be empty", nameof(profileFilePath));
@@ -200,20 +200,36 @@ public static class ProfileExplorerTools
             
             if (result.Success)
             {
+                // Apply weight filtering if specified
+                var filteredProcesses = result.Processes;
+                if (minWeightPercentage.HasValue)
+                {
+                    filteredProcesses = result.Processes
+                        .Where(p => p.WeightPercentage >= minWeightPercentage.Value)
+                        .ToArray();
+                }
+
                 var successResult = new
                 {
                     Action = "GetAvailableProcesses",
                     ProfileFilePath = profileFilePath,
                     Status = "Success",
-                    ProcessCount = result.Processes.Length,
-                    Processes = result.Processes.Select(p => new
+                    MinWeightPercentage = Math.Round(minWeightPercentage ?? 0, 2),
+                    TotalProcessCount = result.Processes.Length,
+                    FilteredProcessCount = filteredProcesses.Length,
+                    Processes = filteredProcesses.Select(p => new
                     {
                         ProcessId = p.ProcessId,
                         Name = p.Name,
                         ImageFileName = p.ImageFileName,
-                        CommandLine = p.CommandLine
+                        CommandLine = p.CommandLine,
+                        Weight = p.Weight.ToString(),
+                        WeightPercentage = Math.Round(p.WeightPercentage, 2),
+                        Duration = p.Duration.ToString()
                     }).ToArray(),
-                    Description = $"Successfully retrieved {result.Processes.Length} processes from trace file",
+                    Description = minWeightPercentage.HasValue 
+                        ? $"Successfully retrieved {filteredProcesses.Length} processes (filtered from {result.Processes.Length} total) with weight >= {minWeightPercentage}%"
+                        : $"Successfully retrieved {result.Processes.Length} processes from trace file",
                     Instruction = "If the user requests to open a process using an ambiguous term (like 'defender', 'office', 'browser', etc.) that could match multiple processes from this list, you MUST ask the user to clarify which specific process they want instead of choosing one yourself. Present the matching options and let the user decide. Only proceed with OpenTrace if the user has explicitly specified an exact process name or ID, or if there is only one clear match.",
                     Timestamp = DateTime.UtcNow
                 };
@@ -322,8 +338,8 @@ public static class ProfileExplorerTools
             {
                 new { 
                     Name = "GetAvailableProcesses", 
-                    Description = "Get the list of available processes from a trace file without opening it", 
-                    Parameters = "profileFilePath (string) - Path to the ETL trace file to analyze for available processes"
+                    Description = "Get the list of available processes from a trace file with optional weight filtering", 
+                    Parameters = "profileFilePath (string) - Path to the ETL trace file to analyze for available processes, minWeightPercentage (double, optional) - Minimum weight percentage to filter processes (e.g., 1.0 for processes with >= 1% weight)"
                 },
                 new { 
                     Name = "OpenTrace", 
@@ -345,10 +361,28 @@ public static class ProfileExplorerTools
             {
                 new
                 {
-                    Description = "Get list of available processes in a trace file",
+                    Description = "Get list of all available processes in a trace file",
                     Command = "GetAvailableProcesses",
                     Parameters = new {
                         profileFilePath = @"C:\traces\sample.etl"
+                    }
+                },
+                new
+                {
+                    Description = "Get list of processes with significant CPU usage (>= 1%)",
+                    Command = "GetAvailableProcesses",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl",
+                        minWeightPercentage = 1.0
+                    }
+                },
+                new
+                {
+                    Description = "Get list of processes with very high CPU usage (>= 5%)",
+                    Command = "GetAvailableProcesses",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl",
+                        minWeightPercentage = 5.0
                     }
                 },
                 new

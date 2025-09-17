@@ -35,8 +35,9 @@ public interface IMcpActionExecutor
     /// Gets the list of available processes from a trace file without opening it
     /// </summary>
     /// <param name="profileFilePath">Path to the ETL trace file to analyze</param>
+    /// <param name="minWeightPercentage">Optional minimum weight percentage to filter processes (e.g., 1.0 for processes with >= 1% weight)</param>
     /// <returns>Task that completes with the list of available processes in the trace file</returns>
-    Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath);
+    Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null);
 }
 
 /// <summary>
@@ -85,6 +86,9 @@ public class ProcessInfo
     public string Name { get; set; } = string.Empty;
     public string? ImageFileName { get; set; }
     public string? CommandLine { get; set; }
+    public TimeSpan Weight { get; set; }
+    public double WeightPercentage { get; set; }
+    public TimeSpan Duration { get; set; }
 }
 
 /// <summary>
