@@ -75,35 +75,62 @@ public static class ProfileExplorerTools
                 throw new InvalidOperationException("MCP action executor is not initialized");
             }
 
-            OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+            // First, check if this might be an ambiguous query by getting available processes
+            GetAvailableProcessesResult processesResult = await _executor.GetAvailableProcessesAsync(profileFilePath);
             
-            if (result.Success)
+            if (processesResult.Success)
             {
-                var successResult = new
+                // Check for exact matches first (process ID or exact name)
+                if (int.TryParse(processNameOrId, out int processId))
+                {
+                    var exactIdMatch = processesResult.Processes.FirstOrDefault(p => p.ProcessId == processId);
+                    if (exactIdMatch != null)
+                    {
+                        // Direct match by ID - proceed with OpenTrace
+                        OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                        return SerializeOpenTraceResult(result, profileFilePath, processNameOrId);
+                    }
+                }
+
+                // Check for exact name matches
+                var exactNameMatches = processesResult.Processes
+                    .Where(p => p.Name.Equals(processNameOrId, StringComparison.OrdinalIgnoreCase) ||
+                               (p.ImageFileName?.Equals(processNameOrId, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .ToArray();
+
+                if (exactNameMatches.Length == 1)
+                {
+                    // Single exact match - proceed with OpenTrace
+                    OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                    return SerializeOpenTraceResult(result, profileFilePath, processNameOrId);
+                }
+
+                // For ambiguous queries, provide all processes for LLM analysis
+                var llmAnalysisResult = new
                 {
                     Action = "OpenTrace",
                     ProfileFilePath = profileFilePath,
                     ProcessNameOrId = processNameOrId,
-                    Status = "Success",
-                    Description = $"Successfully opened Profile Explorer, loaded trace file, selected process '{processNameOrId}', and executed profile load",
+                    Status = "RequiresLLMAnalysis",
+                    Description = $"The query '{processNameOrId}' is ambiguous or doesn't match exactly. Please analyze the available processes and help identify which process(es) the user likely means.",
+                    UserQuery = processNameOrId,
+                    AllProcesses = processesResult.Processes.Select(p => new
+                    {
+                        ProcessId = p.ProcessId,
+                        Name = p.Name,
+                        ImageFileName = p.ImageFileName,
+                        CommandLine = p.CommandLine
+                    }).ToArray(),
+                    ProcessCount = processesResult.Processes.Length,
+                    Instructions = "Please analyze these processes and identify any that match the user's query. Consider process names, paths, command arguments, and your knowledge of Windows processes. If multiple matches are found, present them to the user for selection. If no matches are found, explain why and suggest alternatives. Don't continue executing the trace load until the user clarifies.",
                     Timestamp = DateTime.UtcNow
                 };
-                return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                return System.Text.Json.JsonSerializer.Serialize(llmAnalysisResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
-            else
-            {
-                var failureResult = new
-                {
-                    Action = "OpenTrace",
-                    ProfileFilePath = profileFilePath,
-                    ProcessNameOrId = processNameOrId,
-                    Status = "Failed",
-                    FailureReason = result.FailureReason.ToString(),
-                    Description = result.ErrorMessage ?? "Unknown failure",
-                    Timestamp = DateTime.UtcNow
-                };
-                return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            }
+
+            // Fallback to direct OpenTrace call if we can't get the process list
+            OpenTraceResult directResult = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+            return SerializeOpenTraceResult(directResult, profileFilePath, processNameOrId);
         }
         catch (Exception ex)
         {
@@ -118,6 +145,37 @@ public static class ProfileExplorerTools
             };
 
             return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+    }
+
+    private static string SerializeOpenTraceResult(OpenTraceResult result, string profileFilePath, string processNameOrId)
+    {
+        if (result.Success)
+        {
+            var successResult = new
+            {
+                Action = "OpenTrace",
+                ProfileFilePath = profileFilePath,
+                ProcessNameOrId = processNameOrId,
+                Status = "Success",
+                Description = $"Successfully opened Profile Explorer, loaded trace file, selected process '{processNameOrId}', and executed profile load",
+                Timestamp = DateTime.UtcNow
+            };
+            return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+        else
+        {
+            var failureResult = new
+            {
+                Action = "OpenTrace",
+                ProfileFilePath = profileFilePath,
+                ProcessNameOrId = processNameOrId,
+                Status = "Failed",
+                FailureReason = result.FailureReason.ToString(),
+                Description = result.ErrorMessage ?? "Unknown failure",
+                Timestamp = DateTime.UtcNow
+            };
+            return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
         }
     }
 
@@ -156,6 +214,7 @@ public static class ProfileExplorerTools
                         CommandLine = p.CommandLine
                     }).ToArray(),
                     Description = $"Successfully retrieved {result.Processes.Length} processes from trace file",
+                    Instruction = "If the user requests to open a process using an ambiguous term (like 'defender', 'office', 'browser', etc.) that could match multiple processes from this list, you MUST ask the user to clarify which specific process they want instead of choosing one yourself. Present the matching options and let the user decide. Only proceed with OpenTrace if the user has explicitly specified an exact process name or ID, or if there is only one clear match.",
                     Timestamp = DateTime.UtcNow
                 };
                 return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
@@ -205,9 +264,9 @@ public static class ProfileExplorerTools
                 throw new InvalidOperationException("MCP action executor is not initialized");
             }
 
-            string filePath = await _executor.GetFunctionAssemblyToFileAsync(functionName);
+            string? filePath = await _executor.GetFunctionAssemblyToFileAsync(functionName);
             
-            if (filePath == null)
+            if (string.IsNullOrEmpty(filePath))
             {
                 var notFoundResult = new
                 {
@@ -268,8 +327,8 @@ public static class ProfileExplorerTools
                 },
                 new { 
                     Name = "OpenTrace", 
-                    Description = "Open and load a trace file with a specific process by name or ID in one complete operation", 
-                    Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processNameOrId (string) - Process name (e.g., 'chrome.exe', 'POWERPNT') or process ID (e.g., '1234') to select and load from the trace"
+                    Description = "Open and load a trace file with a specific process by name or ID. For ambiguous queries, uses LLM world knowledge to help identify the correct process", 
+                    Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processNameOrId (string) - Process name (e.g., 'chrome.exe', 'POWERPNT'), category (e.g., 'defender', 'performance recorder'), or process ID (e.g., '1234')"
                 },
                 new { 
                     Name = "GetFunctionAssembly", 
@@ -303,11 +362,29 @@ public static class ProfileExplorerTools
                 },
                 new
                 {
-                    Description = "Load a trace file and select a specific process by partial name",
+                    Description = "Load a trace file with an exact process name",
                     Command = "OpenTrace",
                     Parameters = new {
                         profileFilePath = @"C:\traces\sample.etl",
                         processNameOrId = "POWERPNT"
+                    }
+                },
+                new
+                {
+                    Description = "Load a trace file with an ambiguous query (will trigger LLM analysis)",
+                    Command = "OpenTrace",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl",
+                        processNameOrId = "defender"
+                    }
+                },
+                new
+                {
+                    Description = "Load a trace file using semantic description (will trigger LLM analysis)",
+                    Command = "OpenTrace",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl",
+                        processNameOrId = "performance recorder"
                     }
                 },
                 new
