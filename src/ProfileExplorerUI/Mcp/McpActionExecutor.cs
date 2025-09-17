@@ -64,142 +64,15 @@ public class McpActionExecutor : IMcpActionExecutor
 
     private async Task<OpenTraceResult> OpenTraceByProcessIdAsync(string profileFilePath, int processId)
     {
-        // Execute the command in the background since ShowDialog() blocks
-        var task = Task.Run(() =>
-        {
-            dispatcher.Invoke(() => AppCommand.LoadProfile.Execute(null, mainWindow));
-        });
-        
-        // Wait for the dialog to be created and shown (with timeout)
-        var profileLoadWindow = await WaitForWindowAsync<ProfileExplorer.UI.ProfileLoadWindow>(TimeSpan.FromSeconds(5));
-        if (profileLoadWindow == null)
-        {
-            return new OpenTraceResult
-            {
-                Success = false,
-                FailureReason = OpenTraceFailureReason.UIError,
-                ErrorMessage = "Failed to open profile load dialog window"
-            };
-        }
-        
         try
         {
-            // Step 1: Set the profile file path
-            await dispatcher.InvokeAsync(() => 
-            {
-                profileLoadWindow.ProfileFilePath = profileFilePath;
-            });
-            
-            // Step 2: Trigger the text changed logic to load the process list
-            await dispatcher.InvokeAsync(() =>
-            {
-                var textChangedMethod = profileLoadWindow.GetType().GetMethod("ProfileAutocompleteBox_TextChanged", 
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                if (textChangedMethod != null)
-                {
-                    textChangedMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-                }
-            });
-            
-            // Step 3: Wait for process list to finish loading (with timeout)
-            bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
-            if (!processListLoaded)
-            {
-                return new OpenTraceResult
-                {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
-                    ErrorMessage = "Timeout while loading process list from trace file"
-                };
+            var loadResult = await LoadTraceAsync(profileFilePath);
+            if (!loadResult.Success) {
+                return loadResult.Result;
             }
             
-            // Step 4: Additional verification that ItemsSource is actually populated
-            // Sometimes there can be a brief delay between our wait completing and ItemsSource being set
-            var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
-            if (!verificationResult)
-            {
-                return new OpenTraceResult
-                {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
-                    ErrorMessage = "Process list failed to load properly"
-                };
-            }
-            
-            // Step 5: Get available processes for error reporting
-            var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
-            
-            // Step 6: Select the specified process from the process list
-            // Use retry logic in case there are still brief timing issues
-            bool processSelected = false;
-            for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++)
-            {
-                if (retryCount > 0)
-                {
-                    await Task.Delay(500); // Brief delay between retries
-                }
-                
-                processSelected = await dispatcher.InvokeAsync(() =>
-                {
-                    var processListControl = profileLoadWindow.FindName("ProcessList") as System.Windows.Controls.ListView;
-                    if (processListControl?.ItemsSource != null)
-                    {
-                        try
-                        {
-                            var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
-                            var targetProcess = processSummaries.FirstOrDefault(p => p.Process.ProcessId == processId);
-                            
-                            if (targetProcess != null)
-                            {
-                                processListControl.SelectedItems.Clear();
-                                processListControl.SelectedItems.Add(targetProcess);
-                                
-                                // Trigger the selection changed event
-                                var selectionChangedMethod = profileLoadWindow.GetType().GetMethod("ProcessList_OnSelectionChanged", 
-                                    BindingFlags.NonPublic | BindingFlags.Instance);
-                                if (selectionChangedMethod != null)
-                                {
-                                    var args = new System.Windows.Controls.SelectionChangedEventArgs(
-                                        System.Windows.Controls.Primitives.Selector.SelectionChangedEvent,
-                                        new object[0], new object[] { targetProcess });
-                                    selectionChangedMethod.Invoke(profileLoadWindow, new object[] { processListControl, args });
-                                }
-                                return true;
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            // If casting or process selection fails, return false
-                            return false;
-                        }
-                    }
-                    return false;
-                });
-            }
-            
-            if (!processSelected)
-            {
-                return new OpenTraceResult
-                {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.ProcessNotFound,
-                    ErrorMessage = $"Process with ID {processId} not found in trace file",
-                    AvailableProcesses = availableProcesses
-                };
-            }
-            
-            // Step 7: Execute the profile load (click Load button)
-            await dispatcher.InvokeAsync(() =>
-            {
-                var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                if (loadButtonClickMethod != null)
-                {
-                    loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-                }
-            });
-            
-            return new OpenTraceResult { Success = true };
+            // Select the process by PID
+            return await SelectProcessByPidAsync(loadResult.ProfileLoadWindow, processId);
         }
         catch (Exception ex)
         {
@@ -212,8 +85,27 @@ public class McpActionExecutor : IMcpActionExecutor
         }
     }
 
-    private async Task<OpenTraceResult> OpenTraceByProcessNameAsync(string profileFilePath, string processIdentifier)
-    {
+    private async Task<OpenTraceResult> OpenTraceByProcessNameAsync(string profileFilePath, string processName) {
+        try {
+            // Load the trace and prepare the process list
+            var loadResult = await LoadTraceAsync(profileFilePath);
+            if (!loadResult.Success) {
+                return loadResult.Result;
+            }
+
+            // Select the process by name
+            return await SelectProcessByNameAsync(loadResult.ProfileLoadWindow, processName);
+        }
+        catch (Exception ex) {
+            return new OpenTraceResult {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.UnknownError,
+                ErrorMessage = $"Unexpected error: {ex.Message}"
+            };
+        }
+    }
+
+    private async Task<(bool Success, ProfileExplorer.UI.ProfileLoadWindow ProfileLoadWindow, OpenTraceResult Result)> LoadTraceAsync(string profileFilePath) {
         // Execute the command in the background since ShowDialog() blocks
         var task = Task.Run(() =>
         {
@@ -224,159 +116,216 @@ public class McpActionExecutor : IMcpActionExecutor
         var profileLoadWindow = await WaitForWindowAsync<ProfileExplorer.UI.ProfileLoadWindow>(TimeSpan.FromSeconds(5));
         if (profileLoadWindow == null)
         {
-            return new OpenTraceResult
+            var errorResult = new OpenTraceResult 
             {
                 Success = false,
                 FailureReason = OpenTraceFailureReason.UIError,
                 ErrorMessage = "Failed to open profile load dialog window"
             };
+            return (false, null, errorResult);
         }
         
-        try
+        // Step 1: Set the profile file path
+        await dispatcher.InvokeAsync(() => {
+            profileLoadWindow.ProfileFilePath = profileFilePath;
+        });
+
+        // Step 2: Trigger the text changed logic to load the process list
+        await dispatcher.InvokeAsync(() => 
         {
-            // Step 1: Set the profile file path
-            await dispatcher.InvokeAsync(() => 
+            var textChangedMethod = profileLoadWindow.GetType().GetMethod("ProfileAutocompleteBox_TextChanged",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            if (textChangedMethod != null) 
             {
-                profileLoadWindow.ProfileFilePath = profileFilePath;
-            });
-            
-            // Step 2: Trigger the text changed logic to load the process list
-            await dispatcher.InvokeAsync(() =>
+                textChangedMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+            }
+        });
+
+        // Step 3: Wait for process list to finish loading (with timeout)
+        bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
+        if (!processListLoaded) 
+        {
+            var errorResult = new OpenTraceResult 
             {
-                var textChangedMethod = profileLoadWindow.GetType().GetMethod("ProfileAutocompleteBox_TextChanged", 
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                if (textChangedMethod != null)
-                {
-                    textChangedMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-                }
-            });
-            
-            // Step 3: Wait for process list to finish loading (with timeout)
-            bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
-            if (!processListLoaded)
+                Success = false,
+                FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                ErrorMessage = "Timeout while loading process list from trace file"
+            };
+            return (false, profileLoadWindow, errorResult);
+        }
+
+        // Step 4: Additional verification that ItemsSource is actually populated
+        var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
+        if (!verificationResult) 
+        {
+            var errorResult = new OpenTraceResult 
             {
-                return new OpenTraceResult
-                {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
-                    ErrorMessage = "Timeout while loading process list from trace file"
-                };
+                Success = false,
+                FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                ErrorMessage = "Process list failed to load properly"
+            };
+            return (false, profileLoadWindow, errorResult);
+        }
+
+        return (true, profileLoadWindow, null);
+    }
+
+    private async Task<OpenTraceResult> SelectProcessByPidAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow, int processId) {
+        // Step 5: Get available processes for error reporting
+        var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
+        
+        // Step 6: Select the specified process from the process list
+        // Use retry logic in case there are still brief timing issues
+        bool processSelected = false;
+        for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++)
+        {
+            if (retryCount > 0)
+            {
+                await Task.Delay(500); // Brief delay between retries
             }
             
-            // Step 4: Additional verification that ItemsSource is actually populated
-            var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
-            if (!verificationResult)
+            processSelected = await dispatcher.InvokeAsync(() =>
             {
-                return new OpenTraceResult
+                var processListControl = profileLoadWindow.FindName("ProcessList") as System.Windows.Controls.ListView;
+                if (processListControl?.ItemsSource != null)
                 {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
-                    ErrorMessage = "Process list failed to load properly"
-                };
-            }
-            
-            // Step 5: Get available processes for error reporting
-            var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
-            
-            // Step 6: Select the specified process by name from the process list
-            bool processSelected = false;
-            for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++)
-            {
-                if (retryCount > 0)
-                {
-                    await Task.Delay(500); // Brief delay between retries
-                }
-                
-                processSelected = await dispatcher.InvokeAsync(() =>
-                {
-                    var processListControl = profileLoadWindow.FindName("ProcessList") as System.Windows.Controls.ListView;
-                    if (processListControl?.ItemsSource != null)
+                    try
                     {
-                        try
+                        var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
+                        var targetProcess = processSummaries.FirstOrDefault(p => p.Process.ProcessId == processId);
+                        
+                        if (targetProcess != null)
                         {
-                            var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
+                            processListControl.SelectedItems.Clear();
+                            processListControl.SelectedItems.Add(targetProcess);
                             
-                            // Look for process by name (case-insensitive, supports partial matching)
-                            var targetProcess = processSummaries.FirstOrDefault(p => 
-                                p.Process.Name != null && 
-                                p.Process.Name.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase));
-                            
-                            // If no partial match, try exact match
-                            if (targetProcess == null)
+                            // Trigger the selection changed event
+                            var selectionChangedMethod = profileLoadWindow.GetType().GetMethod("ProcessList_OnSelectionChanged", 
+                                BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (selectionChangedMethod != null)
                             {
-                                targetProcess = processSummaries.FirstOrDefault(p => 
-                                    string.Equals(p.Process.Name, processIdentifier, StringComparison.OrdinalIgnoreCase));
+                                var args = new System.Windows.Controls.SelectionChangedEventArgs(
+                                    System.Windows.Controls.Primitives.Selector.SelectionChangedEvent,
+                                    new object[0], new object[] { targetProcess });
+                                selectionChangedMethod.Invoke(profileLoadWindow, new object[] { processListControl, args });
                             }
-                            
-                            // If still no match, try matching against image file name
-                            if (targetProcess == null)
-                            {
-                                targetProcess = processSummaries.FirstOrDefault(p => 
-                                    p.Process.ImageFileName != null && 
-                                    p.Process.ImageFileName.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase));
-                            }
-                            
-                            if (targetProcess != null)
-                            {
-                                processListControl.SelectedItems.Clear();
-                                processListControl.SelectedItems.Add(targetProcess);
-                                
-                                // Trigger the selection changed event
-                                var selectionChangedMethod = profileLoadWindow.GetType().GetMethod("ProcessList_OnSelectionChanged", 
-                                    BindingFlags.NonPublic | BindingFlags.Instance);
-                                if (selectionChangedMethod != null)
-                                {
-                                    var args = new System.Windows.Controls.SelectionChangedEventArgs(
-                                        System.Windows.Controls.Primitives.Selector.SelectionChangedEvent,
-                                        new object[0], new object[] { targetProcess });
-                                    selectionChangedMethod.Invoke(profileLoadWindow, new object[] { processListControl, args });
-                                }
-                                return true;
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            // If casting or process selection fails, return false
-                            return false;
+                            return true;
                         }
                     }
-                    return false;
-                });
-            }
-            
-            if (!processSelected)
-            {
-                return new OpenTraceResult
-                {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.ProcessNotFound,
-                    ErrorMessage = $"Process '{processIdentifier}' not found in trace file",
-                    AvailableProcesses = availableProcesses
-                };
-            }
-            
-            // Step 6: Execute the profile load (click Load button)
-            await dispatcher.InvokeAsync(() =>
-            {
-                var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                if (loadButtonClickMethod != null)
-                {
-                    loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+                    catch (Exception)
+                    {
+                        // If casting or process selection fails, return false
+                        return false;
+                    }
                 }
+                return false;
             });
-            
-            return new OpenTraceResult { Success = true };
         }
-        catch (Exception ex)
+        
+        if (!processSelected)
         {
             return new OpenTraceResult
             {
                 Success = false,
-                FailureReason = OpenTraceFailureReason.UnknownError,
-                ErrorMessage = $"Unexpected error: {ex.Message}"
+                FailureReason = OpenTraceFailureReason.ProcessNotFound,
+                ErrorMessage = $"Process with ID {processId} not found in trace file",
+                AvailableProcesses = availableProcesses
             };
         }
+        
+        // Step 7: Execute the profile load (click Load button)
+        await dispatcher.InvokeAsync(() =>
+        {
+            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            if (loadButtonClickMethod != null)
+            {
+                loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+            }
+        });
+        
+        return new OpenTraceResult { Success = true };
+    }
+
+    private async Task<OpenTraceResult> SelectProcessByNameAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow, string processName) {
+        // Step 5: Get available processes for error reporting
+        var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
+
+        // Step 6: Select the specified process by name from the process list
+        bool processSelected = false;
+        for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++) {
+            if (retryCount > 0) {
+                await Task.Delay(500); // Brief delay between retries
+            }
+
+            processSelected = await dispatcher.InvokeAsync(() => {
+                var processListControl = profileLoadWindow.FindName("ProcessList") as System.Windows.Controls.ListView;
+                if (processListControl?.ItemsSource != null) {
+                    try {
+                        var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
+
+                        // Look for process by name (case-insensitive, supports partial matching)
+                        var targetProcess = processSummaries.FirstOrDefault(p =>
+                            p.Process.Name != null &&
+                            p.Process.Name.Contains(processName, StringComparison.OrdinalIgnoreCase));
+
+                        // If no partial match, try exact match
+                        if (targetProcess == null) {
+                            targetProcess = processSummaries.FirstOrDefault(p =>
+                                string.Equals(p.Process.Name, processName, StringComparison.OrdinalIgnoreCase));
+                        }
+
+                        // If still no match, try matching against image file name
+                        if (targetProcess == null) {
+                            targetProcess = processSummaries.FirstOrDefault(p =>
+                                p.Process.ImageFileName != null &&
+                                p.Process.ImageFileName.Contains(processName, StringComparison.OrdinalIgnoreCase));
+                        }
+
+                        if (targetProcess != null) {
+                            processListControl.SelectedItems.Clear();
+                            processListControl.SelectedItems.Add(targetProcess);
+
+                            // Trigger the selection changed event
+                            var selectionChangedMethod = profileLoadWindow.GetType().GetMethod("ProcessList_OnSelectionChanged",
+                                BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (selectionChangedMethod != null) {
+                                var args = new System.Windows.Controls.SelectionChangedEventArgs(
+                                    System.Windows.Controls.Primitives.Selector.SelectionChangedEvent,
+                                    new object[0], new object[] { targetProcess });
+                                selectionChangedMethod.Invoke(profileLoadWindow, new object[] { processListControl, args });
+                            }
+                            return true;
+                        }
+                    }
+                    catch (Exception) {
+                        // If casting or process selection fails, return false
+                        return false;
+                    }
+                }
+                return false;
+            });
+        }
+
+        if (!processSelected) {
+            return new OpenTraceResult {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.ProcessNotFound,
+                ErrorMessage = $"Process '{processName}' not found in trace file",
+                AvailableProcesses = availableProcesses
+            };
+        }
+
+        // Step 6: Execute the profile load (click Load button)
+        await dispatcher.InvokeAsync(() => {
+            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            if (loadButtonClickMethod != null) {
+                loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+            }
+        });
+
+        return new OpenTraceResult { Success = true };
     }
 
     /// <summary>
