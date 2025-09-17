@@ -471,6 +471,29 @@ public class McpActionExecutor : IMcpActionExecutor
         return false; // Timeout - ItemsSource never became available
     }
 
+    /// <summary>
+    /// Helper method to get the section panel and function list control
+    /// </summary>
+    private async Task<(ProfileExplorer.UI.SectionPanelPair SectionPanel, System.Windows.Controls.ListView FunctionList)> 
+        GetFunctionListControlAsync()
+    {
+        var sectionPanel = await dispatcher.InvokeAsync(() =>
+        {
+            return mainWindow.FindName("SectionPanel") as ProfileExplorer.UI.SectionPanelPair ??
+                    mainWindow.FindPanel(ProfileExplorer.UI.ToolPanelKind.Section) as ProfileExplorer.UI.SectionPanelPair;
+        });
+
+        if (sectionPanel?.MainPanel == null)
+        {
+            return (null, null);
+        }
+
+        var functionListControl = await dispatcher.InvokeAsync(() => 
+            sectionPanel.MainPanel.FindName("FunctionList") as System.Windows.Controls.ListView);
+
+        return (sectionPanel, functionListControl);
+    }
+
     public async Task<ProfilerStatus> GetStatusAsync()
     {
         return await dispatcher.InvokeAsync(() =>
@@ -568,21 +591,9 @@ public class McpActionExecutor : IMcpActionExecutor
     {
         try
         {
-            // Step 1: Find the SectionPanel that contains the function list
-            var sectionPanel = await dispatcher.InvokeAsync(() =>
-            {
-                return mainWindow.FindName("SectionPanel") as ProfileExplorer.UI.SectionPanelPair ??
-                        mainWindow.FindPanel(ProfileExplorer.UI.ToolPanelKind.Section) as ProfileExplorer.UI.SectionPanelPair;
-            });
-
-            if (sectionPanel == null)
-            {
-                return null; // Section panel not found
-            }
-
-            // Step 2: Get the main section panel (not the diff panel)
-            var mainSectionPanel = await dispatcher.InvokeAsync(() => sectionPanel.MainPanel);
-            if (mainSectionPanel == null)
+            // Step 1: Get the function list control
+            var (sectionPanel, functionListControl) = await GetFunctionListControlAsync();
+            if (sectionPanel == null || functionListControl == null)
             {
                 return null;
             }
@@ -590,7 +601,6 @@ public class McpActionExecutor : IMcpActionExecutor
             // Step 3: Find the function in the function list
             var functionFound = await dispatcher.InvokeAsync(() =>
             {
-                var functionListControl = mainSectionPanel.FindName("FunctionList") as System.Windows.Controls.ListView;
                 if (functionListControl?.ItemsSource != null)
                 {
                     try
@@ -603,13 +613,18 @@ public class McpActionExecutor : IMcpActionExecutor
                                 // Check if the function name matches
                                 if (functionEx.ToolTip == functionName)
                                 {
+                                    // Early check: Verify function has assembly data before proceeding
+                                    if (!HasAssemblyData(functionEx))
+                                    {
+                                        return false; // Function found but has no assembly data
+                                    }
                                     // Select the function
                                     functionListControl.SelectedItems.Clear();
                                     functionListControl.SelectedItems.Add(functionEx);
                                     functionListControl.ScrollIntoView(functionEx);
 
                                     // Programmatically trigger the double-click event
-                                    var method = mainSectionPanel.GetType().GetMethod("FunctionDoubleClick",
+                                    var method = sectionPanel.MainPanel.GetType().GetMethod("FunctionDoubleClick",
                                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                                     if (method != null)
                                     {
@@ -626,7 +641,7 @@ public class McpActionExecutor : IMcpActionExecutor
                                             {
                                                 RoutedEvent = System.Windows.Controls.Control.MouseDoubleClickEvent
                                             };
-                                            method.Invoke(mainSectionPanel, new object[] { listViewItem, mouseEventArgs });
+                                            method.Invoke(sectionPanel.MainPanel, new object[] { listViewItem, mouseEventArgs });
                                             return true;
                                         }
                                     }
@@ -1160,6 +1175,265 @@ public class McpActionExecutor : IMcpActionExecutor
         catch
         {
             return Array.Empty<ProcessInfo>();
+        }
+    }
+
+    public async Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "")
+    {
+        try
+        {
+            // Check if a profile is currently loaded
+            var status = await GetStatusAsync();
+            if (!status.IsProfileLoaded)
+            {
+                return new GetAvailableFunctionsResult
+                {
+                    Success = false,
+                    ErrorMessage = "No profile is currently loaded. Please open a trace file first using OpenTrace."
+                };
+            }
+
+            // Extract function information from the currently loaded session
+            var functions = await ExtractFunctionInfoAsync();
+
+            if (functions.Length == 0)
+            {
+                return new GetAvailableFunctionsResult
+                {
+                    Success = false,
+                    ErrorMessage = "No functions found in the currently loaded profile. The profile may not be fully loaded yet."
+                };
+            }
+
+            // Apply module filtering if specified
+            if (!string.IsNullOrWhiteSpace(moduleName))
+            {
+                functions = functions
+                    .Where(f => !string.IsNullOrEmpty(f.ModuleName) && 
+                               f.ModuleName.Contains(moduleName, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+                    
+                if (functions.Length == 0)
+                {
+                    return new GetAvailableFunctionsResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"No functions found in module '{moduleName}'. Available modules might have different names or the module might not be loaded."
+                    };
+                }
+            }
+
+            // Apply self time filtering if specified
+            if (minSelfTimePercentage.HasValue)
+            {
+                if (minSelfTimePercentage < 0 || minSelfTimePercentage > 100)
+                {
+                    return new GetAvailableFunctionsResult
+                    {
+                        Success = false,
+                        ErrorMessage = "minSelfTimePercentage must be between 0 and 100."
+                    };
+                }
+                functions = functions
+                    .Where(f => f.SelfTimePercentage >= minSelfTimePercentage.Value)
+                    .ToArray();
+            }
+
+            // Apply total time filtering if specified
+            if (minTotalTimePercentage.HasValue)
+            {
+                if (minTotalTimePercentage < 0 || minTotalTimePercentage > 100)
+                {
+                    return new GetAvailableFunctionsResult
+                    {
+                        Success = false,
+                        ErrorMessage = "minTotalTimePercentage must be between 0 and 100."
+                    };
+                }
+                functions = functions
+                    .Where(f => f.TotalTimePercentage >= minTotalTimePercentage.Value)
+                    .ToArray();
+            }
+
+            // Apply top N filtering if specified
+            if (topCount.HasValue)
+            {
+                if (topCount < 1)
+                {
+                    return new GetAvailableFunctionsResult
+                    {
+                        Success = false,
+                        ErrorMessage = "topCount must be a positive integer."
+                    };
+                }
+                // Sort by the chosen metric and take top N
+                if (functions.Length > topCount.Value)
+                {
+                    functions = sortBySelfTime
+                        ? functions.OrderByDescending(f => f.SelfTimePercentage).Take(topCount.Value).ToArray()
+                        : functions.OrderByDescending(f => f.TotalTimePercentage).Take(topCount.Value).ToArray();
+                }
+            }
+            else
+            {
+                // If no topCount specified, still sort the results
+                functions = sortBySelfTime
+                    ? functions.OrderByDescending(f => f.SelfTimePercentage).ToArray()
+                    : functions.OrderByDescending(f => f.TotalTimePercentage).ToArray();
+            }
+
+            return new GetAvailableFunctionsResult
+            {
+                Success = true,
+                Functions = functions
+            };
+        }
+        catch (Exception ex)
+        {
+            return new GetAvailableFunctionsResult
+            {
+                Success = false,
+                ErrorMessage = $"Unexpected error: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Extract function information from the currently loaded profile session
+    /// </summary>
+    private async Task<FunctionInfo[]> ExtractFunctionInfoAsync()
+    {
+        try
+        {
+            // Use the shared helper to get the function list control
+            var (sectionPanel, functionListControl) = await GetFunctionListControlAsync();
+            if (functionListControl?.ItemsSource == null)
+            {
+                return Array.Empty<FunctionInfo>();
+            }
+
+            return await dispatcher.InvokeAsync(() =>
+            {
+                try
+                {
+                    var functionInfos = new List<FunctionInfo>();
+
+                    // Iterate through the function list and extract information
+                    foreach (var item in functionListControl.ItemsSource)
+                    {
+                        if (item is ProfileExplorer.UI.IRTextFunctionEx functionEx)
+                        {
+                            var functionInfo = new FunctionInfo
+                            {
+                                Name = functionEx.Name ?? string.Empty,
+                                FullName = functionEx.ToolTip ?? functionEx.Name ?? string.Empty,
+                                ModuleName = ExtractModuleName(functionEx),
+                                SelfTimePercentage = functionEx.ExclusivePercentage,
+                                TotalTimePercentage = functionEx.Percentage,
+                                SelfTime = functionEx.ExclusiveWeight,
+                                TotalTime = functionEx.Weight,
+                                SourceFile = ExtractSourceFile(functionEx),
+                                HasAssembly = HasAssemblyData(functionEx)
+                            };
+
+                            functionInfos.Add(functionInfo);
+                        }
+                    }
+
+                    // Sort by self time percentage descending (most expensive functions first)
+                    return functionInfos
+                        .OrderByDescending(f => f.SelfTimePercentage)
+                        .ToArray();
+                }
+                catch
+                {
+                    return Array.Empty<FunctionInfo>();
+                }
+            });
+        }
+        catch
+        {
+            return Array.Empty<FunctionInfo>();
+        }
+    }
+
+    /// <summary>
+    /// Extract module name from function information
+    /// </summary>
+    private string ExtractModuleName(ProfileExplorer.UI.IRTextFunctionEx functionEx)
+    {
+        try
+        {
+            // Get module name directly from the function
+            if (!string.IsNullOrEmpty(functionEx.ModuleName))
+            {
+                return functionEx.ModuleName;
+            }
+
+            // Alternative: extract from full name if it contains module info
+            var fullName = functionEx.ToolTip ?? functionEx.Name ?? string.Empty;
+            if (fullName.Contains("!"))
+            {
+                var parts = fullName.Split('!');
+                if (parts.Length > 1)
+                {
+                    return parts[0];
+                }
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Extract source file information from function
+    /// </summary>
+    private string ExtractSourceFile(ProfileExplorer.UI.IRTextFunctionEx functionEx)
+    {
+        try
+        {
+            // Try to get source file information from debug info
+            var sessionState = mainWindow.SessionState;
+            var profileData = sessionState?.ProfileData;
+            
+            if (profileData?.ModuleDebugInfo != null && functionEx.Function != null)
+            {
+                // Look through module debug info for this function
+                foreach (var debugInfo in profileData.ModuleDebugInfo.Values)
+                {
+                    var sourceInfo = debugInfo.FindFunctionSourceFilePath(functionEx.Function);
+                    if (!sourceInfo.IsUnknown && sourceInfo.HasFilePath)
+                    {
+                        return sourceInfo.FilePath;
+                    }
+                }
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Check if function has assembly data available
+    /// </summary>
+    private bool HasAssemblyData(ProfileExplorer.UI.IRTextFunctionEx functionEx)
+    {
+        try
+        {
+            // Check if the function has any sections (indicating code/assembly data)
+            return functionEx.Function?.HasSections ?? false;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

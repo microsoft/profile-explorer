@@ -284,6 +284,155 @@ public static class ProfileExplorerTools
 
     #endregion
 
+    #region Get Available Functions Tool
+
+    [McpServerTool, Description("Get the list of available functions from the currently loaded process/trace with optional filtering by module name, performance metrics, and result count")]
+    public static async Task<string> GetAvailableFunctions(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "")
+    {
+        try
+        {
+            if (_executor == null)
+            {
+                throw new InvalidOperationException("MCP action executor is not initialized");
+            }
+
+            GetAvailableFunctionsResult result = await _executor.GetAvailableFunctionsAsync(minSelfTimePercentage, minTotalTimePercentage, topCount, sortBySelfTime, moduleName);
+            
+            if (result.Success)
+            {
+                // Apply self time filtering if specified (already done in executor but kept for compatibility)
+                var filteredFunctions = result.Functions;
+                if (minSelfTimePercentage.HasValue)
+                {
+                    filteredFunctions = result.Functions
+                        .Where(f => f.SelfTimePercentage >= minSelfTimePercentage.Value)
+                        .ToArray();
+                }
+
+                // Apply total time filtering if specified (already done in executor but kept for compatibility)
+                if (minTotalTimePercentage.HasValue)
+                {
+                    filteredFunctions = filteredFunctions
+                        .Where(f => f.TotalTimePercentage >= minTotalTimePercentage.Value)
+                        .ToArray();
+                }
+
+                // Apply top N filtering if specified (already done in executor but kept for compatibility)
+                if (topCount.HasValue)
+                {
+                    // Sort by the chosen metric and take top N
+                    if (filteredFunctions.Length > topCount.Value)
+                    {
+                        filteredFunctions = sortBySelfTime
+                            ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).Take(topCount.Value).ToArray()
+                            : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).Take(topCount.Value).ToArray();
+                    }
+                }
+
+                var successResult = new
+                {
+                    Action = "GetAvailableFunctions",
+                    Status = "Success",
+                    MinSelfTimePercentage = Math.Round(minSelfTimePercentage ?? 0, 2),
+                    MinTotalTimePercentage = Math.Round(minTotalTimePercentage ?? 0, 2),
+                    TopCount = topCount,
+                    SortBySelfTime = sortBySelfTime,
+                    TotalFunctionCount = result.Functions.Length,
+                    FilteredFunctionCount = filteredFunctions.Length,
+                    Functions = filteredFunctions.Select(f => new
+                    {
+                        Name = f.Name,
+                        FullName = f.FullName,
+                        ModuleName = f.ModuleName,
+                        SelfTimePercentage = Math.Round(f.SelfTimePercentage, 2),
+                        TotalTimePercentage = Math.Round(f.TotalTimePercentage, 2),
+                        SelfTime = f.SelfTime.ToString(),
+                        TotalTime = f.TotalTime.ToString(),
+                        SourceFile = f.SourceFile,
+                        HasAssembly = f.HasAssembly
+                    }).ToArray(),
+                    Description = GetFunctionFilterDescription(minSelfTimePercentage, minTotalTimePercentage, topCount, sortBySelfTime, moduleName, result.Functions.Length, filteredFunctions.Length),
+                    Instruction = GetFunctionFilterInstruction(sortBySelfTime),
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            else
+            {
+                var failureResult = new
+                {
+                    Action = "GetAvailableFunctions",
+                    Status = "Failed",
+                    Description = result.ErrorMessage ?? "Failed to retrieve functions from currently loaded profile",
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new
+            {
+                Action = "GetAvailableFunctions",
+                Status = "Error",
+                Error = ex.Message,
+                Timestamp = DateTime.UtcNow
+            };
+
+            return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+    }
+
+    private static string GetFunctionFilterDescription(double? minSelfTimePercentage, double? minTotalTimePercentage, int? topCount, bool sortBySelfTime, string moduleName, int totalCount, int filteredCount)
+    {
+        var sortMetric = sortBySelfTime ? "self time" : "total time";
+        var filterParts = new List<string>();
+        
+        if (!string.IsNullOrWhiteSpace(moduleName))
+        {
+            filterParts.Add($"module '{moduleName}'");
+        }
+        
+        if (minSelfTimePercentage.HasValue)
+        {
+            filterParts.Add($"self time >= {minSelfTimePercentage}%");
+        }
+        
+        if (minTotalTimePercentage.HasValue)
+        {
+            filterParts.Add($"total time >= {minTotalTimePercentage}%");
+        }
+        
+        if (topCount.HasValue && filterParts.Any())
+        {
+            return $"Successfully retrieved top {topCount} functions (from {totalCount} total) with {string.Join(" and ", filterParts)}, sorted by {sortMetric} percentage";
+        }
+        else if (filterParts.Any())
+        {
+            return $"Successfully retrieved {filteredCount} functions (filtered from {totalCount} total) with {string.Join(" and ", filterParts)}, sorted by {sortMetric} percentage";
+        }
+        else if (topCount.HasValue)
+        {
+            return $"Successfully retrieved top {Math.Min(topCount.Value, totalCount)} heaviest functions (from {totalCount} total), sorted by {sortMetric} percentage";
+        }
+        else
+        {
+            return $"Successfully retrieved {totalCount} functions from currently loaded profile, sorted by {sortMetric} percentage";
+        }
+    }
+
+    private static string GetFunctionFilterInstruction(bool sortBySelfTime)
+    {
+        var sortMetric = sortBySelfTime ? "self time" : "total time";
+        var explanation = sortBySelfTime 
+            ? "Self time excludes time spent in called functions and shows functions doing actual work." 
+            : "Total time includes time spent in called functions and shows the overall impact.";
+        
+        return $"Functions are sorted by {sortMetric} percentage (highest first). {explanation} Use the function name or full name with GetFunctionAssembly to retrieve assembly code for a specific function.";
+    }
+
+    #endregion
+
     #region Function Assembly Tool
 
     [McpServerTool, Description("Get assembly code for a specific function by double-clicking on it in the Summary pane, and save it to a file for later contextual reference by Copilot")]
@@ -364,6 +513,11 @@ public static class ProfileExplorerTools
                     Name = "OpenTrace", 
                     Description = "Open and load a trace file with a specific process by name or ID. For ambiguous queries, uses LLM world knowledge to help identify the correct process", 
                     Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processNameOrId (string) - Process name (e.g., 'chrome.exe', 'POWERPNT'), category (e.g., 'defender', 'performance recorder'), or process ID (e.g., '1234')"
+                },
+                new { 
+                    Name = "GetAvailableFunctions", 
+                    Description = "Get the list of available functions from the currently loaded process/trace. This should be called after a process is loaded via OpenTrace. Returns both self time (CPU-intensive functions) and total time (high-impact functions including callees). Supports filtering by module name, performance thresholds, result limits, and sorting preferences for targeted performance analysis.", 
+                    Parameters = "moduleName (string, optional) - Filter functions by specific module/DLL name (e.g., 'ntdll.dll', 'kernel32.dll', 'ntdll' - supports partial matching), minSelfTimePercentage (double, optional) - Minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time; use for finding CPU-intensive functions), minTotalTimePercentage (double, optional) - Minimum total time percentage to filter functions (e.g., 5.0 for functions with >= 5% total time; use for finding functions with high overall impact), topCount (int, optional) - Limit results to top N heaviest functions (e.g., 10 for top 10 functions; useful for focusing on worst performers), sortBySelfTime (bool, optional, default true) - Sort by self time (true, shows functions doing actual work) or total time (false, shows functions with highest overall impact including called functions)"
                 },
                 new { 
                     Name = "GetFunctionAssembly", 
@@ -457,6 +611,91 @@ public static class ProfileExplorerTools
                     Parameters = new {
                         profileFilePath = @"C:\traces\sample.etl",
                         processNameOrId = "performance recorder"
+                    }
+                },
+                new
+                {
+                    Description = "Get list of all available functions in the currently loaded profile",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new { }
+                },
+                new
+                {
+                    Description = "Get functions from ntdll.dll only",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        moduleName = "ntdll.dll"
+                    }
+                },
+                new
+                {
+                    Description = "Get functions from kernel32.dll only",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        moduleName = "kernel32.dll"
+                    }
+                },
+                new
+                {
+                    Description = "Get list of functions with significant self time (>= 1%)",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        minSelfTimePercentage = 1.0
+                    }
+                },
+                new
+                {
+                    Description = "Get list of functions with high total time impact (>= 5%)",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        minTotalTimePercentage = 5.0
+                    }
+                },
+                new
+                {
+                    Description = "Get top 5 CPU-intensive functions (by self time)",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        topCount = 5,
+                        sortBySelfTime = true
+                    }
+                },
+                new
+                {
+                    Description = "Get top 5 highest-impact functions (by total time)",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        topCount = 5,
+                        sortBySelfTime = false
+                    }
+                },
+                new
+                {
+                    Description = "Find performance bottlenecks: functions with >= 2% self time AND >= 10% total time",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        minSelfTimePercentage = 2.0,
+                        minTotalTimePercentage = 10.0
+                    }
+                },
+                new
+                {
+                    Description = "Get top 3 hotspots in ntdll.dll (combined module and count filtering)",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        moduleName = "ntdll.dll",
+                        topCount = 3,
+                        sortBySelfTime = true
+                    }
+                },
+                new
+                {
+                    Description = "Get top 5 functions from kernel32.dll by self time",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new {
+                        moduleName = "kernel32.dll",
+                        topCount = 5,
+                        sortBySelfTime = true
                     }
                 },
                 new

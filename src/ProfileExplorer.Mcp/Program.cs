@@ -211,4 +211,146 @@ ret";
             Processes = filteredProcesses
         });
     }
+
+    public Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "")
+    {
+        Console.WriteLine($"Mock: GetAvailableFunctionsAsync called with minSelfTimePercentage: {minSelfTimePercentage}, minTotalTimePercentage: {minTotalTimePercentage}, topCount: {topCount}, sortBySelfTime: {sortBySelfTime}, moduleName: {moduleName}");
+        
+        // Return mock function list with weight percentages
+        var mockFunctions = new FunctionInfo[]
+        {
+            new FunctionInfo
+            {
+                Name = "main",
+                FullName = "main",
+                ModuleName = "MyApp.exe",
+                SelfTimePercentage = 45.2,
+                TotalTimePercentage = 68.5,
+                SelfTime = TimeSpan.FromSeconds(18.1),
+                TotalTime = TimeSpan.FromSeconds(27.4),
+                SourceFile = "C:\\source\\main.cpp",
+                HasAssembly = true
+            },
+            new FunctionInfo
+            {
+                Name = "ProcessData",
+                FullName = "MyNamespace::ProcessData(int, char*)",
+                ModuleName = "MyApp.exe",
+                SelfTimePercentage = 22.7,
+                TotalTimePercentage = 35.2,
+                SelfTime = TimeSpan.FromSeconds(9.1),
+                TotalTime = TimeSpan.FromSeconds(14.1),
+                SourceFile = "C:\\source\\processor.cpp",
+                HasAssembly = true
+            },
+            new FunctionInfo
+            {
+                Name = "AllocateMemory",
+                FullName = "MemoryManager::AllocateMemory(size_t)",
+                ModuleName = "MyApp.exe",
+                SelfTimePercentage = 15.3,
+                TotalTimePercentage = 15.3,
+                SelfTime = TimeSpan.FromSeconds(6.1),
+                TotalTime = TimeSpan.FromSeconds(6.1),
+                SourceFile = "C:\\source\\memory.cpp",
+                HasAssembly = true
+            },
+            new FunctionInfo
+            {
+                Name = "StringCompare",
+                FullName = "std::basic_string<char>::compare",
+                ModuleName = "MSVCP140.dll",
+                SelfTimePercentage = 8.9,
+                TotalTimePercentage = 8.9,
+                SelfTime = TimeSpan.FromSeconds(3.6),
+                TotalTime = TimeSpan.FromSeconds(3.6),
+                SourceFile = null,
+                HasAssembly = true
+            },
+            new FunctionInfo
+            {
+                Name = "NtAllocateVirtualMemory",
+                FullName = "NtAllocateVirtualMemory",
+                ModuleName = "ntdll.dll",
+                SelfTimePercentage = 6.2,
+                TotalTimePercentage = 6.2,
+                SelfTime = TimeSpan.FromSeconds(2.5),
+                TotalTime = TimeSpan.FromSeconds(2.5),
+                SourceFile = null,
+                HasAssembly = true
+            },
+            new FunctionInfo
+            {
+                Name = "RtlAllocateHeap",
+                FullName = "RtlAllocateHeap",
+                ModuleName = "ntdll.dll",
+                SelfTimePercentage = 4.1,
+                TotalTimePercentage = 4.1,
+                SelfTime = TimeSpan.FromSeconds(1.6),
+                TotalTime = TimeSpan.FromSeconds(1.6),
+                SourceFile = null,
+                HasAssembly = true
+            },
+            new FunctionInfo
+            {
+                Name = "Helper",
+                FullName = "Utils::Helper()",
+                ModuleName = "MyApp.exe",
+                SelfTimePercentage = 0.5,
+                TotalTimePercentage = 2.1,
+                SelfTime = TimeSpan.FromSeconds(0.2),
+                TotalTime = TimeSpan.FromSeconds(0.8),
+                SourceFile = "C:\\source\\utils.cpp",
+                HasAssembly = true
+            }
+        };
+
+        // Apply module filtering if specified
+        var filteredFunctions = mockFunctions;
+        if (!string.IsNullOrWhiteSpace(moduleName))
+        {
+            filteredFunctions = filteredFunctions
+                .Where(f => !string.IsNullOrEmpty(f.ModuleName) && 
+                           f.ModuleName.Contains(moduleName, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+        
+        // Apply self time filtering if specified
+        if (minSelfTimePercentage.HasValue)
+        {
+            filteredFunctions = filteredFunctions
+                .Where(f => f.SelfTimePercentage >= minSelfTimePercentage.Value)
+                .ToArray();
+        }
+        
+        // Apply total time filtering if specified
+        if (minTotalTimePercentage.HasValue)
+        {
+            filteredFunctions = filteredFunctions
+                .Where(f => f.TotalTimePercentage >= minTotalTimePercentage.Value)
+                .ToArray();
+        }
+        
+        // Apply top N filtering if specified
+        if (topCount.HasValue)
+        {
+            // Sort by the chosen metric and take top N
+            filteredFunctions = sortBySelfTime
+                ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).Take(topCount.Value).ToArray()
+                : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).Take(topCount.Value).ToArray();
+        }
+        else
+        {
+            // If no topCount specified, still sort the results
+            filteredFunctions = sortBySelfTime
+                ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).ToArray()
+                : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).ToArray();
+        }
+
+        return Task.FromResult(new GetAvailableFunctionsResult
+        {
+            Success = true,
+            Functions = filteredFunctions
+        });
+    }
 }

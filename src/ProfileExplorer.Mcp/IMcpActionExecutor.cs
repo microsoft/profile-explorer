@@ -39,6 +39,18 @@ public interface IMcpActionExecutor
     /// <param name="topCount">Optional number to limit results to the top N heaviest processes (e.g., 10 for top 10 heaviest processes)</param>
     /// <returns>Task that completes with the list of available processes in the trace file</returns>
     Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null, int? topCount = null);
+
+    /// <summary>
+    /// Gets the list of available functions from the currently loaded process/trace
+    /// This should be called after a process is loaded via OpenTraceAsync
+    /// </summary>
+    /// <param name="minSelfTimePercentage">Optional minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time)</param>
+    /// <param name="minTotalTimePercentage">Optional minimum total time percentage to filter functions (e.g., 1.0 for functions with >= 1% total time)</param>
+    /// <param name="topCount">Optional number to limit results to the top N heaviest functions (e.g., 10 for top 10 heaviest functions)</param>
+    /// <param name="sortBySelfTime">Optional flag to sort by self time (true, default) or total time (false)</param>
+    /// <param name="moduleName">Optional module name to filter functions (e.g., "ntdll" for functions from ntdll.dll only)</param>
+    /// <returns>Task that completes with the list of available functions in the currently loaded process</returns>
+    Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "");
 }
 
 /// <summary>
@@ -100,5 +112,71 @@ public class GetAvailableProcessesResult
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
     public ProcessInfo[] Processes { get; set; } = Array.Empty<ProcessInfo>();
+}
+
+/// <summary>
+/// Information about a function available in the currently loaded process
+/// </summary>
+public class FunctionInfo
+{
+    /// <summary>
+    /// Short function name (e.g., "ProcessData")
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Full function signature including namespace, class, and parameters
+    /// (e.g., "MyNamespace::MyClass::ProcessData(int, char*)")
+    /// </summary>
+    public string? FullName { get; set; }
+    
+    /// <summary>
+    /// Name of the module/binary containing this function (e.g., "MyApp.exe", "kernel32.dll")
+    /// </summary>
+    public string? ModuleName { get; set; }
+    
+    /// <summary>
+    /// Self time percentage - time spent exclusively in this function's code (excluding called functions)
+    /// Corresponds to "Time (self)" percentage in ProfileExplorer Summary window
+    /// </summary>
+    public double SelfTimePercentage { get; set; }
+    
+    /// <summary>
+    /// Total time percentage - time spent in this function including all functions it calls
+    /// Corresponds to "Time (total)" percentage in ProfileExplorer Summary window
+    /// </summary>
+    public double TotalTimePercentage { get; set; }
+    
+    /// <summary>
+    /// Self time - time spent exclusively in this function's code (excluding called functions)
+    /// Corresponds to "Time (self)" in ProfileExplorer Summary window
+    /// </summary>
+    public TimeSpan SelfTime { get; set; }
+    
+    /// <summary>
+    /// Total time - time spent in this function including all functions it calls  
+    /// Corresponds to "Time (total)" in ProfileExplorer Summary window
+    /// </summary>
+    public TimeSpan TotalTime { get; set; }
+    
+    /// <summary>
+    /// Path to the source file containing this function, if available from debug information
+    /// </summary>
+    public string? SourceFile { get; set; }
+    
+    /// <summary>
+    /// Whether assembly/disassembly code is available for this function
+    /// </summary>
+    public bool HasAssembly { get; set; }
+}
+
+/// <summary>
+/// Result of a GetAvailableFunctions operation
+/// </summary>
+public class GetAvailableFunctionsResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public FunctionInfo[] Functions { get; set; } = Array.Empty<FunctionInfo>();
 }
 
