@@ -30,6 +30,13 @@ public interface IMcpActionExecutor
     /// <param name="functionName">Name of the function to retrieve assembly for</param>
     /// <returns>Task that completes with the file path where assembly was saved, or null if function not found</returns>
     Task<string?> GetFunctionAssemblyToFileAsync(string functionName);
+
+    /// <summary>
+    /// Gets the list of available processes from a trace file without opening it
+    /// </summary>
+    /// <param name="profileFilePath">Path to the ETL trace file to analyze</param>
+    /// <returns>Task that completes with the list of available processes in the trace file</returns>
+    Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath);
 }
 
 /// <summary>
@@ -40,7 +47,6 @@ public class OpenTraceResult
     public bool Success { get; set; }
     public OpenTraceFailureReason FailureReason { get; set; } = OpenTraceFailureReason.None;
     public string? ErrorMessage { get; set; }
-    public string[]? AvailableProcesses { get; set; }
 }
 
 /// <summary>
@@ -66,8 +72,28 @@ public class ProfilerStatus
     public string? CurrentProfilePath { get; set; }
     public int[] LoadedProcesses { get; set; } = Array.Empty<int>();
     public string[] ActiveFilters { get; set; } = Array.Empty<string>();
-    public string? CurrentProcessName { get; set; }
-    public int? CurrentProcessId { get; set; }
+    public ProcessInfo? CurrentProcess { get; set; }
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Information about a process available in a trace file
+/// </summary>
+public class ProcessInfo
+{
+    public int ProcessId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? ImageFileName { get; set; }
+    public string? CommandLine { get; set; }
+}
+
+/// <summary>
+/// Result of a GetAvailableProcesses operation
+/// </summary>
+public class GetAvailableProcessesResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public ProcessInfo[] Processes { get; set; } = Array.Empty<ProcessInfo>();
 }
 

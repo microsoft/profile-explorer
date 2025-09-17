@@ -145,4 +145,41 @@ ret";
         
         return sanitized;
     }
+
+    public Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath)
+    {
+        Console.WriteLine($"Mock: GetAvailableProcessesAsync called with profileFilePath: {profileFilePath}");
+        
+        // Return mock process list
+        var mockProcesses = new ProcessInfo[]
+        {
+            new ProcessInfo
+            {
+                ProcessId = 1234,
+                Name = "chrome",
+                ImageFileName = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                CommandLine = "\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --type=browser"
+            },
+            new ProcessInfo
+            {
+                ProcessId = 5678,
+                Name = "notepad",
+                ImageFileName = "C:\\Windows\\System32\\notepad.exe",
+                CommandLine = "notepad.exe sample.txt"
+            },
+            new ProcessInfo
+            {
+                ProcessId = 9999,
+                Name = "MyApp",
+                ImageFileName = "C:\\MyApp\\MyApp.exe",
+                CommandLine = "MyApp.exe --debug --verbose"
+            }
+        };
+
+        return Task.FromResult(new GetAvailableProcessesResult
+        {
+            Success = true,
+            Processes = mockProcesses
+        });
+    }
 }

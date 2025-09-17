@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -99,7 +100,6 @@ public static class ProfileExplorerTools
                     Status = "Failed",
                     FailureReason = result.FailureReason.ToString(),
                     Description = result.ErrorMessage ?? "Unknown failure",
-                    AvailableProcesses = result.AvailableProcesses ?? Array.Empty<string>(),
                     Timestamp = DateTime.UtcNow
                 };
                 return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
@@ -112,6 +112,73 @@ public static class ProfileExplorerTools
                 Action = "OpenTrace",
                 ProfileFilePath = profileFilePath,
                 ProcessNameOrId = processNameOrId,
+                Status = "Error",
+                Error = ex.Message,
+                Timestamp = DateTime.UtcNow
+            };
+
+            return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+    }
+
+    #endregion
+
+    #region Get Available Processes Tool
+
+    [McpServerTool, Description("Get the list of available processes from a trace file")]
+    public static async Task<string> GetAvailableProcesses(string profileFilePath)
+    {
+        if (string.IsNullOrWhiteSpace(profileFilePath))
+            throw new ArgumentException("Profile file path cannot be empty", nameof(profileFilePath));
+
+        try
+        {
+            if (_executor == null)
+            {
+                throw new InvalidOperationException("MCP action executor is not initialized");
+            }
+
+            GetAvailableProcessesResult result = await _executor.GetAvailableProcessesAsync(profileFilePath);
+            
+            if (result.Success)
+            {
+                var successResult = new
+                {
+                    Action = "GetAvailableProcesses",
+                    ProfileFilePath = profileFilePath,
+                    Status = "Success",
+                    ProcessCount = result.Processes.Length,
+                    Processes = result.Processes.Select(p => new
+                    {
+                        ProcessId = p.ProcessId,
+                        Name = p.Name,
+                        ImageFileName = p.ImageFileName,
+                        CommandLine = p.CommandLine
+                    }).ToArray(),
+                    Description = $"Successfully retrieved {result.Processes.Length} processes from trace file",
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            else
+            {
+                var failureResult = new
+                {
+                    Action = "GetAvailableProcesses",
+                    ProfileFilePath = profileFilePath,
+                    Status = "Failed",
+                    Description = result.ErrorMessage ?? "Failed to retrieve processes from trace file",
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new
+            {
+                Action = "GetAvailableProcesses",
+                ProfileFilePath = profileFilePath,
                 Status = "Error",
                 Error = ex.Message,
                 Timestamp = DateTime.UtcNow
@@ -195,6 +262,11 @@ public static class ProfileExplorerTools
             AvailableCommands = new[]
             {
                 new { 
+                    Name = "GetAvailableProcesses", 
+                    Description = "Get the list of available processes from a trace file without opening it", 
+                    Parameters = "profileFilePath (string) - Path to the ETL trace file to analyze for available processes"
+                },
+                new { 
                     Name = "OpenTrace", 
                     Description = "Open and load a trace file with a specific process by name or ID in one complete operation", 
                     Parameters = "profileFilePath (string) - Path to the ETL trace file to open, processNameOrId (string) - Process name (e.g., 'chrome.exe', 'POWERPNT') or process ID (e.g., '1234') to select and load from the trace"
@@ -212,6 +284,14 @@ public static class ProfileExplorerTools
             },
             Examples = new object[]
             {
+                new
+                {
+                    Description = "Get list of available processes in a trace file",
+                    Command = "GetAvailableProcesses",
+                    Parameters = new {
+                        profileFilePath = @"C:\traces\sample.etl"
+                    }
+                },
                 new
                 {
                     Description = "Load a trace file and select a specific process by ID",

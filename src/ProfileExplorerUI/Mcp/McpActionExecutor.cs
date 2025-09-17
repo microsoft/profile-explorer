@@ -171,10 +171,7 @@ public class McpActionExecutor : IMcpActionExecutor
     }
 
     private async Task<OpenTraceResult> SelectProcessByPidAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow, int processId) {
-        // Step 5: Get available processes for error reporting
-        var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
-        
-        // Step 6: Select the specified process from the process list
+        // Step 5: Select the specified process from the process list
         // Use retry logic in case there are still brief timing issues
         bool processSelected = false;
         for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++)
@@ -229,11 +226,10 @@ public class McpActionExecutor : IMcpActionExecutor
                 Success = false,
                 FailureReason = OpenTraceFailureReason.ProcessNotFound,
                 ErrorMessage = $"Process with ID {processId} not found in trace file",
-                AvailableProcesses = availableProcesses
             };
         }
         
-        // Step 7: Execute the profile load (click Load button)
+        // Step 6: Execute the profile load (click Load button)
         await dispatcher.InvokeAsync(() =>
         {
             var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
@@ -248,10 +244,7 @@ public class McpActionExecutor : IMcpActionExecutor
     }
 
     private async Task<OpenTraceResult> SelectProcessByNameAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow, string processName) {
-        // Step 5: Get available processes for error reporting
-        var availableProcesses = await GetAvailableProcessesAsync(profileLoadWindow);
-
-        // Step 6: Select the specified process by name from the process list
+        // Step 5: Select the specified process by name from the process list
         bool processSelected = false;
         for (int retryCount = 0; retryCount < 3 && !processSelected; retryCount++) {
             if (retryCount > 0) {
@@ -312,7 +305,6 @@ public class McpActionExecutor : IMcpActionExecutor
                 Success = false,
                 FailureReason = OpenTraceFailureReason.ProcessNotFound,
                 ErrorMessage = $"Process '{processName}' not found in trace file",
-                AvailableProcesses = availableProcesses
             };
         }
 
@@ -494,8 +486,7 @@ public class McpActionExecutor : IMcpActionExecutor
                 string currentProfilePath = null;
                 int[] loadedProcesses = Array.Empty<int>();
                 string[] activeFilters = Array.Empty<string>();
-                string currentProcessName = null;
-                int? currentProcessId = null;
+                ProcessInfo? currentProcess = null;
 
                 if (isProfileLoaded && report != null)
                 {
@@ -505,8 +496,13 @@ public class McpActionExecutor : IMcpActionExecutor
                     // Get process information from ProfileDataReport.Process (main process)
                     if (report.Process != null)
                     {
-                        currentProcessName = report.Process.Name;
-                        currentProcessId = report.Process.ProcessId;
+                        currentProcess = new ProcessInfo
+                        {
+                            ProcessId = report.Process.ProcessId,
+                            Name = report.Process.Name ?? string.Empty,
+                            ImageFileName = report.Process.ImageFileName ?? string.Empty,
+                            CommandLine = report.Process.CommandLine ?? string.Empty
+                        };
                     }
 
                     // Get all running processes from ProfileDataReport.RunningProcesses
@@ -548,8 +544,7 @@ public class McpActionExecutor : IMcpActionExecutor
                     CurrentProfilePath = currentProfilePath,
                     LoadedProcesses = loadedProcesses,
                     ActiveFilters = activeFilters,
-                    CurrentProcessName = currentProcessName,
-                    CurrentProcessId = currentProcessId,
+                    CurrentProcess = currentProcess,
                     LastUpdated = DateTime.UtcNow
                 };
             }
@@ -562,8 +557,7 @@ public class McpActionExecutor : IMcpActionExecutor
                     CurrentProfilePath = null,
                     LoadedProcesses = Array.Empty<int>(),
                     ActiveFilters = Array.Empty<string>(),
-                    CurrentProcessName = null,
-                    CurrentProcessId = null,
+                    CurrentProcess = null,
                     LastUpdated = DateTime.UtcNow
                 };
             }
@@ -969,6 +963,56 @@ public class McpActionExecutor : IMcpActionExecutor
         }
     }
 
+    public async Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath)
+    {
+        // Validate file exists first
+        if (!File.Exists(profileFilePath))
+        {
+            return new GetAvailableProcessesResult
+            {
+                Success = false,
+                ErrorMessage = $"Trace file not found: {profileFilePath}"
+            };
+        }
+
+        try
+        {
+            // Load the trace and prepare the process list (similar to OpenTraceAsync but standalone)
+            var loadResult = await LoadTraceAsync(profileFilePath);
+            if (!loadResult.Success)
+            {
+                return new GetAvailableProcessesResult
+                {
+                    Success = false,
+                    ErrorMessage = loadResult.Result?.ErrorMessage ?? "Failed to load trace file"
+                };
+            }
+
+            // Extract process information from the loaded trace
+            var processes = await ExtractProcessInfoAsync(loadResult.ProfileLoadWindow);
+            
+            // Close the profile load window since we're just extracting process info
+            await dispatcher.InvokeAsync(() =>
+            {
+                loadResult.ProfileLoadWindow?.Close();
+            });
+
+            return new GetAvailableProcessesResult
+            {
+                Success = true,
+                Processes = processes
+            };
+        }
+        catch (Exception ex)
+        {
+            return new GetAvailableProcessesResult
+            {
+                Success = false,
+                ErrorMessage = $"Unexpected error: {ex.Message}"
+            };
+        }
+    }
+
     /// <summary>
     /// Get the current process name from the loaded session
     /// </summary>
@@ -978,16 +1022,15 @@ public class McpActionExecutor : IMcpActionExecutor
         {
             var status = await GetStatusAsync();
             
-            // Use the current process name if available
-            if (!string.IsNullOrEmpty(status.CurrentProcessName))
+            // Use the current process information if available
+            if (status.CurrentProcess != null)
             {
-                return status.CurrentProcessName;
-            }
-            
-            // Use the current process ID if available
-            if (status.CurrentProcessId.HasValue)
-            {
-                return $"process-{status.CurrentProcessId.Value}";
+                if (!string.IsNullOrEmpty(status.CurrentProcess.Name))
+                {
+                    return status.CurrentProcess.Name;
+                }
+                
+                return $"process-{status.CurrentProcess.ProcessId}";
             }
             
             // Try to extract process name from loaded processes
@@ -1047,9 +1090,9 @@ public class McpActionExecutor : IMcpActionExecutor
     }
 
     /// <summary>
-    /// Get a list of available processes from the trace for error reporting
+    /// Extract process information from the ProfileLoadWindow
     /// </summary>
-    private async Task<string[]> GetAvailableProcessesAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
+    private async Task<ProcessInfo[]> ExtractProcessInfoAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
     {
         try
         {
@@ -1061,21 +1104,25 @@ public class McpActionExecutor : IMcpActionExecutor
                     try
                     {
                         var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
-                        return processSummaries
-                            .Select(p => $"{p.Process.Name} (ID: {p.Process.ProcessId})")
-                            .ToArray();
+                        return processSummaries.Select(p => new ProcessInfo
+                        {
+                            ProcessId = p.Process.ProcessId,
+                            Name = p.Process.Name ?? string.Empty,
+                            ImageFileName = p.Process.ImageFileName,
+                            CommandLine = p.Process.CommandLine
+                        }).ToArray();
                     }
                     catch
                     {
-                        return Array.Empty<string>();
+                        return Array.Empty<ProcessInfo>();
                     }
                 }
-                return Array.Empty<string>();
+                return Array.Empty<ProcessInfo>();
             });
         }
         catch
         {
-            return Array.Empty<string>();
+            return Array.Empty<ProcessInfo>();
         }
     }
 }
