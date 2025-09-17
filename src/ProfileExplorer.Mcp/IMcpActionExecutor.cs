@@ -73,6 +73,7 @@ public enum OpenTraceFailureReason
     ProcessNotFound,
     TraceLoadTimeout,
     ProcessListLoadTimeout,
+    ProfileLoadTimeout,
     UIError,
     UnknownError
 }

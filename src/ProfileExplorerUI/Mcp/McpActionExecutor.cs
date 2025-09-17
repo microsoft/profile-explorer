@@ -240,6 +240,18 @@ public class McpActionExecutor : IMcpActionExecutor
             }
         });
         
+        // Step 7: Wait for the profile to finish loading
+        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(5));
+        if (!profileLoadCompleted)
+        {
+            return new OpenTraceResult
+            {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.ProfileLoadTimeout,
+                ErrorMessage = "Timeout while waiting for profile loading to complete. The profile may be very large or there may be symbol loading issues."
+            };
+        }
+        
         return new OpenTraceResult { Success = true };
     }
 
@@ -316,6 +328,18 @@ public class McpActionExecutor : IMcpActionExecutor
                 loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
             }
         });
+
+        // Step 7: Wait for the profile to finish loading
+        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(5));
+        if (!profileLoadCompleted)
+        {
+            return new OpenTraceResult
+            {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.ProfileLoadTimeout,
+                ErrorMessage = "Timeout while waiting for profile loading to complete. The profile may be very large or there may be symbol loading issues."
+            };
+        }
 
         return new OpenTraceResult { Success = true };
     }
@@ -469,6 +493,34 @@ public class McpActionExecutor : IMcpActionExecutor
         }
         
         return false; // Timeout - ItemsSource never became available
+    }
+
+    /// <summary>
+    /// Waits for the profile loading to complete by monitoring the IsLoadingProfile property.
+    /// This ensures the profile is fully loaded before operations like GetAvailableFunctions can succeed.
+    /// </summary>
+    private async Task<bool> WaitForProfileLoadingCompletedAsync(ProfileExplorer.UI.ProfileLoadWindow window, TimeSpan timeout)
+    {
+        var startTime = DateTime.UtcNow;
+        
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            bool isLoadingProfile = await dispatcher.InvokeAsync(() =>
+            {
+                var isLoadingProp = window.GetType().GetProperty("IsLoadingProfile");
+                return isLoadingProp?.GetValue(window) as bool? ?? false;
+            });
+            
+            // Profile loading is complete when IsLoadingProfile is false
+            if (!isLoadingProfile)
+            {
+                return true;
+            }
+            
+            await Task.Delay(500); // Check every 500ms since profile loading can take a long time
+        }
+        
+        return false; // Timeout
     }
 
     /// <summary>
@@ -1201,7 +1253,11 @@ public class McpActionExecutor : IMcpActionExecutor
                 return new GetAvailableFunctionsResult
                 {
                     Success = false,
-                    ErrorMessage = "No functions found in the currently loaded profile. The profile may not be fully loaded yet."
+                    ErrorMessage = "No functions found in the currently loaded profile. If you just opened a trace file, " +
+                                 "please wait for the profile loading to complete (this can take 20+ seconds for large traces) " +
+                                 "before calling GetAvailableFunctions. The loading includes multiple stages: " +
+                                 "'Reading Trace' → 'Downloading and loading binaries' → 'Downloading and loading symbols' → " +
+                                 "'Processing trace samples' → 'Computing Call Tree'."
                 };
             }
 
