@@ -166,7 +166,7 @@ public static class ProfileExplorerTools
                     {
                         "If user asked for 'NTDLL functions': GetAvailableFunctions(moduleName: 'ntdll.dll')",
                         "If user asked for 'top 10 functions': GetAvailableFunctions(topCount: 10)",
-                        "If user asked for 'CPU-intensive functions': GetAvailableFunctions(minSelfTimePercentage: 1.0)"
+                        "If user asked for 'CPU-intensive functions': GetAvailableFunctions(minSelfTimePercentage: 0.1)"
                     },
                     Reason = "Using specific filters based on the user's request is more efficient than retrieving all functions and manually filtering results",
                     AvailableFilters = new[] { "moduleName", "minSelfTimePercentage", "minTotalTimePercentage", "topCount", "sortBySelfTime" }
@@ -311,9 +311,9 @@ public static class ProfileExplorerTools
     public static async Task<string> GetAvailableFunctions(
         [Description("Filter by module/DLL name (e.g. 'ntdll.dll', 'kernel32.dll'). Use for focused analysis of specific modules.")]
         string? moduleName = null,
-        [Description("Minimum self-time percentage threshold (e.g. 1.0 for >=1% CPU usage). Use for CPU-intensive function analysis.")]
+        [Description("Minimum self-time percentage threshold (e.g. 0.1 for >=0.1% CPU usage). Use for CPU-intensive function analysis.")]
         double? minSelfTimePercentage = null, 
-        [Description("Minimum total-time percentage threshold (e.g. 5.0 for >=5% total impact). Use for high-impact function analysis.")]
+        [Description("Minimum total-time percentage threshold (e.g. 0.5 for >=0.5% total impact). Use for high-impact function analysis.")]
         double? minTotalTimePercentage = null, 
         [Description("Limit results to top N functions (e.g. 10). Useful for focusing on worst performers.")]
         int? topCount = null, 
@@ -457,6 +457,124 @@ public static class ProfileExplorerTools
 
     #endregion
 
+    #region Get Available Binaries Tool
+
+    [McpServerTool, Description("Get the list of available binaries/DLLs from the currently loaded process/trace")]
+    public static async Task<string> GetAvailableBinaries(
+        [Description("Minimum time percentage threshold to filter binaries (e.g. 0.01 for binaries contributing >=0.01% time).")]
+        double? minTimePercentage = null,
+        [Description("Minimum absolute time threshold to filter binaries (e.g. 500 for binaries with >=500ms runtime). Specify time in milliseconds.")]
+        double? minTimeMs = null,
+        [Description("Limit results to top N binaries by performance (e.g. 10 for top 10 most time-consuming binaries).")]
+        int? topCount = null)
+    {
+        try
+        {
+            if (_executor == null)
+            {
+                throw new InvalidOperationException("MCP action executor is not initialized");
+            }
+
+            // Convert minTimeMs to TimeSpan if provided
+            TimeSpan? minTime = minTimeMs.HasValue ? TimeSpan.FromMilliseconds(minTimeMs.Value) : null;
+            
+            GetAvailableBinariesResult result = await _executor.GetAvailableBinariesAsync(minTimePercentage, minTime, topCount);
+            
+            if (result.Success)
+            {
+                // Generate suggested usage based on the parameters and results
+                string? suggestedUsage = null;
+                if (result.Binaries.Length > 50)
+                {
+                    suggestedUsage = "Large result set detected. Consider using minTimePercentage or minTimeMs parameters to focus on binaries with significant time usage, or topCount to limit results.";
+                }
+                else if (!minTimePercentage.HasValue && !minTimeMs.HasValue && !topCount.HasValue)
+                {
+                    suggestedUsage = "For more focused analysis, consider using minTimePercentage (e.g., 0.05 for >=0.05%) or minTimeMs (e.g., 500 for >=500ms) to filter out low-impact binaries, or topCount to show only the most time-consuming binaries.";
+                }
+
+                var successResult = new
+                {
+                    Action = "GetAvailableBinaries",
+                    Status = "Success",
+                    MinTimePercentage = Math.Round(minTimePercentage ?? 0, 2),
+                    MinTimeMs = minTimeMs,
+                    TopCount = topCount,
+                    Description = GetBinaryFilterDescription(minTimePercentage, minTimeMs, topCount, result.Binaries.Length),
+                    Instruction = "These are the binaries/DLLs containing functions in the currently loaded process. This shows aggregated time consumption per binary. Use GetAvailableFunctions(moduleName: '<binary_name>') to get functions from a specific binary.",
+                    SuggestedUsage = suggestedUsage,
+                    TotalBinaryCount = result.Binaries.Length,
+                    FilteredBinaryCount = result.Binaries.Length,
+                    Binaries = result.Binaries.Select(b => new {
+                        Name = b.Name,
+                        FullPath = b.FullPath,
+                        TimePercentage = Math.Round(b.TimePercentage, 2),
+                        Time = b.Time.ToString()
+                    }).ToArray(),
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            else
+            {
+                var failureResult = new
+                {
+                    Action = "GetAvailableBinaries",
+                    Status = "Failed",
+                    Description = result.ErrorMessage ?? "Failed to retrieve binaries from currently loaded profile",
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(failureResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new
+            {
+                Action = "GetAvailableBinaries",
+                Status = "Error",
+                Error = ex.Message,
+                Timestamp = DateTime.UtcNow
+            };
+
+            return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+    }
+
+    private static string GetBinaryFilterDescription(double? minTimePercentage, double? minTimeMs, int? topCount, int totalCount)
+    {
+        var filterParts = new List<string>();
+        
+        if (minTimePercentage.HasValue)
+        {
+            filterParts.Add($"time >= {minTimePercentage}%");
+        }
+        
+        if (minTimeMs.HasValue)
+        {
+            filterParts.Add($"time >= {minTimeMs}ms");
+        }
+        
+        if (topCount.HasValue && filterParts.Any())
+        {
+            return $"Successfully retrieved top {topCount} binaries (from {totalCount} total) with {string.Join(" and ", filterParts)}, sorted by time percentage";
+        }
+        else if (filterParts.Any())
+        {
+            return $"Successfully retrieved {totalCount} binaries with {string.Join(" and ", filterParts)}, sorted by time percentage";
+        }
+        else if (topCount.HasValue)
+        {
+            return $"Successfully retrieved top {Math.Min(topCount.Value, totalCount)} most time-consuming binaries (from {totalCount} total), sorted by time percentage";
+        }
+        else
+        {
+            return $"Successfully retrieved {totalCount} binaries from currently loaded profile, sorted by time percentage";
+        }
+    }
+
+    #endregion
+
     #region Function Assembly Tool
 
     [McpServerTool, Description("Get assembly code for a specific function by double-clicking on it in the Summary pane, and save it to a file for later contextual reference by Copilot")]
@@ -530,7 +648,7 @@ public static class ProfileExplorerTools
             {
                 "1. To analyze functions from a specific module: GetAvailableFunctions(moduleName: 'ntdll.dll')",
                 "2. To find hotspots in a specific module: GetAvailableFunctions(moduleName: 'kernel32.dll', topCount: 10)",
-                "3. To analyze CPU-intensive functions: GetAvailableFunctions(minSelfTimePercentage: 1.0)",
+                "3. To analyze CPU-intensive functions: GetAvailableFunctions(minSelfTimePercentage: 0.1)",
                 "4. Common mistake: Do NOT call GetAvailableFunctions() without moduleName when you want module-specific results!"
             },
             AvailableCommands = new[]
@@ -548,7 +666,12 @@ public static class ProfileExplorerTools
                 new { 
                     Name = "GetAvailableFunctions", 
                     Description = "Get the list of available functions from the currently loaded process/trace. This should be called after a process is loaded via OpenTrace. Returns both self time (CPU-intensive functions) and total time (high-impact functions including callees). Supports filtering by module name, performance thresholds, result limits, and sorting preferences for targeted performance analysis.", 
-                    Parameters = "moduleName (string, optional) - **CRITICAL: Filter functions by specific module/DLL name (e.g., 'ntdll.dll', 'kernel32.dll', 'ntdll' - supports partial matching). USE THIS FIRST when you want functions from a specific module!**, minSelfTimePercentage (double, optional) - Minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time; use for finding CPU-intensive functions), minTotalTimePercentage (double, optional) - Minimum total time percentage to filter functions (e.g., 5.0 for functions with >= 5% total time; use for finding functions with high overall impact), topCount (int, optional) - Limit results to top N heaviest functions (e.g., 10 for top 10 functions; useful for focusing on worst performers), sortBySelfTime (bool, optional, default true) - Sort by self time (true, shows functions doing actual work) or total time (false, shows functions with highest overall impact including called functions)"
+                    Parameters = "moduleName (string, optional) - **CRITICAL: Filter functions by specific module/DLL name (e.g., 'ntdll.dll', 'kernel32.dll', 'ntdll' - supports partial matching). USE THIS FIRST when you want functions from a specific module!**, minSelfTimePercentage (double, optional) - Minimum self time percentage to filter functions (e.g., 0.1 for functions with >= 0.1% self time; use for finding CPU-intensive functions), minTotalTimePercentage (double, optional) - Minimum total time percentage to filter functions (e.g., 0.5 for functions with >= 0.5% total time; use for finding functions with high overall impact), topCount (int, optional) - Limit results to top N heaviest functions (e.g., 10 for top 10 functions; useful for focusing on worst performers), sortBySelfTime (bool, optional, default true) - Sort by self time (true, shows functions doing actual work) or total time (false, shows functions with highest overall impact including called functions)"
+                },
+                new { 
+                    Name = "GetAvailableBinaries", 
+                    Description = "Get the list of available binaries/DLLs from the currently loaded process/trace. This should be called after a process is loaded via OpenTrace. Returns aggregated performance data for each binary that contains functions with performance data.", 
+                    Parameters = "minTimePercentage (double, optional) - Minimum time percentage threshold to filter binaries (e.g., 0.01 for binaries contributing >=0.01% time), topCount (int, optional) - Limit results to top N binaries by performance (e.g., 10 for top 10 most time-consuming binaries)"
                 },
                 new { 
                     Name = "GetFunctionAssembly", 
@@ -668,18 +791,18 @@ public static class ProfileExplorerTools
                 },
                 new
                 {
-                    Description = "Get list of functions with significant self time (>= 1%)",
+                    Description = "Get list of functions with significant self time (>= 0.1%)",
                     Command = "GetAvailableFunctions",
                     Parameters = new {
-                        minSelfTimePercentage = 1.0
+                        minSelfTimePercentage = 0.1
                     }
                 },
                 new
                 {
-                    Description = "Get list of functions with high total time impact (>= 5%)",
+                    Description = "Get list of functions with high total time impact (>= 0.5%)",
                     Command = "GetAvailableFunctions",
                     Parameters = new {
-                        minTotalTimePercentage = 5.0
+                        minTotalTimePercentage = 0.5
                     }
                 },
                 new
@@ -702,11 +825,11 @@ public static class ProfileExplorerTools
                 },
                 new
                 {
-                    Description = "Find performance bottlenecks: functions with >= 2% self time AND >= 10% total time",
+                    Description = "Find performance bottlenecks: functions with >= 0.2% self time AND >= 1% total time",
                     Command = "GetAvailableFunctions",
                     Parameters = new {
-                        minSelfTimePercentage = 2.0,
-                        minTotalTimePercentage = 10.0
+                        minSelfTimePercentage = 0.2,
+                        minTotalTimePercentage = 1.0
                     }
                 },
                 new
@@ -727,6 +850,37 @@ public static class ProfileExplorerTools
                         moduleName = "kernel32.dll",
                         topCount = 5,
                         sortBySelfTime = true
+                    }
+                },
+                new
+                {
+                    Description = "Get list of all available binaries/DLLs in the currently loaded profile",
+                    Command = "GetAvailableBinaries",
+                    Parameters = new { }
+                },
+                new
+                {
+                    Description = "Get list of binaries contributing at least 0.05% time",
+                    Command = "GetAvailableBinaries",
+                    Parameters = new {
+                        minTimePercentage = 0.05
+                    }
+                },
+                new
+                {
+                    Description = "Get top 10 most time-consuming binaries",
+                    Command = "GetAvailableBinaries",
+                    Parameters = new {
+                        topCount = 10
+                    }
+                },
+                new
+                {
+                    Description = "Get top 5 binaries with significant time impact (combined filtering)",
+                    Command = "GetAvailableBinaries",
+                    Parameters = new {
+                        minTimePercentage = 0.1,
+                        topCount = 5
                     }
                 },
                 new

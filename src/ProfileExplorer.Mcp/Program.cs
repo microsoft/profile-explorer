@@ -354,4 +354,78 @@ ret";
             Functions = filteredFunctions
         });
     }
+
+    public Task<GetAvailableBinariesResult> GetAvailableBinariesAsync(double? minTimePercentage = null, TimeSpan? minTime = null, int? topCount = null)
+    {
+        Console.WriteLine($"Mock: GetAvailableBinariesAsync called with minTimePercentage: {minTimePercentage}, minTime: {minTime}, topCount: {topCount}");
+        
+        // Return mock binary list - just the unique binary names from the functions
+        var mockBinaries = new BinaryInfo[]
+        {
+            new BinaryInfo
+            {
+                Name = "MyApp.exe",
+                FullPath = "C:\\MyApp\\MyApp.exe",
+                TimePercentage = 83.7, // sum of main, ProcessData, AllocateMemory, Helper self time percentages
+                Time = TimeSpan.FromSeconds(33.5)
+            },
+            new BinaryInfo
+            {
+                Name = "ntdll.dll",
+                FullPath = "C:\\Windows\\System32\\ntdll.dll",
+                TimePercentage = 10.3, // sum of NtAllocateVirtualMemory, RtlAllocateHeap self time percentages
+                Time = TimeSpan.FromSeconds(4.1)
+            },
+            new BinaryInfo
+            {
+                Name = "MSVCP140.dll",
+                FullPath = "C:\\Windows\\System32\\MSVCP140.dll",
+                TimePercentage = 8.9, // StringCompare self time percentage
+                Time = TimeSpan.FromSeconds(3.6)
+            },
+            new BinaryInfo
+            {
+                Name = "kernel32.dll",
+                FullPath = "C:\\Windows\\System32\\kernel32.dll",
+                TimePercentage = 0,
+                Time = TimeSpan.Zero
+            }
+        };
+
+        // Apply filtering
+        var filteredBinaries = mockBinaries;
+        
+        if (minTimePercentage.HasValue)
+        {
+            filteredBinaries = filteredBinaries
+                .Where(b => b.TimePercentage >= minTimePercentage.Value)
+                .ToArray();
+        }
+        
+        if (minTime.HasValue)
+        {
+            filteredBinaries = filteredBinaries
+                .Where(b => b.Time >= minTime.Value)
+                .ToArray();
+        }
+        
+        // Sort by time percentage descending
+        filteredBinaries = filteredBinaries
+            .OrderByDescending(b => b.TimePercentage)
+            .ToArray();
+
+        // Apply top count filtering if specified
+        if (topCount.HasValue)
+        {
+            filteredBinaries = filteredBinaries
+                .Take(topCount.Value)
+                .ToArray();
+        }
+
+        return Task.FromResult(new GetAvailableBinariesResult
+        {
+            Success = true,
+            Binaries = filteredBinaries
+        });
+    }
 }

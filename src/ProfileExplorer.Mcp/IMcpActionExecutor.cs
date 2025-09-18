@@ -47,6 +47,17 @@ public interface IMcpActionExecutor
     /// <param name="filter">Optional filter settings for functions - specify moduleName, performance thresholds, result limits, and sorting preferences</param>
     /// <returns>Task that completes with the list of available functions in the currently loaded process</returns>
     Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(FunctionFilter? filter = null);
+
+    /// <summary>
+    /// Gets the list of available binaries/DLLs from the currently loaded process/trace
+    /// Returns all binaries that contain functions with performance data, with aggregated performance metrics
+    /// This should be called after a process is loaded via OpenTraceAsync
+    /// </summary>
+    /// <param name="minTimePercentage">Optional minimum time percentage to filter binaries (e.g., 0.01 for binaries with >= 0.01% time)</param>
+    /// <param name="minTime">Optional minimum absolute time to filter binaries (e.g., "00:00:00.500" for binaries with >= 500ms runtime)</param>
+    /// <param name="topCount">Optional number to limit results to the top N binaries by performance (e.g., 10 for top 10 most time-consuming binaries)</param>
+    /// <returns>Task that completes with the list of available binaries in the currently loaded process</returns>
+    Task<GetAvailableBinariesResult> GetAvailableBinariesAsync(double? minTimePercentage = null, TimeSpan? minTime = null, int? topCount = null);
 }
 
 /// <summary>
@@ -212,5 +223,55 @@ public class GetAvailableFunctionsResult
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
     public FunctionInfo[] Functions { get; set; } = Array.Empty<FunctionInfo>();
+}
+
+/// <summary>
+/// Information about a binary/DLL available in the currently loaded process
+/// Represents aggregated performance data for all functions within each binary
+/// </summary>
+public class BinaryInfo
+{
+    /// <summary>
+    /// Name of the binary/DLL (e.g., "kernel32.dll", "ntdll.dll", "MyApp.exe")
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Full path to the binary file, if available
+    /// </summary>
+    public string? FullPath { get; set; }
+    
+    /// <summary>
+    /// Time percentage for this binary (typically self time percentage)
+    /// Represents how much CPU time this binary consumes
+    /// </summary>
+    public double TimePercentage { get; set; }
+    
+    /// <summary>
+    /// Time value for this binary
+    /// Represents the actual time consumed by this binary
+    /// </summary>
+    public TimeSpan Time { get; set; }
+
+    /// <summary
+    /// 
+    /// 
+    /// / </summary>
+    public bool BinaryFileMissing { get; set; }
+    /// <summary>
+    /// 
+    /// 
+    /// </summary>
+    public bool DebugFileMissing { get; set; }
+}
+
+/// <summary>
+/// Result of a GetAvailableBinaries operation
+/// </summary>
+public class GetAvailableBinariesResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public BinaryInfo[] Binaries { get; set; } = Array.Empty<BinaryInfo>();
 }
 

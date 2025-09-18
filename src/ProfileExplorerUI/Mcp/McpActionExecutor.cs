@@ -1397,8 +1397,8 @@ public class McpActionExecutor : IMcpActionExecutor
                                 Name = functionEx.Name ?? string.Empty,
                                 FullName = functionEx.ToolTip ?? functionEx.Name ?? string.Empty,
                                 ModuleName = ExtractModuleName(functionEx),
-                                SelfTimePercentage = functionEx.ExclusivePercentage,
-                                TotalTimePercentage = functionEx.Percentage,
+                                SelfTimePercentage = Math.Round(functionEx.ExclusivePercentage * 100, 4), // Convert fraction to percentage
+                                TotalTimePercentage = Math.Round(functionEx.Percentage * 100, 4), // Convert fraction to percentage
                                 SelfTime = functionEx.ExclusiveWeight,
                                 TotalTime = functionEx.Weight,
                                 SourceFile = ExtractSourceFile(functionEx),
@@ -1503,6 +1503,174 @@ public class McpActionExecutor : IMcpActionExecutor
         catch
         {
             return false;
+        }
+    }
+
+    public async Task<GetAvailableBinariesResult> GetAvailableBinariesAsync(double? minTimePercentage = null, TimeSpan? minTime = null, int? topCount = null)
+    {
+        try
+        {
+            // Check if a profile is currently loaded
+            var status = await GetStatusAsync();
+            if (!status.IsProfileLoaded)
+            {
+                return new GetAvailableBinariesResult
+                {
+                    Success = false,
+                    ErrorMessage = "No profile is currently loaded. Please open a trace file first using OpenTrace.",
+                    Binaries = Array.Empty<BinaryInfo>()
+                };
+            }
+
+            // Get module data directly from ProfileData CallTree
+            var moduleInfos = await GetModuleDataFromCallTreeAsync();
+            if (moduleInfos.Length == 0)
+            {
+                return new GetAvailableBinariesResult
+                {
+                    Success = false,
+                    ErrorMessage = "No module data available. Ensure the profile has finished loading completely.",
+                    Binaries = Array.Empty<BinaryInfo>()
+                };
+            }
+
+            // Slice ModuleEx into BinaryInfo
+            var binaryInfos = moduleInfos.Select(module => new BinaryInfo {
+                Name = module.Name ?? string.Empty,
+                FullPath = ExtractModuleFullPath(module.Name),
+                TimePercentage = Math.Round(module.ExclusivePercentage, 4),
+                Time = module.ExclusiveWeight,
+                BinaryFileMissing = module.BinaryFileMissing,
+                DebugFileMissing = module.DebugFileMissing
+            }).ToArray();
+
+            // Apply filtering
+            var filteredBinaries = binaryInfos;
+
+            if (minTimePercentage.HasValue)
+            {
+                filteredBinaries = filteredBinaries
+                    .Where(b => b.TimePercentage >= minTimePercentage.Value)
+                    .ToArray();
+            }
+
+            if (minTime.HasValue)
+            {
+                filteredBinaries = filteredBinaries
+                    .Where(b => b.Time >= minTime.Value)
+                    .ToArray();
+            }
+
+            // Sort by time percentage descending
+            filteredBinaries = filteredBinaries
+                .OrderByDescending(b => b.TimePercentage)
+                .ToArray();
+
+            // Apply top count filter if specified
+            if (topCount.HasValue)
+            {
+                filteredBinaries = filteredBinaries
+                    .Take(topCount.Value)
+                    .ToArray();
+            }
+
+            return new GetAvailableBinariesResult
+            {
+                Success = true,
+                Binaries = filteredBinaries
+            };
+        }
+        catch (Exception ex)
+        {
+            return new GetAvailableBinariesResult
+            {
+                Success = false,
+                ErrorMessage = $"Error retrieving binaries: {ex.Message}",
+                Binaries = Array.Empty<BinaryInfo>()
+            };
+        }
+    }
+
+    /// <summary>
+    /// Get module data directly from SessionState.ProfileData (same source as UI)
+    /// </summary>
+    private async Task<ProfileExplorer.UI.ModuleEx[]> GetModuleDataFromCallTreeAsync()
+    {
+        try
+        {
+            return await dispatcher.InvokeAsync(() =>
+            {
+                try
+                {
+                    var sessionState = mainWindow.SessionState;
+                    var profileData = sessionState?.ProfileData;
+
+                    if (profileData?.ModuleWeights == null || profileData.Modules == null)
+                    {
+                        return Array.Empty<ProfileExplorer.UI.ModuleEx>();
+                    }
+
+                    var moduleInfos = new List<ProfileExplorer.UI.ModuleEx>();
+
+                    // Extract module information directly from ProfileData (same logic as LoadFunctionProfile)
+                    foreach (var pair in profileData.ModuleWeights)
+                    {
+                        var module = profileData.Modules[pair.Key];
+                        double weightPercentage = profileData.ScaleModuleWeight(pair.Value);
+
+                        // Get module status for additional info
+                        var moduleStatus = profileData.Report?.GetModuleStatus(module.ModuleName);
+
+                        var moduleInfo = new ProfileExplorer.UI.ModuleEx {
+                            Name = module.ModuleName,
+                            ExclusivePercentage = weightPercentage * 100.0, // convert 0.abcd decimal to ab.cd percent
+                            ExclusiveWeight = pair.Value,
+                            BinaryFileMissing = moduleStatus != null ? !moduleStatus.HasBinaryLoaded : false,
+                            DebugFileMissing = moduleStatus != null ? !moduleStatus.HasDebugInfoLoaded : false,
+                        };
+
+                        moduleInfos.Add(moduleInfo);
+                    }
+
+                    return moduleInfos.OrderByDescending(m => m.ExclusivePercentage).ToArray();
+                }
+                catch
+                {
+                    return Array.Empty<ProfileExplorer.UI.ModuleEx>();
+                }
+            });
+        }
+        catch
+        {
+            return Array.Empty<ProfileExplorer.UI.ModuleEx>();
+        }
+    }
+
+    /// <summary>
+    /// Extract full path for a module if available
+    /// </summary>
+    private string ExtractModuleFullPath(string moduleName)
+    {
+        try
+        {
+            var sessionState = mainWindow.SessionState;
+            var profileData = sessionState?.ProfileData;
+            
+            if (profileData?.Modules != null)
+            {
+                // Look for a module with matching name
+                var module = profileData.Modules.FirstOrDefault(m => 
+                    string.Equals(m.Value.ModuleName, moduleName, StringComparison.OrdinalIgnoreCase) ||
+                    Path.GetFileName(m.Value.FilePath).Equals(moduleName, StringComparison.OrdinalIgnoreCase));
+                
+                return module.Value?.FilePath;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
         }
     }
 }
