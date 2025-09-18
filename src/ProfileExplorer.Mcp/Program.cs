@@ -212,9 +212,10 @@ ret";
         });
     }
 
-    public Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "")
+    public Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(FunctionFilter? filter = null)
     {
-        Console.WriteLine($"Mock: GetAvailableFunctionsAsync called with minSelfTimePercentage: {minSelfTimePercentage}, minTotalTimePercentage: {minTotalTimePercentage}, topCount: {topCount}, sortBySelfTime: {sortBySelfTime}, moduleName: {moduleName}");
+        filter ??= new FunctionFilter();
+        Console.WriteLine($"Mock: GetAvailableFunctionsAsync called with filter - ModuleName: {filter.ModuleName}, MinSelfTimePercentage: {filter.MinSelfTimePercentage}, MinTotalTimePercentage: {filter.MinTotalTimePercentage}, TopCount: {filter.TopCount}, SortBySelfTime: {filter.SortBySelfTime}");
         
         // Return mock function list with weight percentages
         var mockFunctions = new FunctionInfo[]
@@ -307,42 +308,42 @@ ret";
 
         // Apply module filtering if specified
         var filteredFunctions = mockFunctions;
-        if (!string.IsNullOrWhiteSpace(moduleName))
+        if (!string.IsNullOrWhiteSpace(filter.ModuleName))
         {
             filteredFunctions = filteredFunctions
                 .Where(f => !string.IsNullOrEmpty(f.ModuleName) && 
-                           f.ModuleName.Contains(moduleName, StringComparison.OrdinalIgnoreCase))
+                           f.ModuleName.Contains(filter.ModuleName, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
         }
         
         // Apply self time filtering if specified
-        if (minSelfTimePercentage.HasValue)
+        if (filter.MinSelfTimePercentage.HasValue)
         {
             filteredFunctions = filteredFunctions
-                .Where(f => f.SelfTimePercentage >= minSelfTimePercentage.Value)
+                .Where(f => f.SelfTimePercentage >= filter.MinSelfTimePercentage.Value)
                 .ToArray();
         }
         
         // Apply total time filtering if specified
-        if (minTotalTimePercentage.HasValue)
+        if (filter.MinTotalTimePercentage.HasValue)
         {
             filteredFunctions = filteredFunctions
-                .Where(f => f.TotalTimePercentage >= minTotalTimePercentage.Value)
+                .Where(f => f.TotalTimePercentage >= filter.MinTotalTimePercentage.Value)
                 .ToArray();
         }
         
         // Apply top N filtering if specified
-        if (topCount.HasValue)
+        if (filter.TopCount.HasValue)
         {
             // Sort by the chosen metric and take top N
-            filteredFunctions = sortBySelfTime
-                ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).Take(topCount.Value).ToArray()
-                : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).Take(topCount.Value).ToArray();
+            filteredFunctions = filter.SortBySelfTime
+                ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).Take(filter.TopCount.Value).ToArray()
+                : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).Take(filter.TopCount.Value).ToArray();
         }
         else
         {
             // If no topCount specified, still sort the results
-            filteredFunctions = sortBySelfTime
+            filteredFunctions = filter.SortBySelfTime
                 ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).ToArray()
                 : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).ToArray();
         }

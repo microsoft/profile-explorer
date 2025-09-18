@@ -1230,7 +1230,7 @@ public class McpActionExecutor : IMcpActionExecutor
         }
     }
 
-    public async Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "")
+    public async Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(FunctionFilter? filter = null)
     {
         try
         {
@@ -1262,78 +1262,91 @@ public class McpActionExecutor : IMcpActionExecutor
             }
 
             // Apply module filtering if specified
-            if (!string.IsNullOrWhiteSpace(moduleName))
+            if (!string.IsNullOrWhiteSpace(filter?.ModuleName))
             {
                 functions = functions
                     .Where(f => !string.IsNullOrEmpty(f.ModuleName) && 
-                               f.ModuleName.Contains(moduleName, StringComparison.OrdinalIgnoreCase))
+                               f.ModuleName.Contains(filter.ModuleName, StringComparison.OrdinalIgnoreCase))
                     .ToArray();
                     
                 if (functions.Length == 0)
                 {
+                    // Provide helpful error message with available module suggestions
+                    var availableModules = (await ExtractFunctionInfoAsync())
+                        .Where(f => !string.IsNullOrEmpty(f.ModuleName))
+                        .Select(f => f.ModuleName!)
+                        .Distinct()
+                        .OrderBy(m => m)
+                        .Take(10) // Show first 10 modules as examples
+                        .ToArray();
+                    
+                    var modulesSuggestion = availableModules.Length > 0 
+                        ? $" Available modules include: {string.Join(", ", availableModules)}{(availableModules.Length == 10 ? ", ..." : "")}" 
+                        : "";
+                    
                     return new GetAvailableFunctionsResult
                     {
                         Success = false,
-                        ErrorMessage = $"No functions found in module '{moduleName}'. Available modules might have different names or the module might not be loaded."
+                        ErrorMessage = $"No functions found in module '{filter.ModuleName}'. The module name might not exist, be spelled differently, or not be loaded.{modulesSuggestion}"
                     };
                 }
             }
 
             // Apply self time filtering if specified
-            if (minSelfTimePercentage.HasValue)
+            if (filter?.MinSelfTimePercentage.HasValue == true)
             {
-                if (minSelfTimePercentage < 0 || minSelfTimePercentage > 100)
+                if (filter.MinSelfTimePercentage < 0 || filter.MinSelfTimePercentage > 100)
                 {
                     return new GetAvailableFunctionsResult
                     {
                         Success = false,
-                        ErrorMessage = "minSelfTimePercentage must be between 0 and 100."
+                        ErrorMessage = "MinSelfTimePercentage must be between 0 and 100."
                     };
                 }
                 functions = functions
-                    .Where(f => f.SelfTimePercentage >= minSelfTimePercentage.Value)
+                    .Where(f => f.SelfTimePercentage >= filter.MinSelfTimePercentage.Value)
                     .ToArray();
             }
 
             // Apply total time filtering if specified
-            if (minTotalTimePercentage.HasValue)
+            if (filter?.MinTotalTimePercentage.HasValue == true)
             {
-                if (minTotalTimePercentage < 0 || minTotalTimePercentage > 100)
+                if (filter.MinTotalTimePercentage < 0 || filter.MinTotalTimePercentage > 100)
                 {
                     return new GetAvailableFunctionsResult
                     {
                         Success = false,
-                        ErrorMessage = "minTotalTimePercentage must be between 0 and 100."
+                        ErrorMessage = "MinTotalTimePercentage must be between 0 and 100."
                     };
                 }
                 functions = functions
-                    .Where(f => f.TotalTimePercentage >= minTotalTimePercentage.Value)
+                    .Where(f => f.TotalTimePercentage >= filter.MinTotalTimePercentage.Value)
                     .ToArray();
             }
 
             // Apply top N filtering if specified
-            if (topCount.HasValue)
+            if (filter?.TopCount.HasValue == true)
             {
-                if (topCount < 1)
+                if (filter.TopCount < 1)
                 {
                     return new GetAvailableFunctionsResult
                     {
                         Success = false,
-                        ErrorMessage = "topCount must be a positive integer."
+                        ErrorMessage = "TopCount must be a positive integer."
                     };
                 }
                 // Sort by the chosen metric and take top N
-                if (functions.Length > topCount.Value)
+                if (functions.Length > filter.TopCount.Value)
                 {
-                    functions = sortBySelfTime
-                        ? functions.OrderByDescending(f => f.SelfTimePercentage).Take(topCount.Value).ToArray()
-                        : functions.OrderByDescending(f => f.TotalTimePercentage).Take(topCount.Value).ToArray();
+                    functions = (filter.SortBySelfTime)
+                        ? functions.OrderByDescending(f => f.SelfTimePercentage).Take(filter.TopCount.Value).ToArray()
+                        : functions.OrderByDescending(f => f.TotalTimePercentage).Take(filter.TopCount.Value).ToArray();
                 }
             }
             else
             {
                 // If no topCount specified, still sort the results
-                functions = sortBySelfTime
+                functions = (filter?.SortBySelfTime ?? true)
                     ? functions.OrderByDescending(f => f.SelfTimePercentage).ToArray()
                     : functions.OrderByDescending(f => f.TotalTimePercentage).ToArray();
             }

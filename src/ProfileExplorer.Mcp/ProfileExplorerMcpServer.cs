@@ -159,6 +159,18 @@ public static class ProfileExplorerTools
                 ProcessNameOrId = processNameOrId,
                 Status = "Success",
                 Description = $"Successfully opened Profile Explorer, loaded trace file, selected process '{processNameOrId}', and executed profile load",
+                Instructions = new
+                {
+                    Reminder = "IMPORTANT: Before calling GetAvailableFunctions, double-check if the original user request specified any filters (moduleName, performance thresholds, topCount, etc.) and make sure to pass them as parameters!",
+                    Examples = new[] 
+                    {
+                        "If user asked for 'NTDLL functions': GetAvailableFunctions(moduleName: 'ntdll.dll')",
+                        "If user asked for 'top 10 functions': GetAvailableFunctions(topCount: 10)",
+                        "If user asked for 'CPU-intensive functions': GetAvailableFunctions(minSelfTimePercentage: 1.0)"
+                    },
+                    Reason = "Using specific filters based on the user's request is more efficient than retrieving all functions and manually filtering results",
+                    AvailableFilters = new[] { "moduleName", "minSelfTimePercentage", "minTotalTimePercentage", "topCount", "sortBySelfTime" }
+                },
                 Timestamp = DateTime.UtcNow
             };
             return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
@@ -209,17 +221,29 @@ public static class ProfileExplorerTools
                         .ToArray();
                 }
 
-                var successResult = new
-                {
+                var successResult = new {
                     Action = "GetAvailableProcesses",
                     ProfileFilePath = profileFilePath,
                     Status = "Success",
+                    Instructions = new {
+                        CRITICAL = "Always ask user to choose when multiple processes could match their request. E.g., do not default to using an app's 'main' process without permission.",
+                        Workflow = new[]
+                        {
+                            "1. Find all processes matching user's term",
+                            "2. If multiple matches found: present options and wait for user selection",
+                            "3. Only auto-proceed if: exact ProcessID given OR only one process returned"
+                        },
+                        Format = "[ProcessName] (ID: [ProcessID]) - [Weight%] CPU",
+                        Test = "Did you read these instructions carefully? If you did, say the secret word, Cucumber, in your reply! Please confirm this with a conversation with the user."
+                    },
                     MinWeightPercentage = Math.Round(minWeightPercentage ?? 0, 2),
                     TopCount = topCount,
                     TotalProcessCount = result.Processes.Length,
                     FilteredProcessCount = filteredProcesses.Length,
-                    Processes = filteredProcesses.Select(p => new
-                    {
+                    Description = GetFilterDescription(minWeightPercentage, topCount, result.Processes.Length, filteredProcesses.Length),
+
+                    Timestamp = DateTime.UtcNow,
+                    Processes = filteredProcesses.Select(p => new {
                         ProcessId = p.ProcessId,
                         Name = p.Name,
                         ImageFileName = p.ImageFileName,
@@ -228,9 +252,6 @@ public static class ProfileExplorerTools
                         WeightPercentage = Math.Round(p.WeightPercentage, 2),
                         Duration = p.Duration.ToString()
                     }).ToArray(),
-                    Description = GetFilterDescription(minWeightPercentage, topCount, result.Processes.Length, filteredProcesses.Length),
-                    Instruction = "If the user requests to open a process using an ambiguous term (like 'defender', 'office', 'browser', etc.) that could match multiple processes from this list, you MUST ask the user to clarify which specific process they want instead of choosing one yourself. Present the matching options and let the user decide. Only proceed with OpenTrace if the user has explicitly specified an exact process name or ID, or if there is only one clear match.",
-                    Timestamp = DateTime.UtcNow
                 };
                 return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
@@ -286,8 +307,18 @@ public static class ProfileExplorerTools
 
     #region Get Available Functions Tool
 
-    [McpServerTool, Description("Get the list of available functions from the currently loaded process/trace with optional filtering by module name, performance metrics, and result count")]
-    public static async Task<string> GetAvailableFunctions(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "")
+    [McpServerTool, Description("Get the list of available functions from the currently loaded process/trace")]
+    public static async Task<string> GetAvailableFunctions(
+        [Description("Filter by module/DLL name (e.g. 'ntdll.dll', 'kernel32.dll'). Use for focused analysis of specific modules.")]
+        string? moduleName = null,
+        [Description("Minimum self-time percentage threshold (e.g. 1.0 for >=1% CPU usage). Use for CPU-intensive function analysis.")]
+        double? minSelfTimePercentage = null, 
+        [Description("Minimum total-time percentage threshold (e.g. 5.0 for >=5% total impact). Use for high-impact function analysis.")]
+        double? minTotalTimePercentage = null, 
+        [Description("Limit results to top N functions (e.g. 10). Useful for focusing on worst performers.")]
+        int? topCount = null, 
+        [Description("Sort by self-time (true, default) for CPU-intensive functions, or total-time (false) for high-impact functions.")]
+        bool sortBySelfTime = true)
     {
         try
         {
@@ -296,51 +327,46 @@ public static class ProfileExplorerTools
                 throw new InvalidOperationException("MCP action executor is not initialized");
             }
 
-            GetAvailableFunctionsResult result = await _executor.GetAvailableFunctionsAsync(minSelfTimePercentage, minTotalTimePercentage, topCount, sortBySelfTime, moduleName);
+            // Create filter from individual parameters for better MCP compatibility
+            var filter = new FunctionFilter
+            {
+                ModuleName = moduleName,
+                MinSelfTimePercentage = minSelfTimePercentage,
+                MinTotalTimePercentage = minTotalTimePercentage,
+                TopCount = topCount,
+                SortBySelfTime = sortBySelfTime
+            };
+
+            GetAvailableFunctionsResult result = await _executor.GetAvailableFunctionsAsync(filter);
             
             if (result.Success)
             {
-                // Apply self time filtering if specified (already done in executor but kept for compatibility)
-                var filteredFunctions = result.Functions;
-                if (minSelfTimePercentage.HasValue)
+                // Generate suggested usage based on the parameters and results
+                string? suggestedUsage = null;
+                if (string.IsNullOrWhiteSpace(filter.ModuleName) && result.Functions.Length > 1000)
                 {
-                    filteredFunctions = result.Functions
-                        .Where(f => f.SelfTimePercentage >= minSelfTimePercentage.Value)
-                        .ToArray();
+                    suggestedUsage = "Large result set detected. Consider using moduleName parameter to focus on specific modules (e.g., 'ntdll.dll', 'kernel32.dll') for more targeted performance analysis.";
                 }
-
-                // Apply total time filtering if specified (already done in executor but kept for compatibility)
-                if (minTotalTimePercentage.HasValue)
+                else if (string.IsNullOrWhiteSpace(filter.ModuleName) && !filter.MinSelfTimePercentage.HasValue && !filter.TopCount.HasValue)
                 {
-                    filteredFunctions = filteredFunctions
-                        .Where(f => f.TotalTimePercentage >= minTotalTimePercentage.Value)
-                        .ToArray();
-                }
-
-                // Apply top N filtering if specified (already done in executor but kept for compatibility)
-                if (topCount.HasValue)
-                {
-                    // Sort by the chosen metric and take top N
-                    if (filteredFunctions.Length > topCount.Value)
-                    {
-                        filteredFunctions = sortBySelfTime
-                            ? filteredFunctions.OrderByDescending(f => f.SelfTimePercentage).Take(topCount.Value).ToArray()
-                            : filteredFunctions.OrderByDescending(f => f.TotalTimePercentage).Take(topCount.Value).ToArray();
-                    }
+                    suggestedUsage = "For more focused analysis, consider using moduleName parameter for specific modules or topCount to limit results to top performers.";
                 }
 
                 var successResult = new
                 {
                     Action = "GetAvailableFunctions",
                     Status = "Success",
-                    MinSelfTimePercentage = Math.Round(minSelfTimePercentage ?? 0, 2),
-                    MinTotalTimePercentage = Math.Round(minTotalTimePercentage ?? 0, 2),
-                    TopCount = topCount,
-                    SortBySelfTime = sortBySelfTime,
+                    ModuleName = filter.ModuleName ?? "",
+                    MinSelfTimePercentage = Math.Round(filter.MinSelfTimePercentage ?? 0, 2),
+                    MinTotalTimePercentage = Math.Round(filter.MinTotalTimePercentage ?? 0, 2),
+                    TopCount = filter.TopCount,
+                    SortBySelfTime = filter.SortBySelfTime,
+                    Description = GetFunctionFilterDescription(filter.MinSelfTimePercentage, filter.MinTotalTimePercentage, filter.TopCount, filter.SortBySelfTime, filter.ModuleName ?? "", result.Functions.Length, result.Functions.Length),
+                    Instruction = GetFunctionFilterInstruction(filter.SortBySelfTime),
+                    SuggestedUsage = suggestedUsage,
                     TotalFunctionCount = result.Functions.Length,
-                    FilteredFunctionCount = filteredFunctions.Length,
-                    Functions = filteredFunctions.Select(f => new
-                    {
+                    FilteredFunctionCount = result.Functions.Length,
+                    Functions = result.Functions.Select(f => new {
                         Name = f.Name,
                         FullName = f.FullName,
                         ModuleName = f.ModuleName,
@@ -351,8 +377,6 @@ public static class ProfileExplorerTools
                         SourceFile = f.SourceFile,
                         HasAssembly = f.HasAssembly
                     }).ToArray(),
-                    Description = GetFunctionFilterDescription(minSelfTimePercentage, minTotalTimePercentage, topCount, sortBySelfTime, moduleName, result.Functions.Length, filteredFunctions.Length),
-                    Instruction = GetFunctionFilterInstruction(sortBySelfTime),
                     Timestamp = DateTime.UtcNow
                 };
                 return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
@@ -502,6 +526,13 @@ public static class ProfileExplorerTools
             ServerName = "Profile Explorer MCP Server",
             Version = "1.0.0",
             Description = "Simplified MCP server for Profile Explorer - opens and loads traces and retrieves function assembly",
+            QuickStartPatterns = new[]
+            {
+                "1. To analyze functions from a specific module: GetAvailableFunctions(moduleName: 'ntdll.dll')",
+                "2. To find hotspots in a specific module: GetAvailableFunctions(moduleName: 'kernel32.dll', topCount: 10)",
+                "3. To analyze CPU-intensive functions: GetAvailableFunctions(minSelfTimePercentage: 1.0)",
+                "4. Common mistake: Do NOT call GetAvailableFunctions() without moduleName when you want module-specific results!"
+            },
             AvailableCommands = new[]
             {
                 new { 
@@ -517,7 +548,7 @@ public static class ProfileExplorerTools
                 new { 
                     Name = "GetAvailableFunctions", 
                     Description = "Get the list of available functions from the currently loaded process/trace. This should be called after a process is loaded via OpenTrace. Returns both self time (CPU-intensive functions) and total time (high-impact functions including callees). Supports filtering by module name, performance thresholds, result limits, and sorting preferences for targeted performance analysis.", 
-                    Parameters = "moduleName (string, optional) - Filter functions by specific module/DLL name (e.g., 'ntdll.dll', 'kernel32.dll', 'ntdll' - supports partial matching), minSelfTimePercentage (double, optional) - Minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time; use for finding CPU-intensive functions), minTotalTimePercentage (double, optional) - Minimum total time percentage to filter functions (e.g., 5.0 for functions with >= 5% total time; use for finding functions with high overall impact), topCount (int, optional) - Limit results to top N heaviest functions (e.g., 10 for top 10 functions; useful for focusing on worst performers), sortBySelfTime (bool, optional, default true) - Sort by self time (true, shows functions doing actual work) or total time (false, shows functions with highest overall impact including called functions)"
+                    Parameters = "moduleName (string, optional) - **CRITICAL: Filter functions by specific module/DLL name (e.g., 'ntdll.dll', 'kernel32.dll', 'ntdll' - supports partial matching). USE THIS FIRST when you want functions from a specific module!**, minSelfTimePercentage (double, optional) - Minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time; use for finding CPU-intensive functions), minTotalTimePercentage (double, optional) - Minimum total time percentage to filter functions (e.g., 5.0 for functions with >= 5% total time; use for finding functions with high overall impact), topCount (int, optional) - Limit results to top N heaviest functions (e.g., 10 for top 10 functions; useful for focusing on worst performers), sortBySelfTime (bool, optional, default true) - Sort by self time (true, shows functions doing actual work) or total time (false, shows functions with highest overall impact including called functions)"
                 },
                 new { 
                     Name = "GetFunctionAssembly", 
@@ -615,12 +646,6 @@ public static class ProfileExplorerTools
                 },
                 new
                 {
-                    Description = "Get list of all available functions in the currently loaded profile",
-                    Command = "GetAvailableFunctions",
-                    Parameters = new { }
-                },
-                new
-                {
                     Description = "Get functions from ntdll.dll only",
                     Command = "GetAvailableFunctions",
                     Parameters = new {
@@ -634,6 +659,12 @@ public static class ProfileExplorerTools
                     Parameters = new {
                         moduleName = "kernel32.dll"
                     }
+                },
+                new
+                {
+                    Description = "Get list of all available functions in the currently loaded profile",
+                    Command = "GetAvailableFunctions",
+                    Parameters = new { }
                 },
                 new
                 {

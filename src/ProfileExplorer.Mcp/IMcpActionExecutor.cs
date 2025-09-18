@@ -44,13 +44,46 @@ public interface IMcpActionExecutor
     /// Gets the list of available functions from the currently loaded process/trace
     /// This should be called after a process is loaded via OpenTraceAsync
     /// </summary>
-    /// <param name="minSelfTimePercentage">Optional minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time)</param>
-    /// <param name="minTotalTimePercentage">Optional minimum total time percentage to filter functions (e.g., 1.0 for functions with >= 1% total time)</param>
-    /// <param name="topCount">Optional number to limit results to the top N heaviest functions (e.g., 10 for top 10 heaviest functions)</param>
-    /// <param name="sortBySelfTime">Optional flag to sort by self time (true, default) or total time (false)</param>
-    /// <param name="moduleName">Optional module name to filter functions (e.g., "ntdll" for functions from ntdll.dll only)</param>
+    /// <param name="filter">Optional filter settings for functions - specify moduleName, performance thresholds, result limits, and sorting preferences</param>
     /// <returns>Task that completes with the list of available functions in the currently loaded process</returns>
-    Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(double? minSelfTimePercentage = null, double? minTotalTimePercentage = null, int? topCount = null, bool sortBySelfTime = true, string moduleName = "");
+    Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(FunctionFilter? filter = null);
+}
+
+/// <summary>
+/// Filter options for GetAvailableFunctions operation
+/// All properties are optional - specify only the filters you want to apply
+/// </summary>
+public class FunctionFilter
+{
+    /// <summary>
+    /// Filter functions by specific module/DLL name (e.g., "ntdll.dll", "kernel32.dll", "ntdll")
+    /// Supports partial matching - MOST COMMONLY USED FILTER
+    /// </summary>
+    public string? ModuleName { get; set; }
+    
+    /// <summary>
+    /// Minimum self time percentage to filter functions (e.g., 1.0 for functions with >= 1% self time)
+    /// Use for finding CPU-intensive functions doing actual work
+    /// </summary>
+    public double? MinSelfTimePercentage { get; set; }
+    
+    /// <summary>
+    /// Minimum total time percentage to filter functions (e.g., 5.0 for functions with >= 5% total time)  
+    /// Use for finding functions with high overall impact including callees
+    /// </summary>
+    public double? MinTotalTimePercentage { get; set; }
+    
+    /// <summary>
+    /// Limit results to top N heaviest functions (e.g., 10 for top 10 functions)
+    /// Useful for focusing on worst performers
+    /// </summary>
+    public int? TopCount { get; set; }
+    
+    /// <summary>
+    /// Sort by self time (true, default) or total time (false)
+    /// Self time shows functions doing actual work, total time shows overall impact
+    /// </summary>
+    public bool SortBySelfTime { get; set; } = true;
 }
 
 /// <summary>
