@@ -24,6 +24,57 @@ public interface IOptionsPanel {
   void PanelAfterReset();
 }
 
+/// <summary>
+/// Interface for MVVM-compatible option panels that use ViewModels instead of directly implementing IOptionsPanel.
+/// This allows for gradual migration to MVVM architecture.
+/// </summary>
+public interface IMvvmOptionsPanel {
+  /// <summary>
+  /// Default panel width for positioning
+  /// </summary>
+  double DefaultWidth { get; }
+  
+  /// <summary>
+  /// Default panel height for positioning
+  /// </summary>
+  double DefaultHeight { get; }
+  
+  /// <summary>
+  /// Minimum panel width
+  /// </summary>
+  double MinimumWidth { get; }
+  
+  /// <summary>
+  /// Minimum panel height
+  /// </summary>
+  double MinimumHeight { get; }
+
+  /// <summary>
+  /// Initialize the panel with the parent element, settings, and UI session
+  /// </summary>
+  void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session);
+
+  /// <summary>
+  /// Save the current settings from the ViewModel
+  /// </summary>
+  void SaveSettings();
+
+  /// <summary>
+  /// Get the current settings from the ViewModel
+  /// </summary>
+  SettingsBase GetCurrentSettings();
+
+  /// <summary>
+  /// Reset the settings to default values
+  /// </summary>
+  void ResetSettings();
+
+  /// <summary>
+  /// Called when the panel is about to close
+  /// </summary>
+  void PanelClosing();
+}
+
 public class OptionsPanelBase : UserControl, IOptionsPanel, INotifyPropertyChanged {
   private bool initialized_;
   public virtual double DefaultHeight => 320;

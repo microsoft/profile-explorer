@@ -13,8 +13,8 @@ using ProfileExplorer.Core.Settings;
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class OptionsPanelBaseViewModel<TSettings> : ObservableObject where TSettings : SettingsBase  {
-  private FrameworkElement parent_;
-  private IUISession session_;
+  protected FrameworkElement parent_;
+  protected IUISession session_;
 
   [ObservableProperty]
   protected TSettings settings_;

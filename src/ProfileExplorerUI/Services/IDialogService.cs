@@ -27,4 +27,13 @@ public interface IDialogService {
   /// <param name="message">The message to display</param>
   /// <param name="title">Optional title for the dialog</param>
   Task ShowMessageBoxAsync(string message, string? title = null);
+
+  /// <summary>
+  /// Shows a text input dialog.
+  /// </summary>
+  /// <param name="title">The dialog title</param>
+  /// <param name="prompt">The prompt message to display</param>
+  /// <param name="defaultValue">Optional default value for the input</param>
+  /// <returns>The entered text, or null if cancelled</returns>
+  Task<string?> ShowTextInputDialogAsync(string title, string prompt, string? defaultValue = null);
 }

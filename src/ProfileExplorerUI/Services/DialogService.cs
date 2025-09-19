@@ -4,14 +4,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
 using ProfileExplorer.UI.Controls;
+using ProfileExplorer.UI.Windows;
 
 namespace ProfileExplorer.UI.Services;
 
 public class DialogService : IDialogService {
-  private readonly Window? _parentWindow;
+  private readonly FrameworkElement? _parentElement;
 
-  public DialogService(Window? parentWindow = null) {
-    _parentWindow = parentWindow;
+  public DialogService(FrameworkElement? parentElement = null) {
+    _parentElement = parentElement;
   }
 
   public Task<string?> ShowOpenFolderDialogAsync(string title, string? initialDirectory = null) {
@@ -19,7 +20,7 @@ public class DialogService : IDialogService {
 
     // Execute on UI thread
     Application.Current.Dispatcher.Invoke(() => {
-      using var centerForm = _parentWindow != null ? new DialogCenteringHelper(_parentWindow) : null;
+      using var centerForm = _parentElement != null ? new DialogCenteringHelper(_parentElement) : null;
       var dialog = new OpenFolderDialog {
         Title = title
       };
@@ -40,8 +41,9 @@ public class DialogService : IDialogService {
     bool result = false;
 
     Application.Current.Dispatcher.Invoke(() => {
+      var parentWindow = _parentElement != null ? Window.GetWindow(_parentElement) : null;
       var messageBoxResult = MessageBox.Show(
-        _parentWindow,
+        parentWindow,
         message,
         title ?? "Confirmation",
         MessageBoxButton.YesNo,
@@ -55,8 +57,9 @@ public class DialogService : IDialogService {
 
   public Task ShowMessageBoxAsync(string message, string? title = null) {
     Application.Current.Dispatcher.Invoke(() => {
+      var parentWindow = _parentElement != null ? Window.GetWindow(_parentElement) : null;
       MessageBox.Show(
-        _parentWindow,
+        parentWindow,
         message,
         title ?? "Information",
         MessageBoxButton.OK,
@@ -65,5 +68,31 @@ public class DialogService : IDialogService {
     });
 
     return Task.CompletedTask;
+  }
+
+  public Task<string?> ShowTextInputDialogAsync(string title, string prompt, string? defaultValue = null) {
+    string? result = null;
+
+    Application.Current.Dispatcher.Invoke(() => {
+      var parentWindow = _parentElement != null ? Window.GetWindow(_parentElement) : null;
+      var inputWindow = new TextInputWindow(
+        title,
+        prompt,
+        "OK",
+        "Cancel",
+        parentWindow
+      );
+      
+      if (!string.IsNullOrEmpty(defaultValue)) {
+        // Set default value if provided
+        inputWindow.AutocompleteBox.Text = defaultValue;
+      }
+
+      if (inputWindow.Show(out string inputText, false)) {
+        result = inputText;
+      }
+    });
+
+    return Task.FromResult(result);
   }
 }

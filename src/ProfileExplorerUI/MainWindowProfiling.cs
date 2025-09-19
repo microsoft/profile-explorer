@@ -882,7 +882,7 @@ public partial class MainWindow : Window, IUISession {
     }
 
     var positionAdjustment = new Point(330, MainMenu.ActualHeight + 1);
-    markingOptionsPanelPopup_ = OptionsPanelHostPopup.Create<FunctionMarkingOptionsPanel, FunctionMarkingSettings>(
+    markingOptionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<FunctionMarkingOptionsPanel, FunctionMarkingSettings>(
       MarkingSettings.Clone(), MainGrid, this,
       async (newSettings, commit) => {
         if (!newSettings.Equals(MarkingSettings)) {

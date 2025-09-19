@@ -49,6 +49,7 @@ public partial class OptionsWindow : Window {
     // Save settings from panels that use the new MVVM pattern
     GeneralOptionsPanel.SaveSettings();
     SymbolOptionsPanel.SaveSettings();
+    FunctionMarkingOptionsPanel.SaveSettings();
 
     // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
   }

@@ -45,14 +45,7 @@ public partial class SymbolPathViewModel : ObservableObject {
 }
 
 public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<SymbolFileSourceSettings> {
-  private readonly IDialogService _dialogService;
-
-  public SymbolOptionsPanelViewModel() : this(new DialogService()) {
-  }
-
-  public SymbolOptionsPanelViewModel(IDialogService dialogService) {
-    _dialogService = dialogService;
-  }
+  private IDialogService _dialogService;
 
   // Observable properties mirroring SymbolFileSourceSettings
   [ObservableProperty]
@@ -106,7 +99,10 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
 
   public override void Initialize(FrameworkElement parent, SymbolFileSourceSettings settings, IUISession session) {
     base.Initialize(parent, settings, session);
-    
+
+    // Initialize the dialog service with the parent element now that we have it
+    _dialogService = new DialogService(parent);
+
     // Populate view model properties from settings
     PopulateFromSettings(settings);
   }
