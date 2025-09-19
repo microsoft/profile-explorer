@@ -1,33 +1,25 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using System.Windows.Controls;
 using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
-public partial class GeneralOptionsPanel : OptionsPanelBase {
-  private GeneralSettings settings_;
+public partial class GeneralOptionsPanel : UserControl {
+  private GeneralOptionsPanelViewModel viewModel_;
 
   public GeneralOptionsPanel() {
     InitializeComponent();
+    viewModel_ = new GeneralOptionsPanelViewModel();
+    DataContext = viewModel_;
   }
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
-    base.Initialize(parent, settings, session);
-    settings_ = (GeneralSettings)Settings;
+  public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
+    viewModel_.Initialize(parent, (GeneralSettings)settings, session);
   }
 
-  public override void OnSettingsChanged(object newSettings) {
-    settings_ = (GeneralSettings)newSettings;
-  }
-
-  private void ResetUIZoomButton_Click(object sender, RoutedEventArgs e) {
-    settings_.WindowScaling = 1.0;
-    ReloadSettings();
-  }
-
-  private void CpuCoreLimitButton_Click(object sender, RoutedEventArgs e) {
-    settings_.CpuCoreLimit = GeneralSettings.DefaultCpuCoreLimit;
-    ReloadSettings();
+  public void SaveSettings() {
+    viewModel_.SaveSettings();
   }
 }

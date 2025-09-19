@@ -38,8 +38,21 @@ public partial class OptionsWindow : Window {
   }
 
   private async Task SaveAndReloadSettings() {
+    // Save settings from view models back to their settings objects
+    SavePanelSettings();
+    
     App.SaveApplicationSettings();
     await Session.ReloadSettings();
+  }
+  
+  private void SavePanelSettings() {
+    // Save settings from panels that use the new MVVM pattern
+    GeneralOptionsPanel.SaveSettings();
+
+    // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
+    // SymbolOptionsPanel.SaveSettings();
+    // SummaryOptionsPanel.SaveSettings();
+    // etc.
   }
 
   private async void CloseButton_OnClick(object sender, RoutedEventArgs e) {
