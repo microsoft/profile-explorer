@@ -48,11 +48,9 @@ public partial class OptionsWindow : Window {
   private void SavePanelSettings() {
     // Save settings from panels that use the new MVVM pattern
     GeneralOptionsPanel.SaveSettings();
+    SymbolOptionsPanel.SaveSettings();
 
     // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
-    // SymbolOptionsPanel.SaveSettings();
-    // SummaryOptionsPanel.SaveSettings();
-    // etc.
   }
 
   private async void CloseButton_OnClick(object sender, RoutedEventArgs e) {

@@ -1,4 +1,4 @@
-﻿<local:OptionsPanelBase
+﻿<UserControl
   x:Class="ProfileExplorer.UI.OptionsPanels.SymbolOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -18,18 +18,18 @@
       <CheckBox
         Margin="0,4,0,2"
         Content="Include __NT__SYMBOL__PATH environment variable"
-        IsChecked="{Binding Path=UseEnvironmentVarSymbolPaths, Mode=TwoWay}"
+        IsChecked="{Binding Path=UseEnvironmentVarSymbolPaths_, Mode=TwoWay}"
         ToolTip="Append the NT__SYMBOL__PATH environment variable to the list of sources" />
       <CheckBox
         Margin="0,2,0,2"
         Content="Include subdirectories for local paths"
-        IsChecked="{Binding Path=IncludeSymbolSubdirectories, Mode=TwoWay}"
+        IsChecked="{Binding Path=IncludeSymbolSubdirectories_, Mode=TwoWay}"
         ToolTip="Scan and include all subdirectories with symbols for the local paths in the list" />
       <CheckBox
         x:Name="ModuleSamplesCheckBox"
         Margin="0,2,0,2"
         Content="Don't load symbols for very low sample modules"
-        IsChecked="{Binding Path=SkipLowSampleModules, Mode=TwoWay}"
+        IsChecked="{Binding Path=SkipLowSampleModules_, Mode=TwoWay}"
         ToolTip="Skip downloading and loading of symbols for insignificant modules with very few samples" />
       <StackPanel
         Margin="20,2,0,2"
@@ -47,20 +47,20 @@
           Minimum="0.1"
           ShowButtonSpinner="True"
           ToolTip="Exclude modules with a number of samples below this percentage"
-          Value="{Binding Path=LowSampleModuleCutoff, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
+          Value="{Binding Path=LowSampleModuleCutoff_, Mode=TwoWay, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=100.0}" />
         <Button
           Height="20"
           Margin="4,0,0,0"
           Padding="2,0,2,0"
           VerticalAlignment="Center"
-          Click="ResetFilterModuleSamplesButton_Click"
+          Command="{Binding ResetFilterModuleSamplesCommand}"
           Content="Default"
           ToolTip="Reset value to default percentage" />
       </StackPanel>
       <CheckBox
         Margin="0,4,0,0"
         Content="Don't load symbols that failed in previous sessions"
-        IsChecked="{Binding Path=RejectPreviouslyFailedFiles, Mode=TwoWay}"
+        IsChecked="{Binding Path=RejectPreviouslyFailedFiles_, Mode=TwoWay}"
         ToolTip="Skip downloading and loading of symbols that could not be found in previous sessions" />
       <StackPanel
         Margin="20,2,0,0"
@@ -71,7 +71,7 @@
         <TextBlock
           Margin="4,0,0,0"
           VerticalAlignment="Center"
-          Text="{Binding RejectedBinaryFiles.Count}" />
+          Text="{Binding RejectedBinaryFiles_.Count}" />
         <TextBlock
           Margin="24,0,0,0"
           VerticalAlignment="Center"
@@ -79,7 +79,7 @@
         <TextBlock
           Margin="4,0,0,0"
           VerticalAlignment="Center"
-          Text="{Binding RejectedSymbolFiles.Count}" />
+          Text="{Binding RejectedSymbolFiles_.Count}" />
         <ToggleButton
           x:Name="ExcludedToggleButton"
           Height="22"
@@ -96,7 +96,7 @@
           Padding="4,2,4,2"
           HorizontalAlignment="Right"
           VerticalAlignment="Center"
-          Click="ClearRejectedButton_Click"
+          Command="{Binding ClearRejectedCommand}"
           Content="Clear"
           IsEnabled="{Binding InputControlsEnabled}"
           ToolTip="Reset lists of rejected binaries and symbols" />
@@ -130,7 +130,9 @@
                 Margin="0,4,4,4"
                 IsTextSearchEnabled="True"
                 SelectionMode="Extended"
-                TextSearch.TextPath="ImageName">
+                TextSearch.TextPath="BinaryFile_.ImageName"
+                ItemsSource="{Binding RejectedBinaryFiles_}"
+                SelectedIndex="{Binding SelectedRejectedBinaryFileIndex_, Mode=TwoWay}">
                 <ListView.View>
                   <GridView>
                     <GridViewColumn
@@ -194,7 +196,7 @@
                   Height="24"
                   Padding="2"
                   HorizontalContentAlignment="Left"
-                  Click="RemoveRejectedBinariesButton_Click">
+                  Command="{Binding RemoveRejectedBinariesCommand}">
                   <StackPanel Orientation="Horizontal">
                     <Image
                       Width="16"
@@ -211,7 +213,7 @@
                   Margin="0,2,0,0"
                   Padding="2"
                   HorizontalContentAlignment="Left"
-                  Click="ClearRejectedBinariesButton_Click">
+                  Command="{Binding ClearRejectedBinariesCommand}">
                   <StackPanel Orientation="Horizontal">
                     <Image
                       Width="16"
@@ -248,7 +250,9 @@
                 Margin="0,4,4,4"
                 IsTextSearchEnabled="True"
                 SelectionMode="Extended"
-                TextSearch.TextPath="ImageName">
+                TextSearch.TextPath="SymbolFile_.SymbolName"
+                ItemsSource="{Binding RejectedSymbolFiles_}"
+                SelectedIndex="{Binding SelectedRejectedSymbolFileIndex_, Mode=TwoWay}">
                 <ListView.View>
                   <GridView>
                     <GridViewColumn
@@ -308,12 +312,12 @@
                 Grid.Row="0"
                 Grid.Column="1"
                 Margin="2,4,4,4">
-                <Button
+        <Button
                   Height="24"
                   Padding="2"
                   HorizontalContentAlignment="Left"
-                  Click="RemoveRejectedSymbolsButton_Click">
-                  <StackPanel Orientation="Horizontal">
+                  Command="{Binding RemoveRejectedSymbolsCommand}">
+          <StackPanel Orientation="Horizontal">
                     <Image
                       Width="16"
                       Height="16"
@@ -329,7 +333,7 @@
                   Margin="0,2,0,0"
                   Padding="2"
                   HorizontalContentAlignment="Left"
-                  Click="ClearRejectedSymbolsButton_Click">
+                  Command="{Binding ClearRejectedSymbolsCommand}">
                   <StackPanel Orientation="Horizontal">
                     <Image
                       Width="16"
@@ -351,7 +355,7 @@
       <CheckBox
         Margin="0,4,0,0"
         Content="Cache processed symbol files"
-        IsChecked="{Binding Path=CacheSymbolFiles, Mode=TwoWay}"
+        IsChecked="{Binding Path=CacheSymbolFiles_, Mode=TwoWay}"
         ToolTip="Save the symbol files processing results to the %TEMP% directory for faster subsequent load" />
       <StackPanel
         Margin="20,2,0,0"
@@ -369,7 +373,7 @@
           Padding="4,2,4,2"
           HorizontalAlignment="Right"
           VerticalAlignment="Center"
-          Click="OpenSymbolCacheButton_Click"
+          Command="{Binding OpenSymbolCacheCommand}"
           Content="Open"
           IsEnabled="{Binding InputControlsEnabled}"
           ToolTip="Open the with cached symbol files directory" />
@@ -379,7 +383,7 @@
           Padding="4,2,4,2"
           HorizontalAlignment="Right"
           VerticalAlignment="Center"
-          Click="ClearSymbolCacheButton_Click"
+          Command="{Binding ClearSymbolCacheCommand}"
           Content="Clear"
           IsEnabled="{Binding InputControlsEnabled}"
           ToolTip="Reset lists of cached symbol files" />
@@ -406,15 +410,17 @@
             <ColumnDefinition Width="80" />
           </Grid.ColumnDefinitions>
 
-          <ListView
+      <ListView
             x:Name="SymbolPathsList"
             Grid.Row="0"
             Grid.Column="0"
             Margin="0,8,4,4"
             IsTextSearchEnabled="True"
-            SelectionMode="Single"
-            TextSearch.TextPath="Name">
-            <ListView.View>
+            SelectionMode="Extended"
+            TextSearch.TextPath="Path"
+            ItemsSource="{Binding SymbolPaths_}"
+            SelectedIndex="{Binding SelectedSymbolPathIndex_, Mode=TwoWay}">
+        <ListView.View>
               <GridView>
                 <GridViewColumn
                   Width="Auto"
@@ -428,14 +434,10 @@
                     <DataTemplate>
                       <controls:FileSystemTextBox
                         BorderThickness="0"
-                        DropDownClosed="SymbolPath_OnDropDownClosed"
                         FilterMode="StartsWithOrdinal"
-                        KeyDown="SymbolPath_KeyDown"
-                        LostFocus="SymbolPath_LostFocus"
                         MinimumPrefixLength="0"
-                        PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
                         ShowOnlyDirectories="True"
-                        Text="{Binding Path=.}" />
+                        Text="{Binding Path=Path}" />
                     </DataTemplate>
                   </GridViewColumn.CellTemplate>
                 </GridViewColumn>
@@ -454,7 +456,7 @@
                         HorizontalAlignment="Right"
                         Background="Transparent"
                         BorderThickness="0"
-                        Click="SymbolPathBrowseButton_Click"
+                        Command="{Binding BrowseCommand}"
                         ToolTip="Select symbols directory from file system">
                         <Image
                           Source="{StaticResource FolderIcon}"
@@ -484,7 +486,7 @@
               Height="24"
               Padding="2"
               HorizontalContentAlignment="Left"
-              Click="AddSymbolPathButton_Click"
+              Command="{Binding AddSymbolPathCommand}"
               ToolTip="Add new symbol path to list">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -502,7 +504,7 @@
               Margin="0,2,0,0"
               Padding="2"
               HorizontalContentAlignment="Left"
-              Click="RemoveSymbolPathButton_Click"
+              Command="{Binding RemoveSymbolPathCommand}"
               ToolTip="Remove selected symbol path from list">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -520,7 +522,7 @@
               Margin="0,2,0,0"
               Padding="2"
               HorizontalContentAlignment="Left"
-              Click="MoveSymbolPathUpButton_Click"
+              Command="{Binding MoveSymbolPathUpCommand}"
               ToolTip="Move selected symbol path up in list">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -538,7 +540,7 @@
               Margin="0,2,0,0"
               Padding="2"
               HorizontalContentAlignment="Left"
-              Click="MoveSymbolPathDownButton_Click"
+              Command="{Binding MoveSymbolPathDownCommand}"
               ToolTip="Move selected symbol path down in list">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -566,7 +568,7 @@
               Height="24"
               Padding="4,2,4,2"
               HorizontalContentAlignment="Left"
-              Click="AddPublicSymbolServer_OnClick"
+              Command="{Binding AddPublicSymbolServerCommand}"
               ToolTip="Add public symbol server path to list">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -584,7 +586,7 @@
               Margin="2,0,0,0"
               Padding="4,2,4,2"
               HorizontalContentAlignment="Left"
-              Click="AddPrivateSymbolServer_OnClick"
+              Command="{Binding AddPrivateSymbolServerCommand}"
               ToolTip="Add private symbol server path to list">
               <StackPanel Orientation="Horizontal">
                 <Image
@@ -603,8 +605,8 @@
               Cursor="Hand"
               Foreground="DarkBlue">
               <Hyperlink
-                NavigateUri="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv"
-                RequestNavigate="Hyperlink_RequestNavigate">
+                Command="{Binding NavigateHyperlinkCommand}"
+                CommandParameter="https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv">
                 Symbol configuration help
               </Hyperlink>
             </TextBlock>
@@ -615,4 +617,4 @@
       </Expander>
     </StackPanel>
   </Grid>
-</local:OptionsPanelBase>
+</UserControl>
