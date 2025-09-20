@@ -21,25 +21,97 @@ using ProfileExplorer.UI.Services;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
+public partial class BinaryFileDescriptorViewModel : ObservableObject {
+  private BinaryFileDescriptor binaryFileDescriptor_;
+
+  public BinaryFileDescriptorViewModel(BinaryFileDescriptor binaryFileDescriptor) {
+    binaryFileDescriptor_ = binaryFileDescriptor;
+    imageName_ = binaryFileDescriptor.ImageName;
+    imagePath_ = binaryFileDescriptor.ImagePath;
+    imageSize_ = binaryFileDescriptor.ImageSize;
+    timeStamp_ = binaryFileDescriptor.TimeStamp;
+  }
+
+  [ObservableProperty]
+  private string imageName_;
+
+  [ObservableProperty]
+  private string imagePath_;
+
+  [ObservableProperty]
+  private long imageSize_;
+
+  [ObservableProperty]
+  private int timeStamp_;
+
+  [ObservableProperty]
+  private bool isSelected_;
+
+  public BinaryFileDescriptor ToModel() {
+    binaryFileDescriptor_.ImageName = imageName_;
+    binaryFileDescriptor_.ImagePath = imagePath_;
+    binaryFileDescriptor_.ImageSize = imageSize_;
+    binaryFileDescriptor_.TimeStamp = timeStamp_;
+    return binaryFileDescriptor_;
+  }
+}
+
+public partial class SymbolFileDescriptorViewModel : ObservableObject {
+  private SymbolFileDescriptor symbolFileDescriptor_;
+
+  public SymbolFileDescriptorViewModel(SymbolFileDescriptor symbolFileDescriptor) {
+    symbolFileDescriptor_ = symbolFileDescriptor;
+    symbolName_ = symbolFileDescriptor.SymbolName;
+    fileName_ = symbolFileDescriptor.FileName;
+    id_ = symbolFileDescriptor.Id;
+    age_ = symbolFileDescriptor.Age;
+  }
+
+  [ObservableProperty]
+  private string symbolName_;
+
+  [ObservableProperty]
+  private string fileName_;
+
+  [ObservableProperty]
+  private Guid id_;
+
+  [ObservableProperty]
+  private int age_;
+
+  [ObservableProperty]
+  private bool isSelected_;
+
+  public SymbolFileDescriptor ToModel() {
+    symbolFileDescriptor_.FileName = fileName_;
+    symbolFileDescriptor_.Id = id_;
+    symbolFileDescriptor_.Age = age_;
+    return symbolFileDescriptor_;
+  }
+}
+
 public partial class SymbolPathViewModel : ObservableObject {
   private readonly IDialogService _dialogService;
 
   public SymbolPathViewModel(string path, IDialogService dialogService) {
     _dialogService = dialogService;
-    Path = path;
+    Path_ = path;
   }
 
   [ObservableProperty]
-  private string path;
+  private string path_;
+
+  [ObservableProperty]
+  private string isSelected_;
 
   [RelayCommand]
   private async Task Browse() {
     var selectedPath = await _dialogService.ShowOpenFolderDialogAsync(
       "Select symbols directory",
-      Path);
+      Path_);
 
     if (!string.IsNullOrEmpty(selectedPath)) {
-      Path = selectedPath;
+      Path_ = selectedPath;
     }
   }
 }
@@ -47,7 +119,6 @@ public partial class SymbolPathViewModel : ObservableObject {
 public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<SymbolFileSourceSettings> {
   private IDialogService _dialogService;
 
-  // Observable properties mirroring SymbolFileSourceSettings
   [ObservableProperty]
   private ObservableCollection<SymbolPathViewModel> symbolPaths_;
 
@@ -55,16 +126,10 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
   private int selectedSymbolPathIndex_;
 
   [ObservableProperty]
-  private ObservableCollection<BinaryFileDescriptor> rejectedBinaryFiles_;
+  private ObservableCollection<BinaryFileDescriptorViewModel> rejectedBinaryFiles_;
 
   [ObservableProperty]
-  private int selectedRejectedBinaryFileIndex_ = -1;
-
-  [ObservableProperty]
-  private ObservableCollection<SymbolFileDescriptor> rejectedSymbolFiles_;
-
-  [ObservableProperty]
-  private int selectedRejectedSymbolFileIndex_;
+  private ObservableCollection<SymbolFileDescriptorViewModel> rejectedSymbolFiles_;
 
   [ObservableProperty]
   private bool sourceServerEnabled_;
@@ -114,14 +179,14 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
       SymbolPaths_.Add(new SymbolPathViewModel(path, _dialogService));
     }
 
-    RejectedBinaryFiles_ = new ObservableCollection<BinaryFileDescriptor>();
+    RejectedBinaryFiles_ = new ObservableCollection<BinaryFileDescriptorViewModel>();
     foreach (var binaryFile in settings.RejectedBinaryFiles) {
-      RejectedBinaryFiles_.Add(binaryFile);
+      RejectedBinaryFiles_.Add(new BinaryFileDescriptorViewModel(binaryFile));
     }
 
-    RejectedSymbolFiles_ = new ObservableCollection<SymbolFileDescriptor>();
+    RejectedSymbolFiles_ = new ObservableCollection<SymbolFileDescriptorViewModel>();
     foreach (var symbolFile in settings.RejectedSymbolFiles) {
-      RejectedSymbolFiles_.Add(symbolFile);
+      RejectedSymbolFiles_.Add(new SymbolFileDescriptorViewModel(symbolFile));
     }
 
     // Populate simple properties
@@ -143,8 +208,9 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
 
   [RelayCommand]
   private void RemoveRejectedBinaries() {
-    while (selectedRejectedBinaryFileIndex_ != -1) {
-      RejectedBinaryFiles_.RemoveAt(selectedRejectedBinaryFileIndex_);
+    var toRemove = RejectedBinaryFiles_.Where(b => b.IsSelected_).ToList();
+    foreach (var item in toRemove) {
+      RejectedBinaryFiles_.Remove(item);
     }
   }
 
@@ -157,8 +223,9 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
 
   [RelayCommand]
   private void RemoveRejectedSymbols(IList selectedItems) {
-    while (selectedRejectedSymbolFileIndex_ != -1) {
-      RejectedSymbolFiles_.RemoveAt(selectedRejectedSymbolFileIndex_);
+    var toRemove = RejectedSymbolFiles_.Where(b => b.IsSelected_).ToList();
+    foreach (var item in toRemove) {
+      RejectedSymbolFiles_.Remove(item);
     }
   }
 
@@ -187,7 +254,7 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
     string defaultCachePath = @"C:\Symbols";
     string path = $"srv*{defaultCachePath}*{symbolServer}";
 
-    if (!SymbolPaths_.Any(item => item.Path.Equals(path, StringComparison.OrdinalIgnoreCase))) {
+    if (!SymbolPaths_.Any(item => item.Path_.Equals(path, StringComparison.OrdinalIgnoreCase))) {
       SymbolPaths_.Add(new SymbolPathViewModel(path, _dialogService));
     }
   }
@@ -198,7 +265,7 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
     string defaultCachePath = @"C:\Symbols";
     string path = $"srv*{defaultCachePath}*{symbolServer}";
 
-    if (!SymbolPaths_.Any(item => item.Path.Equals(path, StringComparison.OrdinalIgnoreCase))) {
+    if (!SymbolPaths_.Any(item => item.Path_.Equals(path, StringComparison.OrdinalIgnoreCase))) {
       SymbolPaths_.Add(new SymbolPathViewModel(path, _dialogService));
     }
   }
@@ -279,19 +346,19 @@ public partial class SymbolOptionsPanelViewModel : OptionsPanelBaseViewModel<Sym
       // Save collections
       Settings_.SymbolPaths.Clear();
       foreach (var pathViewModel in SymbolPaths_) {
-        if (!string.IsNullOrWhiteSpace(pathViewModel.Path)) {
-          Settings_.SymbolPaths.Add(pathViewModel.Path);
+        if (!string.IsNullOrWhiteSpace(pathViewModel.Path_)) {
+          Settings_.SymbolPaths.Add(pathViewModel.Path_);
         }
       }
 
       Settings_.RejectedBinaryFiles.Clear();
       foreach (var binaryFile in RejectedBinaryFiles_) {
-        Settings_.RejectedBinaryFiles.Add(binaryFile);
+        Settings_.RejectedBinaryFiles.Add(binaryFile.ToModel());
       }
 
       Settings_.RejectedSymbolFiles.Clear();
       foreach (var symbolFile in RejectedSymbolFiles_) {
-        Settings_.RejectedSymbolFiles.Add(symbolFile);
+        Settings_.RejectedSymbolFiles.Add(symbolFile.ToModel());
       }
     }
   }

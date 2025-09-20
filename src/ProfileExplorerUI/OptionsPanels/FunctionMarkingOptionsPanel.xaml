@@ -153,6 +153,7 @@
               <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
+              <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
             </Style>
           </ListView.ItemContainerStyle>
         </ListView>
@@ -335,6 +336,7 @@
               <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
+              <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
             </Style>
           </ListView.ItemContainerStyle>
         </ListView>
@@ -472,6 +474,7 @@
               <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="VerticalContentAlignment" Value="Center" />
+              <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
             </Style>
           </ListView.ItemContainerStyle>
         </ListView>

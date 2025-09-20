@@ -35,6 +35,9 @@ public partial class FunctionMarkingStyleViewModel : ObservableObject {
   [ObservableProperty]
   private bool isFocused_;
 
+  [ObservableProperty]
+  private bool isSelected_;
+
   public FunctionMarkingStyleViewModel(string name = "", Color? color = null, bool isRegex = false) {
     Name_ = name;
     Color_ = color ?? Colors.White;
@@ -57,6 +60,9 @@ public partial class FunctionMarkingStyleViewModel : ObservableObject {
 public partial class FunctionMarkingSetViewModel : ObservableObject {
   [ObservableProperty]
   private string title_;
+
+  [ObservableProperty]
+  private bool isSelected_;
 
   [ObservableProperty]
   private ObservableCollection<FunctionMarkingStyleViewModel> functionColors_;
@@ -123,19 +129,10 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
   private ObservableCollection<FunctionMarkingStyleViewModel> moduleColors_;
 
   [ObservableProperty]
-  private int selectedModuleColorIndex_;
-
-  [ObservableProperty]
   private ObservableCollection<FunctionMarkingStyleViewModel> functionColors_;
 
   [ObservableProperty]
-  private int selectedFunctionColorIndex_;
-
-  [ObservableProperty]
   private ObservableCollection<FunctionMarkingSetViewModel> savedSets_;
-
-  [ObservableProperty]
-  private int selectedSavedSetIndex_ = -1;
 
   // Computed properties that access settings
   public bool InputControlsEnabled => true; // Always enabled for options panels
@@ -180,11 +177,13 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
 
   [RelayCommand]
   private void ModuleAdd() {
+    foreach (var item in ModuleColors_) {
+      item.IsSelected_ = false;
+    }
+
     var newItem = new FunctionMarkingStyleViewModel("", Colors.White);
+    newItem.IsSelected_ = true;
     ModuleColors_.Add(newItem);
-    
-    // Select the newly added empty item for editing
-    SelectedModuleColorIndex_ = ModuleColors_.Count - 1;
 
     // Set focus on the text box for the newly added item
     newItem.IsFocused_ = true;
@@ -192,8 +191,9 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
 
   [RelayCommand]
   private void ModuleRemove() {
-    if (SelectedModuleColorIndex_ >= 0 && SelectedModuleColorIndex_ < ModuleColors_.Count) {
-      ModuleColors_.RemoveAt(SelectedModuleColorIndex_);
+    var toRemove = ModuleColors_.Where(item => item.IsSelected_).ToList();
+    foreach (var item in toRemove) {
+      ModuleColors_.Remove(item);
     }
   }
 
@@ -206,20 +206,24 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
 
   [RelayCommand]
   private void FunctionAdd() {
+    foreach (var item in FunctionColors_) {
+      item.IsSelected_ = false;
+    }
     var newItem = new FunctionMarkingStyleViewModel("", Colors.White);
+    newItem.IsSelected_ = true;
+
+    // Add the new item to the collection
     FunctionColors_.Add(newItem);
     
-    // Select the newly added empty item for editing
-    SelectedFunctionColorIndex_ = FunctionColors_.Count - 1;
-
     // Set focus on the text box for the newly added item
     newItem.IsFocused_ = true;
   }
 
   [RelayCommand]
   private void FunctionRemove() {
-    if (SelectedFunctionColorIndex_ >= 0 && SelectedFunctionColorIndex_ < FunctionColors_.Count) {
-      FunctionColors_.RemoveAt(SelectedFunctionColorIndex_);
+    var toRemove = FunctionColors_.Where(item => item.IsSelected_).ToList();
+    foreach (var item in toRemove) {
+      FunctionColors_.Remove(item);
     }
   }
 
@@ -239,8 +243,9 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
 
   [RelayCommand]
   private void MarkingRemove() {
-    if (SelectedSavedSetIndex_ >= 0 && SelectedSavedSetIndex_ < SavedSets_.Count) {
-      SavedSets_.RemoveAt(SelectedSavedSetIndex_);
+    var toRemove = SavedSets_.Where(item => item.IsSelected_).ToList();
+    foreach (var item in toRemove) {
+      SavedSets_.Remove(item);
     }
   }
 
@@ -288,10 +293,11 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
 
   [RelayCommand]
   private void MarkingLoad() {
-    if (SelectedSavedSetIndex_ >= 0 && SelectedSavedSetIndex_ < SavedSets_.Count) {
-      SaveSettings();
-      settings_.AppendMarkingSet(SavedSets_[SelectedSavedSetIndex_].ToModel());
-      PopulateFromSettings(settings_);
+    var toSave = SavedSets_.Where(item => item.IsSelected_).ToList();
+    if (toSave.Count == 1) {
+      var set = toSave[0];
+      MergeMarkingStylesIntoCollection(set.FunctionColors_, FunctionColors_);
+      MergeMarkingStylesIntoCollection(set.ModuleColors_, ModuleColors_);
     }
   }
 
@@ -326,6 +332,20 @@ public partial class FunctionMarkingOptionsPanelViewModel : OptionsPanelBaseView
       
       // Add the new style
       targetCollection.Add(new FunctionMarkingStyleViewModel(style));
+    }
+  }
+
+  private void MergeMarkingStylesIntoCollection(ObservableCollection<FunctionMarkingStyleViewModel> sourceStyles,
+                                               ObservableCollection<FunctionMarkingStyleViewModel> targetCollection) {
+    foreach (var style in sourceStyles) {
+      // Remove existing item with same name
+      var existingVm = targetCollection.FirstOrDefault(vm => vm.Name_.Equals(style.Name_, StringComparison.Ordinal));
+      if (existingVm != null) {
+        targetCollection.Remove(existingVm);
+      }
+
+      // Add the new style
+      targetCollection.Add(style);
     }
   }
 

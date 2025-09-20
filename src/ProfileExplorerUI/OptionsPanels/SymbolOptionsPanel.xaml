@@ -137,7 +137,7 @@
                   <GridView>
                     <GridViewColumn
                       Width="Auto"
-                      DisplayMemberBinding="{Binding ImageName}"
+                      DisplayMemberBinding="{Binding ImageName_}"
                       Header="File">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -147,7 +147,7 @@
                     </GridViewColumn>
                     <GridViewColumn
                       Width="150"
-                      DisplayMemberBinding="{Binding ImagePath}"
+                      DisplayMemberBinding="{Binding ImagePath_}"
                       Header="Path">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -167,7 +167,7 @@
                     </GridViewColumn>
                     <GridViewColumn
                       Width="Auto"
-                      DisplayMemberBinding="{Binding TimeStamp}"
+                      DisplayMemberBinding="{Binding TimeStamp_}"
                       Header="Timestamp">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -184,6 +184,7 @@
                     <Setter Property="Background"
                             Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
                   </Style>
                 </ListView.ItemContainerStyle>
               </ListView>
@@ -257,7 +258,7 @@
                   <GridView>
                     <GridViewColumn
                       Width="Auto"
-                      DisplayMemberBinding="{Binding SymbolName}"
+                      DisplayMemberBinding="{Binding SymbolName_}"
                       Header="File">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -267,7 +268,7 @@
                     </GridViewColumn>
                     <GridViewColumn
                       Width="150"
-                      DisplayMemberBinding="{Binding FileName}"
+                      DisplayMemberBinding="{Binding FileName_}"
                       Header="File">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -277,7 +278,7 @@
                     </GridViewColumn>
                     <GridViewColumn
                       Width="Auto"
-                      DisplayMemberBinding="{Binding Id}"
+                      DisplayMemberBinding="{Binding Id_}"
                       Header="Id">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -287,7 +288,7 @@
                     </GridViewColumn>
                     <GridViewColumn
                       Width="Auto"
-                      DisplayMemberBinding="{Binding Age}"
+                      DisplayMemberBinding="{Binding Age_}"
                       Header="Age">
                       <GridViewColumn.HeaderContainerStyle>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -304,6 +305,7 @@
                     <Setter Property="Background"
                             Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
                   </Style>
                 </ListView.ItemContainerStyle>
               </ListView>
@@ -474,6 +476,7 @@
                 <Setter Property="Background"
                         Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
               </Style>
             </ListView.ItemContainerStyle>
           </ListView>
