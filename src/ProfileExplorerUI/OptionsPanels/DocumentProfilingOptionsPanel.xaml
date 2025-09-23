@@ -68,7 +68,7 @@
           ParsingNumberStyle="Integer"
           ShowButtonSpinner="True"
           ToolTip="Only show lines with a weight greater than this value"
-          Value="{Binding Path=MaxPercentageBarWidth, Mode=TwoWay}" />
+          Value="{Binding Path=MaxPercentageBarWidth_, Mode=TwoWay}" />
         <Button
           Height="20"
           Margin="8,0,0,0"
@@ -98,7 +98,6 @@
           Width="151"
           Height="20"
           Margin="8,0,0,0"
-          DisplayMemberPath="Value"
           ItemsSource="{Binding ValueUnitOptions_, Mode=TwoWay}"
           SelectedValue="{Binding SelectedValueUnit_, Mode=TwoWay}"
           SelectedValuePath="Key" />
@@ -149,7 +148,7 @@
           VerticalAlignment="Center"
           AvailableColorsSortingMode="HueSaturationBrightness"
           BorderBrush="Gray"
-          SelectedColor="{Binding ColumnTextColor, Mode=TwoWay}"
+          SelectedColor="{Binding ColumnTextColor_, Mode=TwoWay}"
           ShowDropDownButton="True" />
         <TextBlock
           Grid.Column="1"
@@ -169,7 +168,7 @@
           VerticalAlignment="Center"
           AvailableColorsSortingMode="HueSaturationBrightness"
           BorderBrush="Gray"
-          SelectedColor="{Binding PercentageBarBackColor, Mode=TwoWay}"
+          SelectedColor="{Binding PercentageBarBackColor_, Mode=TwoWay}"
           ShowDropDownButton="True" />
         <TextBlock
           Grid.Column="1"
@@ -189,7 +188,7 @@
           VerticalAlignment="Center"
           AvailableColorsSortingMode="HueSaturationBrightness"
           BorderBrush="Gray"
-          SelectedColor="{Binding PerformanceCounterBackColor, Mode=TwoWay}"
+          SelectedColor="{Binding PerformanceCounterBackColor_, Mode=TwoWay}"
           ShowDropDownButton="True" />
         <TextBlock
           Grid.Column="1"
@@ -209,7 +208,7 @@
           VerticalAlignment="Center"
           AvailableColorsSortingMode="HueSaturationBrightness"
           BorderBrush="Gray"
-          SelectedColor="{Binding PerformanceMetricBackColor, Mode=TwoWay}"
+          SelectedColor="{Binding PerformanceMetricBackColor_, Mode=TwoWay}"
           ShowDropDownButton="True" />
         <TextBlock
           Grid.Column="1"
@@ -232,7 +231,7 @@
           VerticalAlignment="Center"
           AvailableColorsSortingMode="HueSaturationBrightness"
           BorderBrush="Gray"
-          SelectedColor="{Binding BlockOverlayTextColor, Mode=TwoWay}"
+          SelectedColor="{Binding BlockOverlayTextColor_, Mode=TwoWay}"
           ShowDropDownButton="True" />
         <TextBlock
           Grid.Column="1"
@@ -255,7 +254,7 @@
           VerticalAlignment="Center"
           AvailableColorsSortingMode="HueSaturationBrightness"
           BorderBrush="Gray"
-          SelectedColor="{Binding HotBlockOverlayTextColor, Mode=TwoWay}"
+          SelectedColor="{Binding HotBlockOverlayTextColor_, Mode=TwoWay}"
           ShowDropDownButton="True" />
         <TextBlock
           Grid.Column="1"

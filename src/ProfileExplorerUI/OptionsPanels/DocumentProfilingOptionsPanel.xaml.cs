@@ -8,14 +8,14 @@ using static ProfileExplorer.UI.ProfileDocumentMarkerSettings;
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class DocumentProfilingOptionsPanel : UserControl {
-  private DocumentProfilingOptionsViewModel viewModel_;
+  private DocumentProfilingOptionsPanelViewModel viewModel_;
 
   // temp
   public bool ShowsDocumentSettings { get; set; } = true;
 
   public DocumentProfilingOptionsPanel() {
     InitializeComponent();
-    viewModel_ = new DocumentProfilingOptionsViewModel();
+    viewModel_ = new DocumentProfilingOptionsPanelViewModel();
     DataContext = viewModel_;
   }
 }

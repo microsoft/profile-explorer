@@ -263,7 +263,7 @@ public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged 
     }
 
     FrameworkElement relativeControl = ProfileTextView;
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SourceFileOptionsPanel, SourceFileSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<SourceFileOptionsPanel, SourceFileSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {

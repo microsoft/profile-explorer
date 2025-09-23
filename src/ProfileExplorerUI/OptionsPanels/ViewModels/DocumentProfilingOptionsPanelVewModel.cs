@@ -20,7 +20,7 @@ using static ProfileExplorer.UI.ProfileDocumentMarkerSettings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
-public partial class DocumentProfilingOptionsViewModel : OptionsPanelBaseViewModel<ProfileDocumentMarkerSettings> {
+public partial class DocumentProfilingOptionsPanelViewModel : OptionsPanelBaseViewModel<ProfileDocumentMarkerSettings> {
   [ObservableProperty]
   private bool showsDocumentSettings_;
 
@@ -52,7 +52,7 @@ public partial class DocumentProfilingOptionsViewModel : OptionsPanelBaseViewMod
   private bool appendValueUnitSuffix_;
 
   [ObservableProperty]
-  private ObservableCollection<ValueUnitKind> valueUnitKinds_;
+  private ObservableCollection<ValueUnitKind> valueUnitOptions_;
 
   [ObservableProperty]
   private ValueUnitKind selectedValueUnit_;
@@ -84,7 +84,7 @@ public partial class DocumentProfilingOptionsViewModel : OptionsPanelBaseViewMod
   public override void Initialize(FrameworkElement parent, ProfileDocumentMarkerSettings settings, IUISession session) {
     base.Initialize(parent, settings, session);
 
-    valueUnitKinds_ = new() {
+    ValueUnitOptions_ = new() {
       ValueUnitKind.Second,
       ValueUnitKind.Millisecond,
       ValueUnitKind.Microsecond,
@@ -118,12 +118,12 @@ public partial class DocumentProfilingOptionsViewModel : OptionsPanelBaseViewMod
 
   [RelayCommand]
   private void ResetMaxWidth() {
-    maxPercentageBarWidth_ = ProfileDocumentMarkerSettings.DefaultMaxPercentageBarWidth;
+    MaxPercentageBarWidth_ = ProfileDocumentMarkerSettings.DefaultMaxPercentageBarWidth;
   }
 
   [RelayCommand]
   private void ResetWeightCutoff() {
-    elementWeightCutoff_ = ProfileDocumentMarkerSettings.DefaultElementWeightCutoff;
+    ElementWeightCutoff_ = ProfileDocumentMarkerSettings.DefaultElementWeightCutoff;
   }
 
   public override void SaveSettings() {

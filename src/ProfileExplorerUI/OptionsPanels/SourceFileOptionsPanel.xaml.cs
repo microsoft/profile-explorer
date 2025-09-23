@@ -9,88 +9,39 @@ using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
-public partial class SourceFileOptionsPanel : OptionsPanelBase {
-  private SourceFileSettings settings_;
+public partial class SourceFileOptionsPanel : UserControl, IMvvmOptionsPanel {
+  private SourceFileOptionsPanelViewModel viewModel_;
 
   public SourceFileOptionsPanel() {
     InitializeComponent();
+    viewModel_ = new SourceFileOptionsPanelViewModel();
+    DataContext = viewModel_;
   }
 
-  public override double DefaultHeight => 450;
-  public override double DefaultWidth => 400;
+  public double DefaultWidth => 400;
+  public double DefaultHeight => 450;
+  public double MinimumWidth => 400;
+  public double MinimumHeight => 300;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
-    base.Initialize(parent, settings, session);
-    settings_ = (SourceFileSettings)Settings;
-    ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
-    ReloadMappedPathsList();
-    ReloadExcludedPathsList();
+
+  public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
+    viewModel_.Initialize(parent, (SourceFileSettings)settings, session);
   }
 
-  public override void OnSettingsChanged(object newSettings) {
-    settings_ = (SourceFileSettings)newSettings;
-    ProfilingOptionsPanel.DataContext = null;
-    ProfilingOptionsPanel.DataContext = settings_.ProfileMarkerSettings;
+  public void SaveSettings() {
+    viewModel_.SaveSettings();
   }
 
-  private void ReloadMappedPathsList() {
-    var mappings = new List<KeyValuePair<string, string>>();
-
-    foreach (var pair in settings_.FinderSettings.SourceMappings) {
-      mappings.Add(pair);
-    }
-
-    var list = new ObservableCollectionRefresh<KeyValuePair<string, string>>(mappings);
-    MappedPathsList.ItemsSource = list;
+  public SettingsBase GetCurrentSettings() {
+    return viewModel_.GetCurrentSettings();
   }
 
-  private void ReloadExcludedPathsList() {
-    var list = new ObservableCollectionRefresh<string>(settings_.FinderSettings.DisabledSourceMappings);
-    ExcludedPathsList.ItemsSource = list;
+  public void ResetSettings() {
+    viewModel_.ResetSettings();
   }
 
-  private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-    if (sender is TextBox textBox) {
-      Utils.SelectTextBoxListViewItem(textBox, ExcludedPathsList);
-      e.Handled = true;
-    }
-  }
-
-  private void RemoveMappedPath_Click(object sender, RoutedEventArgs e) {
-    if (MappedPathsList.SelectedItem is KeyValuePair<string, string> pair) {
-      settings_.FinderSettings.SourceMappings.Remove(pair.Key);
-      ReloadMappedPathsList();
-    }
-  }
-
-  private void ClearMappedPath_Click(object sender, RoutedEventArgs e) {
-    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
-      settings_.FinderSettings.SourceMappings.Clear();
-      ReloadMappedPathsList();
-    }
-  }
-
-  private void AddExcludedPath_Click(object sender, RoutedEventArgs e) {
-    settings_.FinderSettings.DisabledSourceMappings.Add("");
-    ReloadExcludedPathsList();
-
-    // Wait for the UI to update
-    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => {
-      Utils.SelectEditableListViewItem(ExcludedPathsList, settings_.FinderSettings.DisabledSourceMappings.Count - 1);
-    });
-  }
-
-  private void ClearExcludedPath_Click(object sender, RoutedEventArgs e) {
-    if (Utils.ShowYesNoMessageBox("Do you want to clear the list?", this) == MessageBoxResult.Yes) {
-      settings_.FinderSettings.DisabledSourceMappings.Clear();
-      ReloadExcludedPathsList();
-    }
-  }
-
-  private void RemoveExcludedPath_Click(object sender, RoutedEventArgs e) {
-    if (ExcludedPathsList.SelectedItem is string path) {
-      settings_.FinderSettings.DisabledSourceMappings.Remove(path);
-      ReloadExcludedPathsList();
-    }
+  public void PanelClosing() {
+    // Clean up any resources if needed
+    viewModel_.PanelClosing();
   }
 }

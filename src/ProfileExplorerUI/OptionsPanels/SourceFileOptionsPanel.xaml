@@ -1,4 +1,4 @@
-﻿<local:OptionsPanelBase
+﻿<UserControl
   x:Class="ProfileExplorer.UI.OptionsPanels.SourceFileOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -10,12 +10,12 @@
   d:DesignHeight="450"
   d:DesignWidth="350"
   mc:Ignorable="d">
-  <local:OptionsPanelBase.Resources>
+  <UserControl.Resources>
     <CollectionViewSource
       x:Key="FontCollection"
       Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
     <utilities:FontFamilyConverter x:Key="FontFamilyConverter" />
-  </local:OptionsPanelBase.Resources>
+  </UserControl.Resources>
 
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <TabControl
@@ -29,43 +29,43 @@
             x:Name="AssemblyCheckBox"
             Margin="0,2,0,0"
             Content="Show assembly sections for source lines"
-            IsChecked="{Binding Path=ShowInlineAssembly, Mode=TwoWay}"
+            IsChecked="{Binding Path=ShowInlineAssembly_, Mode=TwoWay}"
             ToolTip="Display the associated assembly instructions for each source line" />
           <CheckBox
             Margin="20,2,0,2"
             Content="Auto-expand all assembly sections"
-            IsChecked="{Binding Path=AutoExpandInlineAssembly, Mode=TwoWay}"
+            IsChecked="{Binding Path=AutoExpandInlineAssembly_, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=AssemblyCheckBox, Path=IsChecked}"
             ToolTip="Display the assembly sections in expanded state by default" />
           <CheckBox
             x:Name="StatementsCheckBox"
             Margin="0,4,0,0"
             Content="Show source code statement annotations"
-            IsChecked="{Binding Path=ShowSourceStatements, Mode=TwoWay}"
+            IsChecked="{Binding Path=ShowSourceStatements_, Mode=TwoWay}"
             ToolTip="Parse source file and mark loops and if/else/switch statements in the profiling columns" />
           <CheckBox
             Margin="20,2,0,2"
             Content="Replace only insignificant column values"
-            IsChecked="{Binding Path=ReplaceInsignificantSourceStatements, Mode=TwoWay}"
+            IsChecked="{Binding Path=ReplaceInsignificantSourceStatements_, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
             ToolTip="Show annotations in the profiling columns only if replacing insignificant values.&#x0a;If not replaced, annotation is displayed in document left margin" />
 
           <CheckBox
             Margin="20,2,0,2"
             Content="Show statement annotations on left margin"
-            IsChecked="{Binding Path=ShowSourceStatementsOnMargin, Mode=TwoWay}"
+            IsChecked="{Binding Path=ShowSourceStatementsOnMargin_, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=StatementsCheckBox, Path=IsChecked}"
             ToolTip="Show the statement annotations as icons in the document left margin" />
 
           <CheckBox
             Margin="0,4,0,2"
             Content="Sync selected line with Assembly view"
-            IsChecked="{Binding Path=SyncLineWithDocument, Mode=TwoWay}"
+            IsChecked="{Binding Path=SyncLineWithDocument_, Mode=TwoWay}"
             ToolTip="Sync the corresponding lines with the selection in the Assembly view" />
           <CheckBox
             Margin="0,2,0,0"
             Content="Sync inlinee with Assembly view"
-            IsChecked="{Binding Path=SyncInlineeWithDocument, Mode=TwoWay}"
+            IsChecked="{Binding Path=SyncInlineeWithDocument_, Mode=TwoWay}"
             ToolTip="Display the deepest inlined function for the selection in the Assembly view" />
 
           <Separator
@@ -77,13 +77,13 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Highlight current text line"
-            IsChecked="{Binding Path=HighlightCurrentLine, Mode=TwoWay}"
+            IsChecked="{Binding Path=HighlightCurrentLine_, Mode=TwoWay}"
             ToolTip="Mark the current line in the document with a border" />
           <CheckBox
             x:Name="SyncWithDocumentCheckBox"
             Margin="0,2,0,4"
             Content="Sync style with Assembly view"
-            IsChecked="{Binding Path=SyncStyleWithDocument, Mode=TwoWay}"
+            IsChecked="{Binding Path=SyncStyleWithDocument_, Mode=TwoWay}"
             ToolTip="Use the same font and text size as the associated Assembly view" />
           <StackPanel
             Margin="0,2,0,2"
@@ -99,7 +99,7 @@
               VerticalAlignment="Center"
               IsSynchronizedWithCurrentItem="True"
               ItemsSource="{Binding Source={StaticResource FontCollection}}"
-              SelectedValue="{Binding Path=FontName, Mode=TwoWay, Converter={StaticResource FontFamilyConverter}}" />
+              SelectedValue="{Binding Path=FontName_, Mode=TwoWay, Converter={StaticResource FontFamilyConverter}}" />
           </StackPanel>
           <StackPanel
             Margin="0,0,0,2"
@@ -116,7 +116,7 @@
               Minimum="5.0"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
-              Value="{Binding Path=FontSize, Mode=TwoWay}" />
+              Value="{Binding Path=FontSize_, Mode=TwoWay}" />
           </StackPanel>
 
           <Separator
@@ -160,7 +160,7 @@
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
                 IsManipulationEnabled="True"
-                SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=BackgroundColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -181,7 +181,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=TextColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -201,7 +201,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=CurrentLineBorderColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=CurrentLineBorderColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -221,7 +221,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=MarginBackgroundColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=MarginBackgroundColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -244,7 +244,7 @@
               VerticalAlignment="Center"
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
-              SelectedColor="{Binding Path=AssemblyTextColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=AssemblyTextColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -266,7 +266,7 @@
               VerticalAlignment="Center"
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
-              SelectedColor="{Binding Path=AssemblyBackColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=AssemblyBackColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -306,6 +306,7 @@
               IsTextSearchEnabled="True"
               ScrollViewer.VerticalScrollBarVisibility="Auto"
               SelectionMode="Extended"
+              ItemsSource="{Binding ExcludedFilePathMappings_, Mode=TwoWay}"
               TextSearch.TextPath="Name">
               <ListView.View>
                 <GridView>
@@ -321,8 +322,7 @@
                       <DataTemplate>
                         <TextBox
                           BorderThickness="0"
-                          PreviewMouseLeftButtonDown="TextBox_PreviewMouseLeftButtonDown"
-                          Text="{Binding Path=., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                          Text="{Binding Path_, Mode=TwoWay}" />
                       </DataTemplate>
                     </GridViewColumn.CellTemplate>
                   </GridViewColumn>
@@ -335,6 +335,7 @@
                   <Setter Property="Background"
                           Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                  <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
                 </Style>
               </ListView.ItemContainerStyle>
             </ListView>
@@ -347,7 +348,7 @@
                 Height="24"
                 Padding="2"
                 HorizontalContentAlignment="Left"
-                Click="AddExcludedPath_Click"
+                Command="{Binding AddExcludedPathCommand}"
                 ToolTip="Add new symbol path to the list">
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -365,7 +366,7 @@
                 Margin="0,2,0,0"
                 Padding="2"
                 HorizontalContentAlignment="Left"
-                Click="RemoveExcludedPath_Click"
+                Command="{Binding RemoveExcludedPathCommand}"
                 ToolTip="Remove path from the list">
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -383,7 +384,7 @@
                 Margin="0,2,0,0"
                 Padding="2"
                 HorizontalContentAlignment="Left"
-                Click="ClearExcludedPath_Click"
+                Command="{Binding ClearExcludedPathsCommand}"
                 ToolTip="Remove all paths from the list">
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -440,6 +441,7 @@
               Margin="0,4,4,4"
               IsTextSearchEnabled="True"
               ScrollViewer.VerticalScrollBarVisibility="Auto"
+              ItemsSource="{Binding FilePathMappings_, Mode=TwoWay}"
               SelectionMode="Extended"
               TextSearch.TextPath="Name">
               <ListView.View>
@@ -457,11 +459,11 @@
                         <StackPanel>
                           <TextBlock
                             HorizontalAlignment="Stretch"
-                            Text="{Binding Key}"
+                            Text="{Binding Key_}"
                             TextTrimming="CharacterEllipsis" />
                           <TextBlock
                             HorizontalAlignment="Stretch"
-                            Text="{Binding Value}"
+                            Text="{Binding Value_}"
                             TextTrimming="CharacterEllipsis" />
                           <Separator />
 
@@ -478,6 +480,7 @@
                   <Setter Property="Background"
                           Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                   <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                  <Setter Property="IsSelected" Value="{Binding IsSelected_,Mode=TwoWay}" />
                 </Style>
               </ListView.ItemContainerStyle>
             </ListView>
@@ -491,7 +494,7 @@
                 Margin="0,2,0,0"
                 Padding="2"
                 HorizontalContentAlignment="Left"
-                Click="RemoveMappedPath_Click"
+                Command="{Binding RemoveMappedPathCommand}"
                 ToolTip="Remove path from the list">
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -509,7 +512,7 @@
                 Margin="0,2,0,0"
                 Padding="2"
                 HorizontalContentAlignment="Left"
-                Click="ClearMappedPath_Click"
+                Command="{Binding ClearMappedPathsCommand}"
                 ToolTip="Remove all paths from the list">
                 <StackPanel Orientation="Horizontal">
                   <Image
@@ -540,8 +543,9 @@
         x:Name="ProfilingOptionsPanel"
         Header="Profiling"
         Style="{StaticResource TabControlStyle}">
-        <local:DocumentProfilingOptionsPanel />
+        <local:DocumentProfilingOptionsPanel
+          DataContext="{Binding DocumentProfilingOptionsPanelViewModel_}"/>
       </TabItem>
     </TabControl>
   </Grid>
-</local:OptionsPanelBase>
+</UserControl>
