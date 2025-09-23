@@ -1,43 +1,43 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using System.Windows.Controls;
 using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
-public partial class SectionOptionsPanel : OptionsPanelBase {
+public partial class SectionOptionsPanel : UserControl, IMvvmOptionsPanel {
+  private SectionOptionsPanelViewModel viewModel_;
+
   public SectionOptionsPanel() {
     InitializeComponent();
+    viewModel_ = new SectionOptionsPanelViewModel();
+    DataContext = viewModel_;
   }
 
-  public override double DefaultHeight => 450;
-  public override double DefaultWidth => 400;
+  public double DefaultHeight => 450;
+  public double DefaultWidth => 400;
+  public double MinimumWidth => 400;
+  public double MinimumHeight => 300;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
-    base.Initialize(parent, settings, session);
+  public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
+    viewModel_.Initialize(parent, (UISectionSettings)settings, session);
   }
 
-  private void EditButton_Click(object sender, RoutedEventArgs e) {
-    string settingsPath = App.GetSectionsDefinitionFilePath(Session.CompilerInfo.CompilerIRName);
-    App.LaunchSettingsFileEditor(settingsPath);
+  public void SaveSettings() {
+    viewModel_.SaveSettings();
   }
 
-  private void ReloadButton_Click(object sender, RoutedEventArgs e) {
-    Session.SectionStyleProvider.LoadSettings();
+  public SettingsBase GetCurrentSettings() {
+    return viewModel_.GetCurrentSettings();
   }
 
-  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((UISectionSettings)Settings).CallStackPopupDuration = UISectionSettings.DefaultCallStackPopupDuration;
-    ReloadSettings();
+  public void ResetSettings() {
+    viewModel_.ResetSettings();
   }
 
-  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((UISectionSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
-    ReloadSettings();
-  }
-
-  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((UISectionSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
-    ReloadSettings();
+  public void PanelClosing() {
+    // Clean up any resources if needed
+    viewModel_.PanelClosing();
   }
 }
