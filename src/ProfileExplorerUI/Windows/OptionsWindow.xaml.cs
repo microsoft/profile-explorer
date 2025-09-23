@@ -52,6 +52,7 @@ public partial class OptionsWindow : Window {
     FunctionMarkingOptionsPanel.SaveSettings();
     SourceFileOptionsPanel.SaveSettings();
     SummaryOptionsPanel.SaveSettings();
+    FlameGraphOptionsPanel.SaveSettings();
 
     // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
   }
