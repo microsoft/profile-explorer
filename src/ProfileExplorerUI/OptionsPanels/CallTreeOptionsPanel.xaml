@@ -1,4 +1,4 @@
-﻿<local:OptionsPanelBase
+﻿<UserControl
   x:Class="ProfileExplorer.UI.OptionsPanels.CallTreeOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -26,12 +26,12 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Sync function in other profiling views"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding SyncSelection_, Mode=TwoWay}"
             ToolTip="Sync function displayed in other profiling views with selection" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Sync Source File view with selection"
-            IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
+            IsChecked="{Binding SyncSourceFile_, Mode=TwoWay}"
             ToolTip="Sync file displayed in the Source File view with selection" />
           <Separator
             Margin="0,4,0,4"
@@ -43,19 +43,19 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Auto-expand hottest call path"
-            IsChecked="{Binding ExpandHottestPath, Mode=TwoWay}"
+            IsChecked="{Binding ExpandHottestPath_, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
 
           <CheckBox
             Margin="0,2,0,2"
             Content="Append module name before function"
-            IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
+            IsChecked="{Binding PrependModuleToFunction_, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Margin="0,2,0,2"
             Content="Show function details on hover"
-            IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
+            IsChecked="{Binding ShowNodePopup_, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with details.&#x0a;If pinned, the popup expands into a Function Details panel popup" />
           <StackPanel
             Margin="20,2,0,2"
@@ -71,14 +71,14 @@
               Minimum="50"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
-              Value="{Binding Path=NodePopupDuration, Mode=TwoWay}" />
+              Value="{Binding Path=NodePopupDuration_, Mode=TwoWay}" />
             <Button
               Height="20"
               Margin="4,0,0,0"
               Padding="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="ResetCallStackPopupDurationButton_Click"
+              Command="{Binding ResetNodePopupDurationCommand}"
               Content="Default"
               ToolTip="Reset value to default duration" />
             <Button
@@ -87,7 +87,7 @@
               Padding="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="ShortCallStackPopupDurationButton_Click"
+              Command="{Binding SetShortNodePopupDurationCommand}"
               Content="Short"
               ToolTip="Reset value to default duration" />
             <Button
@@ -96,7 +96,7 @@
               Padding="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="LongCallStackPopupDurationButton_Click"
+              Command="{Binding SetLongNodePopupDurationCommand}"
               Content="Long"
               ToolTip="Reset value to default duration" />
           </StackPanel>
@@ -105,4 +105,4 @@
       </TabItem>
     </TabControl>
   </Grid>
-</local:OptionsPanelBase>
+</UserControl>

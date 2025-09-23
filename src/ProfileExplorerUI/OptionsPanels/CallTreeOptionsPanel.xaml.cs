@@ -1,34 +1,43 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using System.Windows.Controls;
 using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
-public partial class CallTreeOptionsPanel : OptionsPanelBase {
+public partial class CallTreeOptionsPanel : UserControl, IMvvmOptionsPanel {
+  private CallTreeOptionsPanelViewModel viewModel_;
+
   public CallTreeOptionsPanel() {
     InitializeComponent();
+    viewModel_ = new CallTreeOptionsPanelViewModel();
+    DataContext = viewModel_;
   }
 
-  public override double DefaultHeight => 450;
-  public override double DefaultWidth => 400;
+  public double DefaultHeight => 450;
+  public double DefaultWidth => 400;
+  public double MinimumHeight => 200;
+  public double MinimumWidth => 380;
 
-  public override void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
-    base.Initialize(parent, settings, session);
+  public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
+    viewModel_.Initialize(parent, (CallTreeSettings)settings, session);
   }
 
-  private void ResetCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = CallTreeSettings.DefaultNodePopupDuration;
-    ReloadSettings();
+  public void SaveSettings() {
+    viewModel_.SaveSettings();
   }
 
-  private void ShortCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.HoverDurationMs;
-    ReloadSettings();
+  public SettingsBase GetCurrentSettings() {
+    return viewModel_.GetCurrentSettings();
   }
 
-  private void LongCallStackPopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((CallTreeSettings)Settings).NodePopupDuration = HoverPreview.LongHoverDurationMs;
-    ReloadSettings();
+  public void ResetSettings() {
+    viewModel_.ResetSettings();
+  }
+
+  public void PanelClosing() {
+    // Clean up any resources if needed
+    viewModel_.PanelClosing();
   }
 }
