@@ -1,4 +1,4 @@
-﻿<local:OptionsPanelBase
+﻿<UserControl
   x:Class="ProfileExplorer.UI.OptionsPanels.TimelineOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -14,13 +14,13 @@
       <CheckBox
         Margin="0,2,0,2"
         Content="Mark functions in other profiling views"
-        IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+        IsChecked="{Binding SyncSelection_, Mode=TwoWay}"
         ToolTip="Mark the functions covered by the selected time range in the other profiling views" />
       <CheckBox
         x:Name="ShowCallStackPopupCheckbox"
         Margin="0,2,0,2"
         Content="Show hottest call stack popup on hover"
-        IsChecked="{Binding ShowCallStackPopup, Mode=TwoWay}"
+        IsChecked="{Binding ShowCallStackPopup_, Mode=TwoWay}"
         ToolTip="On mouse hover over a function, show a popup with the hottest call stack including it" />
       <StackPanel
         Margin="20,2,0,2"
@@ -36,14 +36,14 @@
           Minimum="50"
           ParsingNumberStyle="Number"
           ShowButtonSpinner="True"
-          Value="{Binding Path=CallStackPopupDuration, Mode=TwoWay}" />
+          Value="{Binding Path=CallStackPopupDuration_, Mode=TwoWay}" />
         <Button
           Height="20"
           Margin="4,0,0,0"
           Padding="2,0,2,0"
           VerticalAlignment="Center"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-          Click="ResetNodePopupDurationButton_Click"
+          Command="{Binding ResetCallStackPopupDurationCommand}"
           Content="Default"
           ToolTip="Reset value to default duration" />
         <Button
@@ -52,7 +52,7 @@
           Padding="2,0,2,0"
           VerticalAlignment="Center"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-          Click="ShortNodePopupDurationButton_Click"
+          Command="{Binding SetShortCallStackPopupDurationCommand}"
           Content="Short"
           ToolTip="Reset value to default duration" />
         <Button
@@ -61,7 +61,7 @@
           Padding="2,0,2,0"
           VerticalAlignment="Center"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-          Click="LongNodePopupDurationButton_Click"
+          Command="{Binding SetLongCallStackPopupDurationCommand}"
           Content="Long"
           ToolTip="Reset value to default duration" />
       </StackPanel>
@@ -74,7 +74,7 @@
       <CheckBox
         Margin="0,4,0,2"
         Content="Use colors based on thread name"
-        IsChecked="{Binding UseThreadColors, Mode=TwoWay}"
+        IsChecked="{Binding UseThreadColors_, Mode=TwoWay}"
         ToolTip="Mark the functions covered by the selected time range in the other profiling views" />
       <CheckBox
         Margin="0,4,0,0"
@@ -85,4 +85,4 @@
         Visibility="Collapsed" />
     </StackPanel>
   </Grid>
-</local:OptionsPanelBase>
+</UserControl>

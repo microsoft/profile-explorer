@@ -1,26 +1,43 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System.Windows;
+using System.Windows.Controls;
+using ProfileExplorer.Core.Settings;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
-public partial class TimelineOptionsPanel : OptionsPanelBase {
+public partial class TimelineOptionsPanel : UserControl, IMvvmOptionsPanel {
+  private TimelineOptionsPanelViewModel viewModel_;
+
   public TimelineOptionsPanel() {
     InitializeComponent();
+    viewModel_ = new TimelineOptionsPanelViewModel();
+    DataContext = viewModel_;
   }
 
-  private void ResetNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = TimelineSettings.DefaultCallStackPopupDuration;
-    ReloadSettings();
+  public double DefaultHeight => 320;
+  public double MinimumHeight => 200;
+  public double DefaultWidth => 380;
+  public double MinimumWidth => 380;
+
+  public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
+    viewModel_.Initialize(parent, (TimelineSettings)settings, session);
   }
 
-  private void ShortNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.HoverDurationMs;
-    ReloadSettings();
+  public void SaveSettings() {
+    viewModel_.SaveSettings();
   }
 
-  private void LongNodePopupDurationButton_Click(object sender, RoutedEventArgs e) {
-    ((TimelineSettings)Settings).CallStackPopupDuration = HoverPreview.LongHoverDurationMs;
-    ReloadSettings();
+  public SettingsBase GetCurrentSettings() {
+    return viewModel_.GetCurrentSettings();
+  }
+
+  public void ResetSettings() {
+    viewModel_.ResetSettings();
+  }
+
+  public void PanelClosing() {
+    // Clean up any resources if needed
+    viewModel_.PanelClosing();
   }
 }
