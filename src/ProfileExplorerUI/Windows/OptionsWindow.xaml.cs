@@ -59,6 +59,7 @@ public partial class OptionsWindow : Window {
     GraphOptionsPanel.SaveSettings();
     ExpressionGraphOptionsPanel.SaveSettings();
     PreviewPopupOptionsPanel.SaveSettings();
+    DocumentOptionsPanel.SaveSettings();
 
     // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
   }
