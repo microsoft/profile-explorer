@@ -58,6 +58,7 @@ public partial class OptionsWindow : Window {
     CallerCalleeOptionsPanel.SaveSettings();
     GraphOptionsPanel.SaveSettings();
     ExpressionGraphOptionsPanel.SaveSettings();
+    PreviewPopupOptionsPanel.SaveSettings();
 
     // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
   }
