@@ -5,13 +5,13 @@ namespace ProfileExplorer.Mcp;
 /// <summary>
 /// Interface for executing MCP actions against the Profile Explorer UI.
 /// This will be implemented by the UI project to provide the actual integration.
-/// Based on the 4 documented UI entry points in mcp-ui-entrypoints.md
+/// Provides methods for opening traces, analyzing processes and functions, and retrieving assembly code.
 /// </summary>
 public interface IMcpActionExecutor
 {
     /// <summary>
     /// Opens a trace file and loads the specified process in one complete operation
-    /// This combines all the UI entry points into a single streamlined action
+    /// This provides a simplified interface that handles the entire trace loading workflow
     /// </summary>
     /// <param name="profileFilePath">Path to the ETL trace file to open</param>
     /// <param name="processIdentifier">Process ID (e.g., "1234") or process name (e.g., "chrome.exe", "POWERPNT") to select and load from the trace</param>

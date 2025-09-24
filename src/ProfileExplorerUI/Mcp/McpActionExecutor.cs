@@ -16,8 +16,8 @@ using ProfileExplorer.Core.IR;
 namespace ProfileExplorer.UI.Mcp;
 
 /// <summary>
-/// Implementation of IMcpActionExecutor that provides UI automation for Profile Explorer.
-/// This is currently a dummy implementation that can be filled in later.
+/// Implementation of IMcpActionExecutor that provides Profile Explorer integration for AI agent interactions.
+/// This connects MCP tools to the actual Profile Explorer UI functionality.
 /// </summary>
 public class McpActionExecutor : IMcpActionExecutor
 {

@@ -42,7 +42,7 @@ public class ProfileExplorerMcpServer
 }
 
 /// <summary>
-/// MCP tools for Profile Explorer UI automation and analysis
+/// MCP tools for Profile Explorer AI agent interactions and analysis
 /// </summary>
 [McpServerToolType]
 public static class ProfileExplorerTools

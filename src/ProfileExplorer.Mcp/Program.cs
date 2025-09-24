@@ -31,7 +31,7 @@ public class Program
 
 /// <summary>
 /// Mock implementation of IMcpActionExecutor for testing purposes
-/// Implements the 4 documented UI entry points for testing
+/// Provides mock responses for all MCP tools to enable standalone testing
 /// </summary>
 public class MockMcpActionExecutor : IMcpActionExecutor {
     public Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier) {
