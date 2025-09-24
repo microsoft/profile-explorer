@@ -630,34 +630,29 @@ public partial class App : Application {
 
   private void InitializeMcpServerAsync(MainWindow mainWindow)
   {
-    // Check if MCP server should be enabled via environment variable
-    var enableMcp = Environment.GetEnvironmentVariable("PROFILE_EXPLORER_ENABLE_MCP");
-    if (string.Equals(enableMcp, "true", StringComparison.OrdinalIgnoreCase))
+    try
     {
-      try
+      // Create the MCP action executor
+      var executor = new McpActionExecutor(mainWindow);
+      
+      // Start the MCP server in the background
+      mcpServerTask = Task.Run(async () =>
       {
-        // Create the MCP action executor
-        var executor = new McpActionExecutor(mainWindow);
-        
-        // Start the MCP server in the background
-        mcpServerTask = Task.Run(async () =>
+        try
         {
-          try
-          {
-            await McpServerConfiguration.StartServerWithExecutorAsync(executor);
-          }
-          catch (Exception ex)
-          {
-            Trace.WriteLine($"MCP Server error: {ex}");
-          }
-        });
-        
-        Trace.WriteLine("MCP Server initialization started");
-      }
-      catch (Exception ex)
-      {
-        Trace.WriteLine($"Failed to initialize MCP Server: {ex}");
-      }
+          await McpServerConfiguration.StartServerWithExecutorAsync(executor);
+        }
+        catch (Exception ex)
+        {
+          Trace.WriteLine($"MCP Server error: {ex}");
+        }
+      });
+      
+      Trace.WriteLine("MCP Server initialization started");
+    }
+    catch (Exception ex)
+    {
+      Trace.WriteLine($"Failed to initialize MCP Server: {ex}");
     }
   }
 

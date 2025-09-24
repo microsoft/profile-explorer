@@ -60,8 +60,7 @@ dotnet run
 ### Integration with AI Assistants
 The UI project should:
 1. Implement `IMcpActionExecutor` interface to bridge MCP calls to Profile Explorer functionality
-2. Initialize the server using `McpServerConfiguration.StartServerWithExecutorAsync(executor)`
-3. Enable MCP server startup via environment variable (e.g., `PROFILE_EXPLORER_ENABLE_MCP=true`)
+2. Initialize the server using `McpServerConfiguration.StartServerWithExecutorAsync(executor)` in `App.OnStartup`
 
 Once integrated, users can interact with Profile Explorer through AI agents via AI assistants that support MCP.
 
