@@ -99,7 +99,6 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private DocumentSearchPanel documentSearchPanel_;
   private bool initialDockLayoutRestored_;
   private bool profileControlsVisible;
-  private UI.Mcp.McpActionExecutor mcpActionExecutor_;
 
   public MainWindow() {
     InitializeComponent();
@@ -112,7 +111,6 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     SetupGraphLayoutCache();
     SetupEvents();
     DataContext = this;
-    mcpActionExecutor_ = new UI.Mcp.McpActionExecutor(this);
   }
 
   public FunctionMarkingSettings MarkingSettings => App.Settings.MarkingSettings;
@@ -1104,39 +1102,6 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
 
   private void CheckUpdatesMenu_Click(object sender, RoutedEventArgs e) {
     CheckForUpdate();
-  }
-
-  private async void TestMcpLoadProfile_Click(object sender, RoutedEventArgs e) {
-    try {
-
-      bool result = await mcpActionExecutor_.OpenTraceAsync(@"D:\OneDrive - Microsoft\Documents\My Documents\Tracing\trace.etl", 34376);
-      string message = result ? "MCP Load Profile dialog opened successfully!" : "Failed to open MCP Load Profile dialog.";
-      MessageBox.Show(message, "MCP Test Result", MessageBoxButton.OK, 
-                      result ? MessageBoxImage.Information : MessageBoxImage.Error);
-    }
-    catch (Exception ex) {
-      MessageBox.Show($"Error testing MCP Load Profile: {ex.Message}", "MCP Test Error", 
-                      MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-  }
-
-  private async void TestFunctionAssembly_Click(object sender, RoutedEventArgs e) {
-    try {
-      string functionName = "Mso::Experiment::EcsNS::Private::SortByParameterGroups";
-      string assembly = await mcpActionExecutor_.GetFunctionAssemblyAsync(functionName);
-      
-      if (!string.IsNullOrEmpty(assembly)) {
-        MessageBox.Show($"Successfully retrieved assembly for function '{functionName}':\n\n{assembly.Substring(0, Math.Min(assembly.Length, 500))}...", 
-                        "MCP Function Assembly Test Result", MessageBoxButton.OK, MessageBoxImage.Information);
-      } else {
-        MessageBox.Show($"No assembly found for function '{functionName}'.", 
-                        "MCP Function Assembly Test Result", MessageBoxButton.OK, MessageBoxImage.Warning);
-      }
-    }
-    catch (Exception ex) {
-      MessageBox.Show($"Error testing MCP Function Assembly: {ex.Message}", "MCP Test Error", 
-                      MessageBoxButton.OK, MessageBoxImage.Error);
-    }
   }
 
   private class MainWindowState {
