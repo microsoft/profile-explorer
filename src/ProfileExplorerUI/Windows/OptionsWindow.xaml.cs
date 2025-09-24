@@ -55,6 +55,8 @@ public partial class OptionsWindow : Window {
     FlameGraphOptionsPanel.SaveSettings();
     TimelineOptionsPanel.SaveSettings();
     CallTreeOptionsPanel.SaveSettings();
+    CallerCalleeOptionsPanel.SaveSettings();
+    GraphOptionsPanel.SaveSettings();
 
     // TODO: Add SaveSettings() calls for other panels as they are migrated to MVVM
   }
