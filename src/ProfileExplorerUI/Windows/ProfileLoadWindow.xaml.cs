@@ -24,6 +24,14 @@ using ProfileExplorer.Core.Profile.ETW;
 
 namespace ProfileExplorer.UI;
 
+public enum ProcessSortField {
+  ProcessName,
+  Weight,
+  Duration,
+  ProcessId,
+  CommandLine
+}
+
 public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private CancelableTaskInstance loadTask_;
   private bool isLoadingProfile_;
@@ -42,6 +50,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private ICollectionView perfCountersFilter_;
   private ICollectionView metricsFilter_;
   private ICollectionView processFilter_;
+  private GridViewColumnValueSorter<ProcessSortField> processListSorter_;
   private string profileFilePath_;
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
@@ -55,6 +64,13 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     InitializeComponent();
     DataContext = this;
     Session = session;
+    
+    // Initialize the process list column sorter
+    processListSorter_ = new GridViewColumnValueSorter<ProcessSortField>(
+      ProcessList, 
+      MapColumnNameToSortField, 
+      CompareProcessSummaryValues);
+    
     loadTask_ = new CancelableTaskInstance();
     IsRecordMode = recordMode;
     loadedSession_ = loadedSession;
@@ -694,10 +710,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private void DisplayProcessList(List<ProcessSummary> list, List<ProcessSummary> selectedProcSummary = null) {
-    list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
     ProcessList.ItemsSource = null;
     ProcessList.ItemsSource = new ListCollectionView(list);
     ShowProcessList = true;
+    
+    // Set default sort by weight (highest first) to maintain current behavior
+    processListSorter_.SortByField(ProcessSortField.Weight, ListSortDirection.Descending);
 
     if (selectedProcSummary != null) {
       // Keep selected process after updating list.
@@ -1029,5 +1047,36 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     if (e.Key == Key.Enter) {
       await LoadProfileTraceFileAndCloseWindow(symbolSettings_);
     }
+  }
+
+  // To be wrapped as a ColumnFieldMappingDelegate for use by GridViewColumnValueSorter instantiation
+  private ProcessSortField MapColumnNameToSortField(string columnName) {
+    return columnName switch {
+      "ProcessNameColumn" => ProcessSortField.ProcessName,
+      "WeightPercentageColumn" => ProcessSortField.Weight,
+      "DurationColumn" => ProcessSortField.Duration,
+      "ProcessIdColumn" => ProcessSortField.ProcessId,
+      "ProcessCommandLineColumn" => ProcessSortField.CommandLine,
+      _ => ProcessSortField.ProcessName
+    };
+  }
+
+  // To be wrapped as a ValueCompareDelegate for use by GridViewColumnValueSorter instantiation
+  private int CompareProcessSummaryValues(object x, object y, ProcessSortField field,
+                                          ListSortDirection direction, object tag) {
+    if (x is not ProcessSummary processX || y is not ProcessSummary processY) {
+      return 0;
+    }
+
+    int result = field switch {
+      ProcessSortField.ProcessName => string.Compare(processX.Process.Name, processY.Process.Name, StringComparison.OrdinalIgnoreCase),
+      ProcessSortField.Weight => processX.Weight.CompareTo(processY.Weight),
+      ProcessSortField.Duration => processX.Duration.CompareTo(processY.Duration),
+      ProcessSortField.ProcessId => processX.Process.ProcessId.CompareTo(processY.Process.ProcessId),
+      ProcessSortField.CommandLine => string.Compare(processX.Process.CommandLine, processY.Process.CommandLine, StringComparison.OrdinalIgnoreCase),
+      _ => 0
+    };
+
+    return direction == ListSortDirection.Ascending ? result : -result;
   }
 }
