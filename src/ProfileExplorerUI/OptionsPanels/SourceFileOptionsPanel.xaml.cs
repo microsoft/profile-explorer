@@ -20,8 +20,8 @@ public partial class SourceFileOptionsPanel : UserControl, IMvvmOptionsPanel {
 
   public double DefaultWidth => 400;
   public double DefaultHeight => 450;
-  public double MinimumWidth => 400;
-  public double MinimumHeight => 300;
+  public double MinimumHeight => 200;
+  public double MinimumWidth => 380;
 
 
   public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {

@@ -19,10 +19,10 @@ public partial class FlameGraphOptionsPanel : UserControl, IMvvmOptionsPanel {
     ManagedPaletteSelector.PalettesSource = ColorPalette.BuiltinPalettes;
   }
 
-  public double DefaultHeight => 450;
-  public double DefaultWidth => 400;
-  public double MinimumWidth => 400;
-  public double MinimumHeight => 300;
+  public double DefaultHeight => 320;
+  public double MinimumHeight => 200;
+  public double DefaultWidth => 380;
+  public double MinimumWidth => 380;
 
   public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     viewModel_.Initialize(parent, (FlameGraphSettings)settings, session);

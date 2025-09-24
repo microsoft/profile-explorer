@@ -20,8 +20,8 @@ public partial class FunctionMarkingOptionsPanel : UserControl, IMvvmOptionsPane
   // IMvvmOptionsPanel properties
   public double DefaultWidth => 500;
   public double DefaultHeight => 600;
-  public double MinimumWidth => 400;
-  public double MinimumHeight => 300;
+  public double MinimumHeight => 200;
+  public double MinimumWidth => 380;
 
   public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     viewModel_.Initialize(parent, (FunctionMarkingSettings)settings, session);

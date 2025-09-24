@@ -17,8 +17,8 @@ public partial class SectionOptionsPanel : UserControl, IMvvmOptionsPanel {
 
   public double DefaultHeight => 450;
   public double DefaultWidth => 400;
-  public double MinimumWidth => 400;
-  public double MinimumHeight => 300;
+  public double MinimumHeight => 200;
+  public double MinimumWidth => 380;
 
   public void Initialize(FrameworkElement parent, SettingsBase settings, IUISession session) {
     viewModel_.Initialize(parent, (UISectionSettings)settings, session);
