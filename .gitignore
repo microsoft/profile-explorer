@@ -370,3 +370,6 @@ src/GrpcCppLib/ReleaseStaticLib
 # Include some pre-built binaries
 !/src/external/*
 !/src/external/arm64/*
+
+# Don't include MCP-generated temporary files
+src/tmp/*

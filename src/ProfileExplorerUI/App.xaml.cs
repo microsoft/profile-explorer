@@ -13,6 +13,8 @@ using System.Windows.Shell;
 using System.Xml;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Settings;
+using ProfileExplorer.UI.Mcp;
+using ProfileExplorer.Mcp;
 
 namespace ProfileExplorer.UI;
 
@@ -81,6 +83,7 @@ public partial class App : Application {
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
   public static IUISession Session;
+  private Task? mcpServerTask;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;
   public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
@@ -616,6 +619,60 @@ public partial class App : Application {
       Trace.WriteLine($"Disable hardware rendering");
       RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
     }
+
+    // Create and show the main window manually
+    var mainWindow = new MainWindow();
+    mainWindow.Show();
+
+    // Initialize MCP server if enabled
+    InitializeMcpServerAsync(mainWindow);
+  }
+
+  private void InitializeMcpServerAsync(MainWindow mainWindow)
+  {
+    try
+    {
+      // Create the MCP action executor
+      var executor = new McpActionExecutor(mainWindow);
+      
+      // Start the MCP server in the background
+      mcpServerTask = Task.Run(async () =>
+      {
+        try
+        {
+          await McpServerConfiguration.StartServerWithExecutorAsync(executor);
+        }
+        catch (Exception ex)
+        {
+          Trace.WriteLine($"MCP Server error: {ex}");
+        }
+      });
+      
+      Trace.WriteLine("MCP Server initialization started");
+    }
+    catch (Exception ex)
+    {
+      Trace.WriteLine($"Failed to initialize MCP Server: {ex}");
+    }
+  }
+
+  protected override void OnExit(ExitEventArgs e)
+  {
+    // Wait for MCP server to shutdown gracefully
+    if (mcpServerTask != null && !mcpServerTask.IsCompleted)
+    {
+      try
+      {
+        // Give the server a moment to shutdown gracefully
+        mcpServerTask.Wait(TimeSpan.FromSeconds(5));
+      }
+      catch (Exception ex)
+      {
+        Trace.WriteLine($"Error during MCP server shutdown: {ex}");
+      }
+    }
+
+    base.OnExit(e);
   }
 
   private static void FixPopupPlacement() {
