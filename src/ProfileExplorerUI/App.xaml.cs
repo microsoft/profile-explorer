@@ -278,9 +278,9 @@ public partial class App : Application {
     return result?.Path;
   }
 
-  public static string GetSyntaxHighlightingFilePath(SyntaxFileInfo syntaxFile) {
-    if (syntaxFile != null && File.Exists(syntaxFile.Path)) {
-      return syntaxFile.Path;
+  public static string GetSyntaxHighlightingFilePath(string path) {
+    if (path != null && File.Exists(path)) {
+      return path;
     }
 
     return GetSyntaxHighlightingFilePath();

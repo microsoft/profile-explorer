@@ -1,4 +1,4 @@
-﻿<local:OptionsPanelBase
+﻿<UserControl
   x:Class="ProfileExplorer.UI.OptionsPanels.ExpressionGraphOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -26,26 +26,26 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Show variable names"
-            IsChecked="{Binding Path=PrintVariableNames, Mode=TwoWay}"
+            IsChecked="{Binding Path=PrintVariableNames_, Mode=TwoWay}"
             ToolTip="Show the destination variable name for each instruction" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Show variable SSA definition numbers"
-            IsChecked="{Binding Path=PrintSSANumbers, Mode=TwoWay}"
+            IsChecked="{Binding Path=PrintSSANumbers_, Mode=TwoWay}"
             ToolTip="Show the SSA definition numbers for instructions and other operands" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Skip over copy instructions"
-            IsChecked="{Binding Path=SkipCopyInstructions, Mode=TwoWay}"
+            IsChecked="{Binding Path=SkipCopyInstructions_, Mode=TwoWay}"
             ToolTip="Don't include in the graph instructions that only copy values" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Group instructions by basic block"
-            IsChecked="{Binding Path=GroupInstructions, Mode=TwoWay}" />
+            IsChecked="{Binding Path=GroupInstructions_, Mode=TwoWay}" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Show expression bottom-up"
-            IsChecked="{Binding Path=PrintBottomUp, Mode=TwoWay}"
+            IsChecked="{Binding Path=PrintBottomUp_, Mode=TwoWay}"
             ToolTip="Show the expression inverted, with the start point placed up and the leaf operands placed down" />
           <TextBlock
             Margin="0,6,0,2"
@@ -63,7 +63,7 @@
               TickFrequency="2"
               TickPlacement="BottomRight"
               ToolTip="The maximum depth of the expression tree to show in the graph"
-              Value="{Binding Path=MaxExpressionDepth, Mode=TwoWay}" />
+              Value="{Binding Path=MaxExpressionDepth_, Mode=TwoWay}" />
             <TextBlock
               Margin="8,0,0,0"
               Text="{Binding Path=MaxExpressionDepth}" />
@@ -82,19 +82,19 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Bring selected node into view"
-            IsChecked="{Binding Path=BringNodesIntoView, Mode=TwoWay}"
+            IsChecked="{Binding Path=BringNodesIntoView_, Mode=TwoWay}"
             ToolTip="Scroll the graph to show the node corresponding to the selected line in the associated document" />
 
           <CheckBox
             x:Name="ShowPreviewCheckbox"
             Margin="0,2,0,2"
             Content="Show node preview popup on hover"
-            IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}"
+            IsChecked="{Binding Path=ShowPreviewPopup_, Mode=TwoWay}"
             ToolTip="Show a preview of the corresponding lines from the associated document" />
           <CheckBox
             Margin="20,3,0,2"
             Content="Only when a modifier key is pressed (Shift/Ctrl/Alt)"
-            IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
+            IsChecked="{Binding Path=ShowPreviewPopupWithModifier_, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
         </StackPanel>
       </TabItem>
@@ -109,19 +109,19 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Use semantic colorization for nodes"
-            IsChecked="{Binding Path=ColorizeNodes, Mode=TwoWay}" />
+            IsChecked="{Binding Path=ColorizeNodes_, Mode=TwoWay}" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Use semantic colorization for edges"
-            IsChecked="{Binding Path=ColorizeEdges, Mode=TwoWay}" />
+            IsChecked="{Binding Path=ColorizeEdges_, Mode=TwoWay}" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Highlight connected nodes on hover"
-            IsChecked="{Binding Path=HighlightConnectedNodesOnHover, Mode=TwoWay}" />
+            IsChecked="{Binding Path=HighlightConnectedNodesOnHover_, Mode=TwoWay}" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Highlight connected nodes on selection"
-            IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}" />
+            IsChecked="{Binding Path=HighlightConnectedNodesOnSelection_, Mode=TwoWay}" />
           <Separator
             Margin="0,4,0,4"
             Background="LightGray" />
@@ -145,7 +145,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=TextColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -166,7 +166,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=BackgroundColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -187,7 +187,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=NodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=NodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -207,7 +207,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=SelectedNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -227,7 +227,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=NodeBorderColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -247,7 +247,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=PredecessorNodeBorderColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=PredecessorNodeBorderColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -267,7 +267,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=SuccessorNodeBorderColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=SuccessorNodeBorderColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -287,7 +287,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=EdgeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=EdgeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -307,7 +307,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=UnaryInstructionNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=UnaryInstructionNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -328,7 +328,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=BinaryInstructionNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=BinaryInstructionNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -349,7 +349,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=CopyInstructionNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=CopyInstructionNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -370,7 +370,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=LoadStoreInstructionNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=LoadStoreInstructionNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -392,7 +392,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=CallInstructionNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=CallInstructionNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -414,7 +414,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=OperandNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=OperandNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -435,7 +435,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=NumberOperandNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=NumberOperandNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -456,7 +456,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=IndirectionOperandNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=IndirectionOperandNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -477,7 +477,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=AddressOperandNodeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=AddressOperandNodeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -498,7 +498,7 @@
                 VerticalAlignment="Center"
                 AvailableColorsSortingMode="HueSaturationBrightness"
                 BorderBrush="#707070"
-                SelectedColor="{Binding Path=LoopPhiBackedgeColor, Mode=TwoWay}"
+                SelectedColor="{Binding Path=LoopPhiBackedgeColor_, Mode=TwoWay}"
                 ShowDropDownButton="True" />
               <TextBlock
                 Grid.Column="1"
@@ -511,4 +511,4 @@
       </TabItem>
     </TabControl>
   </Grid>
-</local:OptionsPanelBase>
+</UserControl>

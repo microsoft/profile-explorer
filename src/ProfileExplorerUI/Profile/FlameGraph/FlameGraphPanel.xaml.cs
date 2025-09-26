@@ -477,7 +477,7 @@ public partial class FlameGraphPanel : ToolPanelControl, IFunctionProfileInfoPro
 
     //? TODO: Redesign settings change detection, doesn't work well
     //? when a panel shows multiple settings objects.
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<FlameGraphOptionsPanel, FlameGraphSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<FlameGraphOptionsPanel, FlameGraphSettings>(
       settings_.Clone(), GraphDetailsPanelHost, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {

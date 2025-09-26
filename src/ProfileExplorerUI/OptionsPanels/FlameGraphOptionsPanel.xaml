@@ -1,4 +1,4 @@
-﻿<local:OptionsPanelBase
+﻿<UserControl
   x:Class="ProfileExplorer.UI.OptionsPanels.FlameGraphOptionsPanel"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -21,17 +21,17 @@
           <CheckBox
             Margin="0,2,0,2"
             Content="Show Function Details panel"
-            IsChecked="{Binding ShowDetailsPanel, Mode=TwoWay}"
+            IsChecked="{Binding ShowDetailsPanel_, Mode=TwoWay}"
             ToolTip="Show the Function Details panel on the right-hand side" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Sync function in other profiling views"
-            IsChecked="{Binding SyncSelection, Mode=TwoWay}"
+            IsChecked="{Binding SyncSelection_, Mode=TwoWay}"
             ToolTip="Sync function displayed in other profiling views with selection" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Sync Source File view with selection"
-            IsChecked="{Binding SyncSourceFile, Mode=TwoWay}"
+            IsChecked="{Binding SyncSourceFile_, Mode=TwoWay}"
             ToolTip="Sync file displayed in the Source File view with selection" />
 
           <Separator
@@ -43,23 +43,23 @@
           <CheckBox
             Margin="0,4,0,2"
             Content="Include module name"
-            IsChecked="{Binding PrependModuleToFunction, Mode=TwoWay}"
+            IsChecked="{Binding PrependModuleToFunction_, Mode=TwoWay}"
             ToolTip="Show the module name in front of the function name" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Include function percentage"
-            IsChecked="{Binding AppendPercentageToFunction, Mode=TwoWay}"
+            IsChecked="{Binding AppendPercentageToFunction_, Mode=TwoWay}"
             ToolTip="Show the function instance time percentage after the name" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Include function time"
-            IsChecked="{Binding AppendDurationToFunction, Mode=TwoWay}"
+            IsChecked="{Binding AppendDurationToFunction_, Mode=TwoWay}"
             ToolTip="Show the function instance duration after the name" />
           <CheckBox
             x:Name="ShowCallStackPopupCheckbox"
             Margin="0,2,0,2"
             Content="Show function details on hover"
-            IsChecked="{Binding ShowNodePopup, Mode=TwoWay}"
+            IsChecked="{Binding ShowNodePopup_, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with details.&#x0a;If pinned, the popup expands into a Function Details panel popup" />
           <StackPanel
             Margin="20,2,0,2"
@@ -76,14 +76,14 @@
               Minimum="50"
               ParsingNumberStyle="Number"
               ShowButtonSpinner="True"
-              Value="{Binding Path=NodePopupDuration, Mode=TwoWay}" />
+              Value="{Binding Path=NodePopupDuration_, Mode=TwoWay}" />
             <Button
               Height="20"
               Margin="4,0,0,0"
               Padding="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="ResetNodePopupDurationButton_Click"
+              Command="{Binding ResetNodePopupDurationCommand}"
               Content="Default"
               ToolTip="Reset value to default duration" />
             <Button
@@ -92,7 +92,7 @@
               Padding="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="ShortNodePopupDurationButton_Click"
+              Command="{Binding SetShortNodePopupDurationCommand}"
               Content="Short"
               ToolTip="Reset value to default duration" />
             <Button
@@ -101,7 +101,7 @@
               Padding="2,0,2,0"
               VerticalAlignment="Center"
               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-              Click="LongNodePopupDurationButton_Click"
+              Command="{Binding SetLongNodePopupDurationCommand}"
               Content="Long"
               ToolTip="Reset value to default duration" />
           </StackPanel>
@@ -117,20 +117,20 @@
             Margin="0,2,0,2"
             Content="Use compact mode"
             ToolTip="Use a smaller font size for the Flame Graph nodes"
-            IsChecked="{Binding UseCompactMode, Mode=TwoWay}" />
+            IsChecked="{Binding UseCompactMode_, Mode=TwoWay}" />
           <CheckBox
             x:Name="KernelCheckBox"
             Margin="0,4,0,2"
             Content="Use different color palette for kernel code"
             ToolTip="Use the color palette specified below for code executing in kernel mode context"
-            IsChecked="{Binding UseKernelColorPalette, Mode=TwoWay}"
+            IsChecked="{Binding UseKernelColorPalette_, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
           <CheckBox
             x:Name="ManagedCheckBox"
             Margin="0,2,0,2"
             Content="Use different color palette for managed (.NET) code"
             ToolTip="Use the color palette specified below for code executing in managed (.NET) context"
-            IsChecked="{Binding UseManagedColorPalette, Mode=TwoWay}"
+            IsChecked="{Binding UseManagedColorPalette_, Mode=TwoWay}"
             IsEnabled="{Binding ElementName=ModuleColorsCheckBox, Path=IsChecked, Converter={StaticResource InvertedBoolConverter}}" />
           <StackPanel
             Margin="0,4,0,0"
@@ -142,7 +142,7 @@
               Height="20"
               HorizontalAlignment="Left"
               PreviewWidth="200"
-              SelectedPalette="{Binding DefaultColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+              SelectedPalette="{Binding DefaultColorPalette_, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
             <TextBlock
               Margin="8,0,0,0"
               VerticalAlignment="Center"
@@ -158,7 +158,7 @@
               Height="20"
               HorizontalAlignment="Left"
               PreviewWidth="200"
-              SelectedPalette="{Binding KernelColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+              SelectedPalette="{Binding KernelColorPalette_, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
             <TextBlock
               Margin="8,0,0,0"
               VerticalAlignment="Center"
@@ -174,7 +174,7 @@
               Height="20"
               HorizontalAlignment="Left"
               PreviewWidth="200"
-              SelectedPalette="{Binding ManagedColorPalette, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
+              SelectedPalette="{Binding ManagedColorPalette_, Mode=TwoWay, Converter={StaticResource ColorPaletteConverter}}" />
             <TextBlock
               Margin="8,0,0,0"
               VerticalAlignment="Center"
@@ -201,7 +201,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=NodeTextColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=NodeTextColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -222,7 +222,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=KernelNodeTextColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=KernelNodeTextColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -243,7 +243,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=ManagedNodeTextColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=ManagedNodeTextColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -264,7 +264,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=NodeModuleColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=NodeModuleColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -285,7 +285,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=NodePercentageColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=NodePercentageColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -306,7 +306,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=NodeWeightColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=NodeWeightColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -327,7 +327,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=NodeBorderColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -348,7 +348,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=KernelNodeBorderColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=KernelNodeBorderColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -369,7 +369,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=ManagedNodeBorderColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=ManagedNodeBorderColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -390,7 +390,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=SelectedNodeColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=SelectedNodeColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -411,7 +411,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=SelectedNodeBorderColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=SelectedNodeBorderColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -432,7 +432,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=SearchResultMarkingColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=SearchResultMarkingColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -453,7 +453,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=SearchedNodeColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=SearchedNodeColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -474,7 +474,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=SearchedNodeBorderColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=SearchedNodeBorderColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -487,27 +487,28 @@
       <TabItem
         x:Name="DetailsPanel"
         Header="Function Details panel"
+        DataContext="{Binding FunctionDetailsPanelViewModel_}"
         Style="{StaticResource TabControlStyle}">
         <StackPanel Margin="4,4,4,4">
           <CheckBox
             Margin="0,2,0,2"
             Content="Auto-expand Instance Statistics section"
-            IsChecked="{Binding ExpandInstances, Mode=TwoWay}"
+            IsChecked="{Binding ExpandInstances_, Mode=TwoWay}"
             ToolTip="Instances section expanded by default when selecting a function" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Auto-expand Histogram section"
-            IsChecked="{Binding ExpandHistogram, Mode=TwoWay}"
+            IsChecked="{Binding ExpandHistogram_, Mode=TwoWay}"
             ToolTip="Histogram section expanded by default when selecting a function" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Auto-expand Threads section"
-            IsChecked="{Binding ExpandThreads, Mode=TwoWay}"
+            IsChecked="{Binding ExpandThreads_, Mode=TwoWay}"
             ToolTip="Threads list section expanded by default when selecting a function" />
           <CheckBox
             Margin="0,2,0,2"
             Content="Alternate list view background color"
-            IsChecked="{Binding AlternateListRows, Mode=TwoWay}"
+            IsChecked="{Binding AlternateListRows_, Mode=TwoWay}"
             ToolTip="Alternate the background color of the function/module list view items" />
           <Separator
             Margin="0,4,0,4"
@@ -516,12 +517,13 @@
           <TextBlock
             FontWeight="Medium"
             Text="Function Lists" />
-          <StackPanel x:Name="FunctionListOptionsPanel">
+          <StackPanel x:Name="FunctionListOptionsPanel"
+                      DataContext="{Binding FunctionListOptionsPanelViewModel_}">
             <CheckBox
               x:Name="FilterWeightCheckBox"
               Margin="0,4,0,2"
               Content="Filter out insignificant functions"
-              IsChecked="{Binding FilterByWeight, Mode=TwoWay}"
+              IsChecked="{Binding FilterByWeight_, Mode=TwoWay}"
               ToolTip="Filter out functions with a time less than this value" />
             <StackPanel
               Margin="20,2,0,2"
@@ -538,14 +540,14 @@
                 Minimum="0"
                 ShowButtonSpinner="True"
                 ToolTip="Filter out functions with a time less than this value"
-                Value="{Binding Path=MinWeight, Mode=TwoWay}" />
+                Value="{Binding Path=MinWeight_, Mode=TwoWay}" />
               <Button
                 Height="20"
                 Margin="4,0,0,0"
                 Padding="2,0,2,0"
                 VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Click="ResetFilterWeightButton_Click"
+                Command="{Binding ResetFilterWeightCommand}"
                 Content="Default"
                 ToolTip="Reset value to default duration" />
             </StackPanel>
@@ -556,11 +558,11 @@
             <RadioButton
               Margin="0,4,8,0"
               Content="Total time (inclusive)"
-              IsChecked="{Binding SortByExclusiveTime, Converter={StaticResource InvertedBoolConverter}}" />
+              IsChecked="{Binding SortByExclusiveTime_, Converter={StaticResource InvertedBoolConverter}}" />
             <RadioButton
               Margin="0,2,8,2"
               Content="Self time (exclusive)"
-              IsChecked="{Binding SortByExclusiveTime}" />
+              IsChecked="{Binding SortByExclusiveTime_}" />
           </StackPanel>
 
           <Separator
@@ -573,7 +575,7 @@
             x:Name="ShowDetailsPopupCheckbox"
             Margin="0,4,0,2"
             Content="Show function preview on hover"
-            IsChecked="{Binding ShowPreviewPopup, Mode=TwoWay}"
+            IsChecked="{Binding ShowPreviewPopup_, Mode=TwoWay}"
             ToolTip="On mouse hover over a function, show a popup with details.&#x0a;If pinned, the popup expands into a Function Details panel popup" />
 
           <StackPanel Margin="20,2,0,0">
@@ -590,14 +592,14 @@
                 Minimum="50"
                 ParsingNumberStyle="Number"
                 ShowButtonSpinner="True"
-                Value="{Binding Path=PreviewPopupDuration, Mode=TwoWay}" />
+                Value="{Binding Path=PreviewPopupDuration_, Mode=TwoWay}" />
               <Button
                 Height="20"
                 Margin="4,0,0,0"
                 Padding="2,0,2,0"
                 VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Click="ResetDetailsPopupDurationButton_Click"
+                Command="{Binding ResetDetailsPopupDurationCommand}"
                 Content="Default"
                 ToolTip="Reset value to default duration" />
               <Button
@@ -606,7 +608,7 @@
                 Padding="2,0,2,0"
                 VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Click="ShortDetailsPopupDurationButton_Click"
+                Command="{Binding SetShortDetailsPopupDurationCommand}"
                 Content="Short"
                 ToolTip="Reset value to default duration" />
               <Button
@@ -615,7 +617,7 @@
                 Padding="2,0,2,0"
                 VerticalAlignment="Center"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                Click="LongDetailsPopupDurationButton_Click"
+                Command="{Binding SetLongDetailsPopupDurationCommand}"
                 Content="Long"
                 ToolTip="Reset value to default duration" />
             </StackPanel>
@@ -644,7 +646,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=HistogramBarColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=HistogramBarColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -665,7 +667,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=HistogramAverageColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=HistogramAverageColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -686,7 +688,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=HistogramMedianColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=HistogramMedianColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -707,7 +709,7 @@
               AvailableColorsSortingMode="HueSaturationBrightness"
               BorderBrush="#707070"
               IsManipulationEnabled="True"
-              SelectedColor="{Binding Path=HistogramCurrentColor, Mode=TwoWay}"
+              SelectedColor="{Binding Path=HistogramCurrentColor_, Mode=TwoWay}"
               ShowDropDownButton="True" />
             <TextBlock
               Grid.Column="1"
@@ -720,4 +722,4 @@
       </TabItem>
     </TabControl>
   </Grid>
-</local:OptionsPanelBase>
+</UserControl>

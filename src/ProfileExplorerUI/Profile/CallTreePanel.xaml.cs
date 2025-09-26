@@ -1108,7 +1108,7 @@ public partial class CallTreePanel : ToolPanelControl, IFunctionProfileInfoProvi
     //? when a panel shows multiple settings objects.
     var initialMarkingSettings = MarkingSettings.Clone();
     FrameworkElement relativeControl = CallTreeList;
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<CallTreeOptionsPanel, CallTreeSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<CallTreeOptionsPanel, CallTreeSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_) ||

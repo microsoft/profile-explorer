@@ -16,7 +16,7 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
     DependencyProperty.Register("SelectedPalette", typeof(ColorPalette), typeof(ColorPaletteSelector),
                                 new PropertyMetadata(null, OnSelectedPaletteChanged));
   public static readonly DependencyProperty PalettesSourceProperty =
-    DependencyProperty.Register("PalettesSource", typeof(List<ColorPalette>), typeof(ColorPaletteSelector),
+    DependencyProperty.Register("PalettesSource", typeof(IEnumerable<ColorPalette>), typeof(ColorPaletteSelector),
                                 new PropertyMetadata(null));
 
   public ColorPaletteSelector() {
@@ -41,8 +41,8 @@ public partial class ColorPaletteSelector : UserControl, INotifyPropertyChanged 
     }
   }
 
-  public List<ColorPalette> PalettesSource {
-    get => (List<ColorPalette>)GetValue(PalettesSourceProperty);
+  public IEnumerable<ColorPalette> PalettesSource {
+    get => (IEnumerable<ColorPalette>)GetValue(PalettesSourceProperty);
     set {
       if (value != PalettesSource) {
         SetValue(PalettesSourceProperty, value);

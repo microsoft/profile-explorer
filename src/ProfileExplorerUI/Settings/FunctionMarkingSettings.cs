@@ -73,6 +73,28 @@ public class FunctionMarkingSettings : SettingsBase {
     return false;
   }
 
+  public (bool Success, Markings Data, string ErrorMessage) LoadMarkingsFromFile(FrameworkElement owner) {
+    string filePath = Utils.ShowOpenFileDialog("JSON files|*.json", "*.*", "Import markings from file");
+
+    if (filePath == null) {
+      return (false, null, "No file selected");
+    }
+
+    if (!UIJsonUtils.DeserializeFromFile(filePath, out Markings data)) {
+      string errorMsg = $"Failed to import markings from {filePath}.\nFailed to read markings file";
+      Utils.ShowWarningMessageBox(errorMsg, owner);
+      return (false, null, "Failed to read markings file");
+    }
+
+    if (!ValidateMarkings(data, out string failureText)) {
+      string errorMsg = $"Failed to import markings from {filePath}.\n{failureText}";
+      Utils.ShowWarningMessageBox(errorMsg, owner);
+      return (false, null, failureText);
+    }
+
+    return (true, data, null);
+  }
+
   public bool ExportMarkings(FrameworkElement owner) {
     string filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
 
@@ -86,6 +108,23 @@ public class FunctionMarkingSettings : SettingsBase {
     }
 
     return false;
+  }
+
+  public bool ExportMarkingsFromData(FunctionMarkingSet currentSet, List<FunctionMarkingSet> savedSets, FrameworkElement owner) {
+    string filePath = Utils.ShowSaveFileDialog("JSON files|*.json", "*.*", "Export markings to file");
+
+    if (filePath == null) {
+      return false;
+    }
+
+    var markings = new Markings(currentSet, savedSets);
+    
+    if (!UIJsonUtils.SerializeToFile(markings, filePath)) {
+      Utils.ShowWarningMessageBox($"Failed to export markings to {filePath}", owner);
+      return false;
+    }
+
+    return true;
   }
 
   public void SwitchMarkingSet(FunctionMarkingSet set) {
@@ -277,7 +316,7 @@ public class FunctionMarkingSettings : SettingsBase {
     return PrintOptions(this);
   }
 
-  private record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
+  public record Markings(FunctionMarkingSet Current, List<FunctionMarkingSet> Saved);
 }
 
 [ProtoContract(SkipConstructor = true)]
