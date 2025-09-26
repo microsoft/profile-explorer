@@ -1535,13 +1535,20 @@ public class McpActionExecutor : IMcpActionExecutor
             }
 
             // Slice ModuleEx into BinaryInfo
-            var binaryInfos = moduleInfos.Select(module => new BinaryInfo {
-                Name = module.Name ?? string.Empty,
-                FullPath = ExtractModuleFullPath(module.Name),
-                TimePercentage = Math.Round(module.ExclusivePercentage, 4),
-                Time = module.ExclusiveWeight,
-                BinaryFileMissing = module.BinaryFileMissing,
-                DebugFileMissing = module.DebugFileMissing
+            var binaryInfos = moduleInfos.Select(module => {
+                var binaryInfo = new BinaryInfo {
+                    Name = module.Name ?? string.Empty,
+                    FullPath = ExtractModuleFullPath(module.Name),
+                    TimePercentage = Math.Round(module.ExclusivePercentage, 4),
+                    Time = module.ExclusiveWeight,
+                    BinaryFileMissing = module.BinaryFileMissing,
+                    DebugFileMissing = module.DebugFileMissing
+                };
+                
+                // Log binary info for diagnostics
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogDebug($"[MCP-BinaryInfo] Module: {binaryInfo.Name}, BinaryMissing: {binaryInfo.BinaryFileMissing}, DebugMissing: {binaryInfo.DebugFileMissing}");
+                
+                return binaryInfo;
             }).ToArray();
 
             // Apply filtering

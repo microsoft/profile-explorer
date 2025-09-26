@@ -961,6 +961,22 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
     window.ShowDialog();
   }
 
+  private void DiagnosticLogMenu_Click(object sender, RoutedEventArgs e) {
+    try {
+      string logInfo = DiagnosticLogger.GetLogFileInfo();
+      var result = MessageBox.Show(logInfo + "\n\nClick OK to open the log file location in Windows Explorer.", 
+                                   "Diagnostic Log", MessageBoxButton.OKCancel, MessageBoxImage.Information);
+      
+      if (result == MessageBoxResult.OK) {
+        DiagnosticLogger.ShowLogFileLocation();
+      }
+    }
+    catch (Exception ex) {
+      MessageBox.Show($"Failed to access diagnostic log: {ex.Message}", "Error", 
+                      MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+  }
+
   private void SetOptionalStatus(TimeSpan duration, string text, string tooltip = "", Brush textBrush = null) {
     SetOptionalStatus(text, tooltip, textBrush);
     statusTextAction_ = DelayedAction.StartNew(duration, () => SetOptionalStatus(""));

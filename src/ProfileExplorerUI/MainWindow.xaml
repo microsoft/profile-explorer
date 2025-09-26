@@ -623,6 +623,18 @@
                   Source="{StaticResource SettingsIcon}" />
               </MenuItem.Icon>
             </MenuItem>
+            <Separator />
+            
+            <MenuItem
+              Click="DiagnosticLogMenu_Click"
+              Header="Show Diagnostic Log">
+              <MenuItem.Icon>
+                <Image
+                  Width="16"
+                  Height="16"
+                  Source="{StaticResource ReportIcon}" />
+              </MenuItem.Icon>
+            </MenuItem>
           </MenuItem>
 
           <MenuItem Header="Help">
