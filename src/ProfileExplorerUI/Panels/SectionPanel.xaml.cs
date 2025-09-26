@@ -1696,6 +1696,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
         moduleInfo.Status = moduleStatus;
         moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
         moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
+        
+        // Log the module status for debugging
+        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogDebug($"[UI-ModuleStatus] Module {moduleInfo.Name}: BinaryLoaded={moduleStatus.HasBinaryLoaded}, DebugInfoLoaded={moduleStatus.HasDebugInfoLoaded}");
+        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogDebug($"[UI-ModuleStatus] Module {moduleInfo.Name}: BinaryFileMissing={moduleInfo.BinaryFileMissing}, DebugFileMissing={moduleInfo.DebugFileMissing}");
+      } else {
+        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning($"[UI-ModuleStatus] No module status found for {moduleInfo.Name}");
       }
 
       modulesEx.Add(moduleInfo);

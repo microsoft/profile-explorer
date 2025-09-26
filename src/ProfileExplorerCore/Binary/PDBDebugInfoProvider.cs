@@ -38,6 +38,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
   private ConcurrentDictionary<uint, List<SourceStackFrame>> inlineeByRvaCache_ = new();
+  private ConcurrentDictionary<long, bool> loggedRvas_ = new();
   private object cacheLock_ = new();
   private SymbolFileDescriptor symbolFile_;
   private SymbolFileSourceSettings settings_;
@@ -167,6 +168,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public FunctionDebugInfo FindFunctionByRVA(long rva) {
+    bool shouldLog = loggedRvas_.TryAdd(rva, true); // Returns true if newly added
+    string binaryName = symbolFile_?.FileName ?? "Unknown";
+    
     try {
       if (sortedFuncList_ != null) {
         // Query the function list first. If not found, then still query the actual PDB
@@ -174,6 +178,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
 
         if (result != null) {
+          if (shouldLog) {
+            DiagnosticLogger.LogInfo($"[PDBDebugInfo] Binary: {binaryName}, RVA: 0x{rva:X}, Function: {result.Name} (found in cache)");
+          }
           return result;
         }
       }
@@ -182,14 +189,22 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       // to justify the time spent in reading the entire PDB.
       if (sortedFuncList_ == null &&
           Interlocked.Increment(ref funcCacheMisses_) >= FunctionCacheMissThreshold) {
+        if (shouldLog) {
+          DiagnosticLogger.LogInfo($"[PDBDebugInfo] Binary: {binaryName}, cache miss threshold reached, loading function list");
+        }
         GetSortedFunctions();
 
         if (sortedFuncList_ != null) {
           var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva, sortedFuncListOverlapping_);
 
           if (result != null) {
+            if (shouldLog) {
+              DiagnosticLogger.LogInfo($"[PDBDebugInfo] Binary: {binaryName}, RVA: 0x{rva:X}, Function: {result.Name} (found after cache load)");
+            }
             return result;
           }
+        } else if (shouldLog) {
+          DiagnosticLogger.LogWarning($"[PDBDebugInfo] Binary: {binaryName}, failed to load function list");
         }
       }
 
@@ -197,10 +212,18 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       var symbol = FindFunctionSymbolByRVA(rva);
 
       if (symbol != null) {
+        if (shouldLog) {
+          DiagnosticLogger.LogInfo($"[PDBDebugInfo] Binary: {binaryName}, RVA: 0x{rva:X}, Function: {symbol.name} (found via PDB query)");
+        }
         return new FunctionDebugInfo(symbol.name, symbol.relativeVirtualAddress, (uint)symbol.length);
+      } else if (shouldLog) {
+        DiagnosticLogger.LogWarning($"[PDBDebugInfo] Binary: {binaryName}, RVA: 0x{rva:X}, Function: NOT_RESOLVED (no symbol found)");
       }
     }
     catch (Exception ex) {
+      if (shouldLog) {
+        DiagnosticLogger.LogError($"[PDBDebugInfo] Binary: {binaryName}, RVA: 0x{rva:X}, Function: ERROR ({ex.Message})", ex);
+      }
       Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
     }
 
@@ -307,7 +330,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return DebugFileSearchResult.None;
     }
 
+    DiagnosticLogger.LogInfo($"[SymbolSearch] Starting symbol file search for {symbolFile.FileName} (ID: {symbolFile.Id}, Age: {symbolFile.Age})");
+
     if (resolvedSymbolsCache_.TryGetValue(symbolFile, out var searchResult)) {
+      DiagnosticLogger.LogDebug($"[SymbolSearch] Found cached result for {symbolFile.FileName}: {(searchResult.Found ? "Found" : "Not Found")}");
       return searchResult;
     }
 
@@ -316,33 +342,45 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     // In case there is a timeout downloading the symbols, try again.
     string symbolSearchPath = ConstructSymbolSearchPath(settings);
+    DiagnosticLogger.LogDebug($"[SymbolSearch] Symbol search path: {symbolSearchPath}");
+    
     using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, CreateAuthHandler(settings));
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
     try {
+      DiagnosticLogger.LogInfo($"[SymbolSearch] Starting PDB download/search for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
       Trace.WriteLine($"Start PDB download for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
       result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+      DiagnosticLogger.LogInfo($"[SymbolSearch] FindSymbolFilePath result: {result ?? "null"}");
     }
     catch (Exception ex) {
+      DiagnosticLogger.LogError($"[SymbolSearch] Exception in FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}", ex);
       Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
     }
+
+    // Log the detailed search information
+    string searchLog = logWriter.ToString();
+    DiagnosticLogger.LogDebug($"[SymbolSearch] TraceEvent log for {symbolFile.FileName}:\n{searchLog}");
 
 #if DEBUG
     Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
     Trace.IndentLevel = 1;
-    Trace.WriteLine(logWriter.ToString());
+    Trace.WriteLine(searchLog);
     Trace.IndentLevel = 0;
     Trace.WriteLine("<< TraceEvent");
 #endif
 
     if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-      searchResult = DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+      DiagnosticLogger.LogInfo($"[SymbolSearch] Successfully found symbol file for {symbolFile.FileName}: {result}");
+      searchResult = DebugFileSearchResult.Success(symbolFile, result, searchLog);
     }
     else {
-      searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+      DiagnosticLogger.LogWarning($"[SymbolSearch] Failed to find symbol file for {symbolFile.FileName}. Result: {result ?? "null"}");
+      searchResult = DebugFileSearchResult.Failure(symbolFile, searchLog);
     }
 
     resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
+    DiagnosticLogger.LogInfo($"[SymbolSearch] Cached search result for {symbolFile.FileName}: {(searchResult.Found ? "Success" : "Failure")}");
     return searchResult;
   }
 
@@ -576,10 +614,20 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   private bool EnsureLoaded() {
     if (session_ != null) {
+      DiagnosticLogger.LogDebug($"[PDBDebugInfo] PDB session already loaded for {symbolFile_?.FileName ?? debugFilePath_ ?? "Unknown"}");
       return true;
     }
 
-    return LoadDebugInfo(debugFilePath_);
+    DiagnosticLogger.LogInfo($"[PDBDebugInfo] Loading PDB file: {debugFilePath_}");
+    bool loaded = LoadDebugInfo(debugFilePath_);
+    
+    if (loaded) {
+      DiagnosticLogger.LogInfo($"[PDBDebugInfo] Successfully loaded PDB file: {debugFilePath_}");
+    } else {
+      DiagnosticLogger.LogError($"[PDBDebugInfo] Failed to load PDB file: {debugFilePath_}");
+    }
+    
+    return loaded;
   }
 
   private SourceFileDebugInfo FindFunctionSourceFilePathImpl(SourceLineDebugInfo lineInfo,
