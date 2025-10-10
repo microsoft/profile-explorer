@@ -6,7 +6,7 @@
 	url = https://gitlab.com/graphviz/graphviz.git
 [submodule "src/external/tree-sitter/csharp-tree-sitter"]
 	path = src/external/tree-sitter/csharp-tree-sitter
-	url = https://github.com/tree-sitter/csharp-tree-sitter.git
+	url = https://github.com/bgn64/csharp-tree-sitter.git
 [submodule "src/external/tree-sitter/tree-sitter-c-sharp"]
 	path = src/external/tree-sitter/tree-sitter-c-sharp
 	url = https://github.com/tree-sitter/tree-sitter-c-sharp.git
