@@ -43,6 +43,8 @@ public class RawProfileData : IDisposable {
   private CompressedSegmentedList<PerformanceCounterEvent> perfCountersEvents_;
   [ProtoMember(9)]
   private ProfileTraceInfo traceInfo_;
+  [ProtoMember(10)]
+  private WaitAnalysisData waitData_;
 
   // Objects used only while building the profile.
   private Dictionary<ProfileThread, int> threadsMap_;
@@ -70,6 +72,7 @@ public class RawProfileData : IDisposable {
     samples_ = new List<ProfileSample>();
     perfCounters_ = new List<PerformanceCounter>();
     imageSymbols_ = new Dictionary<int, Dictionary<long, SymbolFileDescriptor>>();
+    waitData_ = new WaitAnalysisData();
 
     if (handlesDotNetEvents) {
       procManagedDataMap_ = new Dictionary<int, ManagedRawProfileData>();
@@ -84,6 +87,8 @@ public class RawProfileData : IDisposable {
   public CompressedSegmentedList<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
   public List<PerformanceCounter> PerformanceCounters => perfCounters_;
   public bool HasPerformanceCountersEvents => PerformanceCountersEvents is {Count: > 0};
+  public WaitAnalysisData WaitData => waitData_;
+  public bool HasWaitData => WaitData is {WaitIntervals.Count: > 0};
 
   public void Dispose() {
     perfCountersEvents_?.Dispose();
