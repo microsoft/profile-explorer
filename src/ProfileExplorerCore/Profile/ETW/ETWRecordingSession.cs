@@ -175,13 +175,18 @@ public sealed class ETWRecordingSession : IDisposable {
         var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
                              KernelTraceEventParser.Keywords.Process |
                              KernelTraceEventParser.Keywords.Thread |
-                             //KernelTraceEventParser.Keywords.ContextSwitch |
                              //KernelTraceEventParser.Keywords.DiskIO |
                              //KernelTraceEventParser.Keywords.DiskFileIO |
                              //KernelTraceEventParser.Keywords.DiskIOInit |
                              //KernelTraceEventParser.Keywords.FileIO |
                              //KernelTraceEventParser.Keywords.FileIOInit |
                              KernelTraceEventParser.Keywords.Profile;
+
+        // Enable cswitch events to collect
+        if (options_.RecordWaitAnalysis) {
+          capturedEvents |= KernelTraceEventParser.Keywords.ContextSwitch;
+          Trace.WriteLine("Wait analysis enabled: capturing ContextSwitch and ReadyThread events");
+        }
 
         if (options_.RecordPerformanceCounters && options_.PerformanceCounters.Count > 0) {
           // Enable the CPU perf. counters to collect.

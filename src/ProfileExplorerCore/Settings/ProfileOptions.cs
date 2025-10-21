@@ -46,6 +46,8 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
   public int TargetProcessId { get; set; }
   [ProtoMember(14)][OptionValue(false)]
   public bool RecordDotNetAssembly { get; set; }
+  [ProtoMember(15)][OptionValue(false)]
+  public bool RecordWaitAnalysis { get; set; }
   public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
   public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
   public bool HasTitle => !string.IsNullOrEmpty(Title);
