@@ -176,6 +176,7 @@ public partial class MainWindow : Window, IUISession {
     RegisterPanel(CallTreePanel, CallTreePanelHost);
     RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
     RegisterPanel(FlameGraphPanel, FlameGraphPanelHost);
+    RegisterPanel(TimelinePanel, TimelinePanelHost);
     RegisterPanel(HelpPanel, HelpPanelHost);
     RenameAllPanels();
 
