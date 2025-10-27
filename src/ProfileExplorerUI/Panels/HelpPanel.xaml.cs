@@ -128,6 +128,10 @@ public partial class HelpPanel : ToolPanelControl {
   }
 
   public static async Task DisplayPanelHelp(ToolPanelKind kind, IUISession session) {
+    if (session == null) {
+      return;
+    }
+    
     if (await session.ShowPanel(ToolPanelKind.Help) is HelpPanel panel) {
       await panel.LoadPanelHelp(kind);
     }
@@ -135,7 +139,9 @@ public partial class HelpPanel : ToolPanelControl {
 
   private async Task NavigateToTopic(HelpTopic topic) {
     if (topic != null && !string.IsNullOrEmpty(topic.URL)) {
-      TopicTextBox.Text = topic.Title;
+      if (TopicTextBox != null) {
+        TopicTextBox.Text = topic.Title;
+      }
       currentTopic_ = topic;
       await NavigateToURL(App.GetHelpFilePath(topic.URL));
     }
