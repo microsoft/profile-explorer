@@ -437,7 +437,7 @@ public partial class IRDocumentPopup : DraggablePopup, INotifyPropertyChanged {
     }
 
     FrameworkElement relativeControl = ProfileTextView;
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<PreviewPopupOptionsPanel, PreviewPopupSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<PreviewPopupOptionsPanel, PreviewPopupSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {

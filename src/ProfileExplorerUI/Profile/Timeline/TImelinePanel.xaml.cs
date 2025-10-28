@@ -936,7 +936,7 @@ public partial class TimelinePanel : ToolPanelControl, IFunctionProfileInfoProvi
     }
 
     FrameworkElement relativeControl = TimelineHost;
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<TimelineOptionsPanel, TimelineSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<TimelineOptionsPanel, TimelineSettings>(
       settings_.Clone(), relativeControl, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(settings_)) {

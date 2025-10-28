@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.38.0" />
     <PackageReference Include="Azure.Identity" Version="1.11.4" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="CSharpTest.Net.Collections" Version="14.906.1403.1082" />
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="Google.Protobuf" Version="3.28.3" />

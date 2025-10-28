@@ -2379,7 +2379,7 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
       return;
     }
 
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<SectionOptionsPanel, UISectionSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<SectionOptionsPanel, UISectionSettings>(
       Settings.Clone(), FunctionList, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(Settings)) {

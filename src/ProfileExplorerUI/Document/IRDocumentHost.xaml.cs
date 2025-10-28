@@ -1773,7 +1773,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
 
     FrameworkElement relativeElement = ProfileVisible ? ProfileColumns : TextView;
-    optionsPanelPopup_ = OptionsPanelHostPopup.Create<DocumentOptionsPanel, DocumentSettings>(
+    optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<DocumentOptionsPanel, DocumentSettings>(
       Settings.Clone(), relativeElement, Session,
       async (newSettings, commit) => {
         if (!newSettings.Equals(Settings)) {

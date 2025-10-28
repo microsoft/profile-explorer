@@ -1039,7 +1039,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
     if (symbolSettings_.SymbolPaths[index] != newSymbolPath) {
       symbolSettings_.SymbolPaths[index] = newSymbolPath;
-      SymbolOptionsPanel.ReloadSettings();
+      // Reload handled by data binding
     }
   }
 

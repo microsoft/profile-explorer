@@ -71,7 +71,7 @@ public static class JsonUtils {
   public static bool SerializeToFile<T>(T data, string path) {
     try {
       var options = GetJsonOptions();
-      using var stream = File.OpenWrite(path);
+      using var stream = File.Create(path);
       JsonSerializer.Serialize(stream, data, options);
       return true;
     }

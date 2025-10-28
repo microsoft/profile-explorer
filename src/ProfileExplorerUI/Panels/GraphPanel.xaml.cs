@@ -688,7 +688,7 @@ public partial class GraphPanel : ToolPanelControl {
     }
 
     if (PanelKind == ToolPanelKind.ExpressionGraph) {
-      optionsPanelPopup_ = OptionsPanelHostPopup.Create<ExpressionGraphOptionsPanel, ExpressionGraphSettings>(
+      optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<ExpressionGraphOptionsPanel, ExpressionGraphSettings>(
         Settings.Clone(), GraphHost, Session,
         async (newSettings, commit) => {
           if (!newSettings.Equals(Settings)) {
@@ -705,7 +705,7 @@ public partial class GraphPanel : ToolPanelControl {
         () => optionsPanelPopup_ = null);
     }
     else {
-      optionsPanelPopup_ = OptionsPanelHostPopup.Create<FlowGraphOptionsPanel, FlowGraphSettings>(
+      optionsPanelPopup_ = OptionsPanelHostPopup.CreateMvvm<FlowGraphOptionsPanel, FlowGraphSettings>(
         Settings.Clone(), GraphHost, Session,
         async (newSettings, commit) => {
           if (!newSettings.Equals(Settings)) {
