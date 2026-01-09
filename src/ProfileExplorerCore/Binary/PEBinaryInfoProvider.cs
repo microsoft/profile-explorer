@@ -143,15 +143,21 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
   public static BinaryFileSearchResult LocateBinaryFile(BinaryFileDescriptor binaryFile,
                                                         SymbolFileSourceSettings settings) {
+    var sw = Stopwatch.StartNew();
+    
     // Check if the binary was requested before.
     if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
+      DiagnosticLogger.LogDebug($"[BinarySearch] Cache hit for {binaryFile.ImageName}");
       return searchResult;
     }
+
+    DiagnosticLogger.LogInfo($"[BinarySearch] Starting binary search for {binaryFile.ImageName} (Size: {binaryFile.ImageSize}, Timestamp: {binaryFile.TimeStamp})");
 
     // Quick check if trace was recorded on local machine.
     string result = FindExactLocalBinaryFile(binaryFile);
 
     if (result != null) {
+      DiagnosticLogger.LogInfo($"[BinarySearch] Found exact local binary for {binaryFile.ImageName} at {result} ({sw.ElapsedMilliseconds}ms)");
       binaryFile = GetBinaryFileInfo(result);
       searchResult = BinaryFileSearchResult.Success(binaryFile, result, "");
       resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
@@ -189,25 +195,33 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
       if (result == null) {
         // Finally, try an approximate manual search.
+        DiagnosticLogger.LogDebug($"[BinarySearch] Symbol server search failed, trying approximate local search for {binaryFile.ImageName}");
         result = FindMatchingLocalBinaryFile(binaryFile, settings);
       }
     }
     catch (Exception ex) {
+      DiagnosticLogger.LogError($"[BinarySearch] Exception during binary search for {binaryFile.ImageName}: {ex.Message}", ex);
       Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
     }
+
+    var searchDuration = sw.Elapsed;
+    string searchLog = logWriter.ToString();
+    
 #if DEBUG
     Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
-    Trace.WriteLine(logWriter.ToString());
+    Trace.WriteLine(searchLog);
     Trace.WriteLine("<< TraceEvent");
 #endif
 
     if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+      DiagnosticLogger.LogInfo($"[BinarySearch] Found binary for {binaryFile.ImageName} at {result} ({searchDuration.TotalMilliseconds:F0}ms)");
       // Read the binary info from the local file to fill in all fields.
       binaryFile = GetBinaryFileInfo(result);
-      searchResult = BinaryFileSearchResult.Success(binaryFile, result, logWriter.ToString());
+      searchResult = BinaryFileSearchResult.Success(binaryFile, result, searchLog);
     }
     else {
-      searchResult = BinaryFileSearchResult.Failure(binaryFile, logWriter.ToString());
+      DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
+      searchResult = BinaryFileSearchResult.Failure(binaryFile, searchLog);
     }
 
     resolvedBinariesCache_.TryAdd(binaryFile, searchResult);

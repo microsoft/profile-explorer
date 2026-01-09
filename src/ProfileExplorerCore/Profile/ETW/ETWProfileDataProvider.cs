@@ -761,6 +761,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                              SymbolFileSourceSettings symbolSettings,
                                              ProfileLoadProgressHandler progressCallback,
                                              CancelableTask cancelableTask) {
+    var loadStartTime = Stopwatch.StartNew();
+    DiagnosticLogger.LogInfo($"[SymbolLoading] === Starting LoadBinaryAndDebugFiles for process {mainProcess.ImageFileName} ===");
+    
     var imageList = mainProcess.Images(rawProfile).ToList();
     var kernelProc = rawProfile.FindProcess(ETWEventProcessor.KernelProcessId);
 
@@ -769,6 +772,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     int imageLimit = imageList.Count;
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Total images to process: {imageLimit} (including kernel modules: {kernelProc != null})");
 
     // Find the modules with samples, sorted by sample count.
     // Used to skip loading of insignificant modules with few samples.
@@ -778,6 +782,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     if (symbolSettings.SkipLowSampleModules) {
       moduleSampleCutOff = (int)(symbolSettings.LowSampleModuleCutoff * rawProfile.Samples.Count);
     }
+
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Module filtering: SkipLowSampleModules={symbolSettings.SkipLowSampleModules}, " +
+                             $"Cutoff={moduleSampleCutOff} ({symbolSettings.LowSampleModuleCutoff:P1} of {rawProfile.Samples.Count} samples), " +
+                             $"TopModulesCount={topModules.Count}");
 
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Sample cutoff calculation: {symbolSettings.LowSampleModuleCutoff} * {rawProfile.Samples.Count} = {moduleSampleCutOff}");
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Skip low sample modules: {symbolSettings.SkipLowSampleModules}");
@@ -855,15 +863,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       });
     }
 
+    // Count how many binary tasks were started
+    int binaryTasksStarted = binTaskList.Count(t => t != null);
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Binary download phase: Started {binaryTasksStarted} download tasks out of {imageLimit} images");
+
     // Determine the compiler target for the new session.
     var irMode = IRMode.Default;
 
-#if DEBUG
     var binSw = Stopwatch.StartNew();
-#endif
+    int binariesFound = 0;
+    int binariesProcessed = 0;
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
+        DiagnosticLogger.LogInfo($"[SymbolLoading] Binary loading cancelled at image {i}/{imageLimit}");
         return;
       }
 
@@ -871,7 +884,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
+      binariesProcessed++;
+      var taskStartTime = Stopwatch.StartNew();
       var binaryFile = await binTaskList[i].ConfigureAwait(false);
+      var taskDuration = taskStartTime.Elapsed;
+      
+      // Log slow binary lookups (> 1 second)
+      if (taskDuration.TotalSeconds > 1) {
+        DiagnosticLogger.LogWarning($"[SymbolLoading] Slow binary lookup ({taskDuration.TotalSeconds:F1}s): {imageList[i].ModuleName} - Found: {binaryFile.Found}");
+      }
 
       if (irMode == IRMode.Default && binaryFile is {Found: true}) {
         var binaryInfo = binaryFile.BinaryFile;
@@ -893,15 +914,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
 
       if (binaryFile.Found) {
+        binariesFound++;
         Trace.WriteLine($"Downloaded binary: {binaryFile.FilePath}");
         UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, i,
                        Utilities.Utils.TryGetFileName(binaryFile.BinaryFile.ImageName));
       }
     }
 
-#if DEBUG
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Binary download complete: {binariesFound}/{binariesProcessed} found in {binSw.Elapsed.TotalSeconds:F1}s");
     Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
-#endif
 
     compilerInfoProvider_ = new ASMCompilerInfoProvider(irMode);
     await (StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, compilerInfoProvider_) ?? Task.CompletedTask);
@@ -910,12 +931,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
     var pdbTaskSemaphore = new SemaphoreSlim(12);
+    var pdbSw = Stopwatch.StartNew();
 
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Starting PDB/symbol file search for {imageLimit} images. Sample cutoff: {moduleSampleCutOff}");
     Trace.WriteLine("=== DEBUG FILE SEARCH LOGGING TEST - This message should ALWAYS appear ===");
     Trace.WriteLine($"DEBUG_FILTER_DEBUG: Starting debug file search for {imageLimit} modules. Low sample cutoff: {moduleSampleCutOff}");
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
+        DiagnosticLogger.LogInfo($"[SymbolLoading] PDB loading cancelled at image {i}/{imageLimit}");
         return;
       }
 
@@ -996,31 +1020,45 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       }
     }
 
+    int pdbTasksStarted = pdbTaskList.Count(t => t != null);
+    DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download phase: Started {pdbTasksStarted} download tasks for {pdbCount} eligible modules");
+
     UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
-#if DEBUG
-    var sw = Stopwatch.StartNew();
-#endif
+    int pdbsFound = 0;
+    int pdbsProcessed = 0;
 
     // Wait for the PDBs to be loaded.
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
+        DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download cancelled at image {i}/{imageLimit}");
         return;
       }
 
       if (pdbTaskList[i] != null) {
+        pdbsProcessed++;
+        var pdbTaskStart = Stopwatch.StartNew();
         var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
+        var pdbTaskDuration = pdbTaskStart.Elapsed;
+        
+        // Log slow PDB lookups (> 2 seconds)
+        if (pdbTaskDuration.TotalSeconds > 2) {
+          DiagnosticLogger.LogWarning($"[SymbolLoading] Slow PDB lookup ({pdbTaskDuration.TotalSeconds:F1}s): {imageList[i].ModuleName} - Found: {pdbPath.Found}");
+        }
 
         if (pdbPath.Found) {
+          pdbsFound++;
           UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, i,
                          Utilities.Utils.TryGetFileName(pdbPath.SymbolFile.FileName));
         }
       }
     }
 
+    var totalPdbTime = pdbSw.Elapsed;
+    DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download complete: {pdbsFound}/{pdbsProcessed} found in {totalPdbTime.TotalSeconds:F1}s");
+    DiagnosticLogger.LogInfo($"[SymbolLoading] === LoadBinaryAndDebugFiles completed in {loadStartTime.Elapsed.TotalSeconds:F1}s ===");
+    
     UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
-#if DEBUG
-    Trace.WriteLine($"PDB download time: {sw.Elapsed}");
-#endif
+    Trace.WriteLine($"PDB download time: {totalPdbTime}");
   }
 
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,

@@ -43,6 +43,13 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
+        // Check if the requested trace and process is already loaded
+        var alreadyLoadedResult = await CheckIfTraceAlreadyLoadedAsync(profileFilePath, processIdentifier);
+        if (alreadyLoadedResult != null)
+        {
+            return alreadyLoadedResult;
+        }
+
         // Try to parse as a process ID first
         if (int.TryParse(processIdentifier, out int processId))
         {
@@ -60,6 +67,86 @@ public class McpActionExecutor : IMcpActionExecutor
 
         // If not a number, treat as process name
         return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
+    }
+
+    /// <summary>
+    /// Checks if the requested trace file and process is already loaded.
+    /// Returns a successful OpenTraceResult if already loaded, or null if not loaded.
+    /// This helps avoid timeout errors when a trace was already loaded but MCP timed out waiting.
+    /// </summary>
+    private async Task<OpenTraceResult> CheckIfTraceAlreadyLoadedAsync(string profileFilePath, string processIdentifier)
+    {
+        return await dispatcher.InvokeAsync(() =>
+        {
+            try
+            {
+                var sessionState = mainWindow.SessionState;
+                var profileData = sessionState?.ProfileData;
+                var report = profileData?.Report;
+
+                if (report == null)
+                {
+                    return null; // No profile loaded
+                }
+
+                // Get the currently loaded trace path
+                string loadedTracePath = report.TraceInfo?.TraceFilePath;
+                if (string.IsNullOrEmpty(loadedTracePath))
+                {
+                    return null;
+                }
+
+                // Normalize paths for comparison
+                string normalizedRequestedPath = Path.GetFullPath(profileFilePath).ToLowerInvariant();
+                string normalizedLoadedPath = Path.GetFullPath(loadedTracePath).ToLowerInvariant();
+
+                if (normalizedRequestedPath != normalizedLoadedPath)
+                {
+                    return null; // Different trace file
+                }
+
+                // Check if the requested process matches
+                var currentProcess = report.Process;
+                if (currentProcess == null)
+                {
+                    return null;
+                }
+
+                bool processMatches = false;
+                
+                // Check by process ID
+                if (int.TryParse(processIdentifier, out int requestedPid))
+                {
+                    processMatches = currentProcess.ProcessId == requestedPid;
+                }
+                else
+                {
+                    // Check by process name (case-insensitive, partial match)
+                    processMatches = 
+                        (currentProcess.Name != null && 
+                         currentProcess.Name.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase)) ||
+                        (currentProcess.ImageFileName != null && 
+                         currentProcess.ImageFileName.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (processMatches)
+                {
+                    // The requested trace and process is already loaded!
+                    return new OpenTraceResult
+                    {
+                        Success = true,
+                        AlreadyLoaded = true,
+                        Message = $"Trace and process already loaded (PID: {currentProcess.ProcessId}, Name: {currentProcess.Name})"
+                    };
+                }
+
+                return null; // Same trace but different process requested
+            }
+            catch (Exception)
+            {
+                return null; // On any error, proceed with normal loading
+            }
+        });
     }
 
     private async Task<OpenTraceResult> OpenTraceByProcessIdAsync(string profileFilePath, int processId)
@@ -241,7 +328,7 @@ public class McpActionExecutor : IMcpActionExecutor
         });
         
         // Step 7: Wait for the profile to finish loading
-        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(5));
+        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
         if (!profileLoadCompleted)
         {
             return new OpenTraceResult
@@ -330,7 +417,7 @@ public class McpActionExecutor : IMcpActionExecutor
         });
 
         // Step 7: Wait for the profile to finish loading
-        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(5));
+        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
         if (!profileLoadCompleted)
         {
             return new OpenTraceResult
