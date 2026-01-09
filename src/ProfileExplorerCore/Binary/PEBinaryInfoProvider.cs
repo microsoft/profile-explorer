@@ -15,8 +15,56 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Binary;
 
+/// <summary>
+/// Contains version information extracted from a PE file's version resource.
+/// </summary>
+public sealed class PEVersionInfo {
+  public string CompanyName { get; init; }
+  public string ProductName { get; init; }
+  public string FileDescription { get; init; }
+  public string LegalCopyright { get; init; }
+  public string OriginalFilename { get; init; }
+
+  /// <summary>
+  /// Checks if any of the version info fields contain the specified text (case-insensitive).
+  /// </summary>
+  public bool ContainsText(string text) {
+    if (string.IsNullOrEmpty(text)) {
+      return false;
+    }
+
+    return ContainsTextInternal(CompanyName, text) ||
+           ContainsTextInternal(ProductName, text) ||
+           ContainsTextInternal(FileDescription, text) ||
+           ContainsTextInternal(LegalCopyright, text);
+  }
+
+  /// <summary>
+  /// Checks if any of the version info fields contain any of the specified texts (case-insensitive).
+  /// </summary>
+  public bool ContainsAnyText(IEnumerable<string> texts) {
+    foreach (var text in texts) {
+      if (ContainsText(text)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool ContainsTextInternal(string field, string text) {
+    return !string.IsNullOrEmpty(field) &&
+           field.Contains(text, StringComparison.OrdinalIgnoreCase);
+  }
+
+  public override string ToString() {
+    return $"Company: {CompanyName ?? "N/A"}, Product: {ProductName ?? "N/A"}, Description: {FileDescription ?? "N/A"}";
+  }
+}
+
 public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ = new();
+  private static ConcurrentDictionary<string, PEVersionInfo> versionInfoCache_ = new();
   private string filePath_;
   private PEReader reader_;
 
@@ -129,6 +177,61 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     return null;
   }
 
+  /// <summary>
+  /// Gets version information (Company, Product, Description, Copyright) from a PE file.
+  /// Uses FileVersionInfo which reads the version resource from the PE file.
+  /// </summary>
+  public static PEVersionInfo GetVersionInfo(string filePath) {
+    if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) {
+      return null;
+    }
+
+    // Check cache first
+    if (versionInfoCache_.TryGetValue(filePath, out var cached)) {
+      return cached;
+    }
+
+    try {
+      var fileVersionInfo = FileVersionInfo.GetVersionInfo(filePath);
+      var versionInfo = new PEVersionInfo {
+        CompanyName = fileVersionInfo.CompanyName,
+        ProductName = fileVersionInfo.ProductName,
+        FileDescription = fileVersionInfo.FileDescription,
+        LegalCopyright = fileVersionInfo.LegalCopyright,
+        OriginalFilename = fileVersionInfo.OriginalFilename
+      };
+
+      versionInfoCache_.TryAdd(filePath, versionInfo);
+      return versionInfo;
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"Failed to read version info from {filePath}: {ex.Message}");
+      return null;
+    }
+  }
+
+  /// <summary>
+  /// Checks if a PE file's version info matches any of the specified company filter strings.
+  /// Returns true if any filter string is found in Company, Product, Description, or Copyright fields.
+  /// Returns true if no filters are specified (empty/null list).
+  /// Returns true if the file doesn't exist or version info cannot be read (fail-open for safety).
+  /// </summary>
+  public static bool MatchesCompanyFilter(string filePath, IReadOnlyList<string> companyFilters) {
+    // No filter specified - accept all
+    if (companyFilters == null || companyFilters.Count == 0) {
+      return true;
+    }
+
+    var versionInfo = GetVersionInfo(filePath);
+
+    // If we can't read version info, accept the file (fail-open)
+    if (versionInfo == null) {
+      return true;
+    }
+
+    return versionInfo.ContainsAnyText(companyFilters);
+  }
+
   public static async Task<BinaryFileSearchResult> LocateBinaryFileAsync(BinaryFileDescriptor binaryFile,
                                                                          SymbolFileSourceSettings settings) {
     // Check if the binary was requested before.
@@ -152,6 +255,14 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     }
 
     DiagnosticLogger.LogInfo($"[BinarySearch] Starting binary search for {binaryFile.ImageName} (Size: {binaryFile.ImageSize}, Timestamp: {binaryFile.TimeStamp})");
+
+    // Check if this binary was previously rejected (failed lookup in a prior session).
+    if (settings.IsRejectedBinaryFile(binaryFile)) {
+      DiagnosticLogger.LogInfo($"[BinarySearch] SKIPPED - previously rejected: {binaryFile.ImageName}");
+      searchResult = BinaryFileSearchResult.Failure(binaryFile, "Previously rejected");
+      resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+      return searchResult;
+    }
 
     // Quick check if trace was recorded on local machine.
     string result = FindExactLocalBinaryFile(binaryFile);
@@ -179,6 +290,13 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       using var symbolReader =
         new SymbolReader(logWriter, userSearchPath, PDBDebugInfoProvider.CreateAuthHandler(settings));
       symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+
+      // Set symbol server timeout from settings (default 10 seconds).
+      // Use 10 seconds as fallback if setting is 0 (e.g., from old settings file without this property).
+      int timeoutSeconds = settings.SymbolServerTimeoutSeconds > 0 ? settings.SymbolServerTimeoutSeconds : 10;
+      symbolReader.ServerTimeout = TimeSpan.FromSeconds(timeoutSeconds);
+      DiagnosticLogger.LogInfo($"[BinarySearch] ServerTimeout={timeoutSeconds}s, RejectPreviouslyFailedFiles={settings.RejectPreviouslyFailedFiles}, " +
+                               $"RejectedBinaries={settings.RejectedBinaryFiles?.Count ?? 0} for {binaryFile.ImageName}");
 
       //? TODO: Workaround for cases where the ETL file doesn't have a timestamp
       //? and SymbolReader would reject the bin even on the same machine...
@@ -222,6 +340,9 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     else {
       DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
       searchResult = BinaryFileSearchResult.Failure(binaryFile, searchLog);
+
+      // Record failed lookup to avoid retrying in future sessions.
+      settings.RejectBinaryFile(binaryFile);
     }
 
     resolvedBinariesCache_.TryAdd(binaryFile, searchResult);

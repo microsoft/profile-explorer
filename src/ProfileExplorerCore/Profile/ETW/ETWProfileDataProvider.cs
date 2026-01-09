@@ -798,7 +798,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
     // Start downloading binaries
-    var binTaskSemaphore = new SemaphoreSlim(8);
+    var binTaskSemaphore = new SemaphoreSlim(16); // Increased from 8 for better parallelism
 
     for (int i = 0; i < imageLimit; i++) {
       Trace.WriteLine($"BINARY_FILTER_DEBUG: Processing module {i + 1}/{imageLimit}: {imageList[i].ModuleName}");
@@ -848,12 +848,36 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: ACCEPTED for binary download: {imageList[i].ModuleName}");
 
+      // Capture index for closure
+      int taskIndex = i;
+      var taskBinaryFile = binaryFile;
+
       binTaskList[i] = Task.Run(async () => {
         await binTaskSemaphore.WaitAsync();
         BinaryFileSearchResult result;
 
         try {
-          result = await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, symbolSettings);
+          // Apply manual timeout since TraceEvent's ServerTimeout doesn't work for FindExecutableFilePath
+          int timeoutSeconds = symbolSettings.SymbolServerTimeoutSeconds > 0 ? symbolSettings.SymbolServerTimeoutSeconds : 10;
+          using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+          var downloadTask = PEBinaryInfoProvider.LocateBinaryFileAsync(taskBinaryFile, symbolSettings);
+          var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+          var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+
+          if (completedTask == downloadTask) {
+            result = await downloadTask.ConfigureAwait(false);
+          }
+          else {
+            // Timeout - return failure without waiting for the underlying request
+            DiagnosticLogger.LogWarning($"[BinarySearch] TIMEOUT after {timeoutSeconds}s for {taskBinaryFile.ImageName}");
+            result = BinaryFileSearchResult.Failure(taskBinaryFile, $"Timeout after {timeoutSeconds}s");
+            symbolSettings.RejectBinaryFile(taskBinaryFile);
+          }
+        }
+        catch (OperationCanceledException) {
+          result = BinaryFileSearchResult.Failure(taskBinaryFile, "Cancelled");
         }
         finally {
           binTaskSemaphore.Release();
@@ -867,13 +891,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     int binaryTasksStarted = binTaskList.Count(t => t != null);
     DiagnosticLogger.LogInfo($"[SymbolLoading] Binary download phase: Started {binaryTasksStarted} download tasks out of {imageLimit} images");
 
+    var binSw = Stopwatch.StartNew();
+
     // Determine the compiler target for the new session.
     var irMode = IRMode.Default;
 
-    var binSw = Stopwatch.StartNew();
     int binariesFound = 0;
     int binariesProcessed = 0;
 
+    // Process results (tasks already completed, so this is fast)
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
         DiagnosticLogger.LogInfo($"[SymbolLoading] Binary loading cancelled at image {i}/{imageLimit}");
@@ -966,6 +992,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
+      // Check company filter - skip PDB lookup if binary doesn't match the company filter.
+      // This significantly reduces symbol server timeouts for third-party binaries.
+      if (symbolSettings.HasCompanyFilter && binaryFile is {Found: true}) {
+        var effectiveFilters = symbolSettings.EffectiveCompanyFilterStrings;
+        if (!PEBinaryInfoProvider.MatchesCompanyFilter(binaryFile.FilePath, effectiveFilters)) {
+          var versionInfo = PEBinaryInfoProvider.GetVersionInfo(binaryFile.FilePath);
+          DiagnosticLogger.LogInfo($"[SymbolLoading] Skipping PDB lookup - company filter mismatch: {imageList[i].ModuleName} ({versionInfo}), filter=[{string.Join(",", effectiveFilters)}]");
+          Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - Company filter mismatch: {imageList[i].ModuleName} ({versionInfo})");
+          rejectedDebugModules_.Add(imageList[i]);
+          continue;
+        }
+      }
+
       // Try to use ETL info if binary not available.
       var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
 
@@ -977,12 +1016,32 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search STARTED - Using ETL symbol file descriptor: {imageList[i].ModuleName} (symbol: {symbolFile})");
+        var taskSymbolFile = symbolFile;
         pdbTaskList[i] = Task.Run(async () => {
           await pdbTaskSemaphore.WaitAsync();
           DebugFileSearchResult result;
 
           try {
-            result = await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(symbolFile, symbolSettings);
+            // Apply manual timeout since TraceEvent's ServerTimeout doesn't work reliably
+            int timeoutSeconds = symbolSettings.SymbolServerTimeoutSeconds > 0 ? symbolSettings.SymbolServerTimeoutSeconds : 10;
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+            var downloadTask = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(taskSymbolFile, symbolSettings);
+            var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+            var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+
+            if (completedTask == downloadTask) {
+              result = await downloadTask.ConfigureAwait(false);
+            }
+            else {
+              DiagnosticLogger.LogWarning($"[SymbolSearch] TIMEOUT after {timeoutSeconds}s for {taskSymbolFile.FileName}");
+              result = DebugFileSearchResult.Failure(taskSymbolFile, $"Timeout after {timeoutSeconds}s");
+              symbolSettings.RejectSymbolFile(taskSymbolFile);
+            }
+          }
+          catch (OperationCanceledException) {
+            result = DebugFileSearchResult.Failure(taskSymbolFile, "Cancelled");
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -995,12 +1054,31 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         pdbCount++;
 
         Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search STARTED - Using binary file path: {imageList[i].ModuleName} (binary: {binaryFile.FilePath})");
+        var taskBinaryPath = binaryFile.FilePath;
         pdbTaskList[i] = Task.Run(async () => {
           await pdbTaskSemaphore.WaitAsync();
           DebugFileSearchResult result;
 
           try {
-            result = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+            // Apply manual timeout since TraceEvent's ServerTimeout doesn't work reliably
+            int timeoutSeconds = symbolSettings.SymbolServerTimeoutSeconds > 0 ? symbolSettings.SymbolServerTimeoutSeconds : 10;
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+            var downloadTask = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(taskBinaryPath, symbolSettings);
+            var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+            var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+
+            if (completedTask == downloadTask) {
+              result = await downloadTask.ConfigureAwait(false);
+            }
+            else {
+              DiagnosticLogger.LogWarning($"[SymbolSearch] TIMEOUT after {timeoutSeconds}s for PDB from binary {taskBinaryPath}");
+              result = DebugFileSearchResult.Failure(null, $"Timeout after {timeoutSeconds}s");
+            }
+          }
+          catch (OperationCanceledException) {
+            result = DebugFileSearchResult.Failure(null, "Cancelled");
           }
           finally {
             pdbTaskSemaphore.Release();
@@ -1023,11 +1101,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     int pdbTasksStarted = pdbTaskList.Count(t => t != null);
     DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download phase: Started {pdbTasksStarted} download tasks for {pdbCount} eligible modules");
 
+    // Wait for ALL PDB tasks to complete in parallel before processing results.
+    // This fixes the issue where sequential awaiting would block on slow tasks.
+    var activePdbTasks = pdbTaskList.Where(t => t != null).ToArray();
+    if (activePdbTasks.Length > 0) {
+      DiagnosticLogger.LogInfo($"[SymbolLoading] Waiting for {activePdbTasks.Length} PDB downloads to complete in parallel...");
+      await Task.WhenAll(activePdbTasks).ConfigureAwait(false);
+      DiagnosticLogger.LogInfo($"[SymbolLoading] All PDB downloads completed in {pdbSw.Elapsed.TotalSeconds:F1}s");
+    }
+
     UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
     int pdbsFound = 0;
     int pdbsProcessed = 0;
 
-    // Wait for the PDBs to be loaded.
+    // Process results (tasks already completed, so this is fast)
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
         DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download cancelled at image {i}/{imageLimit}");

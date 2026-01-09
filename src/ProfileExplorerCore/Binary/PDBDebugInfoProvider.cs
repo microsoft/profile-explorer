@@ -337,15 +337,29 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       return searchResult;
     }
 
+    // Check if this symbol file was previously rejected (failed lookup in a prior session).
+    if (settings.IsRejectedSymbolFile(symbolFile)) {
+      DiagnosticLogger.LogInfo($"[SymbolSearch] SKIPPED - previously rejected: {symbolFile.FileName}");
+      searchResult = DebugFileSearchResult.Failure(symbolFile, "Previously rejected");
+      resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
+      return searchResult;
+    }
+
     string result = null;
     using var logWriter = new StringWriter();
 
     // In case there is a timeout downloading the symbols, try again.
     string symbolSearchPath = ConstructSymbolSearchPath(settings);
     DiagnosticLogger.LogDebug($"[SymbolSearch] Symbol search path: {symbolSearchPath}");
-    
+
     using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, CreateAuthHandler(settings));
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+
+    // Set symbol server timeout from settings (default 10 seconds).
+    // Use 10 seconds as fallback if setting is 0 (e.g., from old settings file without this property).
+    int timeoutSeconds = settings.SymbolServerTimeoutSeconds > 0 ? settings.SymbolServerTimeoutSeconds : 10;
+    symbolReader.ServerTimeout = TimeSpan.FromSeconds(timeoutSeconds);
+    DiagnosticLogger.LogInfo($"[SymbolSearch] ServerTimeout={timeoutSeconds}s for {symbolFile.FileName}");
 
     try {
       DiagnosticLogger.LogInfo($"[SymbolSearch] Starting PDB download/search for {symbolFile.FileName}, {symbolFile.Id}, {symbolFile.Age}");
@@ -377,6 +391,9 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     else {
       DiagnosticLogger.LogWarning($"[SymbolSearch] Failed to find symbol file for {symbolFile.FileName}. Result: {result ?? "null"}");
       searchResult = DebugFileSearchResult.Failure(symbolFile, searchLog);
+
+      // Record failed lookup to avoid retrying in future sessions.
+      settings.RejectSymbolFile(symbolFile);
     }
 
     resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);

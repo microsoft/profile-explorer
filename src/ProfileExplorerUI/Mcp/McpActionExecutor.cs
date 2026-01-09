@@ -589,7 +589,8 @@ public class McpActionExecutor : IMcpActionExecutor
     private async Task<bool> WaitForProfileLoadingCompletedAsync(ProfileExplorer.UI.ProfileLoadWindow window, TimeSpan timeout)
     {
         var startTime = DateTime.UtcNow;
-        
+
+        // Phase 1: Wait for the profile load dialog to finish
         while (DateTime.UtcNow - startTime < timeout)
         {
             bool isLoadingProfile = await dispatcher.InvokeAsync(() =>
@@ -597,16 +598,90 @@ public class McpActionExecutor : IMcpActionExecutor
                 var isLoadingProp = window.GetType().GetProperty("IsLoadingProfile");
                 return isLoadingProp?.GetValue(window) as bool? ?? false;
             });
-            
-            // Profile loading is complete when IsLoadingProfile is false
+
+            // Profile dialog loading is complete when IsLoadingProfile is false
             if (!isLoadingProfile)
+            {
+                break;
+            }
+
+            await Task.Delay(500); // Check every 500ms since profile loading can take a long time
+        }
+
+        // Phase 2: Wait for the main window to have fully loaded profile data with functions
+        // This ensures symbol loading is complete and GetAvailableFunctions will work
+        var remainingTimeout = timeout - (DateTime.UtcNow - startTime);
+        if (remainingTimeout <= TimeSpan.Zero)
+        {
+            return false; // Timeout during dialog loading phase
+        }
+
+        return await WaitForMainWindowProfileReadyAsync(remainingTimeout);
+    }
+
+    /// <summary>
+    /// Waits for the main window to have a fully loaded profile with functions available.
+    /// This handles the case where symbol loading continues after the profile dialog closes.
+    /// </summary>
+    private async Task<bool> WaitForMainWindowProfileReadyAsync(TimeSpan timeout)
+    {
+        var startTime = DateTime.UtcNow;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            var (isReady, functionCount) = await dispatcher.InvokeAsync(() =>
+            {
+                try
+                {
+                    var sessionState = mainWindow.SessionState;
+                    var profileData = sessionState?.ProfileData;
+                    var report = profileData?.Report;
+
+                    // Check if we have basic profile data
+                    if (report == null || profileData == null)
+                    {
+                        return (false, 0);
+                    }
+
+                    // Check if function list is populated (indicates symbol loading is complete)
+                    var sectionPanel = mainWindow.FindName("SectionPanel") as ProfileExplorer.UI.SectionPanelPair ??
+                                       mainWindow.FindPanel(ProfileExplorer.UI.ToolPanelKind.Section) as ProfileExplorer.UI.SectionPanelPair;
+
+                    if (sectionPanel?.MainPanel == null)
+                    {
+                        return (false, 0);
+                    }
+
+                    var functionListControl = sectionPanel.MainPanel.FindName("FunctionList") as System.Windows.Controls.ListView;
+                    if (functionListControl?.ItemsSource == null)
+                    {
+                        return (false, 0);
+                    }
+
+                    // Count functions to ensure the list is populated
+                    int count = 0;
+                    foreach (var _ in functionListControl.ItemsSource)
+                    {
+                        count++;
+                        if (count >= 5) break; // We just need to confirm there are functions
+                    }
+
+                    return (count > 0, count);
+                }
+                catch
+                {
+                    return (false, 0);
+                }
+            });
+
+            if (isReady && functionCount > 0)
             {
                 return true;
             }
-            
-            await Task.Delay(500); // Check every 500ms since profile loading can take a long time
+
+            await Task.Delay(500); // Check every 500ms
         }
-        
+
         return false; // Timeout
     }
 

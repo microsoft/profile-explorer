@@ -43,7 +43,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   public HashSet<BinaryFileDescriptor> RejectedBinaryFiles { get; set; }
   [ProtoMember(9)][OptionValue()]
   public HashSet<SymbolFileDescriptor> RejectedSymbolFiles { get; set; }
-  [ProtoMember(10)][OptionValue(false)]
+  [ProtoMember(10)][OptionValue(true)]
   public bool RejectPreviouslyFailedFiles { get; set; }
   [ProtoMember(11)][OptionValue(true)]
   public bool IncludeSymbolSubdirectories { get; set; }
@@ -53,7 +53,27 @@ public class SymbolFileSourceSettings : SettingsBase {
   public string CustomSymbolCacheDirectory { get; set; }
   [ProtoMember(14)][OptionValue(0.002)] // 0.2%
   public double LowSampleModuleCutoff { get; set; }
+  [ProtoMember(15)][OptionValue(true)]
+  public bool CompanyFilterEnabled { get; set; }
+  [ProtoMember(16)][OptionValue()]
+  public List<string> CompanyFilterStrings { get; set; }
+  [ProtoMember(17)][OptionValue(10)] // 10 seconds default timeout
+  public int SymbolServerTimeoutSeconds { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
+  public bool HasCompanyFilter => CompanyFilterEnabled;
+
+  /// <summary>
+  /// Returns the effective company filter strings. Uses "Microsoft" as default if enabled but list is empty.
+  /// </summary>
+  public IReadOnlyList<string> EffectiveCompanyFilterStrings {
+    get {
+      if (CompanyFilterStrings?.Count > 0) {
+        return CompanyFilterStrings;
+      }
+      // Default to "Microsoft" when filter is enabled but no custom strings specified
+      return CompanyFilterEnabled ? new[] { "Microsoft" } : Array.Empty<string>();
+    }
+  }
   public string SymbolCacheDirectoryPath => !string.IsNullOrEmpty(CustomSymbolCacheDirectory) ?
     CustomSymbolCacheDirectory :
     DefaultCacheDirectoryPath;
@@ -273,6 +293,12 @@ public class SymbolFileSourceSettings : SettingsBase {
     }
 
     AddSymbolServer(usePrivateServer: false);
+
+    // Default company filter to "Microsoft" since the tool is primarily for Microsoft code.
+    // Users can modify this in the UI settings.
+    if (CompanyFilterStrings.Count == 0) {
+      CompanyFilterStrings.Add("Microsoft");
+    }
   }
 
   public SymbolFileSourceSettings Clone() {

@@ -61,6 +61,80 @@ $warningLines = $log | Where-Object { $_ -match '\[Warning\]' }
 $debugLines = $log | Where-Object { $_ -match '\[Debug\]' }
 $errorLines = $log | Where-Object { $_ -match '\[Error\]' }
 
+# ============================================================================
+# PHASE TIMING ANALYSIS
+# ============================================================================
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+Write-Host "  PHASE TIMING ANALYSIS" -ForegroundColor Yellow
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+
+# Find phase markers
+$loadStart = $log | Where-Object { $_ -match 'Starting LoadBinaryAndDebugFiles' } | Select-Object -First 1
+$loadComplete = $log | Where-Object { $_ -match 'LoadBinaryAndDebugFiles completed' } | Select-Object -First 1
+$binaryPhaseStart = $log | Where-Object { $_ -match 'Binary download phase: Started' } | Select-Object -First 1
+$binaryPhaseEnd = $log | Where-Object { $_ -match 'All binary downloads completed|Binary download complete' } | Select-Object -First 1
+$pdbPhaseStart = $log | Where-Object { $_ -match 'PDB download phase: Started' } | Select-Object -First 1
+$pdbPhaseEnd = $log | Where-Object { $_ -match 'All PDB downloads completed|PDB download complete' } | Select-Object -First 1
+
+function Get-TimestampFromLine($line) {
+    if ($line -match '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})') {
+        return [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss.fff", $null)
+    }
+    return $null
+}
+
+$startTime = Get-TimestampFromLine $loadStart
+$endTime = Get-TimestampFromLine $loadComplete
+$binStartTime = Get-TimestampFromLine $binaryPhaseStart
+$binEndTime = Get-TimestampFromLine $binaryPhaseEnd
+$pdbStartTime = Get-TimestampFromLine $pdbPhaseStart
+$pdbEndTime = Get-TimestampFromLine $pdbPhaseEnd
+
+if ($startTime -and $endTime) {
+    $totalTime = ($endTime - $startTime).TotalSeconds
+    Write-Host "Total Symbol Loading Time: " -NoNewline
+    Write-Host ("{0:F1}s" -f $totalTime) -ForegroundColor $(if ($totalTime -gt 120) { "Red" } elseif ($totalTime -gt 60) { "Yellow" } else { "Green" })
+}
+
+if ($binStartTime -and $binEndTime) {
+    $binTime = ($binEndTime - $binStartTime).TotalSeconds
+    Write-Host "  Binary Download Phase:   " -NoNewline
+    Write-Host ("{0:F1}s" -f $binTime) -ForegroundColor $(if ($binTime -gt 60) { "Red" } elseif ($binTime -gt 30) { "Yellow" } else { "Green" })
+}
+
+if ($pdbStartTime -and $pdbEndTime) {
+    $pdbTime = ($pdbEndTime - $pdbStartTime).TotalSeconds
+    Write-Host "  PDB Download Phase:      " -NoNewline
+    Write-Host ("{0:F1}s" -f $pdbTime) -ForegroundColor $(if ($pdbTime -gt 60) { "Red" } elseif ($pdbTime -gt 30) { "Yellow" } else { "Green" })
+}
+
+# Count timeouts vs successes
+$binaryTimeouts = ($log | Where-Object { $_ -match '\[BinarySearch\] TIMEOUT' }).Count
+$binaryFound = ($log | Where-Object { $_ -match '\[BinarySearch\] Found binary for' }).Count
+$binaryFailed = ($log | Where-Object { $_ -match '\[BinarySearch\] Failed to find binary' }).Count
+$binarySkipped = ($log | Where-Object { $_ -match '\[BinarySearch\] SKIPPED' }).Count
+
+$pdbTimeouts = ($log | Where-Object { $_ -match '\[SymbolSearch\] TIMEOUT' }).Count
+$pdbFound = ($log | Where-Object { $_ -match '\[SymbolSearch\] Successfully found symbol' }).Count
+$pdbFailed = ($log | Where-Object { $_ -match '\[SymbolSearch\] Failed to find symbol' }).Count
+$pdbSkipped = ($log | Where-Object { $_ -match '\[SymbolLoading\] Skipping PDB lookup' }).Count
+
+Write-Host ""
+Write-Host "Binary Search Results:" -ForegroundColor Cyan
+Write-Host "  Found:    $binaryFound" -ForegroundColor Green
+Write-Host "  Failed:   $binaryFailed" -ForegroundColor Yellow
+Write-Host "  Timeouts: $binaryTimeouts" -ForegroundColor $(if ($binaryTimeouts -gt 10) { "Red" } else { "Yellow" })
+Write-Host "  Skipped:  $binarySkipped" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "PDB Search Results:" -ForegroundColor Cyan
+Write-Host "  Found:    $pdbFound" -ForegroundColor Green
+Write-Host "  Failed:   $pdbFailed" -ForegroundColor Yellow
+Write-Host "  Timeouts: $pdbTimeouts" -ForegroundColor $(if ($pdbTimeouts -gt 10) { "Red" } else { "Yellow" })
+Write-Host "  Skipped (company filter): $pdbSkipped" -ForegroundColor Gray
+
+Write-Host ""
+
 Write-Host ("-" * 80) -ForegroundColor DarkGray
 Write-Host "  LOG STATISTICS" -ForegroundColor Yellow
 Write-Host ("-" * 80) -ForegroundColor DarkGray
