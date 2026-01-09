@@ -797,6 +797,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
+    // Bellwether test: try to download ntoskrnl.exe first to check symbol server health
+    if (symbolSettings.BellwetherTestEnabled && symbolSettings.SourceServerEnabled) {
+      await PerformBellwetherTest(imageList, symbolSettings);
+    }
+
     // Start downloading binaries
     var binTaskSemaphore = new SemaphoreSlim(16); // Increased from 8 for better parallelism
 
@@ -846,6 +851,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
+      // Windows path filter: Skip binaries not in Windows directories (likely third-party)
+      // when company filter is enabled. Symbol server won't have symbols for these anyway.
+      if (symbolSettings.WindowsPathFilterEnabled && symbolSettings.HasCompanyFilter) {
+        if (!SymbolFileSourceSettings.IsWindowsSystemPath(imageList[i].FilePath)) {
+          Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: REJECTED at Windows path filter stage: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
+          DiagnosticLogger.LogInfo($"[BinaryDownload] Skipping non-Windows binary (path filter): {imageList[i].ModuleName}");
+          rejectedDebugModules_.Add(imageList[i]);
+          continue;
+        }
+      }
+
       Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: ACCEPTED for binary download: {imageList[i].ModuleName}");
 
       // Capture index for closure
@@ -858,7 +874,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         try {
           // Apply manual timeout since TraceEvent's ServerTimeout doesn't work for FindExecutableFilePath
-          int timeoutSeconds = symbolSettings.SymbolServerTimeoutSeconds > 0 ? symbolSettings.SymbolServerTimeoutSeconds : 10;
+          // Use EffectiveTimeoutSeconds which is reduced if bellwether test failed
+          int timeoutSeconds = symbolSettings.EffectiveTimeoutSeconds > 0 ? symbolSettings.EffectiveTimeoutSeconds : 10;
           using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
 
           var downloadTask = PEBinaryInfoProvider.LocateBinaryFileAsync(taskBinaryFile, symbolSettings);
@@ -1023,7 +1040,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
           try {
             // Apply manual timeout since TraceEvent's ServerTimeout doesn't work reliably
-            int timeoutSeconds = symbolSettings.SymbolServerTimeoutSeconds > 0 ? symbolSettings.SymbolServerTimeoutSeconds : 10;
+            int timeoutSeconds = symbolSettings.EffectiveTimeoutSeconds > 0 ? symbolSettings.EffectiveTimeoutSeconds : 10;
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
 
             var downloadTask = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(taskSymbolFile, symbolSettings);
@@ -1061,7 +1078,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
           try {
             // Apply manual timeout since TraceEvent's ServerTimeout doesn't work reliably
-            int timeoutSeconds = symbolSettings.SymbolServerTimeoutSeconds > 0 ? symbolSettings.SymbolServerTimeoutSeconds : 10;
+            int timeoutSeconds = symbolSettings.EffectiveTimeoutSeconds > 0 ? symbolSettings.EffectiveTimeoutSeconds : 10;
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
 
             var downloadTask = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(taskBinaryPath, symbolSettings);
@@ -1426,6 +1443,71 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       TimeStamp = image.TimeStamp,
       ImageSize = image.Size
     };
+  }
+
+  /// <summary>
+  /// Performs a "bellwether" test by attempting to download ntoskrnl.exe (the Windows kernel).
+  /// If this fails, it indicates the symbol server is unavailable or slow, and we should
+  /// reduce timeouts to avoid wasting time on failed downloads.
+  /// </summary>
+  private async Task PerformBellwetherTest(List<ProfileImage> imageList, SymbolFileSourceSettings symbolSettings) {
+    // Find ntoskrnl.exe in the image list - it's always present in ETW traces
+    var bellwetherImage = imageList.FirstOrDefault(img =>
+      img.ModuleName.Equals("ntoskrnl.exe", StringComparison.OrdinalIgnoreCase));
+
+    if (bellwetherImage == null) {
+      // Try ntdll.dll as fallback
+      bellwetherImage = imageList.FirstOrDefault(img =>
+        img.ModuleName.Equals("ntdll.dll", StringComparison.OrdinalIgnoreCase));
+    }
+
+    if (bellwetherImage == null) {
+      DiagnosticLogger.LogInfo("[BellwetherTest] No bellwether binary found (ntoskrnl.exe or ntdll.dll), skipping test");
+      return;
+    }
+
+    var binaryFile = FromProfileImage(bellwetherImage);
+    var sw = Stopwatch.StartNew();
+    int timeoutSeconds = symbolSettings.BellwetherTimeoutSeconds > 0 ? symbolSettings.BellwetherTimeoutSeconds : 5;
+
+    DiagnosticLogger.LogInfo($"[BellwetherTest] Testing symbol server health with {bellwetherImage.ModuleName} (timeout: {timeoutSeconds}s)");
+
+    try {
+      using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+      var downloadTask = PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, symbolSettings);
+      var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+      var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+
+      if (completedTask == downloadTask) {
+        var result = await downloadTask.ConfigureAwait(false);
+        if (result.Found) {
+          DiagnosticLogger.LogInfo($"[BellwetherTest] SUCCESS: {bellwetherImage.ModuleName} downloaded in {sw.Elapsed.TotalSeconds:F1}s - Symbol server is healthy");
+          symbolSettings.SymbolServerDegraded = false;
+        }
+        else {
+          // Binary not found on symbol server - this is expected for some builds
+          // Mark as degraded so we use shorter timeouts for other binaries
+          DiagnosticLogger.LogWarning($"[BellwetherTest] FAILED: {bellwetherImage.ModuleName} not found on symbol server ({sw.Elapsed.TotalSeconds:F1}s) - " +
+                                      $"Symbols may not be available for this build. Using reduced timeout ({symbolSettings.DegradedTimeoutSeconds}s)");
+          symbolSettings.SymbolServerDegraded = true;
+        }
+      }
+      else {
+        // Timeout - symbol server is slow or unreachable
+        DiagnosticLogger.LogWarning($"[BellwetherTest] TIMEOUT: {bellwetherImage.ModuleName} timed out after {timeoutSeconds}s - " +
+                                    $"Symbol server may be slow or unreachable. Using reduced timeout ({symbolSettings.DegradedTimeoutSeconds}s)");
+        symbolSettings.SymbolServerDegraded = true;
+      }
+    }
+    catch (Exception ex) {
+      DiagnosticLogger.LogWarning($"[BellwetherTest] ERROR: {bellwetherImage.ModuleName} failed with exception: {ex.Message} - Using reduced timeout");
+      symbolSettings.SymbolServerDegraded = true;
+    }
+
+    if (symbolSettings.SymbolServerDegraded) {
+      DiagnosticLogger.LogWarning($"[BellwetherTest] Symbol server marked as DEGRADED - using {symbolSettings.DegradedTimeoutSeconds}s timeout instead of {symbolSettings.SymbolServerTimeoutSeconds}s");
+    }
   }
 
 #if DEBUG

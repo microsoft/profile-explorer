@@ -59,8 +59,28 @@ public class SymbolFileSourceSettings : SettingsBase {
   public List<string> CompanyFilterStrings { get; set; }
   [ProtoMember(17)][OptionValue(10)] // 10 seconds default timeout
   public int SymbolServerTimeoutSeconds { get; set; }
+  [ProtoMember(18)][OptionValue(true)]
+  public bool BellwetherTestEnabled { get; set; }
+  [ProtoMember(19)][OptionValue(5)] // 5 seconds for bellwether test
+  public int BellwetherTimeoutSeconds { get; set; }
+  [ProtoMember(20)][OptionValue(3)] // 3 seconds when symbol server is degraded
+  public int DegradedTimeoutSeconds { get; set; }
+  [ProtoMember(21)][OptionValue(true)]
+  public bool WindowsPathFilterEnabled { get; set; }
+  [ProtoMember(22)]
+  public DateTime RejectedFilesCacheTime { get; set; }
+  [ProtoMember(23)][OptionValue(3)] // 3 days default expiration
+  public int RejectedFilesCacheExpirationDays { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public bool HasCompanyFilter => CompanyFilterEnabled;
+
+  // Runtime state - not persisted. Set when bellwether test fails.
+  public bool SymbolServerDegraded { get; set; }
+
+  /// <summary>
+  /// Returns the effective timeout based on whether symbol server is degraded.
+  /// </summary>
+  public int EffectiveTimeoutSeconds => SymbolServerDegraded ? DegradedTimeoutSeconds : SymbolServerTimeoutSeconds;
 
   /// <summary>
   /// Returns the effective company filter strings. Uses "Microsoft" as default if enabled but list is empty.
@@ -165,18 +185,48 @@ public class SymbolFileSourceSettings : SettingsBase {
   public void RejectBinaryFile(BinaryFileDescriptor file) {
     if (RejectPreviouslyFailedFiles) {
       RejectedBinaryFiles.Add(file);
+      // Update cache time on first rejection
+      if (RejectedFilesCacheTime == default) {
+        RejectedFilesCacheTime = DateTime.UtcNow;
+      }
     }
   }
 
   public void RejectSymbolFile(SymbolFileDescriptor file) {
     if (RejectPreviouslyFailedFiles) {
       RejectedSymbolFiles.Add(file);
+      // Update cache time on first rejection
+      if (RejectedFilesCacheTime == default) {
+        RejectedFilesCacheTime = DateTime.UtcNow;
+      }
     }
   }
 
   public void ClearRejectedFiles() {
     RejectedSymbolFiles.Clear();
     RejectedBinaryFiles.Clear();
+  }
+
+  /// <summary>
+  /// Checks if a file path is in a Windows system directory (likely Microsoft binary).
+  /// Used as a heuristic when PE version info isn't available yet.
+  /// </summary>
+  public static bool IsWindowsSystemPath(string filePath) {
+    if (string.IsNullOrEmpty(filePath)) {
+      return false;
+    }
+
+    // Common Windows system paths that contain Microsoft binaries
+    string windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+    string systemRoot = Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows";
+
+    return filePath.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase) ||
+           filePath.StartsWith(systemRoot, StringComparison.OrdinalIgnoreCase) ||
+           filePath.StartsWith(@"C:\Windows", StringComparison.OrdinalIgnoreCase) ||
+           filePath.StartsWith(@"\SystemRoot", StringComparison.OrdinalIgnoreCase) ||
+           filePath.Contains(@"\Windows\System32\", StringComparison.OrdinalIgnoreCase) ||
+           filePath.Contains(@"\Windows\SysWOW64\", StringComparison.OrdinalIgnoreCase) ||
+           filePath.Contains(@"\Windows\WinSxS\", StringComparison.OrdinalIgnoreCase);
   }
 
   public void ExpandSymbolPathsSubdirectories(string[] symbolExtensions) {
@@ -309,6 +359,22 @@ public class SymbolFileSourceSettings : SettingsBase {
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {
     InitializeReferenceOptions(this);
+
+    // Migrate old settings: ensure negative caching is enabled by default.
+    // Old settings may have this as false before the feature was fully implemented.
+    if (!RejectPreviouslyFailedFiles) {
+      RejectPreviouslyFailedFiles = true;
+    }
+
+    // Check if rejected files cache has expired (default 3 days).
+    // This allows retrying symbols that may have become available.
+    int expirationDays = RejectedFilesCacheExpirationDays > 0 ? RejectedFilesCacheExpirationDays : 3;
+    if (RejectedFilesCacheTime != default &&
+        DateTime.UtcNow - RejectedFilesCacheTime > TimeSpan.FromDays(expirationDays)) {
+      Trace.WriteLine($"[SymbolSettings] Rejected files cache expired (>{expirationDays} days old), clearing {RejectedBinaryFiles?.Count ?? 0} binaries and {RejectedSymbolFiles?.Count ?? 0} symbols");
+      ClearRejectedFiles();
+      RejectedFilesCacheTime = DateTime.UtcNow;
+    }
   }
 
   public override bool Equals(object obj) {

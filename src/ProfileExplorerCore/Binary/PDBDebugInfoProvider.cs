@@ -356,8 +356,8 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
     // Set symbol server timeout from settings (default 10 seconds).
-    // Use 10 seconds as fallback if setting is 0 (e.g., from old settings file without this property).
-    int timeoutSeconds = settings.SymbolServerTimeoutSeconds > 0 ? settings.SymbolServerTimeoutSeconds : 10;
+    // Use EffectiveTimeoutSeconds which is reduced if bellwether test marked server as degraded.
+    int timeoutSeconds = settings.EffectiveTimeoutSeconds > 0 ? settings.EffectiveTimeoutSeconds : 10;
     symbolReader.ServerTimeout = TimeSpan.FromSeconds(timeoutSeconds);
     DiagnosticLogger.LogInfo($"[SymbolSearch] ServerTimeout={timeoutSeconds}s for {symbolFile.FileName}");
 
