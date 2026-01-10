@@ -273,8 +273,21 @@ public class ProfileTraceInfo {
   public string TraceFilePath { get; set; }
   [ProtoMember(10)]
   public TimeSpan SamplingInterval { get; set; }
+  [ProtoMember(11)]
+  public int ImageLoadEventCount { get; set; }
+  [ProtoMember(12)]
+  public int ImageLoadWithTimestampCount { get; set; }
+  [ProtoMember(13)]
+  public int ImageIdEventCount { get; set; }
+  [ProtoMember(14)]
+  public int ImageIdDbgEventCount { get; set; }
   public bool Is64Bit => PointerSize == 8;
   public TimeSpan ProfileDuration => ProfileEndTime - ProfileStartTime;
+  public bool HasImageIdEvents => ImageIdDbgEventCount > 0;
+  /// <summary>
+  /// True if trace has valid binary lookup info (timestamps for symbol server).
+  /// </summary>
+  public bool HasValidBinaryLookupInfo => ImageLoadWithTimestampCount > 0;
 
   public bool HasSameTraceFilePath(ProfileTraceInfo other) {
     if (!string.IsNullOrEmpty(TraceFilePath) &&

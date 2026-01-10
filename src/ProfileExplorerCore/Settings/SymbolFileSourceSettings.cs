@@ -61,7 +61,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   public int SymbolServerTimeoutSeconds { get; set; }
   [ProtoMember(18)][OptionValue(true)]
   public bool BellwetherTestEnabled { get; set; }
-  [ProtoMember(19)][OptionValue(5)] // 5 seconds for bellwether test
+  [ProtoMember(19)][OptionValue(30)] // 30 seconds for bellwether test (first connection warmup)
   public int BellwetherTimeoutSeconds { get; set; }
   [ProtoMember(20)][OptionValue(3)] // 3 seconds when symbol server is degraded
   public int DegradedTimeoutSeconds { get; set; }
@@ -208,7 +208,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   }
 
   /// <summary>
-  /// Checks if a file path is in a Windows system directory (likely Microsoft binary).
+  /// Checks if a file path is in a Windows/Microsoft directory (likely Microsoft binary).
   /// Used as a heuristic when PE version info isn't available yet.
   /// </summary>
   public static bool IsWindowsSystemPath(string filePath) {
@@ -219,6 +219,7 @@ public class SymbolFileSourceSettings : SettingsBase {
     // Common Windows system paths that contain Microsoft binaries
     string windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
     string systemRoot = Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows";
+    string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
     return filePath.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase) ||
            filePath.StartsWith(systemRoot, StringComparison.OrdinalIgnoreCase) ||
@@ -226,7 +227,17 @@ public class SymbolFileSourceSettings : SettingsBase {
            filePath.StartsWith(@"\SystemRoot", StringComparison.OrdinalIgnoreCase) ||
            filePath.Contains(@"\Windows\System32\", StringComparison.OrdinalIgnoreCase) ||
            filePath.Contains(@"\Windows\SysWOW64\", StringComparison.OrdinalIgnoreCase) ||
-           filePath.Contains(@"\Windows\WinSxS\", StringComparison.OrdinalIgnoreCase);
+           filePath.Contains(@"\Windows\WinSxS\", StringComparison.OrdinalIgnoreCase) ||
+           // WindowsApps contains Microsoft Store apps and system components
+           filePath.Contains(@"\WindowsApps\", StringComparison.OrdinalIgnoreCase) ||
+           filePath.Contains(@"\Program Files\WindowsApps\", StringComparison.OrdinalIgnoreCase) ||
+           // Device paths from ETW traces (e.g., \Device\HarddiskVolume2\Windows\...)
+           (filePath.StartsWith(@"\Device\", StringComparison.OrdinalIgnoreCase) &&
+            (filePath.Contains(@"\Windows\", StringComparison.OrdinalIgnoreCase) ||
+             filePath.Contains(@"\WindowsApps\", StringComparison.OrdinalIgnoreCase))) ||
+           // Microsoft.* and CoreMessaging* DLLs are typically Microsoft binaries regardless of path
+           System.IO.Path.GetFileName(filePath).StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase) ||
+           System.IO.Path.GetFileName(filePath).StartsWith("CoreMessaging", StringComparison.OrdinalIgnoreCase);
   }
 
   public void ExpandSymbolPathsSubdirectories(string[] symbolExtensions) {
@@ -375,6 +386,11 @@ public class SymbolFileSourceSettings : SettingsBase {
       ClearRejectedFiles();
       RejectedFilesCacheTime = DateTime.UtcNow;
     }
+
+    // TODO: TEMPORARY - clear negative cache for testing. Remove this after testing.
+    // Trace.WriteLine($"[SymbolSettings] TEMP: Clearing negative cache for testing ({RejectedBinaryFiles?.Count ?? 0} binaries, {RejectedSymbolFiles?.Count ?? 0} symbols)");
+    // ClearRejectedFiles();
+    // RejectedFilesCacheTime = DateTime.UtcNow;
   }
 
   public override bool Equals(object obj) {

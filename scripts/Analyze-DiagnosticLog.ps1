@@ -62,6 +62,65 @@ $debugLines = $log | Where-Object { $_ -match '\[Debug\]' }
 $errorLines = $log | Where-Object { $_ -match '\[Error\]' }
 
 # ============================================================================
+# TRACE INFO & SYMBOL SERVER STATUS
+# ============================================================================
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+Write-Host "  TRACE INFO & SYMBOL SERVER STATUS" -ForegroundColor Yellow
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+
+# Check for ImageID events
+$hasImageIdEvents = $log | Where-Object { $_ -match 'HasImageIdEvents=True' } | Select-Object -First 1
+$noImageIdEvents = $log | Where-Object { $_ -match 'HasImageIdEvents=False|Trace has no ImageID DbgID events' } | Select-Object -First 1
+$symbolServerDisabled = $log | Where-Object { $_ -match 'Symbol server disabled|Disabling symbol server|SourceServerEnabled=False' } | Select-Object -First 1
+$symbolServerEnabled = $log | Where-Object { $_ -match 'SourceServerEnabled=True' } | Select-Object -First 1
+
+# ImageID event counts
+$imageLoadCount = 0
+$imageIdCount = 0
+$dbgIdCount = 0
+
+$imageLoadLine = $log | Where-Object { $_ -match 'ImageLoad events?[:\s]+(\d+)' } | Select-Object -First 1
+if ($imageLoadLine -match 'ImageLoad events?[:\s]+(\d+)') {
+    $imageLoadCount = [int]$Matches[1]
+}
+
+$imageIdLine = $log | Where-Object { $_ -match 'ImageID events?[:\s]+(\d+)' } | Select-Object -First 1
+if ($imageIdLine -match 'ImageID events?[:\s]+(\d+)') {
+    $imageIdCount = [int]$Matches[1]
+}
+
+$dbgIdLine = $log | Where-Object { $_ -match 'ImageID DbgID|DbgID_RSDS events?[:\s]+(\d+)' } | Select-Object -First 1
+if ($dbgIdLine -match '(\d+)') {
+    $dbgIdCount = [int]$Matches[1]
+}
+
+Write-Host ""
+if ($noImageIdEvents -or $dbgIdCount -eq 0) {
+    Write-Host "[!] MISSING ImageID DbgID EVENTS" -ForegroundColor Red
+    Write-Host "    This trace is missing ImageID DbgID (RSDS) events which contain PDB GUID/Age." -ForegroundColor Yellow
+    Write-Host "    Without these events, symbol server lookups are impossible because PDB matching" -ForegroundColor Yellow
+    Write-Host "    requires the exact GUID+Age from the trace (not extracted from binaries)." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "    Root cause: The trace was likely captured without the right ETW providers enabled." -ForegroundColor Gray
+    Write-Host "    Solution: Re-capture using Profile Explorer's built-in capture (File -> Record Profile)" -ForegroundColor Cyan
+    Write-Host "              or from command line: wpr -start CPU" -ForegroundColor Cyan
+    Write-Host ""
+} elseif ($hasImageIdEvents) {
+    Write-Host "[OK] Trace has ImageID DbgID events (PDB GUID/Age available)" -ForegroundColor Green
+}
+
+if ($symbolServerDisabled) {
+    Write-Host "[!] SYMBOL SERVER DISABLED" -ForegroundColor Yellow
+    Write-Host "    Symbol server lookups were disabled (either by user or due to missing ImageID events)." -ForegroundColor Gray
+    Write-Host "    Only local/cached symbols will be used." -ForegroundColor Gray
+    Write-Host ""
+} elseif ($symbolServerEnabled) {
+    Write-Host "[OK] Symbol server enabled" -ForegroundColor Green
+}
+
+Write-Host ""
+
+# ============================================================================
 # PHASE TIMING ANALYSIS
 # ============================================================================
 Write-Host ("-" * 80) -ForegroundColor DarkGray
@@ -113,25 +172,35 @@ $binaryTimeouts = ($log | Where-Object { $_ -match '\[BinarySearch\] TIMEOUT' })
 $binaryFound = ($log | Where-Object { $_ -match '\[BinarySearch\] Found binary for' }).Count
 $binaryFailed = ($log | Where-Object { $_ -match '\[BinarySearch\] Failed to find binary' }).Count
 $binarySkipped = ($log | Where-Object { $_ -match '\[BinarySearch\] SKIPPED' }).Count
+$binarySkippedDisabled = ($log | Where-Object { $_ -match '\[SymbolLoading\] Symbol server disabled - skipping binary downloads' }).Count
 
 $pdbTimeouts = ($log | Where-Object { $_ -match '\[SymbolSearch\] TIMEOUT' }).Count
 $pdbFound = ($log | Where-Object { $_ -match '\[SymbolSearch\] Successfully found symbol' }).Count
 $pdbFailed = ($log | Where-Object { $_ -match '\[SymbolSearch\] Failed to find symbol' }).Count
 $pdbSkipped = ($log | Where-Object { $_ -match '\[SymbolLoading\] Skipping PDB lookup' }).Count
+$pdbSkippedDisabled = ($log | Where-Object { $_ -match '\[SymbolLoading\] Symbol server disabled' }).Count
 
 Write-Host ""
 Write-Host "Binary Search Results:" -ForegroundColor Cyan
-Write-Host "  Found:    $binaryFound" -ForegroundColor Green
-Write-Host "  Failed:   $binaryFailed" -ForegroundColor Yellow
-Write-Host "  Timeouts: $binaryTimeouts" -ForegroundColor $(if ($binaryTimeouts -gt 10) { "Red" } else { "Yellow" })
-Write-Host "  Skipped:  $binarySkipped" -ForegroundColor Gray
+if ($binarySkippedDisabled -gt 0) {
+    Write-Host "  [Symbol server disabled - all downloads skipped]" -ForegroundColor Yellow
+} else {
+    Write-Host "  Found:    $binaryFound" -ForegroundColor Green
+    Write-Host "  Failed:   $binaryFailed" -ForegroundColor Yellow
+    Write-Host "  Timeouts: $binaryTimeouts" -ForegroundColor $(if ($binaryTimeouts -gt 10) { "Red" } else { "Yellow" })
+    Write-Host "  Skipped:  $binarySkipped" -ForegroundColor Gray
+}
 
 Write-Host ""
 Write-Host "PDB Search Results:" -ForegroundColor Cyan
-Write-Host "  Found:    $pdbFound" -ForegroundColor Green
-Write-Host "  Failed:   $pdbFailed" -ForegroundColor Yellow
-Write-Host "  Timeouts: $pdbTimeouts" -ForegroundColor $(if ($pdbTimeouts -gt 10) { "Red" } else { "Yellow" })
-Write-Host "  Skipped (company filter): $pdbSkipped" -ForegroundColor Gray
+if ($pdbSkippedDisabled -gt 0 -and $pdbFound -eq 0) {
+    Write-Host "  [Symbol server disabled - no PDB lookups attempted]" -ForegroundColor Yellow
+} else {
+    Write-Host "  Found:    $pdbFound" -ForegroundColor Green
+    Write-Host "  Failed:   $pdbFailed" -ForegroundColor Yellow
+    Write-Host "  Timeouts: $pdbTimeouts" -ForegroundColor $(if ($pdbTimeouts -gt 10) { "Red" } else { "Yellow" })
+    Write-Host "  Skipped (company filter): $pdbSkipped" -ForegroundColor Gray
+}
 
 Write-Host ""
 
@@ -526,6 +595,61 @@ if ($totalAttempts -gt 0) {
         Write-Host "$resolutionRate%" -ForegroundColor Yellow
     } else {
         Write-Host "$resolutionRate%" -ForegroundColor Red
+    }
+}
+
+Write-Host ""
+Write-Host ("=" * 80) -ForegroundColor Cyan
+Write-Host "  SUMMARY DIAGNOSIS" -ForegroundColor Cyan
+Write-Host ("=" * 80) -ForegroundColor Cyan
+Write-Host ""
+
+# Determine the primary issue
+$primaryIssue = $null
+$issueDetails = @()
+
+if ($noImageIdEvents -or $dbgIdCount -eq 0) {
+    $primaryIssue = "Missing ImageID DbgID Events"
+    $issueDetails += "The trace is missing PDB GUID/Age information required for symbol server lookups."
+    $issueDetails += "This typically happens when using traces from external tools that don't capture ImageID events."
+    $issueDetails += ""
+    $issueDetails += "FIX: Re-capture with Profile Explorer (File -> Record Profile) or 'wpr -start CPU'"
+}
+elseif ($binaryTimeouts -gt 10 -or $pdbTimeouts -gt 10) {
+    $primaryIssue = "Symbol Server Timeouts"
+    $issueDetails += "Multiple symbol server requests are timing out."
+    $issueDetails += "This could indicate network issues, slow symbol server, or corporate firewall blocks."
+    $issueDetails += ""
+    $issueDetails += "FIX: Check network connectivity, verify symbol server URL, or increase timeout settings."
+}
+elseif ($totalAttempts -gt 0 -and $resolutionRate -lt 50) {
+    $primaryIssue = "Low Symbol Resolution Rate"
+    $issueDetails += "Only $resolutionRate% of symbols are resolving successfully."
+    $issueDetails += "This may indicate missing symbols on the symbol server or version mismatch."
+    $issueDetails += ""
+    $issueDetails += "FIX: Ensure symbol server is correctly configured and symbols exist for your binaries."
+}
+else {
+    $primaryIssue = "Symbol Loading Appears Normal"
+    $issueDetails += "No major issues detected in symbol loading."
+    if ($totalAttempts -gt 0) {
+        $issueDetails += "Symbol resolution rate: $resolutionRate%"
+    }
+}
+
+Write-Host "Primary Issue: " -NoNewline
+if ($primaryIssue -eq "Symbol Loading Appears Normal") {
+    Write-Host $primaryIssue -ForegroundColor Green
+} else {
+    Write-Host $primaryIssue -ForegroundColor Red
+}
+Write-Host ""
+
+foreach ($detail in $issueDetails) {
+    if ($detail -match '^FIX:') {
+        Write-Host $detail -ForegroundColor Cyan
+    } else {
+        Write-Host "  $detail" -ForegroundColor Gray
     }
 }
 

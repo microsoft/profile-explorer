@@ -2,6 +2,8 @@
 
 ## Building
 
+**IMPORTANT: Always use Release configuration (`-c Release`). The user runs Release builds, not Debug.**
+
 ### Before Building
 Always check if ProfileExplorer is running before attempting a build - it locks the DLLs:
 

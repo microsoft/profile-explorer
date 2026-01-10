@@ -71,7 +71,15 @@ public sealed class ProfileModuleBuilder {
     Trace.WriteLine($"ModuleInfo init {imageName}");
 #endif
 
-    var binFile = await FindBinaryFilePath(symbolSettings).ConfigureAwait(false);
+    // Skip binary lookup when symbol server is disabled - we can't resolve symbols anyway
+    // (no ImageID events means no PDB GUID), so loading binaries for disassembly is pointless.
+    BinaryFileSearchResult binFile = null;
+    if (symbolSettings.SourceServerEnabled) {
+      binFile = await FindBinaryFilePath(symbolSettings).ConfigureAwait(false);
+    }
+    else {
+      DiagnosticLogger.LogInfo($"[ModuleInit] Skipping binary lookup for {imageName} - symbol server disabled");
+    }
 
     if (binFile == null || !binFile.Found) {
       DiagnosticLogger.LogWarning($"[ModuleInit] Could not find local path for image {imageName}. Binary file missing.");
