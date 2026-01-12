@@ -401,7 +401,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return searchResult;
   }
 
-  public static string ConstructSymbolSearchPath(SymbolFileSourceSettings settings) {
+  public static string ConstructSymbolSearchPath(SymbolFileSourceSettings settings, bool logPath = false) {
     string symbolPath = "";
 
     if (settings.UseEnvironmentVarSymbolPaths) {
@@ -412,6 +412,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       if (!string.IsNullOrEmpty(path)) {
         symbolPath += $"{path};";
       }
+    }
+
+    if (logPath) {
+      DiagnosticLogger.LogInfo($"[SymbolPath] Constructed symbol search path: {symbolPath}");
     }
 
     return symbolPath;

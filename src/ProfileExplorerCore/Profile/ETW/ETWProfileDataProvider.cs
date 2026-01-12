@@ -787,6 +787,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                              $"Cutoff={moduleSampleCutOff} ({symbolSettings.LowSampleModuleCutoff:P1} of {rawProfile.Samples.Count} samples), " +
                              $"TopModulesCount={topModules.Count}");
 
+    // Log symbol server configuration for diagnostics
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Symbol server enabled: {symbolSettings.SourceServerEnabled}");
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Symbol paths: {string.Join("; ", symbolSettings.SymbolPaths)}");
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Initial timeout: {symbolSettings.EffectiveTimeoutSeconds}s (Bellwether: {symbolSettings.BellwetherTimeoutSeconds}s, Normal: {symbolSettings.SymbolServerTimeoutSeconds}s, Degraded: {symbolSettings.DegradedTimeoutSeconds}s)");
+
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Sample cutoff calculation: {symbolSettings.LowSampleModuleCutoff} * {rawProfile.Samples.Count} = {moduleSampleCutOff}");
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Skip low sample modules: {symbolSettings.SkipLowSampleModules}");
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Starting binary filtering for {imageLimit} total modules");
@@ -928,13 +933,22 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           int timeoutSeconds = symbolSettings.EffectiveTimeoutSeconds > 0 ? symbolSettings.EffectiveTimeoutSeconds : 10;
           using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
 
+          var taskSw = Stopwatch.StartNew();
           downloadTask = PEBinaryInfoProvider.LocateBinaryFileAsync(taskBinaryFile, symbolSettings);
           var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
 
           var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+          var elapsedMs = taskSw.ElapsedMilliseconds;
 
           if (completedTask == downloadTask) {
             result = await downloadTask.ConfigureAwait(false);
+
+            // Check if this was a real network request (took >500ms, not a cache hit)
+            // This is the "real bellwether" if ntoskrnl was a cache hit
+            if (result.Found && elapsedMs > 500 && !symbolSettings.HadFirstSuccessfulNetworkRequest) {
+              symbolSettings.HadFirstSuccessfulNetworkRequest = true;
+              DiagnosticLogger.LogInfo($"[BinarySearch] First real network success: {taskBinaryFile.ImageName} in {elapsedMs}ms - network verified");
+            }
           }
           else {
             // Timeout - mark as failed but we'll wait for the underlying request to finish
@@ -942,6 +956,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             DiagnosticLogger.LogWarning($"[BinarySearch] TIMEOUT after {timeoutSeconds}s for {taskBinaryFile.ImageName}");
             result = BinaryFileSearchResult.Failure(taskBinaryFile, $"Timeout after {timeoutSeconds}s");
             symbolSettings.RejectBinaryFile(taskBinaryFile);
+
+            // After first timeout, reduce timeout for subsequent downloads
+            if (!symbolSettings.HadFirstTimeout) {
+              symbolSettings.HadFirstTimeout = true;
+              DiagnosticLogger.LogInfo($"[BinarySearch] First timeout detected - reducing timeout from {timeoutSeconds}s to {symbolSettings.SymbolServerTimeoutSeconds}s for remaining downloads");
+            }
           }
         }
         catch (OperationCanceledException) {
@@ -972,13 +992,57 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     var binSw = Stopwatch.StartNew();
 
+    // Wait for ALL binary tasks to complete in parallel before processing results.
+    // Report progress incrementally as tasks complete (not just at the end).
+    var activeBinaryTasks = binTaskList.Where(t => t != null).ToArray();
+    if (activeBinaryTasks.Length > 0) {
+      DiagnosticLogger.LogInfo($"[SymbolLoading] Waiting for {activeBinaryTasks.Length} binary downloads to complete in parallel...");
+
+      // Track completions and report progress incrementally
+      int completedCount = 0;
+      int totalTasks = activeBinaryTasks.Length;
+
+      // Start a progress monitoring task that reports progress every 500ms
+      var progressCts = new CancellationTokenSource();
+      var progressTask = Task.Run(async () => {
+        int lastReported = -1;
+        while (!progressCts.Token.IsCancellationRequested) {
+          int current = Volatile.Read(ref completedCount);
+          if (current != lastReported) {
+            UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, totalTasks, current, "binary downloads");
+            lastReported = current;
+          }
+          try {
+            await Task.Delay(500, progressCts.Token).ConfigureAwait(false);
+          }
+          catch (OperationCanceledException) {
+            break;
+          }
+        }
+      });
+
+      // Attach completion tracking to each task
+      var trackingTasks = activeBinaryTasks.Select(task =>
+        task.ContinueWith(_ => Interlocked.Increment(ref completedCount), TaskContinuationOptions.ExecuteSynchronously)
+      ).ToArray();
+
+      // Wait for all downloads to complete
+      await Task.WhenAll(activeBinaryTasks).ConfigureAwait(false);
+
+      // Stop progress monitoring
+      progressCts.Cancel();
+      try { await progressTask.ConfigureAwait(false); } catch { }
+
+      DiagnosticLogger.LogInfo($"[SymbolLoading] All binary downloads completed in {binSw.Elapsed.TotalSeconds:F1}s");
+    }
+
     // Determine the compiler target for the new session.
     var irMode = IRMode.Default;
 
     int binariesFound = 0;
     int binariesProcessed = 0;
 
-    // Process results (tasks already completed, so this is fast)
+    // Process results (tasks already completed)
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
         DiagnosticLogger.LogInfo($"[SymbolLoading] Binary loading cancelled at image {i}/{imageLimit}");
@@ -1126,6 +1190,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
               DiagnosticLogger.LogWarning($"[SymbolSearch] TIMEOUT after {timeoutSeconds}s for {taskSymbolFile.FileName}");
               result = DebugFileSearchResult.Failure(taskSymbolFile, $"Timeout after {timeoutSeconds}s");
               symbolSettings.RejectSymbolFile(taskSymbolFile);
+
+              // After first timeout, reduce timeout for subsequent downloads
+              if (!symbolSettings.HadFirstTimeout) {
+                symbolSettings.HadFirstTimeout = true;
+                DiagnosticLogger.LogInfo($"[SymbolSearch] First timeout detected - reducing timeout from {timeoutSeconds}s to {symbolSettings.SymbolServerTimeoutSeconds}s for remaining downloads");
+              }
             }
           }
           catch (OperationCanceledException) {
@@ -1174,6 +1244,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             else {
               DiagnosticLogger.LogWarning($"[SymbolSearch] TIMEOUT after {timeoutSeconds}s for PDB from binary {taskBinaryPath}");
               result = DebugFileSearchResult.Failure(null, $"Timeout after {timeoutSeconds}s");
+
+              // After first timeout, reduce timeout for subsequent downloads
+              if (!symbolSettings.HadFirstTimeout) {
+                symbolSettings.HadFirstTimeout = true;
+                DiagnosticLogger.LogInfo($"[SymbolSearch] First timeout detected - reducing timeout from {timeoutSeconds}s to {symbolSettings.SymbolServerTimeoutSeconds}s for remaining downloads");
+              }
             }
           }
           catch (OperationCanceledException) {
@@ -1211,11 +1287,46 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download phase: Started {pdbTasksStarted} download tasks for {pdbCount} eligible modules");
 
     // Wait for ALL PDB tasks to complete in parallel before processing results.
-    // This fixes the issue where sequential awaiting would block on slow tasks.
+    // Report progress incrementally as tasks complete (not just at the end).
     var activePdbTasks = pdbTaskList.Where(t => t != null).ToArray();
     if (activePdbTasks.Length > 0) {
       DiagnosticLogger.LogInfo($"[SymbolLoading] Waiting for {activePdbTasks.Length} PDB downloads to complete in parallel...");
+
+      // Track completions and report progress incrementally
+      int pdbCompletedCount = 0;
+      int pdbTotalTasks = activePdbTasks.Length;
+
+      // Start a progress monitoring task that reports progress every 500ms
+      var pdbProgressCts = new CancellationTokenSource();
+      var pdbProgressTask = Task.Run(async () => {
+        int lastReported = -1;
+        while (!pdbProgressCts.Token.IsCancellationRequested) {
+          int current = Volatile.Read(ref pdbCompletedCount);
+          if (current != lastReported) {
+            UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbTotalTasks, current, "PDB downloads");
+            lastReported = current;
+          }
+          try {
+            await Task.Delay(500, pdbProgressCts.Token).ConfigureAwait(false);
+          }
+          catch (OperationCanceledException) {
+            break;
+          }
+        }
+      });
+
+      // Attach completion tracking to each task
+      var pdbTrackingTasks = activePdbTasks.Select(task =>
+        task.ContinueWith(_ => Interlocked.Increment(ref pdbCompletedCount), TaskContinuationOptions.ExecuteSynchronously)
+      ).ToArray();
+
+      // Wait for all downloads to complete
       await Task.WhenAll(activePdbTasks).ConfigureAwait(false);
+
+      // Stop progress monitoring
+      pdbProgressCts.Cancel();
+      try { await pdbProgressTask.ConfigureAwait(false); } catch { }
+
       DiagnosticLogger.LogInfo($"[SymbolLoading] All PDB downloads completed in {pdbSw.Elapsed.TotalSeconds:F1}s");
     }
 
@@ -1573,6 +1684,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     var sw = Stopwatch.StartNew();
     int timeoutSeconds = symbolSettings.BellwetherTimeoutSeconds > 0 ? symbolSettings.BellwetherTimeoutSeconds : 30;
 
+    // Log symbol server configuration
+    DiagnosticLogger.LogInfo($"[BellwetherTest] Symbol paths configured: {string.Join("; ", symbolSettings.SymbolPaths)}");
     DiagnosticLogger.LogInfo($"[BellwetherTest] Testing symbol server health with {bellwetherImage.ModuleName} (timeout: {timeoutSeconds}s)");
 
     try {
@@ -1584,8 +1697,27 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       if (completedTask == downloadTask) {
         var result = await downloadTask.ConfigureAwait(false);
+        var elapsedMs = sw.ElapsedMilliseconds;
+
         if (result.Found) {
-          DiagnosticLogger.LogInfo($"[BellwetherTest] SUCCESS: {bellwetherImage.ModuleName} downloaded in {sw.Elapsed.TotalSeconds:F1}s - Symbol server is healthy");
+          // Check if this was a cache hit (very fast response, < 500ms)
+          // A real network download would take longer
+          bool likelyCacheHit = elapsedMs < 500;
+          string cacheNote = likelyCacheHit ? " (likely from local cache - not a true network test)" : "";
+
+          DiagnosticLogger.LogInfo($"[BellwetherTest] SUCCESS: {bellwetherImage.ModuleName} found at {result.FilePath} in {sw.Elapsed.TotalSeconds:F1}s{cacheNote}");
+
+          if (likelyCacheHit) {
+            // Cache hit doesn't prove network works - the first REAL network request will be the true bellwether
+            DiagnosticLogger.LogInfo("[BellwetherTest] Fast response suggests local cache hit. Network connectivity not verified.");
+            DiagnosticLogger.LogInfo("[BellwetherTest] First real network request will determine timeout strategy.");
+            // Don't change any flags - first real network request will set HadFirstTimeout or HadFirstSuccessfulNetworkRequest
+          }
+          else {
+            // Actual network download succeeded - THIS is the real bellwether, network is verified
+            DiagnosticLogger.LogInfo("[BellwetherTest] Network download verified (took real network time). Symbol server is healthy.");
+            symbolSettings.HadFirstSuccessfulNetworkRequest = true;
+          }
           symbolSettings.SymbolServerDegraded = false;
         }
         else {
@@ -1610,6 +1742,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     if (symbolSettings.SymbolServerDegraded) {
       DiagnosticLogger.LogWarning($"[BellwetherTest] Symbol server marked as DEGRADED - using {symbolSettings.DegradedTimeoutSeconds}s timeout instead of {symbolSettings.SymbolServerTimeoutSeconds}s");
+    }
+    else {
+      DiagnosticLogger.LogInfo($"[BellwetherTest] Using initial timeout: {symbolSettings.EffectiveTimeoutSeconds}s (will reduce to {symbolSettings.SymbolServerTimeoutSeconds}s after first timeout)");
     }
   }
 

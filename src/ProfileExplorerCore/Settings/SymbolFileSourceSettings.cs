@@ -77,10 +77,31 @@ public class SymbolFileSourceSettings : SettingsBase {
   // Runtime state - not persisted. Set when bellwether test fails.
   public bool SymbolServerDegraded { get; set; }
 
+  // Runtime state - tracks if we've had our first successful network request.
+  // Used to know when to reduce timeout from initial 30s to normal 10s.
+  public bool HadFirstSuccessfulNetworkRequest { get; set; }
+
+  // Runtime state - tracks if we've had any timeout, triggering reduced timeout.
+  public bool HadFirstTimeout { get; set; }
+
   /// <summary>
-  /// Returns the effective timeout based on whether symbol server is degraded.
+  /// Returns the effective timeout based on current state:
+  /// - If degraded (bellwether failed): use DegradedTimeoutSeconds (3s)
+  /// - If we've had a timeout: use SymbolServerTimeoutSeconds (10s)
+  /// - Otherwise (initial state): use BellwetherTimeoutSeconds (30s)
   /// </summary>
-  public int EffectiveTimeoutSeconds => SymbolServerDegraded ? DegradedTimeoutSeconds : SymbolServerTimeoutSeconds;
+  public int EffectiveTimeoutSeconds {
+    get {
+      if (SymbolServerDegraded) {
+        return DegradedTimeoutSeconds;
+      }
+      if (HadFirstTimeout) {
+        return SymbolServerTimeoutSeconds;
+      }
+      // Initial state - use generous timeout until we see the first timeout
+      return BellwetherTimeoutSeconds;
+    }
+  }
 
   /// <summary>
   /// Returns the effective company filter strings. Uses "Microsoft" as default if enabled but list is empty.
