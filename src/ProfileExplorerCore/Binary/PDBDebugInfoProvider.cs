@@ -62,23 +62,35 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     // the login page is displayed a single time, with other requests waiting for a token.
 
     // DefaultAzureCredential is not allowed per SFI. Mimic behavior while continuing
-    // to exclude the managed identity credential. Some of these could likely be removed
+    // to exclude the managed identity credential.
+    // NOTE: ChainedTokenCredential only falls through on CredentialUnavailableException.
+    // Other exceptions (like "needs re-authentication") stop the chain. We wrap each
+    // credential to catch auth failures and convert them to CredentialUnavailableException
+    // so the chain continues to InteractiveBrowserCredential which prompts the user.
     var credentials = new List<TokenCredential>
     {
-      new EnvironmentCredential(),
-      new WorkloadIdentityCredential(),
-      new SharedTokenCacheCredential(),
-      new VisualStudioCredential(),
-      new AzureCliCredential(),
-      new AzurePowerShellCredential(),
-      new AzureDeveloperCliCredential(),
-      new InteractiveBrowserCredential()
+      WrapCredential(new EnvironmentCredential()),
+      WrapCredential(new WorkloadIdentityCredential()),
+      WrapCredential(new SharedTokenCacheCredential()),
+      WrapCredential(new VisualStudioCredential()),
+      WrapCredential(new AzureCliCredential()),
+      WrapCredential(new AzurePowerShellCredential()),
+      WrapCredential(new AzureDeveloperCliCredential()),
+      new InteractiveBrowserCredential() // Don't wrap - final fallback should show errors
     };
 
     var authCredential = new ChainedTokenCredential(credentials.ToArray());
 
     authLogWriter_ = new StringWriter();
     authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
+  }
+
+  /// <summary>
+  /// Wraps a credential to catch authentication failures and convert them to
+  /// CredentialUnavailableException so ChainedTokenCredential continues to the next credential.
+  /// </summary>
+  private static TokenCredential WrapCredential(TokenCredential inner) {
+    return new FallbackTokenCredential(inner);
   }
 
   public PDBDebugInfoProvider(SymbolFileSourceSettings settings) {
@@ -1073,5 +1085,48 @@ sealed class BasicAuthenticationHandler : SymbolReaderAuthHandler {
     }
 
     return null;
+  }
+}
+
+/// <summary>
+/// Wraps a TokenCredential to catch authentication failures and convert them to
+/// CredentialUnavailableException so ChainedTokenCredential continues to the next credential.
+/// This ensures that if VS auth needs re-authentication, we fall through to browser auth.
+/// </summary>
+sealed class FallbackTokenCredential : TokenCredential {
+  private readonly TokenCredential inner_;
+
+  public FallbackTokenCredential(TokenCredential inner) {
+    inner_ = inner;
+  }
+
+  public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken) {
+    try {
+      return inner_.GetToken(requestContext, cancellationToken);
+    }
+    catch (CredentialUnavailableException) {
+      throw; // Let this pass through - it's expected
+    }
+    catch (Exception ex) {
+      // Convert other auth failures to CredentialUnavailableException so chain continues
+      throw new CredentialUnavailableException($"{inner_.GetType().Name} failed: {ex.Message}", ex);
+    }
+  }
+
+  public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken) {
+    return GetTokenAsyncImpl(requestContext, cancellationToken);
+  }
+
+  private async ValueTask<AccessToken> GetTokenAsyncImpl(TokenRequestContext requestContext, CancellationToken cancellationToken) {
+    try {
+      return await inner_.GetTokenAsync(requestContext, cancellationToken).ConfigureAwait(false);
+    }
+    catch (CredentialUnavailableException) {
+      throw; // Let this pass through - it's expected
+    }
+    catch (Exception ex) {
+      // Convert other auth failures to CredentialUnavailableException so chain continues
+      throw new CredentialUnavailableException($"{inner_.GetType().Name} failed: {ex.Message}", ex);
+    }
   }
 }
