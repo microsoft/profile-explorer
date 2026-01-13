@@ -55,6 +55,29 @@ Write-Host ""
 Write-Host "Reading log file..." -ForegroundColor Gray
 $log = Get-Content $LogPath
 
+# ============================================================================
+# CRITICAL ERROR CHECK - DIA SDK Registration
+# ============================================================================
+$diaError = $log | Where-Object { $_ -match 'DIA SDK.*is not registered|msdia140\.dll.*not registered|\[CRITICAL\].*DIA' } | Select-Object -First 1
+if ($diaError) {
+    Write-Host ""
+    Write-Host ("!" * 80) -ForegroundColor Red
+    Write-Host "  CRITICAL ERROR: DIA SDK NOT REGISTERED" -ForegroundColor Red
+    Write-Host ("!" * 80) -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  The DIA SDK (msdia140.dll) is not registered as a COM component." -ForegroundColor Red
+    Write-Host "  This prevents ALL symbol resolution - no function names will be displayed." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  TO FIX (run as Administrator):" -ForegroundColor Yellow
+    Write-Host "    regsvr32 `"<ProfileExplorer_Install_Path>\msdia140.dll`"" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Or for dev builds:" -ForegroundColor Yellow
+    Write-Host "    regsvr32 `"C:\src\profile-explorer\src\ProfileExplorerUI\bin\Release\net8.0-windows\msdia140.dll`"" -ForegroundColor White
+    Write-Host ""
+    Write-Host ("!" * 80) -ForegroundColor Red
+    Write-Host ""
+}
+
 # Categorize lines
 $infoLines = $log | Where-Object { $_ -match '\[Information\]' }
 $warningLines = $log | Where-Object { $_ -match '\[Warning\]' }

@@ -57,6 +57,20 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private bool disposed_;
   private bool hasSourceInfo_;
 
+  // Static error tracking for DIA SDK registration issues
+  private static bool diaRegistrationFailed_;
+  private static string diaRegistrationError_;
+
+  /// <summary>
+  /// Returns true if DIA SDK (msdia140.dll) failed to load due to COM registration issues.
+  /// </summary>
+  public static bool HasDiaRegistrationError => diaRegistrationFailed_;
+
+  /// <summary>
+  /// Gets the DIA registration error message with instructions to fix.
+  /// </summary>
+  public static string DiaRegistrationError => diaRegistrationError_;
+
   static PDBDebugInfoProvider() {
     // Create a single instance of the Symweb handler so that
     // when concurrent requests are made and login must be done,
@@ -614,6 +628,26 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       diaSource_.openSession(out session_);
     }
     catch (Exception ex) {
+      // Check for DIA SDK COM registration issue - common in dev builds
+      bool isDiaRegistrationError = ex.Message.Contains("E6756135-1E65-4D17-8576-610761398C3C") ||
+                                    ex.Message.Contains("8007007E") ||
+                                    ex.Message.Contains("class factory");
+      if (isDiaRegistrationError) {
+        string errorMsg = $"DIA SDK (msdia140.dll) is not registered! " +
+                          $"Run as Admin: regsvr32 \"{AppContext.BaseDirectory}msdia140.dll\" " +
+                          $"or use the installed version of Profile Explorer.";
+        DiagnosticLogger.LogError($"[PDBLoad] [CRITICAL] {errorMsg}");
+        Trace.TraceError($"DIA SDK not registered. Run: regsvr32 \"{AppContext.BaseDirectory}msdia140.dll\"");
+
+        // Set static flag so UI can detect and display error
+        if (!diaRegistrationFailed_) {
+          diaRegistrationFailed_ = true;
+          diaRegistrationError_ = errorMsg;
+        }
+      }
+      else {
+        DiagnosticLogger.LogError($"[PDBLoad] EXCEPTION loading PDB {debugFilePath}: {ex.GetType().Name}: {ex.Message}");
+      }
       Trace.TraceError($"Failed to load debug file {debugFilePath}: {ex.Message}");
       loadFailed_ = true;
       return false;
