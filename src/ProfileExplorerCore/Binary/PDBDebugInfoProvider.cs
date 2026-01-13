@@ -637,7 +637,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
                           $"Run as Admin: regsvr32 \"{AppContext.BaseDirectory}msdia140.dll\" " +
                           $"or use the installed version of Profile Explorer.";
         DiagnosticLogger.LogError($"[PDBLoad] [CRITICAL] {errorMsg}");
-        Trace.TraceError($"DIA SDK not registered. Run: regsvr32 \"{AppContext.BaseDirectory}msdia140.dll\"");
+        Trace.TraceError(errorMsg);
 
         // Set static flag so UI can detect and display error
         if (!diaRegistrationFailed_) {
@@ -646,7 +646,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         }
       }
       else {
-        DiagnosticLogger.LogError($"[PDBLoad] EXCEPTION loading PDB {debugFilePath}: {ex.GetType().Name}: {ex.Message}");
+        DiagnosticLogger.LogError($"[PDBLoad] Failed to load {debugFilePath}: {ex.Message}");
       }
       Trace.TraceError($"Failed to load debug file {debugFilePath}: {ex.Message}");
       loadFailed_ = true;

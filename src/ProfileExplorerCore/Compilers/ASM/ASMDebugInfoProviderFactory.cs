@@ -11,23 +11,27 @@ using ProfileExplorer.Core.Utilities;
 namespace ProfileExplorer.Core.Compilers.ASM;
 
 public class ASMDebugInfoProviderFactory : IDebugInfoProviderFactory {
-  private static readonly Dictionary<DebugFileSearchResult, IDebugInfoProvider> loadedDebugInfo_ = new();
+  // Use FilePath as key instead of DebugFileSearchResult object reference.
+  // Different threads may create different DebugFileSearchResult objects for the same PDB,
+  // and without Equals/GetHashCode overrides, reference equality would miss cache hits.
+  private static readonly Dictionary<string, IDebugInfoProvider> loadedDebugInfo_ = new();
+  private static readonly object loadedDebugInfoLock_ = new();
 
   public IDebugInfoProvider CreateDebugInfoProvider(DebugFileSearchResult debugFile) {
-    if (!debugFile.Found) {
+    if (!debugFile.Found || string.IsNullOrEmpty(debugFile.FilePath)) {
       return null;
     }
 
-    lock (this) {
-      if (loadedDebugInfo_.TryGetValue(debugFile, out var provider)) {
+    // Use static lock since the dictionary is static (shared across all factory instances)
+    lock (loadedDebugInfoLock_) {
+      if (loadedDebugInfo_.TryGetValue(debugFile.FilePath, out var provider)) {
         return provider;
       }
 
       var newProvider = new PDBDebugInfoProvider(CoreSettingsProvider.SymbolSettings);
 
-      if (newProvider.LoadDebugInfo(debugFile, provider)) {
-        loadedDebugInfo_[debugFile] = newProvider;
-        provider?.Dispose();
+      if (newProvider.LoadDebugInfo(debugFile, null)) {
+        loadedDebugInfo_[debugFile.FilePath] = newProvider;
         return newProvider;
       }
 

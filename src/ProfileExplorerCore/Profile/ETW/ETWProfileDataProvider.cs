@@ -1122,16 +1122,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           return imageModule;
         }
 
-        // Time spent on debug info file lookup
-        // Skip debug info lookup when symbol server is disabled - we already tried upfront
-        // and without ImageID events we can't match PDBs anyway (no GUID).
+        // Time spent on debug info file lookup.
+        // Always try to find PDB - it may be cached locally from the initial download phase.
         var debugFileSw = Stopwatch.StartNew();
-        DebugFileSearchResult debugInfoFile = null;
-
-        if (symbolSettings.SourceServerEnabled) {
-          debugInfoFile = await GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
-                                               image, rawProfile, processId, symbolSettings);
-        }
+        var debugInfoFile = await GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
+                                                   image, rawProfile, processId, symbolSettings);
         var debugFileTime = debugFileSw.Elapsed;
 
         // Time spent on debug info initialization
@@ -1141,9 +1136,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           Trace.WriteLine($"CreateModuleBuilderAsync: Initializing debug info for {image.ModuleName}");
           debugInitialized = await imageModule.InitializeDebugInfo(debugInfoFile).ConfigureAwait(false);
           Trace.WriteLine($"CreateModuleBuilderAsync: Debug info initialization for {image.ModuleName}, result: {debugInitialized}");
-        }
-        else if (!symbolSettings.SourceServerEnabled) {
-          Trace.WriteLine($"CreateModuleBuilderAsync: Skipping debug info lookup for {image.ModuleName} - symbol server disabled");
         }
         else {
           Trace.WriteLine($"CreateModuleBuilderAsync: No debug info file found for {image.ModuleName}");
@@ -1238,9 +1230,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       // Create the module builder outside the lock to avoid blocking other threads
       imageModule = await CreateModuleBuilderAsync(queryImage, rawProfile, processId, symbolSettings).ConfigureAwait(false);
-      
-      // Add to the cache
-      imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+
+      // Add to the cache. If another thread already added a module, use that one instead
+      // to ensure all threads share the same (hopefully initialized) instance.
+      if (!imageModuleMap_.TryAdd(queryImage.Id, imageModule)) {
+        // Another thread won the race - use their module instead
+        imageModule = imageModuleMap_[queryImage.Id];
+      }
     }
 
     prevImage_ = queryImage;
