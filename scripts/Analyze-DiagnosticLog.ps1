@@ -93,6 +93,17 @@ if ($eventCountLine) {
     }
 }
 
+# Parse Microsoft module info from [SymbolLoading] logs
+# Format: "[SymbolLoading]   1. modulename.dll: 12345 samples [Microsoft]"
+$microsoftModules = @{}
+$log | Where-Object { $_ -match '\[SymbolLoading\].*\d+\.\s+([^:]+):\s+\d+\s+samples' } | ForEach-Object {
+    if ($_ -match '\[SymbolLoading\].*\d+\.\s+([^:]+):\s+(\d+)\s+samples(.*)$') {
+        $moduleName = $Matches[1].Trim()
+        $isMicrosoft = $Matches[3] -match '\[Microsoft\]'
+        $microsoftModules[$moduleName.ToLower()] = $isMicrosoft
+    }
+}
+
 Write-Host ""
 # Only report "MISSING" if we explicitly found evidence of missing events
 # (not just because we couldn't parse the count)
@@ -413,33 +424,44 @@ Write-Host "  MODULE CATEGORIES" -ForegroundColor Yellow
 Write-Host ("-" * 80) -ForegroundColor DarkGray
 
 $kernelModules = @()
-$windowsModules = @()
+$microsoftOtherModules = @()
 $driverModules = @()
 $thirdPartyModules = @()
 
 foreach ($module in $failedModules.Keys) {
     $count = $failedModules[$module]
-    if ($module -match '\.sys$') {
-        $driverModules += [PSCustomObject]@{Name=$module; Count=$count}
-    } elseif ($module -match 'ntoskrnl|ntkrnl|hal\.dll') {
-        $kernelModules += [PSCustomObject]@{Name=$module; Count=$count}
-    } elseif ($module -match '^Windows\.|^Microsoft\.|explorer\.exe|shell32|combase|ExplorerFrame|dui70|duser|thumbcache|twinui') {
-        $windowsModules += [PSCustomObject]@{Name=$module; Count=$count}
+    $moduleLower = $module.ToLower()
+
+    # Check if module is marked as Microsoft from trace FileVersion events
+    $isMicrosoftFromTrace = $microsoftModules.ContainsKey($moduleLower) -and $microsoftModules[$moduleLower]
+
+    # Fallback to name-based heuristics if no trace info
+    $isMicrosoftByName = $module -match '^Windows\.|^Microsoft\.|explorer\.exe|shell32|combase|ExplorerFrame|dui70|duser|thumbcache|twinui|dwm|dcomp|CoreMessaging'
+
+    $isMicrosoft = $isMicrosoftFromTrace -or $isMicrosoftByName
+
+    if ($module -match 'ntoskrnl|ntkrnl|hal\.dll') {
+        $kernelModules += [PSCustomObject]@{Name=$module; Count=$count; IsMicrosoft=$true}
+    } elseif ($module -match '\.sys$') {
+        $driverModules += [PSCustomObject]@{Name=$module; Count=$count; IsMicrosoft=$isMicrosoft}
+    } elseif ($isMicrosoft) {
+        $microsoftOtherModules += [PSCustomObject]@{Name=$module; Count=$count; IsMicrosoft=$true}
     } else {
-        $thirdPartyModules += [PSCustomObject]@{Name=$module; Count=$count}
+        $thirdPartyModules += [PSCustomObject]@{Name=$module; Count=$count; IsMicrosoft=$false}
     }
 }
 
 $kernelTotal = ($kernelModules | Measure-Object -Property Count -Sum).Sum
-$windowsTotal = ($windowsModules | Measure-Object -Property Count -Sum).Sum
+$microsoftTotal = ($microsoftOtherModules | Measure-Object -Property Count -Sum).Sum
 $driverTotal = ($driverModules | Measure-Object -Property Count -Sum).Sum
 $thirdPartyTotal = ($thirdPartyModules | Measure-Object -Property Count -Sum).Sum
+$msDriverCount = ($driverModules | Where-Object { $_.IsMicrosoft } | Measure-Object).Count
 
 Write-Host ""
 Write-Host "Kernel/NT:     $kernelTotal failures in $($kernelModules.Count) modules" -ForegroundColor Red
-Write-Host "Windows Shell: $windowsTotal failures in $($windowsModules.Count) modules" -ForegroundColor Yellow
-Write-Host "Drivers:       $driverTotal failures in $($driverModules.Count) modules" -ForegroundColor Yellow
-Write-Host "Other:         $thirdPartyTotal failures in $($thirdPartyModules.Count) modules" -ForegroundColor White
+Write-Host "Microsoft:     $microsoftTotal failures in $($microsoftOtherModules.Count) modules" -ForegroundColor Yellow
+Write-Host "Drivers:       $driverTotal failures in $($driverModules.Count) modules ($msDriverCount Microsoft)" -ForegroundColor Yellow
+Write-Host "Third-Party:   $thirdPartyTotal failures in $($thirdPartyModules.Count) modules" -ForegroundColor White
 
 # Extract symbol path from log
 $symbolPathLine = $log | Where-Object { $_ -match '\[SymbolSearch\] Symbol search path:' } | Select-Object -First 1
@@ -495,8 +517,19 @@ if ($failedModules.ContainsKey("explorer.exe") -and $failedModules["explorer.exe
 $thirdPartyHigh = $thirdPartyModules | Where-Object { $_.Count -gt 50 }
 if ($thirdPartyHigh.Count -gt 0) {
     Write-Host "[i] " -NoNewline -ForegroundColor Cyan
-    Write-Host "Other modules without symbols (may need PDB download or be third-party):"
+    Write-Host "Third-party modules without symbols (PDBs not available on symbol server):"
     foreach ($m in $thirdPartyHigh | Sort-Object Count -Descending | Select-Object -First 5) {
+        Write-Host "    - $($m.Name) ($($m.Count) failures)"
+    }
+    Write-Host ""
+}
+
+# Also show high-failure Microsoft modules (may indicate symbol server issues)
+$microsoftHigh = $microsoftOtherModules | Where-Object { $_.Count -gt 50 }
+if ($microsoftHigh.Count -gt 0) {
+    Write-Host "[!] " -NoNewline -ForegroundColor Yellow
+    Write-Host "Microsoft modules without symbols (check symbol server access):"
+    foreach ($m in $microsoftHigh | Sort-Object Count -Descending | Select-Object -First 5) {
         Write-Host "    - $($m.Name) ($($m.Count) failures)"
     }
     Write-Host ""
@@ -914,8 +947,9 @@ Write-Host ("-" * 80) -ForegroundColor DarkGray
 Write-Host "  AUTH & SYMBOL SERVER ANALYSIS" -ForegroundColor Yellow
 Write-Host ("-" * 80) -ForegroundColor DarkGray
 
-$authFailed = $log | Where-Object { $_ -match 'Primary server.*auth FAILED|401|403|Unauthorized|Forbidden|Access Denied' }
-$authVerified = $log | Where-Object { $_ -match 'Primary server.*auth VERIFIED|symweb.*auth.*success' }
+# Look for explicit auth failure/success messages from our logging
+$authFailed = $log | Where-Object { $_ -match 'auth FAILED|PrimaryServerAuthFailed=True' }
+$authVerified = $log | Where-Object { $_ -match 'auth VERIFIED|PrimaryServerVerified=True' }
 $symwebHits = $log | Where-Object { $_ -match 'symweb' -and $_ -match 'TraceEvent log' }
 $msdlHits = $log | Where-Object { $_ -match 'msdl\.microsoft\.com|download/symbols' -and $_ -match 'TraceEvent log' }
 

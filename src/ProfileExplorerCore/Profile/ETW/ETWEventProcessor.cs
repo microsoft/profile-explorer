@@ -294,6 +294,17 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
+    // FileVersion events contain version resource info including CompanyName
+    symbolParser.ImageIDFileVersion += data => {
+      // Find the image by timestamp and update its version info
+      var image = profile.FindImageByTimestamp(data.TimeDateStamp);
+      if (image != null) {
+        image.CompanyName = data.CompanyName;
+        image.FileDescription = data.FileDescription;
+        image.ProductName = data.ProductName;
+      }
+    };
+
     // Start of main ETW event handlers.
     kernel.ProcessStartGroup += data => {
       var proc = new ProfileProcess(data.ProcessID, data.ParentID,

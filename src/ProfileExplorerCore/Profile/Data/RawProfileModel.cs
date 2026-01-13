@@ -400,8 +400,23 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
   public int TimeStamp { get; set; }
   [ProtoMember(8)]
   public long Checksum { get; set; }
+  [ProtoMember(9)]
+  public string CompanyName { get; set; }
+  [ProtoMember(10)]
+  public string FileDescription { get; set; }
+  [ProtoMember(11)]
+  public string ProductName { get; set; }
   public long BaseAddressEnd => BaseAddress + Size;
   public string ModuleName => Utilities.Utils.TryGetFileName(FilePath);
+
+  /// <summary>
+  /// Returns true if this appears to be a Microsoft binary based on version info from trace.
+  /// Checks CompanyName, FileDescription, and ProductName fields.
+  /// </summary>
+  public bool IsMicrosoft =>
+    (!string.IsNullOrEmpty(CompanyName) && CompanyName.Contains("Microsoft", StringComparison.OrdinalIgnoreCase)) ||
+    (!string.IsNullOrEmpty(FileDescription) && FileDescription.Contains("Microsoft", StringComparison.OrdinalIgnoreCase)) ||
+    (!string.IsNullOrEmpty(ProductName) && ProductName.Contains("Microsoft", StringComparison.OrdinalIgnoreCase));
 
   public int CompareTo(ProfileImage other) {
     if (BaseAddress < other.BaseAddress && BaseAddressEnd < other.BaseAddressEnd) {

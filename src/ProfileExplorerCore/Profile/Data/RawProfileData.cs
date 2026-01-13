@@ -320,6 +320,15 @@ public class RawProfileData : IDisposable {
     return images_[id - 1];
   }
 
+  public ProfileImage FindImageByTimestamp(int timestamp) {
+    foreach (var image in images_) {
+      if (image.TimeStamp == timestamp) {
+        return image;
+      }
+    }
+    return null;
+  }
+
   public int AddThread(ProfileThread thread) {
     if (!threadsMap_.TryGetValue(thread, out int existingThread)) {
       threads_.Add(thread);

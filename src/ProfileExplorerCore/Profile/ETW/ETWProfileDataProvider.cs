@@ -869,11 +869,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     DiagnosticLogger.LogInfo($"[SymbolLoading] Starting PDB/symbol file search for {imageLimit} images. Sample cutoff: {moduleSampleCutOff}");
 
-    // Log top modules from sample analysis
+    // Log top modules from sample analysis (with Microsoft flag from trace FileVersion events)
     DiagnosticLogger.LogInfo($"[SymbolLoading] Top 10 modules by sample count:");
     for (int t = 0; t < Math.Min(10, topModules.Count); t++) {
       var tm = topModules[t];
-      DiagnosticLogger.LogInfo($"[SymbolLoading]   {t+1}. {tm.Item1.ModuleName}: {tm.SampleCount} samples");
+      string msTag = tm.Item1.IsMicrosoft ? " [Microsoft]" : "";
+      DiagnosticLogger.LogInfo($"[SymbolLoading]   {t+1}. {tm.Item1.ModuleName}: {tm.SampleCount} samples{msTag}");
     }
 
     Trace.WriteLine($"DEBUG_FILTER_DEBUG: Starting debug file search for {imageLimit} modules. Low sample cutoff: {moduleSampleCutOff}");
@@ -912,14 +913,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       if (symbolFile == null) {
         // No ImageID_DbgID event for this module - can't download PDB without GUID/Age
-        DiagnosticLogger.LogWarning($"[SymbolLoading] No PDB info (ImageID_DbgID event) for {imageList[i].ModuleName} at base 0x{imageList[i].BaseAddress:X} - skipping PDB download");
+        string msTag = imageList[i].IsMicrosoft ? " [Microsoft]" : "";
+        DiagnosticLogger.LogWarning($"[SymbolLoading] No PDB info (ImageID_DbgID event) for {imageList[i].ModuleName}{msTag} at base 0x{imageList[i].BaseAddress:X} - skipping PDB download");
         continue;
       }
 
       if (symbolFile != null) {
         if (symbolSettings.IsRejectedSymbolFile(symbolFile)) {
           // Log all rejected symbol files - negative cache from previous failed downloads
-          DiagnosticLogger.LogWarning($"[SymbolLoading] REJECTED: {imageList[i].ModuleName} symbol file in negative cache: {symbolFile.FileName} (ID: {symbolFile.Id})");
+          string msTag = imageList[i].IsMicrosoft ? " [Microsoft]" : "";
+          DiagnosticLogger.LogWarning($"[SymbolLoading] REJECTED: {imageList[i].ModuleName}{msTag} symbol file in negative cache: {symbolFile.FileName} (ID: {symbolFile.Id})");
           Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - Symbol file previously rejected: {imageList[i].ModuleName} (symbol: {symbolFile})");
           rejectedDebugModules_.Add(imageList[i]);
           continue;
