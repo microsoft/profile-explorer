@@ -28,13 +28,13 @@ public class McpActionExecutor : IMcpActionExecutor
     {
         this.mainWindow = mainWindow ?? throw new ArgumentNullException(nameof(mainWindow));
         this.dispatcher = mainWindow.Dispatcher;
-
-        // Suppress UI dialogs (like source file prompts) during MCP automation
-        App.SuppressDialogsForAutomation = true;
     }
 
     public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier)
     {
+        // Mark that MCP automation is active - suppress UI dialogs
+        App.SuppressDialogsForAutomation = true;
+
         // Validate file exists first
         if (!File.Exists(profileFilePath))
         {

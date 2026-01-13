@@ -381,6 +381,18 @@
       Style="{StaticResource TabControlStyle}"
       ToolTip="List of modules loaded by the main process">
       <DockPanel LastChildFill="True">
+        <StackPanel
+          Margin="0,4,0,4"
+          DockPanel.Dock="Top"
+          Orientation="Horizontal">
+          <Button
+            x:Name="LoadAllBinariesButton"
+            Height="22"
+            Padding="8,2,8,2"
+            Click="LoadAllBinariesButton_Click"
+            Content="Load All Binaries"
+            ToolTip="Load binaries for all modules that have symbols loaded (for disassembly view)" />
+        </StackPanel>
         <ListView
           x:Name="ModuleList"
           Height="250"
