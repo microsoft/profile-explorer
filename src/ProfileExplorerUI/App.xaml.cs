@@ -83,6 +83,10 @@ public partial class App : Application {
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
   public static IUISession Session;
+  /// <summary>
+  /// When true, suppresses UI dialogs (like source file prompts) during MCP/automation operations.
+  /// </summary>
+  public static bool SuppressDialogsForAutomation;
   private Task? mcpServerTask;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;

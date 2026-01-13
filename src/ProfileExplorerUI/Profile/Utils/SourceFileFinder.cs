@@ -93,8 +93,8 @@ public class SourceFileFinder {
     }
     else if (!IsDisabledSourceFilePath(sourceInfo.FilePath)) {
       string filePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => {
-        if (disableOpenDialog_) {
-          return null; // Open File dialog disabled for current session.
+        if (disableOpenDialog_ || App.SuppressDialogsForAutomation) {
+          return null; // Open File dialog disabled for current session or MCP automation.
         }
 
         return Utils.ShowOpenFileDialog(
@@ -105,7 +105,7 @@ public class SourceFileFinder {
       if (!string.IsNullOrEmpty(filePath)) {
         sourceInfo.FilePath = filePath;
       }
-      else if (!disableOpenDialog_) {
+      else if (!disableOpenDialog_ && !App.SuppressDialogsForAutomation) {
         var result = Utils.ShowYesNoCancelMessageBox("""
                                                      Continue asking for the location of this source file?
 
