@@ -79,6 +79,7 @@ public class LoadedDocument : ILoadedDocument {
   public bool BinaryFileExists => BinaryFile is {Found: true};
   public bool HasSymbolFileInfo => SymbolFileInfo != null;
   public string FileName => Utils.TryGetFileName(FilePath);
+  public EnsureBinaryLoadedDelegate EnsureBinaryLoaded { get; set; }
 
   public event EventHandler DocumentChanged;
 

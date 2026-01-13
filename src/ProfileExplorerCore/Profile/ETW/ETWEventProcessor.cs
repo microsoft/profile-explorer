@@ -146,6 +146,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profileProcess.Name = Utilities.Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
       profileProcess.ImageFileName = data.ImageFileName;
       profileProcess.CommandLine = data.CommandLine;
+
+      // Capture WoW64 flag - indicates 32-bit process on 64-bit OS
+      // ProcessFlags.Wow64 = 2
+      profileProcess.IsWow64 = (data.Flags & ProcessFlags.Wow64) != 0;
       return profileProcess;
     }
 

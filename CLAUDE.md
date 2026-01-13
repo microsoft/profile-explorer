@@ -1,5 +1,9 @@
 # Claude Code Instructions for Profile Explorer
 
+## Git Policy
+
+**NEVER commit or git add without explicit user permission.** When asked for a commit message, provide the message text only - do not execute `git commit` or `git add`.
+
 ## Building
 
 **IMPORTANT: Always use Release configuration (`-c Release`). The user runs Release builds, not Debug.**

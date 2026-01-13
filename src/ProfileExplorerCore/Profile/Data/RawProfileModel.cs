@@ -511,6 +511,8 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
   public List<int> ThreadIds { get; set; }
   [ProtoMember(8)]
   public DateTime StartTime { get; set; }
+  [ProtoMember(9)]
+  public bool IsWow64 { get; set; } // True if 32-bit process on 64-bit OS (WoW64)
 
   public bool Equals(ProfileProcess other) {
     Debug.Assert(other != null);

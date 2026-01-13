@@ -74,28 +74,32 @@ $noImageIdEvents = $log | Where-Object { $_ -match 'HasImageIdEvents=False|Trace
 $symbolServerDisabled = $log | Where-Object { $_ -match 'Symbol server disabled|Disabling symbol server|SourceServerEnabled=False' } | Select-Object -First 1
 $symbolServerEnabled = $log | Where-Object { $_ -match 'SourceServerEnabled=True' } | Select-Object -First 1
 
-# ImageID event counts
+# ImageID event counts - parse from log format:
+# "[TraceLoad] Event counts: ImageLoad=X (Y with timestamp), ImageID=Z, ImageID_DbgID=W"
 $imageLoadCount = 0
 $imageIdCount = 0
 $dbgIdCount = 0
 
-$imageLoadLine = $log | Where-Object { $_ -match 'ImageLoad events?[:\s]+(\d+)' } | Select-Object -First 1
-if ($imageLoadLine -match 'ImageLoad events?[:\s]+(\d+)') {
-    $imageLoadCount = [int]$Matches[1]
-}
-
-$imageIdLine = $log | Where-Object { $_ -match 'ImageID events?[:\s]+(\d+)' } | Select-Object -First 1
-if ($imageIdLine -match 'ImageID events?[:\s]+(\d+)') {
-    $imageIdCount = [int]$Matches[1]
-}
-
-$dbgIdLine = $log | Where-Object { $_ -match 'ImageID DbgID|DbgID_RSDS events?[:\s]+(\d+)' } | Select-Object -First 1
-if ($dbgIdLine -match '(\d+)') {
-    $dbgIdCount = [int]$Matches[1]
+$eventCountLine = $log | Where-Object { $_ -match '\[TraceLoad\] Event counts:' } | Select-Object -First 1
+if ($eventCountLine) {
+    if ($eventCountLine -match 'ImageLoad=(\d+)') {
+        $imageLoadCount = [int]$Matches[1]
+    }
+    if ($eventCountLine -match 'ImageID=(\d+)') {
+        $imageIdCount = [int]$Matches[1]
+    }
+    if ($eventCountLine -match 'ImageID_DbgID=(\d+)') {
+        $dbgIdCount = [int]$Matches[1]
+    }
 }
 
 Write-Host ""
-if ($noImageIdEvents -or $dbgIdCount -eq 0) {
+# Only report "MISSING" if we explicitly found evidence of missing events
+# (not just because we couldn't parse the count)
+$knownMissing = $noImageIdEvents -or ($eventCountLine -and $dbgIdCount -eq 0)
+$knownPresent = $hasImageIdEvents -or ($eventCountLine -and $dbgIdCount -gt 0)
+
+if ($knownMissing) {
     Write-Host "[!] MISSING ImageID DbgID EVENTS" -ForegroundColor Red
     Write-Host "    This trace is missing ImageID DbgID (RSDS) events which contain PDB GUID/Age." -ForegroundColor Yellow
     Write-Host "    Without these events, symbol server lookups are impossible because PDB matching" -ForegroundColor Yellow
@@ -105,8 +109,13 @@ if ($noImageIdEvents -or $dbgIdCount -eq 0) {
     Write-Host "    Solution: Re-capture using Profile Explorer's built-in capture (File -> Record Profile)" -ForegroundColor Cyan
     Write-Host "              or from command line: wpr -start CPU" -ForegroundColor Cyan
     Write-Host ""
-} elseif ($hasImageIdEvents) {
+} elseif ($knownPresent) {
     Write-Host "[OK] Trace has ImageID DbgID events (PDB GUID/Age available)" -ForegroundColor Green
+    if ($dbgIdCount -gt 0) {
+        Write-Host "     ImageID_DbgID event count: $dbgIdCount" -ForegroundColor Gray
+    }
+} else {
+    Write-Host "[?] Could not determine ImageID event status from log" -ForegroundColor Yellow
 }
 
 if ($symbolServerDisabled) {
@@ -149,10 +158,18 @@ $binEndTime = Get-TimestampFromLine $binaryPhaseEnd
 $pdbStartTime = Get-TimestampFromLine $pdbPhaseStart
 $pdbEndTime = Get-TimestampFromLine $pdbPhaseEnd
 
-if ($startTime -and $endTime) {
+# Extract embedded time from log if available: "LoadBinaryAndDebugFiles completed in X.Xs"
+$loadCompleteEmbeddedTime = $null
+if ($loadComplete -match 'completed in (\d+\.?\d*)s') {
+    $loadCompleteEmbeddedTime = [double]$Matches[1]
+}
+
+# Calculate total time - use embedded time, or timestamp diff, but sanity check against PDB time later
+$totalTime = $null
+if ($loadCompleteEmbeddedTime) {
+    $totalTime = $loadCompleteEmbeddedTime
+} elseif ($startTime -and $endTime) {
     $totalTime = ($endTime - $startTime).TotalSeconds
-    Write-Host "Total Symbol Loading Time: " -NoNewline
-    Write-Host ("{0:F1}s" -f $totalTime) -ForegroundColor $(if ($totalTime -gt 120) { "Red" } elseif ($totalTime -gt 60) { "Yellow" } else { "Green" })
 }
 
 if ($binStartTime -and $binEndTime) {
@@ -161,9 +178,60 @@ if ($binStartTime -and $binEndTime) {
     Write-Host ("{0:F1}s" -f $binTime) -ForegroundColor $(if ($binTime -gt 60) { "Red" } elseif ($binTime -gt 30) { "Yellow" } else { "Green" })
 }
 
-if ($pdbStartTime -and $pdbEndTime) {
-    $pdbTime = ($pdbEndTime - $pdbStartTime).TotalSeconds
-    Write-Host "  PDB Download Phase:      " -NoNewline
+# Calculate PDB/Symbol loading time
+# Try multiple approaches since log format may vary
+
+# Approach 1: Find time from "Starting PDB/symbol file search" to last PDBDebugInfo BEFORE lazy load
+$pdbStartLine = $log | Where-Object { $_ -match '\[SymbolLoading\].*Starting PDB' } | Select-Object -First 1
+$pdbStartTs = Get-TimestampFromLine $pdbStartLine
+
+# Find the line index where lazy load starts (if any) - we only want PDBDebugInfo before this
+$lazyLoadLineIndex = $null
+for ($i = 0; $i -lt $log.Count; $i++) {
+    if ($log[$i] -match '\[LazyBinaryLoad\]') {
+        $lazyLoadLineIndex = $i
+        break
+    }
+}
+
+# Get last PDBDebugInfo line BEFORE lazy load (or last overall if no lazy load)
+$pdbEndLine = $null
+if ($lazyLoadLineIndex) {
+    $pdbEndLine = $log[0..($lazyLoadLineIndex-1)] | Where-Object { $_ -match '\[PDBDebugInfo\]' } | Select-Object -Last 1
+} else {
+    $pdbEndLine = $log | Where-Object { $_ -match '\[PDBDebugInfo\]' } | Select-Object -Last 1
+}
+$pdbEndTs = Get-TimestampFromLine $pdbEndLine
+
+# Approach 2: Try to extract embedded time from log message
+$pdbTimeLine = $log | Where-Object { $_ -match 'PDB downloads? completed? in (\d+\.?\d*)s|PDB download complete:.*in (\d+\.?\d*)s' } | Select-Object -First 1
+$pdbEmbeddedTime = $null
+if ($pdbTimeLine -match 'in (\d+\.?\d*)s') {
+    $pdbEmbeddedTime = [double]$Matches[1]
+}
+
+$pdbTime = $null
+if ($pdbStartTs -and $pdbEndTs) {
+    $pdbTime = ($pdbEndTs - $pdbStartTs).TotalSeconds
+} elseif ($pdbEmbeddedTime) {
+    $pdbTime = $pdbEmbeddedTime
+}
+
+# Display timing - use PDB time as authoritative if total time seems wrong
+if ($pdbTime -and $pdbTime -gt 0.5) {
+    # If total time < PDB time, use PDB time as total (old logs may have wrong embedded time)
+    if ($totalTime -and $totalTime -lt $pdbTime) {
+        $totalTime = $pdbTime
+    }
+}
+
+if ($totalTime -and $totalTime -gt 0.5) {
+    Write-Host "Total Symbol Loading Time: " -NoNewline
+    Write-Host ("{0:F1}s" -f $totalTime) -ForegroundColor $(if ($totalTime -gt 120) { "Red" } elseif ($totalTime -gt 60) { "Yellow" } else { "Green" })
+}
+
+if ($pdbTime -and $pdbTime -gt 0.5) {
+    Write-Host "  PDB/Symbol Loading:      " -NoNewline
     Write-Host ("{0:F1}s" -f $pdbTime) -ForegroundColor $(if ($pdbTime -gt 60) { "Red" } elseif ($pdbTime -gt 30) { "Yellow" } else { "Green" })
 }
 
@@ -371,7 +439,7 @@ Write-Host ""
 Write-Host "Kernel/NT:     $kernelTotal failures in $($kernelModules.Count) modules" -ForegroundColor Red
 Write-Host "Windows Shell: $windowsTotal failures in $($windowsModules.Count) modules" -ForegroundColor Yellow
 Write-Host "Drivers:       $driverTotal failures in $($driverModules.Count) modules" -ForegroundColor Yellow
-Write-Host "Third-Party:   $thirdPartyTotal failures in $($thirdPartyModules.Count) modules" -ForegroundColor White
+Write-Host "Other:         $thirdPartyTotal failures in $($thirdPartyModules.Count) modules" -ForegroundColor White
 
 # Extract symbol path from log
 $symbolPathLine = $log | Where-Object { $_ -match '\[SymbolSearch\] Symbol search path:' } | Select-Object -First 1
@@ -427,7 +495,7 @@ if ($failedModules.ContainsKey("explorer.exe") -and $failedModules["explorer.exe
 $thirdPartyHigh = $thirdPartyModules | Where-Object { $_.Count -gt 50 }
 if ($thirdPartyHigh.Count -gt 0) {
     Write-Host "[i] " -NoNewline -ForegroundColor Cyan
-    Write-Host "Third-party modules without symbols (expected for proprietary software):"
+    Write-Host "Other modules without symbols (may need PDB download or be third-party):"
     foreach ($m in $thirdPartyHigh | Sort-Object Count -Descending | Select-Object -First 5) {
         Write-Host "    - $($m.Name) ($($m.Count) failures)"
     }
@@ -444,22 +512,58 @@ Write-Host "Analyzing timestamps..." -ForegroundColor Gray
 
 # Optimized: Use ArrayList and only parse timestamps, track gaps inline
 $gaps = [System.Collections.ArrayList]::new()
+$lazyLoadOps = [System.Collections.ArrayList]::new()  # Track lazy load operations (start to finish)
 $prevTimestamp = $null
 $prevLine = $null
 $prevLineNum = 0
 $lineNum = 0
 $totalTimestamped = 0
+$loadingCompleted = $false
+
+# For tracking lazy load operations
+$lazyLoadStart = $null
+$lazyLoadStartLine = $null
+$lazyLoadModule = $null
 
 foreach ($line in $log) {
     $lineNum++
+
+    # Track when initial loading is done - gaps after this before lazy load are user think time
+    if ($line -match 'LoadBinaryAndDebugFiles completed|=== Trace loading completed') {
+        $loadingCompleted = $true
+    }
+
+    # Track lazy load operations (start to finish for each binary)
+    if ($line -match '\[LazyBinaryLoad\] Loading binary on-demand for ([^\s]+)') {
+        $lazyLoadModule = $Matches[1]  # Save module name BEFORE timestamp match overwrites $Matches
+        $lazyLoadStart = Get-TimestampFromLine $line
+        $lazyLoadStartLine = $lineNum
+    }
+    if ($lazyLoadStart -and ($line -match '\[LazyBinaryLoad\] Successfully loaded|\[LazyBinaryLoad\] Could not find|\[LazyBinaryLoad\] Found binary')) {
+        $lazyLoadEnd = Get-TimestampFromLine $line
+        if ($lazyLoadEnd) {
+            $lazyLoadMs = ($lazyLoadEnd - $lazyLoadStart).TotalMilliseconds
+            [void]$lazyLoadOps.Add([PSCustomObject]@{
+                Module = $lazyLoadModule
+                DurationMs = $lazyLoadMs
+                StartLine = $lazyLoadStartLine
+                EndLine = $lineNum
+                StartTime = $lazyLoadStart.ToString("HH:mm:ss.fff")
+                EndTime = $lazyLoadEnd.ToString("HH:mm:ss.fff")
+            })
+        }
+        $lazyLoadStart = $null
+        $lazyLoadModule = $null
+    }
+
     if ($line -match '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})') {
         $totalTimestamped++
         $timestamp = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss.fff", $null)
-        
+
         if ($null -ne $prevTimestamp) {
             $gapMs = ($timestamp - $prevTimestamp).TotalMilliseconds
             if ($gapMs -gt 500) {  # Only track gaps > 500ms for performance
-                [void]$gaps.Add([PSCustomObject]@{
+                $gapObj = [PSCustomObject]@{
                     GapMs = $gapMs
                     StartLine = $prevLineNum
                     EndLine = $lineNum
@@ -467,10 +571,18 @@ foreach ($line in $log) {
                     EndTime = $timestamp.ToString("HH:mm:ss.fff")
                     BeforeLine = $prevLine
                     AfterLine = $line
-                })
+                }
+
+                # Only track gaps during initial load (not lazy load related)
+                # Lazy load operations are tracked separately
+                $isLazyLoadRelated = ($line -match '\[LazyBinaryLoad\]') -or ($prevLine -match '\[LazyBinaryLoad\]')
+
+                if (-not $isLazyLoadRelated) {
+                    [void]$gaps.Add($gapObj)
+                }
             }
         }
-        
+
         $prevTimestamp = $timestamp
         $prevLine = $line
         $prevLineNum = $lineNum
@@ -478,7 +590,11 @@ foreach ($line in $log) {
 }
 
 Write-Host "Total timestamped lines: $totalTimestamped"
-Write-Host "Gaps > 500ms found: $($gaps.Count)"
+Write-Host "Initial load gaps > 500ms: $($gaps.Count)" -ForegroundColor $(if ($gaps.Count -gt 0) { "Yellow" } else { "Green" })
+if ($lazyLoadOps.Count -gt 0) {
+    $lazyLoadTotal = ($lazyLoadOps | Measure-Object -Property DurationMs -Sum).Sum / 1000
+    Write-Host "Lazy load operations: $($lazyLoadOps.Count) binaries ($([math]::Round($lazyLoadTotal, 1))s total)" -ForegroundColor Cyan
+}
 Write-Host ""
 
 # Sort by gap size and show top gaps
@@ -542,10 +658,31 @@ if ($topGaps.Count -gt 0) {
         Write-Host "  Time in gaps:        $gapPercent%" -ForegroundColor $(if ($gapPercent -gt 50) { "Red" } elseif ($gapPercent -gt 25) { "Yellow" } else { "Green" })
     }
 } else {
-    Write-Host "No significant gaps (>100ms) detected." -ForegroundColor Green
+    Write-Host "No significant performance gaps (>500ms) detected." -ForegroundColor Green
 }
 
-# Analyze what operations are causing the biggest gaps
+# Show lazy load operations (on-demand binary downloads)
+if ($lazyLoadOps.Count -gt 0) {
+    Write-Host ""
+    Write-Host ("-" * 80) -ForegroundColor DarkGray
+    Write-Host "  LAZY LOAD OPERATIONS (on-demand binary downloads)" -ForegroundColor Cyan
+    Write-Host ("-" * 80) -ForegroundColor DarkGray
+    Write-Host "Time spent downloading binaries when user views assembly/graph." -ForegroundColor Gray
+    Write-Host ""
+
+    foreach ($op in $lazyLoadOps | Sort-Object DurationMs -Descending | Select-Object -First 10) {
+        $secs = [math]::Round($op.DurationMs / 1000, 2)
+        $color = if ($op.DurationMs -gt 5000) { "Red" } elseif ($op.DurationMs -gt 2000) { "Yellow" } else { "White" }
+        Write-Host ("  {0,6}ms ({1,5}s) - {2}" -f [int]$op.DurationMs, $secs, $op.Module) -ForegroundColor $color
+    }
+
+    $lazyLoadTotal = ($lazyLoadOps | Measure-Object -Property DurationMs -Sum).Sum / 1000
+    Write-Host ""
+    Write-Host "  Total lazy load time: $([math]::Round($lazyLoadTotal, 1))s" -ForegroundColor Cyan
+}
+
+
+# Analyze what operations are causing the biggest gaps (excluding user think time)
 Write-Host ""
 Write-Host ("-" * 80) -ForegroundColor DarkGray
 Write-Host "  GAP CAUSE ANALYSIS" -ForegroundColor Yellow
@@ -554,19 +691,28 @@ Write-Host ("-" * 80) -ForegroundColor DarkGray
 $gapCauses = @{}
 foreach ($gap in $gaps | Where-Object { $_.GapMs -gt 500 }) {
     $cause = "Unknown"
-    
-    if ($gap.AfterLine -match '\[ModuleInit\].*Starting.*module: ([^\s]+)') {
+
+    if ($gap.AfterLine -match '\[LazyBinaryLoad\].*for ([^\s]+)') {
+        # LazyBinaryLoad during loading (not user-triggered) is a real delay
+        $cause = "LazyBinaryLoad: $($Matches[1])"
+    } elseif ($gap.AfterLine -match '\[ModuleInit\].*Starting.*module: ([^\s]+)') {
         $cause = "ModuleInit: $($Matches[1])"
     } elseif ($gap.AfterLine -match '\[BinaryLoading\].*Binary: ([^\s,]+)') {
         $cause = "BinaryLoad: $($Matches[1])"
     } elseif ($gap.AfterLine -match '\[PDBDebugInfo\].*Binary: ([^\s,]+)') {
         $cause = "PDBLoad: $($Matches[1])"
+    } elseif ($gap.AfterLine -match '\[SymbolSearch\].*for ([^\s]+)') {
+        $cause = "SymbolSearch: $($Matches[1])"
+    } elseif ($gap.AfterLine -match '\[DebugInfoInit\].*module ([^\s]+)') {
+        $cause = "DebugInfoInit: $($Matches[1])"
     } elseif ($gap.AfterLine -match '\[FunctionResolution\].*Module: ([^\s,]+)') {
         $cause = "FuncResolve: $($Matches[1])"
     } elseif ($gap.BeforeLine -match '\[ModuleInit\].*module: ([^\s]+)') {
         $cause = "After ModuleInit: $($Matches[1])"
+    } elseif ($gap.BeforeLine -match '\[SymbolLoading\].*PDB download') {
+        $cause = "PDB Downloads"
     }
-    
+
     if ($gapCauses.ContainsKey($cause)) {
         $gapCauses[$cause] += $gap.GapMs
     } else {
@@ -654,6 +800,156 @@ foreach ($detail in $issueDetails) {
 }
 
 Write-Host ""
+
+# ============================================================================
+# SOURCE FILE LOADING ANALYSIS
+# ============================================================================
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+Write-Host "  SOURCE FILE LOADING ANALYSIS" -ForegroundColor Yellow
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+
+$sourceFileLines = $log | Where-Object { $_ -match '\[SourceFile\]' }
+$strippedPdbLines = $log | Where-Object { $_ -match 'PDB appears to be STRIPPED' }
+$privatePdbLines = $log | Where-Object { $_ -match 'PDB has source info\.' }
+$sourceServerEnabled = $log | Where-Object { $_ -match 'SourceServerEnabled=True' } | Select-Object -First 1
+$sourceServerLookups = $log | Where-Object { $_ -match 'Attempting source server lookup' }
+$sourceFileSuccess = $log | Where-Object { $_ -match 'Downloaded and verified source file' }
+$sourceFileFailed = $log | Where-Object { $_ -match 'Failed to download|GetSourceFile returned: null|lineInfo is Unknown' }
+$pdbFileSizes = $log | Where-Object { $_ -match '\[PDBDebugInfo\] PDB file size:' }
+
+# Parse PDB file sizes and build lookup table
+$pdbSizeTable = @{}
+$pdbFileSizes | ForEach-Object {
+    if ($_ -match 'PDB file size: ([0-9,]+) bytes \(([0-9.]+) MB\) - (.+)$') {
+        $sizeMB = [double]$Matches[2]
+        $path = $Matches[3]
+        $pdbName = Split-Path $path -Leaf
+        $pdbSizeTable[$path] = @{ Name = $pdbName; SizeMB = $sizeMB }
+    }
+}
+
+# Parse stripped/private PDB lists
+$strippedPdbPaths = @()
+$strippedPdbLines | ForEach-Object {
+    if ($_ -match 'for: (.+)$') {
+        $strippedPdbPaths += $Matches[1]
+    }
+}
+
+$privatePdbPaths = @()
+$privatePdbLines | ForEach-Object {
+    # Private PDB log format: "PDB has source info. Sample source file: <file>"
+    # The PDB path is logged earlier, need to correlate
+}
+
+Write-Host ""
+# PDB Classification Summary
+$totalPdbs = $strippedPdbLines.Count + $privatePdbLines.Count
+if ($totalPdbs -gt 0) {
+    Write-Host "PDB CLASSIFICATION SUMMARY:" -ForegroundColor Cyan
+    Write-Host ("=" * 50) -ForegroundColor DarkGray
+    $privateCount = $privatePdbLines.Count
+    $strippedCount = $strippedPdbLines.Count
+    $privatePercent = if ($totalPdbs -gt 0) { [math]::Round(($privateCount / $totalPdbs) * 100, 1) } else { 0 }
+    $strippedPercent = if ($totalPdbs -gt 0) { [math]::Round(($strippedCount / $totalPdbs) * 100, 1) } else { 0 }
+
+    Write-Host "  Total PDBs loaded:     $totalPdbs" -ForegroundColor White
+    Write-Host "  PRIVATE (has source):  $privateCount ($privatePercent%)" -ForegroundColor Green
+    Write-Host "  PUBLIC/STRIPPED:       $strippedCount ($strippedPercent%)" -ForegroundColor Yellow
+    Write-Host ""
+
+    if ($strippedCount -gt 0 -and $privateCount -gt 0) {
+        Write-Host "  [i] Some PDBs are private (from symweb), others are public (from msdl)." -ForegroundColor Gray
+        Write-Host "      Private PDBs support source file viewing. Public PDBs only have function names." -ForegroundColor Gray
+    } elseif ($strippedCount -gt 0 -and $privateCount -eq 0) {
+        Write-Host "  [!] ALL PDBs are PUBLIC/STRIPPED - source file viewing will NOT work." -ForegroundColor Red
+        Write-Host "      Check if symweb auth is working. You may need to re-authenticate." -ForegroundColor Yellow
+    } elseif ($privateCount -gt 0 -and $strippedCount -eq 0) {
+        Write-Host "  [OK] All PDBs are PRIVATE - source file viewing should work!" -ForegroundColor Green
+    }
+    Write-Host ""
+}
+
+Write-Host "Source File Lookups:" -ForegroundColor Cyan
+Write-Host "  Total [SourceFile] log entries: $($sourceFileLines.Count)"
+Write-Host "  Source server lookups attempted: $($sourceServerLookups.Count)"
+Write-Host "  Successful downloads: $($sourceFileSuccess.Count)" -ForegroundColor $(if ($sourceFileSuccess.Count -gt 0) { "Green" } else { "Yellow" })
+Write-Host "  Failed lookups: $($sourceFileFailed.Count)" -ForegroundColor $(if ($sourceFileFailed.Count -gt 0) { "Red" } else { "Green" })
+Write-Host ""
+
+if ($strippedPdbLines.Count -gt 0) {
+    Write-Host "STRIPPED PDBs (no source info):" -ForegroundColor Yellow
+    $strippedPdbPaths | Select-Object -First 10 | ForEach-Object {
+        $path = $_
+        $pdbName = Split-Path $path -Leaf
+        $sizeInfo = $pdbSizeTable[$path]
+        if ($sizeInfo) {
+            Write-Host ("  {0,8:F2} MB - {1}" -f $sizeInfo.SizeMB, $pdbName) -ForegroundColor Yellow
+        } else {
+            Write-Host "  - $pdbName" -ForegroundColor Yellow
+        }
+    }
+    if ($strippedPdbPaths.Count -gt 10) {
+        Write-Host "  ... and $($strippedPdbPaths.Count - 10) more" -ForegroundColor Gray
+    }
+    Write-Host ""
+}
+
+if ($pdbFileSizes.Count -gt 0) {
+    Write-Host "PDB File Sizes (top 10 by size):" -ForegroundColor Cyan
+    # Sort by size descending and show top 10
+    $sortedPdbs = $pdbSizeTable.Values | Sort-Object -Property SizeMB -Descending | Select-Object -First 10
+    $sortedPdbs | ForEach-Object {
+        $sizeMB = $_.SizeMB
+        $pdbName = $_.Name
+        Write-Host ("  {0,8:F2} MB - {1}" -f $sizeMB, $pdbName) -ForegroundColor White
+    }
+    Write-Host ""
+}
+
+# ============================================================================
+# AUTH & SYMBOL SERVER ANALYSIS
+# ============================================================================
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+Write-Host "  AUTH & SYMBOL SERVER ANALYSIS" -ForegroundColor Yellow
+Write-Host ("-" * 80) -ForegroundColor DarkGray
+
+$authFailed = $log | Where-Object { $_ -match 'Primary server.*auth FAILED|401|403|Unauthorized|Forbidden|Access Denied' }
+$authVerified = $log | Where-Object { $_ -match 'Primary server.*auth VERIFIED|symweb.*auth.*success' }
+$symwebHits = $log | Where-Object { $_ -match 'symweb' -and $_ -match 'TraceEvent log' }
+$msdlHits = $log | Where-Object { $_ -match 'msdl\.microsoft\.com|download/symbols' -and $_ -match 'TraceEvent log' }
+
+Write-Host ""
+if ($authFailed.Count -gt 0) {
+    Write-Host "[!] AUTH FAILURES DETECTED:" -ForegroundColor Red
+    $authFailed | Select-Object -First 5 | ForEach-Object {
+        Write-Host "  $_" -ForegroundColor Yellow
+    }
+    Write-Host ""
+    Write-Host "    If you're EXTERNAL to Microsoft, symweb auth failures are expected." -ForegroundColor Gray
+    Write-Host "    The fallback to public symbols (msdl) should be automatic." -ForegroundColor Gray
+    Write-Host ""
+} elseif ($authVerified.Count -gt 0) {
+    Write-Host "[OK] Primary server (symweb) auth verified" -ForegroundColor Green
+    Write-Host ""
+} else {
+    Write-Host "[?] Could not determine auth status from logs" -ForegroundColor Yellow
+    Write-Host "    Look for 401/403 errors in TraceEvent logs below" -ForegroundColor Gray
+    Write-Host ""
+}
+
+# Show TraceEvent logs for symbol downloads
+$traceEventLogs = $log | Where-Object { $_ -match '\[SymbolSearch\] TraceEvent log for' }
+if ($traceEventLogs.Count -gt 0) {
+    Write-Host "Symbol Download Details (first 5):" -ForegroundColor Cyan
+    $traceEventLogs | Select-Object -First 5 | ForEach-Object {
+        if ($_ -match 'TraceEvent log for ([^:]+):') {
+            Write-Host "  - $($Matches[1])" -ForegroundColor White
+        }
+    }
+    Write-Host ""
+}
+
 Write-Host ("=" * 80) -ForegroundColor Cyan
 
 

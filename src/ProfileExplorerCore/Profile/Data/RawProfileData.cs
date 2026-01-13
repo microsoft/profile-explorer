@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using ProfileExplorer.Core.Binary;
@@ -184,6 +185,8 @@ public class RawProfileData : IDisposable {
   }
 
   public SymbolFileDescriptor GetDebugFileForImage(ProfileImage image, int processId) {
+    int originalProcessId = processId;
+
     // If the module is loaded in kernel address space,
     // look for the debug info entry in the kernel process.
     if (ETWEventProcessor.IsKernelAddress((ulong)image.BaseAddress, TraceInfo.PointerSize)) {
@@ -196,7 +199,24 @@ public class RawProfileData : IDisposable {
       return null;
     }
 
-    return procImageSymbols.GetValueOrNull(image.BaseAddress);
+    var result = procImageSymbols.GetValueOrNull(image.BaseAddress);
+
+    // Debug logging for missing symbol files - important system DLLs
+    if (result == null && (image.ModuleName.Contains("ntdll", StringComparison.OrdinalIgnoreCase) ||
+                           image.ModuleName.Contains("win32u", StringComparison.OrdinalIgnoreCase) ||
+                           image.ModuleName.Contains("user32", StringComparison.OrdinalIgnoreCase) ||
+                           image.ModuleName.Contains("kernel32", StringComparison.OrdinalIgnoreCase) ||
+                           image.ModuleName.Contains("combase", StringComparison.OrdinalIgnoreCase))) {
+      var availableBases = procImageSymbols.Keys.Take(20).Select(k => $"0x{k:X}");
+      string message = $"[SymbolLookup] {image.ModuleName} ImageID_DbgID not found! " +
+        $"ProcessId={processId} (original={originalProcessId}), BaseAddress=0x{image.BaseAddress:X}. " +
+        $"First 20 available bases: {string.Join(", ", availableBases)}";
+      // Log to both VS Output (Trace) and diagnostic file
+      System.Diagnostics.Trace.WriteLine(message);
+      Utilities.DiagnosticLogger.LogWarning(message);
+    }
+
+    return result;
   }
 
   public DotNetDebugInfoProvider GetOrAddManagedModuleDebugInfo(int processId, string moduleName,

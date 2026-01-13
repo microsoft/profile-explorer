@@ -55,6 +55,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private volatile int funcCacheMisses_;
   private bool loadFailed_;
   private bool disposed_;
+  private bool hasSourceInfo_;
 
   static PDBDebugInfoProvider() {
     // Create a single instance of the Symweb handler so that
@@ -67,6 +68,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     // Other exceptions (like "needs re-authentication") stop the chain. We wrap each
     // credential to catch auth failures and convert them to CredentialUnavailableException
     // so the chain continues to InteractiveBrowserCredential which prompts the user.
+    // Enable token cache persistence for browser credential so tokens survive process restarts.
+    // This prevents re-authentication on every trace load if VS credential fails.
+    var browserCredentialOptions = new InteractiveBrowserCredentialOptions {
+      TokenCachePersistenceOptions = new TokenCachePersistenceOptions {
+        Name = "ProfileExplorer" // Unique cache name for this app
+      }
+    };
+
     var credentials = new List<TokenCredential>
     {
       WrapCredential(new EnvironmentCredential()),
@@ -76,7 +85,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       WrapCredential(new AzureCliCredential()),
       WrapCredential(new AzurePowerShellCredential()),
       WrapCredential(new AzureDeveloperCliCredential()),
-      new InteractiveBrowserCredential() // Don't wrap - final fallback should show errors
+      new InteractiveBrowserCredential(browserCredentialOptions) // Don't wrap - final fallback should show errors
     };
 
     var authCredential = new ChainedTokenCredential(credentials.ToArray());
@@ -158,19 +167,29 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   }
 
   public SourceFileDebugInfo FindFunctionSourceFilePath(string functionName) {
+    DiagnosticLogger.LogInfo($"[SourceFile] FindFunctionSourceFilePath called for: {functionName}");
+
     if (sourceFileByNameCache_.TryGetValue(functionName, out var fileInfo)) {
+      DiagnosticLogger.LogInfo($"[SourceFile] Cache hit for {functionName}: {fileInfo.FilePath}");
       return fileInfo;
     }
 
     var funcSymbol = FindFunctionSymbol(functionName);
 
     if (funcSymbol == null) {
+      DiagnosticLogger.LogWarning($"[SourceFile] Function symbol not found for: {functionName}");
       return SourceFileDebugInfo.Unknown;
     }
 
+    DiagnosticLogger.LogInfo($"[SourceFile] Found function symbol for {functionName}, RVA: 0x{funcSymbol.relativeVirtualAddress:X}");
+
     // Find the first line in the function.
     var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(funcSymbol.relativeVirtualAddress);
+    DiagnosticLogger.LogInfo($"[SourceFile] Line info for {functionName}: FilePath={lineInfo.FilePath}, Line={lineInfo.Line}, IsUnknown={lineInfo.IsUnknown}");
+
     fileInfo = FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
+    DiagnosticLogger.LogInfo($"[SourceFile] Result for {functionName}: FilePath={fileInfo.FilePath}, OriginalFilePath={fileInfo.OriginalFilePath}, HasChecksumMismatch={fileInfo.HasChecksumMismatch}");
+
     sourceFileByNameCache_.TryAdd(functionName, fileInfo);
     return fileInfo;
   }
@@ -362,7 +381,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     // In case there is a timeout downloading the symbols, try again.
     string symbolSearchPath = ConstructSymbolSearchPath(settings);
-    DiagnosticLogger.LogDebug($"[SymbolSearch] Symbol search path: {symbolSearchPath}");
+    DiagnosticLogger.LogInfo($"[SymbolSearch] Symbol search path: {symbolSearchPath}");
 
     using var symbolReader = new SymbolReader(logWriter, symbolSearchPath, CreateAuthHandler(settings));
     symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
@@ -384,9 +403,18 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
     }
 
-    // Log the detailed search information
+    // Log the detailed search information - at INFO level to help debug symbol server issues
     string searchLog = logWriter.ToString();
-    DiagnosticLogger.LogDebug($"[SymbolSearch] TraceEvent log for {symbolFile.FileName}:\n{searchLog}");
+    if (!string.IsNullOrWhiteSpace(searchLog)) {
+      DiagnosticLogger.LogInfo($"[SymbolSearch] TraceEvent log for {symbolFile.FileName}:\n{searchLog}");
+    }
+
+    // Check for auth failure on primary server, but ONLY if primary has never been verified working.
+    // Once we've successfully downloaded from symweb, we NEVER fall back to msdl (would get worse symbols).
+    if (!settings.PrimaryServerVerified && !settings.PrimaryServerAuthFailed && DetectPrimaryServerAuthFailure(searchLog)) {
+      settings.PrimaryServerAuthFailed = true;
+      DiagnosticLogger.LogWarning($"[SymbolSearch] Primary server (symweb) auth FAILED - switching to secondary (public) server for remaining downloads");
+    }
 
 #if DEBUG
     Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
@@ -399,6 +427,14 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
       DiagnosticLogger.LogInfo($"[SymbolSearch] Successfully found symbol file for {symbolFile.FileName}: {result}");
       searchResult = DebugFileSearchResult.Success(symbolFile, result, searchLog);
+
+      // If download succeeded and log shows symweb was used, mark primary as verified
+      if (!settings.PrimaryServerVerified &&
+          searchLog.Contains("symweb", StringComparison.OrdinalIgnoreCase) &&
+          !DetectPrimaryServerAuthFailure(searchLog)) {
+        settings.PrimaryServerVerified = true;
+        DiagnosticLogger.LogInfo($"[SymbolSearch] Primary server (symweb) auth VERIFIED - will continue using primary server");
+      }
     }
     else {
       DiagnosticLogger.LogWarning($"[SymbolSearch] Failed to find symbol file for {symbolFile.FileName}. Result: {result ?? "null"}");
@@ -413,8 +449,26 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     return searchResult;
   }
 
+  // Track if we've logged detailed symbol path info (only log once per session unless auth state changes)
+  private static bool loggedSymbolPathDetails_;
+  private static bool lastLoggedAuthFailedState_;
+
   public static string ConstructSymbolSearchPath(SymbolFileSourceSettings settings, bool logPath = false) {
     string symbolPath = "";
+
+    // Only log detailed info on first call or when auth state changes
+    bool authStateChanged = lastLoggedAuthFailedState_ != settings.PrimaryServerAuthFailed;
+    bool shouldLogDetails = !loggedSymbolPathDetails_ || authStateChanged;
+
+    if (shouldLogDetails) {
+      DiagnosticLogger.LogInfo($"[SymbolPath] ConstructSymbolSearchPath - PrimaryServerAuthFailed={settings.PrimaryServerAuthFailed}, PrimaryServerVerified={settings.PrimaryServerVerified}");
+      DiagnosticLogger.LogInfo($"[SymbolPath] Input SymbolPaths ({settings.SymbolPaths?.Count ?? 0} entries): {string.Join("; ", settings.SymbolPaths ?? [])}");
+      if (authStateChanged && loggedSymbolPathDetails_) {
+        DiagnosticLogger.LogWarning($"[SymbolPath] Auth state changed from {lastLoggedAuthFailedState_} to {settings.PrimaryServerAuthFailed} - switching symbol servers");
+      }
+      loggedSymbolPathDetails_ = true;
+      lastLoggedAuthFailedState_ = settings.PrimaryServerAuthFailed;
+    }
 
     if (settings.UseEnvironmentVarSymbolPaths) {
       symbolPath += $"{settings.EnvironmentVarSymbolPath};";
@@ -422,15 +476,79 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     foreach (string path in settings.SymbolPaths) {
       if (!string.IsNullOrEmpty(path)) {
+        // Skip primary (private) server if auth has failed
+        if (settings.PrimaryServerAuthFailed && path.Contains("symweb", StringComparison.OrdinalIgnoreCase)) {
+          if (shouldLogDetails) {
+            DiagnosticLogger.LogInfo($"[SymbolPath] Skipping primary server (auth failed): {path}");
+          }
+          continue;
+        }
+
+        // Skip secondary (public) server UNLESS primary auth has explicitly failed.
+        // msdl only has stripped/public PDBs - we want private symbols from symweb.
+        // Only fall back to msdl if symweb auth fails (401/403).
+        if (!settings.PrimaryServerAuthFailed && path.Contains("msdl.microsoft.com", StringComparison.OrdinalIgnoreCase)) {
+          if (shouldLogDetails) {
+            DiagnosticLogger.LogInfo($"[SymbolPath] Skipping secondary server (primary not failed): {path}");
+          }
+          continue;
+        }
+
+        if (shouldLogDetails) {
+          DiagnosticLogger.LogInfo($"[SymbolPath] Including path: {path}");
+        }
         symbolPath += $"{path};";
       }
     }
 
-    if (logPath) {
-      DiagnosticLogger.LogInfo($"[SymbolPath] Constructed symbol search path: {symbolPath}");
+    // Always log the final path on first call or auth state change
+    if (shouldLogDetails) {
+      DiagnosticLogger.LogInfo($"[SymbolPath] Final constructed path: {symbolPath}");
     }
 
     return symbolPath;
+  }
+
+  /// <summary>
+  /// Checks if the search log indicates an auth failure (401/403) on the primary server.
+  /// Uses specific patterns to avoid false positives from GUIDs/paths that contain "401" or "403".
+  /// </summary>
+  private static bool DetectPrimaryServerAuthFailure(string searchLog) {
+    if (string.IsNullOrEmpty(searchLog)) {
+      return false;
+    }
+
+    // Must involve symweb to be a primary server auth failure
+    if (!searchLog.Contains("symweb", StringComparison.OrdinalIgnoreCase)) {
+      return false;
+    }
+
+    // Look for specific auth failure patterns - not just "401"/"403" which can match GUIDs/paths
+    // TraceEvent typically outputs HTTP errors with context like "Response: 401" or "401 Unauthorized"
+    // Use regex with word boundaries to avoid matching 401/403 within hex GUIDs
+    var authFailurePatterns = new[] {
+      @"\b401\b",           // 401 at word boundary (not in hex GUIDs like A3401B)
+      @"\b403\b",           // 403 at word boundary
+      "Unauthorized",       // HTTP 401 description
+      "Forbidden"           // HTTP 403 description
+    };
+
+    foreach (var pattern in authFailurePatterns) {
+      if (pattern.StartsWith(@"\b")) {
+        // Regex pattern - check for word boundaries
+        if (System.Text.RegularExpressions.Regex.IsMatch(searchLog, pattern)) {
+          return true;
+        }
+      }
+      else {
+        // Simple string search for descriptive terms
+        if (searchLog.Contains(pattern, StringComparison.OrdinalIgnoreCase)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public static async Task<DebugFileSearchResult>
@@ -518,8 +636,49 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       sortedFuncList_ = otherPdb.sortedFuncList_;
     }
 
+    // Check if PDB has source file information (not stripped)
+    CheckForSourceInfo();
     return true;
   }
+
+  private void CheckForSourceInfo() {
+    // Log file size to help diagnose public vs private PDB
+    try {
+      var fileInfo = new FileInfo(debugFilePath_);
+      DiagnosticLogger.LogInfo($"[PDBDebugInfo] PDB file size: {fileInfo.Length:N0} bytes ({fileInfo.Length / 1024.0 / 1024.0:F2} MB) - {debugFilePath_}");
+    }
+    catch { }
+
+    try {
+      // Try to enumerate source files in the PDB
+      session_.findFile(null, null, 0, out var sourceFileEnum);
+      sourceFileEnum.Next(1, out var sourceFile, out uint retrieved);
+
+      if (retrieved > 0 && sourceFile != null) {
+        string fileName = sourceFile.fileName;
+        hasSourceInfo_ = true;
+        DiagnosticLogger.LogInfo($"[PDBDebugInfo] PDB has source info. Sample source file: {fileName}");
+      }
+      else {
+        hasSourceInfo_ = false;
+        DiagnosticLogger.LogWarning($"[PDBDebugInfo] PDB appears to be STRIPPED (no source file info). Source file viewing will not work for: {debugFilePath_}");
+        DiagnosticLogger.LogWarning($"[PDBDebugInfo] If you expected private symbols with source info:");
+        DiagnosticLogger.LogWarning($"[PDBDebugInfo]   1. Delete the cached PDB: {debugFilePath_}");
+        DiagnosticLogger.LogWarning($"[PDBDebugInfo]   2. Ensure symweb (private server) is configured as PRIMARY in symbol paths");
+        DiagnosticLogger.LogWarning($"[PDBDebugInfo]   3. Reload the trace to re-download from the private server");
+      }
+    }
+    catch (Exception ex) {
+      hasSourceInfo_ = false;
+      DiagnosticLogger.LogWarning($"[PDBDebugInfo] Could not enumerate source files in PDB: {ex.Message}. PDB may be stripped.");
+    }
+  }
+
+  /// <summary>
+  /// Returns true if the PDB contains source file information (line numbers, file paths).
+  /// Returns false for stripped/public PDBs that only contain symbol names.
+  /// </summary>
+  public bool HasSourceInfo => hasSourceInfo_;
 
   public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
     var funcSymbol = FindFunctionSymbol(functionName);
@@ -666,6 +825,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private SourceFileDebugInfo FindFunctionSourceFilePathImpl(SourceLineDebugInfo lineInfo,
                                                              IDiaSourceFile sourceFile, uint rva) {
     if (lineInfo.IsUnknown) {
+      DiagnosticLogger.LogWarning($"[SourceFile] lineInfo is Unknown for RVA 0x{rva:X}");
       return SourceFileDebugInfo.Unknown;
     }
 
@@ -674,51 +834,71 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     bool localFileFound = File.Exists(localFilePath);
     bool hasChecksumMismatch = false;
 
+    DiagnosticLogger.LogInfo($"[SourceFile] Checking source file: {originalFilePath}, localFileFound={localFileFound}");
+
     if (localFileFound) {
       // Check if the PDB file checksum matches the one of the local file.
       hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
+      DiagnosticLogger.LogInfo($"[SourceFile] Local file exists, checksumMismatch={hasChecksumMismatch}");
     }
 
     // Try to use the source server if no exact local file found.
+    DiagnosticLogger.LogInfo($"[SourceFile] SourceServerEnabled={settings_.SourceServerEnabled}, needsServerLookup={!localFileFound || hasChecksumMismatch}");
+
     if ((!localFileFound || hasChecksumMismatch) && settings_.SourceServerEnabled) {
+      DiagnosticLogger.LogInfo($"[SourceFile] Attempting source server lookup for RVA 0x{rva:X}");
       try {
         lock (this) {
           if (symbolReaderPDB_ == null) {
+            DiagnosticLogger.LogInfo($"[SourceFile] Initializing SymbolReader for {debugFilePath_}");
             symbolReaderLog_ = new StringWriter();
             symbolReader_ = new SymbolReader(symbolReaderLog_, null, CreateAuthHandler(settings_));
             symbolReader_.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
             symbolReaderPDB_ = symbolReader_.OpenNativeSymbolFile(debugFilePath_);
 
             if (symbolReaderPDB_ == null) {
+              DiagnosticLogger.LogError($"[SourceFile] Failed to initialize SymbolReader for {debugFilePath_}");
               Trace.WriteLine($"Failed to initialize SymbolReader for {lineInfo.FilePath}");
               return new SourceFileDebugInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
             }
+            DiagnosticLogger.LogInfo($"[SourceFile] SymbolReader initialized successfully");
           }
 
           // Query for the source file location on the server.
+          DiagnosticLogger.LogInfo($"[SourceFile] Querying SourceLocationForRva(0x{rva:X})");
           var sourceLine = symbolReaderPDB_.SourceLocationForRva(rva);
 
           if (sourceLine?.SourceFile != null) {
             // Try to download the source file.
             // The checksum should match, but do a check just in case.
+            DiagnosticLogger.LogInfo($"[SourceFile] Source server has file: {sourceLine.SourceFile.BuildTimeFilePath}");
             Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
             string filePath = sourceLine.SourceFile.GetSourceFile();
+            DiagnosticLogger.LogInfo($"[SourceFile] GetSourceFile returned: {filePath ?? "null"}");
 
-            if (SourceFileChecksumMatchesPDB(sourceFile, filePath)) {
+            if (!string.IsNullOrEmpty(filePath) && SourceFileChecksumMatchesPDB(sourceFile, filePath)) {
+              DiagnosticLogger.LogInfo($"[SourceFile] Downloaded and verified source file: {filePath}");
               Trace.WriteLine($"Downloaded source file {filePath}");
               localFilePath = filePath;
               hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
             }
             else {
+              DiagnosticLogger.LogWarning($"[SourceFile] Failed to download or verify source file. filePath={filePath ?? "null"}");
               Trace.WriteLine($"Failed to download source file {localFilePath}");
-              Trace.WriteLine(symbolReaderLog_.ToString().TrimToLength(MaxLogEntryLength));
+              string logContent = symbolReaderLog_.ToString().TrimToLength(MaxLogEntryLength);
+              DiagnosticLogger.LogWarning($"[SourceFile] SymbolReader log: {logContent}");
+              Trace.WriteLine(logContent);
               symbolReaderLog_.GetStringBuilder().Clear();
               Trace.WriteLine("---------------------------------");
             }
           }
+          else {
+            DiagnosticLogger.LogWarning($"[SourceFile] SourceLocationForRva returned null or no SourceFile for RVA 0x{rva:X}");
+          }
         }
       }
       catch (Exception ex) {
+        DiagnosticLogger.LogError($"[SourceFile] Exception during source server lookup: {ex.Message}", ex);
         Trace.TraceError($"Failed to locate source file for {debugFilePath_}: {ex.Message}");
       }
     }
@@ -755,6 +935,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
         lineEnum.Next(1, out var lineNumber, out uint retrieved);
 
         if (retrieved == 0) {
+          DiagnosticLogger.LogWarning($"[SourceFile] No line info found in PDB for RVA 0x{rva:X} - PDB may be stripped (public symbols only)");
           break;
         }
 

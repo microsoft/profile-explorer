@@ -443,6 +443,11 @@
                                   Value="{x:Static profileData:ModuleLoadState.Failed}">
                                   <Setter Property="Source" Value="{StaticResource WarningIconColor}" />
                                 </DataTrigger>
+                                <DataTrigger
+                                  Binding="{Binding State}"
+                                  Value="{x:Static profileData:ModuleLoadState.LazyLoadPending}">
+                                  <Setter Property="Source" Value="{StaticResource DotIconYellow}" />
+                                </DataTrigger>
                               </Style.Triggers>
                             </Style>
                           </Image.Style>
@@ -466,6 +471,11 @@
                                   Binding="{Binding State}"
                                   Value="{x:Static profileData:ModuleLoadState.Failed}">
                                   <Setter Property="Text" Value="Failed" />
+                                </DataTrigger>
+                                <DataTrigger
+                                  Binding="{Binding State}"
+                                  Value="{x:Static profileData:ModuleLoadState.LazyLoadPending}">
+                                  <Setter Property="Text" Value="On-demand" />
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>

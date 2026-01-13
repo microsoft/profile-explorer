@@ -57,14 +57,16 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool CompanyFilterEnabled { get; set; }
   [ProtoMember(16)][OptionValue()]
   public List<string> CompanyFilterStrings { get; set; }
-  [ProtoMember(17)][OptionValue(10)] // 10 seconds default timeout
+  [ProtoMember(17)][OptionValue(30)] // 30 seconds normal timeout (after auth validated)
   public int SymbolServerTimeoutSeconds { get; set; }
   [ProtoMember(18)][OptionValue(true)]
   public bool BellwetherTestEnabled { get; set; }
-  [ProtoMember(19)][OptionValue(30)] // 30 seconds for bellwether test (first connection warmup)
+  [ProtoMember(19)][OptionValue(60)] // 60 seconds for bellwether/initial requests (after auth validated)
   public int BellwetherTimeoutSeconds { get; set; }
-  [ProtoMember(20)][OptionValue(3)] // 3 seconds when symbol server is degraded
+  [ProtoMember(20)][OptionValue(10)] // 10 seconds when symbol server is degraded
   public int DegradedTimeoutSeconds { get; set; }
+  [ProtoMember(24)][OptionValue(600)] // 10 minutes pre-auth timeout (user may need to interact with auth dialog)
+  public int PreAuthTimeoutSeconds { get; set; }
   [ProtoMember(21)][OptionValue(true)]
   public bool WindowsPathFilterEnabled { get; set; }
   [ProtoMember(22)]
@@ -84,21 +86,35 @@ public class SymbolFileSourceSettings : SettingsBase {
   // Runtime state - tracks if we've had any timeout, triggering reduced timeout.
   public bool HadFirstTimeout { get; set; }
 
+  // Runtime state - tracks if primary (private) server auth failed.
+  // When true, subsequent downloads skip primary and go directly to secondary (public) server.
+  public bool PrimaryServerAuthFailed { get; set; }
+
+  // Runtime state - tracks if primary server has been verified working.
+  // When true, we know primary server works and should be used.
+  public bool PrimaryServerVerified { get; set; }
+
   /// <summary>
   /// Returns the effective timeout based on current state:
-  /// - If degraded (bellwether failed): use DegradedTimeoutSeconds (3s)
-  /// - If we've had a timeout: use SymbolServerTimeoutSeconds (10s)
-  /// - Otherwise (initial state): use BellwetherTimeoutSeconds (30s)
+  /// - If auth not yet validated: use PreAuthTimeoutSeconds (600s/10min) to allow for interactive auth
+  /// - If degraded (bellwether failed): use DegradedTimeoutSeconds (10s)
+  /// - If we've had a timeout: use SymbolServerTimeoutSeconds (30s)
+  /// - Otherwise (initial post-auth state): use BellwetherTimeoutSeconds (60s)
   /// </summary>
   public int EffectiveTimeoutSeconds {
     get {
+      // Before auth is validated, use very long timeout to allow for interactive auth dialog
+      // The user might not see the auth dialog immediately, so we give them 10 minutes
+      if (!HadFirstSuccessfulNetworkRequest && !SymbolServerDegraded) {
+        return PreAuthTimeoutSeconds;
+      }
       if (SymbolServerDegraded) {
         return DegradedTimeoutSeconds;
       }
       if (HadFirstTimeout) {
         return SymbolServerTimeoutSeconds;
       }
-      // Initial state - use generous timeout until we see the first timeout
+      // Auth validated, no timeouts yet - use generous initial timeout
       return BellwetherTimeoutSeconds;
     }
   }
