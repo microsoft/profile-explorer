@@ -34,6 +34,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
   private static readonly StringWriter authLogWriter_;
   private static readonly SymwebHandler authSymwebHandler_;
+  private static readonly string authRecordPath_ = Path.Combine(Path.GetTempPath(), "ProfileExplorer", "auth_record.bin");
   private static object undecorateLock_ = new(); // Global lock for undname.
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
@@ -82,13 +83,25 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     // Other exceptions (like "needs re-authentication") stop the chain. We wrap each
     // credential to catch auth failures and convert them to CredentialUnavailableException
     // so the chain continues to InteractiveBrowserCredential which prompts the user.
+
     // Enable token cache persistence for browser credential so tokens survive process restarts.
+    // Additionally, load existing AuthenticationRecord for true silent auth across sessions.
     // This prevents re-authentication on every trace load if VS credential fails.
+    var authRecord = LoadAuthenticationRecord();
     var browserCredentialOptions = new InteractiveBrowserCredentialOptions {
       TokenCachePersistenceOptions = new TokenCachePersistenceOptions {
         Name = "ProfileExplorer" // Unique cache name for this app
-      }
+      },
+      AuthenticationRecord = authRecord // Enable silent auth with cached identity
     };
+
+    TokenCredential browserCredential = new InteractiveBrowserCredential(browserCredentialOptions);
+
+    // If no auth record exists yet, the user will be prompted on first symbol download.
+    // After first successful auth, capture and save the AuthenticationRecord for future sessions.
+    if (authRecord == null) {
+      browserCredential = new CaptureAuthRecordCredential((InteractiveBrowserCredential)browserCredential);
+    }
 
     var credentials = new List<TokenCredential>
     {
@@ -99,7 +112,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       WrapCredential(new AzureCliCredential()),
       WrapCredential(new AzurePowerShellCredential()),
       WrapCredential(new AzureDeveloperCliCredential()),
-      new InteractiveBrowserCredential(browserCredentialOptions) // Don't wrap - final fallback should show errors
+      browserCredential // Don't wrap - final fallback should show errors
     };
 
     var authCredential = new ChainedTokenCredential(credentials.ToArray());
@@ -114,6 +127,47 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   /// </summary>
   private static TokenCredential WrapCredential(TokenCredential inner) {
     return new FallbackTokenCredential(inner);
+  }
+
+  /// <summary>
+  /// Loads a previously saved AuthenticationRecord from disk for silent authentication.
+  /// Returns null if no saved record exists or if loading fails.
+  /// </summary>
+  internal static AuthenticationRecord LoadAuthenticationRecord() {
+    try {
+      if (File.Exists(authRecordPath_)) {
+        using var stream = File.OpenRead(authRecordPath_);
+        var record = AuthenticationRecord.Deserialize(stream);
+        Trace.WriteLine($"[Auth] Loaded cached authentication record from {authRecordPath_}");
+        return record;
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"[Auth] Failed to load authentication record: {ex.Message}");
+    }
+    return null;
+  }
+
+  /// <summary>
+  /// Saves an AuthenticationRecord to disk for reuse across sessions.
+  /// This enables silent authentication without repeated browser prompts.
+  /// </summary>
+  internal static void SaveAuthenticationRecord(AuthenticationRecord record) {
+    if (record == null) {
+      return;
+    }
+
+    try {
+      string directory = Path.GetDirectoryName(authRecordPath_);
+      Directory.CreateDirectory(directory);
+
+      using var stream = File.Create(authRecordPath_);
+      record.Serialize(stream);
+      Trace.WriteLine($"[Auth] Saved authentication record to {authRecordPath_} - future sessions will use silent auth");
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"[Auth] Failed to save authentication record: {ex.Message}");
+    }
   }
 
   public PDBDebugInfoProvider(SymbolFileSourceSettings settings) {
@@ -1300,6 +1354,76 @@ sealed class BasicAuthenticationHandler : SymbolReaderAuthHandler {
     }
 
     return null;
+  }
+}
+
+/// <summary>
+/// Wraps InteractiveBrowserCredential to automatically capture and persist the AuthenticationRecord
+/// after the first successful authentication. This enables silent auth across future sessions.
+/// </summary>
+sealed class CaptureAuthRecordCredential : TokenCredential {
+  private readonly InteractiveBrowserCredential inner_;
+  private bool authRecordCaptured_;
+  private readonly object captureLock_ = new();
+
+  public CaptureAuthRecordCredential(InteractiveBrowserCredential inner) {
+    inner_ = inner;
+  }
+
+  public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken) {
+    var token = inner_.GetToken(requestContext, cancellationToken);
+    CaptureAuthRecordIfNeeded();
+    return token;
+  }
+
+  public override async ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken) {
+    var token = await inner_.GetTokenAsync(requestContext, cancellationToken).ConfigureAwait(false);
+    await CaptureAuthRecordIfNeededAsync().ConfigureAwait(false);
+    return token;
+  }
+
+  private void CaptureAuthRecordIfNeeded() {
+    if (authRecordCaptured_) {
+      return;
+    }
+
+    lock (captureLock_) {
+      if (authRecordCaptured_) {
+        return;
+      }
+
+      try {
+        // Authenticate() returns the current AuthenticationRecord without prompting again
+        var record = Utils.RunSync(() => inner_.AuthenticateAsync());
+        PDBDebugInfoProvider.SaveAuthenticationRecord(record);
+        authRecordCaptured_ = true;
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"[Auth] Failed to capture authentication record: {ex.Message}");
+      }
+    }
+  }
+
+  private async Task CaptureAuthRecordIfNeededAsync() {
+    if (authRecordCaptured_) {
+      return;
+    }
+
+    lock (captureLock_) {
+      if (authRecordCaptured_) {
+        return;
+      }
+
+      try {
+        // Authenticate() returns the current AuthenticationRecord without prompting again
+        var record = Utils.RunSync(() => inner_.AuthenticateAsync());
+        PDBDebugInfoProvider.SaveAuthenticationRecord(record);
+        authRecordCaptured_ = true;
+      }
+      catch (Exception ex) {
+        Trace.WriteLine($"[Auth] Failed to capture authentication record: {ex.Message}");
+      }
+    }
   }
 }
 
