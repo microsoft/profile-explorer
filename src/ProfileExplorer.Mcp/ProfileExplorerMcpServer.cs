@@ -614,9 +614,10 @@ public static class ProfileExplorerTools
                     assemblyContent = await System.IO.File.ReadAllTextAsync(filePath);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // If we can't read the file, just return the path
+                // If we can't read the file, log the error and just return the path
+                _logger.LogError(ex, "Failed to read assembly file '{FilePath}' for function '{FunctionName}'. Returning path without content.", filePath, functionName);
             }
 
             var result = new
