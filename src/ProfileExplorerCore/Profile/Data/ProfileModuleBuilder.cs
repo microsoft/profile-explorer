@@ -13,7 +13,7 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Profile.Data;
 
-public sealed class ProfileModuleBuilder {
+public sealed class ProfileModuleBuilder : IDisposable {
 #if DEBUG
   private static volatile int FuncQueries;
   private static volatile int FuncFoundByAddress;
@@ -430,5 +430,10 @@ public sealed class ProfileModuleBuilder {
       Trace.TraceError($"Failed to load document {filePath}: {ex}");
       return null;
     }
+  }
+
+  public void Dispose() {
+    lock_?.Dispose();
+    binaryLoadLock_?.Dispose();
   }
 }
