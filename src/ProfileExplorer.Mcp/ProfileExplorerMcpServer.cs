@@ -616,8 +616,8 @@ public static class ProfileExplorerTools
             }
             catch (Exception ex)
             {
-                // If we can't read the file, log the error and just return the path
-                _logger.LogError(ex, "Failed to read assembly file '{FilePath}' for function '{FunctionName}'. Returning path without content.", filePath, functionName);
+                // If we can't read the file, log the error and just return the path without content
+                Console.Error.WriteLine($"Failed to read assembly file '{filePath}' for function '{functionName}': {ex.Message}");
             }
 
             var result = new
