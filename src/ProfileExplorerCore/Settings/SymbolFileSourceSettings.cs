@@ -12,6 +12,15 @@ using ProtoBuf;
 
 namespace ProfileExplorer.Core.Settings;
 
+public enum SymbolFileRejectionReason {
+  Unknown = 0,           // Unknown/legacy
+  PermanentNotFound,     // 404 - safe to cache (3 days)
+  InvalidFormat,         // Parse error - safe to cache
+  NetworkTimeout,        // Transient - DON'T cache
+  AuthenticationFailure, // Transient - DON'T cache
+  ServerError           // 5xx - transient - DON'T cache
+}
+
 [ProtoContract(SkipConstructor = true)]
 public class SymbolFileSourceSettings : SettingsBase {
   private const string DefaultPrivateSymbolServer = @"https://symweb.azurefd.net";
@@ -93,6 +102,12 @@ public class SymbolFileSourceSettings : SettingsBase {
   // Runtime state - tracks if primary server has been verified working.
   // When true, we know primary server works and should be used.
   public bool PrimaryServerVerified { get; set; }
+
+  // Runtime state - session-level tracking for negative cache safety checks.
+  // These are NOT persisted and reset on each session.
+  public int SessionSymbolSearchCount { get; set; }
+  public int SessionSymbolFailureCount { get; set; }
+  public int SessionSymbolSuccessCount { get; set; }
 
   /// <summary>
   /// Returns the effective timeout based on current state:
@@ -219,6 +234,126 @@ public class SymbolFileSourceSettings : SettingsBase {
     return isRejected;
   }
 
+  /// <summary>
+  /// Checks if a rejection reason represents a transient failure that should NOT be cached.
+  /// Transient failures include auth failures, timeouts, and server errors.
+  /// </summary>
+  private bool IsTransientFailure(SymbolFileRejectionReason reason) {
+    return reason == SymbolFileRejectionReason.AuthenticationFailure ||
+           reason == SymbolFileRejectionReason.NetworkTimeout ||
+           reason == SymbolFileRejectionReason.ServerError ||
+           reason == SymbolFileRejectionReason.Unknown; // Treat unknown conservatively - don't cache
+  }
+
+  /// <summary>
+  /// Checks if a symbol file exists in the local symbol cache directories.
+  /// Searches all paths from _NT_SYMBOL_PATH including structured (foo.pdb/GUID/foo.pdb) and flat directories.
+  /// </summary>
+  private bool IsSymbolFileInLocalCache(SymbolFileDescriptor file) {
+    if (file == null || string.IsNullOrEmpty(file.FileName)) {
+      return false;
+    }
+
+    // Check all symbol paths configured
+    foreach (string path in SymbolPaths) {
+      if (string.IsNullOrEmpty(path)) continue;
+
+      // Skip symbol server entries (srv*)
+      if (path.StartsWith("srv*", StringComparison.OrdinalIgnoreCase)) {
+        // Extract local cache path from srv*C:\Symbols*https://...
+        var parts = path.Split('*');
+        if (parts.Length >= 2) {
+          string localCachePath = parts[1];
+          if (CheckSymbolFileInDirectory(localCachePath, file)) {
+            return true;
+          }
+        }
+        continue;
+      }
+
+      // Check regular directory paths
+      if (CheckSymbolFileInDirectory(path, file)) {
+        return true;
+      }
+    }
+
+    // Check environment variable symbol paths if enabled
+    if (UseEnvironmentVarSymbolPaths && !string.IsNullOrEmpty(EnvironmentVarSymbolPath)) {
+      foreach (string path in EnvironmentVarSymbolPath.Split(';')) {
+        if (string.IsNullOrEmpty(path)) continue;
+
+        if (path.StartsWith("srv*", StringComparison.OrdinalIgnoreCase)) {
+          var parts = path.Split('*');
+          if (parts.Length >= 2) {
+            string localCachePath = parts[1];
+            if (CheckSymbolFileInDirectory(localCachePath, file)) {
+              return true;
+            }
+          }
+        }
+        else if (CheckSymbolFileInDirectory(path, file)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Checks if a symbol file exists in a specific directory, looking for both structured
+  /// symbol server format (foo.pdb/GUID/foo.pdb) and flat format (foo.pdb).
+  /// </summary>
+  private bool CheckSymbolFileInDirectory(string directory, SymbolFileDescriptor file) {
+    if (!Directory.Exists(directory)) {
+      return false;
+    }
+
+    try {
+      // Check structured symbol server format: basePath\fileName\GUID\fileName
+      string structuredPath = Path.Combine(directory, file.FileName, file.Id.ToString("N").ToUpperInvariant(), file.FileName);
+      if (File.Exists(structuredPath)) {
+        DiagnosticLogger.LogInfo($"[NegativeCache] Found symbol file in local cache (structured): {structuredPath}");
+        return true;
+      }
+
+      // Check flat format: basePath\fileName
+      string flatPath = Path.Combine(directory, file.FileName);
+      if (File.Exists(flatPath)) {
+        DiagnosticLogger.LogInfo($"[NegativeCache] Found symbol file in local cache (flat): {flatPath}");
+        return true;
+      }
+    }
+    catch (Exception ex) {
+      Trace.WriteLine($"[NegativeCache] Error checking symbol file in {directory}: {ex.Message}");
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Session-level safety check: If we have a suspicious failure rate (>80% failures with at least 10 searches),
+  /// something is systematically wrong (network down, auth broken, etc.) and we should NOT add to negative cache.
+  /// This prevents mass rejection when there's an infrastructure issue.
+  /// </summary>
+  private bool ShouldSkipNegativeCachingDueToSuspiciousFailureRate() {
+    const int MinSearchCount = 10;
+    const double MaxFailureRate = 0.80; // 80%
+
+    if (SessionSymbolSearchCount < MinSearchCount) {
+      return false; // Not enough data yet
+    }
+
+    double failureRate = (double)SessionSymbolFailureCount / SessionSymbolSearchCount;
+
+    if (failureRate > MaxFailureRate) {
+      DiagnosticLogger.LogWarning($"[NegativeCache] Suspicious failure rate detected: {SessionSymbolFailureCount}/{SessionSymbolSearchCount} ({failureRate:P0}) - Disabling negative caching for this session");
+      return true;
+    }
+
+    return false;
+  }
+
   public void RejectBinaryFile(BinaryFileDescriptor file) {
     if (RejectPreviouslyFailedFiles) {
       RejectedBinaryFiles.Add(file);
@@ -229,14 +364,52 @@ public class SymbolFileSourceSettings : SettingsBase {
     }
   }
 
-  public void RejectSymbolFile(SymbolFileDescriptor file) {
-    if (RejectPreviouslyFailedFiles) {
-      RejectedSymbolFiles.Add(file);
-      // Update cache time on first rejection
-      if (RejectedFilesCacheTime == default) {
-        RejectedFilesCacheTime = DateTime.UtcNow;
-      }
+  /// <summary>
+  /// Attempts to add a symbol file to the negative cache (list of previously failed symbols).
+  /// Includes multiple safeguards to prevent caching transient failures:
+  /// - Skips transient failures (auth, timeout, server errors)
+  /// - Skips if auth failure detected this session
+  /// - Skips if file exists in local cache
+  /// - Skips if suspicious failure rate detected (>80%)
+  /// Returns true if the file was added to negative cache, false if rejected or skipped.
+  /// </summary>
+  public bool RejectSymbolFile(SymbolFileDescriptor file,
+                                SymbolFileRejectionReason reason = SymbolFileRejectionReason.Unknown,
+                                string searchLog = null) {
+    if (!RejectPreviouslyFailedFiles) return false;
+
+    // SAFEGUARD 1: Skip transient failures
+    if (IsTransientFailure(reason)) {
+      DiagnosticLogger.LogInfo($"[NegativeCache] Skipping transient failure: {file.FileName} - {reason}");
+      return false;
     }
+
+    // SAFEGUARD 2: Check if auth failure detected this session
+    if (PrimaryServerAuthFailed) {
+      DiagnosticLogger.LogWarning($"[NegativeCache] Auth failure detected - rejecting rejection for {file.FileName}");
+      return false;
+    }
+
+    // SAFEGUARD 3: Check if file exists in local cache
+    if (IsSymbolFileInLocalCache(file)) {
+      DiagnosticLogger.LogInfo($"[NegativeCache] Symbol exists in local cache: {file.FileName}");
+      return false;
+    }
+
+    // SAFEGUARD 4: Session-level safety check - suspicious failure rate
+    if (ShouldSkipNegativeCachingDueToSuspiciousFailureRate()) {
+      DiagnosticLogger.LogWarning($"[NegativeCache] Suspicious failure rate - skipping ALL negative caching");
+      return false;
+    }
+
+    // All checks passed - safe to add to negative cache
+    RejectedSymbolFiles.Add(file);
+    if (RejectedFilesCacheTime == default) {
+      RejectedFilesCacheTime = DateTime.UtcNow;
+    }
+
+    DiagnosticLogger.LogInfo($"[NegativeCache] Added: {file.FileName} - Reason: {reason}");
+    return true;
   }
 
   public void ClearRejectedFiles() {

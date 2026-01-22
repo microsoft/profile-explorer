@@ -492,9 +492,15 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     Trace.WriteLine("<< TraceEvent");
 #endif
 
+    // Track session-level statistics for negative cache safety checks
+    settings.SessionSymbolSearchCount++;
+
     if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
       DiagnosticLogger.LogInfo($"[SymbolSearch] Successfully found symbol file for {symbolFile.FileName}: {result}");
       searchResult = DebugFileSearchResult.Success(symbolFile, result, searchLog);
+
+      // Track successful symbol resolution for session statistics
+      settings.SessionSymbolSuccessCount++;
 
       // If download succeeded and log shows symweb was used, mark primary as verified
       if (!settings.PrimaryServerVerified &&
@@ -508,13 +514,58 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       DiagnosticLogger.LogWarning($"[SymbolSearch] Failed to find symbol file for {symbolFile.FileName}. Result: {result ?? "null"}");
       searchResult = DebugFileSearchResult.Failure(symbolFile, searchLog);
 
-      // Record failed lookup to avoid retrying in future sessions.
-      settings.RejectSymbolFile(symbolFile);
+      // Track failed symbol resolution for session statistics
+      settings.SessionSymbolFailureCount++;
+
+      // Classify the failure to determine if it should be cached
+      var reason = ClassifySymbolSearchFailure(searchLog, settings);
+      DiagnosticLogger.LogInfo($"[SymbolSearch] Failure classified as: {reason}");
+
+      // Record failed lookup with reason - RejectSymbolFile has safeguards to prevent caching transient failures
+      settings.RejectSymbolFile(symbolFile, reason, searchLog);
     }
 
     resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
     DiagnosticLogger.LogInfo($"[SymbolSearch] Cached search result for {symbolFile.FileName}: {(searchResult.Found ? "Success" : "Failure")}");
     return searchResult;
+  }
+
+  /// <summary>
+  /// Classifies a symbol search failure based on the search log to determine if it should be cached.
+  /// Returns a SymbolFileRejectionReason indicating whether the failure is permanent (cacheable)
+  /// or transient (should not be cached).
+  /// </summary>
+  private static SymbolFileRejectionReason ClassifySymbolSearchFailure(
+    string searchLog, SymbolFileSourceSettings settings) {
+
+    // Check for auth failures (401/403)
+    if (DetectPrimaryServerAuthFailure(searchLog)) {
+      return SymbolFileRejectionReason.AuthenticationFailure;
+    }
+
+    // Check for server errors (5xx)
+    if (!string.IsNullOrEmpty(searchLog) &&
+        (searchLog.Contains("500") || searchLog.Contains("503") ||
+         searchLog.Contains("Internal Server Error", StringComparison.OrdinalIgnoreCase))) {
+      return SymbolFileRejectionReason.ServerError;
+    }
+
+    // Check for timeout patterns
+    if (!string.IsNullOrEmpty(searchLog) &&
+        (searchLog.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
+         searchLog.Contains("timed out", StringComparison.OrdinalIgnoreCase))) {
+      return SymbolFileRejectionReason.NetworkTimeout;
+    }
+
+    // If file not found in search log (404 or no result)
+    if (string.IsNullOrEmpty(searchLog) ||
+        searchLog.Contains("404") ||
+        searchLog.Contains("not found", StringComparison.OrdinalIgnoreCase)) {
+      return SymbolFileRejectionReason.PermanentNotFound;
+    }
+
+    // Default: unknown (treat conservatively - don't cache if unsure)
+    return SymbolFileRejectionReason.Unknown;
   }
 
   // Track if we've logged detailed symbol path info (only log once per session unless auth state changes)

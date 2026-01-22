@@ -110,124 +110,6 @@
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
           BorderThickness="0">
           <TabItem
-            Header="Binaries"
-            Style="{StaticResource TabControlStyle}">
-            <Grid>
-              <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
-              </Grid.RowDefinitions>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="80" />
-              </Grid.ColumnDefinitions>
-
-              <ListView
-                x:Name="RejectedBinariesList"
-                Grid.Row="0"
-                Grid.Column="0"
-                MaxHeight="200"
-                Margin="0,4,4,4"
-                IsTextSearchEnabled="True"
-                SelectionMode="Extended"
-                TextSearch.TextPath="ImageName">
-                <ListView.View>
-                  <GridView>
-                    <GridViewColumn
-                      Width="Auto"
-                      DisplayMemberBinding="{Binding ImageName}"
-                      Header="File">
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-                    <GridViewColumn
-                      Width="150"
-                      DisplayMemberBinding="{Binding ImagePath}"
-                      Header="Path">
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-                    <GridViewColumn
-                      Width="Auto"
-                      DisplayMemberBinding="{Binding ImageSize}"
-                      Header="Size">
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-                    <GridViewColumn
-                      Width="Auto"
-                      DisplayMemberBinding="{Binding TimeStamp}"
-                      Header="Timestamp">
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-                  </GridView>
-                </ListView.View>
-                <ListView.ItemContainerStyle>
-                  <Style
-                    BasedOn="{StaticResource FlatListViewItem}"
-                    TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background"
-                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                  </Style>
-                </ListView.ItemContainerStyle>
-              </ListView>
-
-              <StackPanel
-                Grid.Row="0"
-                Grid.Column="1"
-                Margin="2,4,4,4">
-                <Button
-                  Height="24"
-                  Padding="2"
-                  HorizontalContentAlignment="Left"
-                  Click="RemoveRejectedBinariesButton_Click">
-                  <StackPanel Orientation="Horizontal">
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource MinusIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="4,0,0,0"
-                      Text="Remove" />
-                  </StackPanel>
-                </Button>
-                <Button
-                  Height="24"
-                  Margin="0,2,0,0"
-                  Padding="2"
-                  HorizontalContentAlignment="Left"
-                  Click="ClearRejectedBinariesButton_Click">
-                  <StackPanel Orientation="Horizontal">
-                    <Image
-                      Width="16"
-                      Height="16"
-                      Source="{StaticResource RemoveIcon}"
-                      Style="{StaticResource DisabledImageStyle}" />
-                    <TextBlock
-                      Margin="4,0,0,0"
-                      Text="Clear" />
-                  </StackPanel>
-                </Button>
-              </StackPanel>
-
-            </Grid>
-          </TabItem>
-          <TabItem
             Header="Symbols"
             Style="{StaticResource TabControlStyle}">
             <Grid>
@@ -330,6 +212,124 @@
                   Padding="2"
                   HorizontalContentAlignment="Left"
                   Click="ClearRejectedSymbolsButton_Click">
+                  <StackPanel Orientation="Horizontal">
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource RemoveIcon}"
+                      Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="4,0,0,0"
+                      Text="Clear" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+
+            </Grid>
+          </TabItem>
+          <TabItem
+            Header="Binaries"
+            Style="{StaticResource TabControlStyle}">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="80" />
+              </Grid.ColumnDefinitions>
+
+              <ListView
+                x:Name="RejectedBinariesList"
+                Grid.Row="0"
+                Grid.Column="0"
+                MaxHeight="200"
+                Margin="0,4,4,4"
+                IsTextSearchEnabled="True"
+                SelectionMode="Extended"
+                TextSearch.TextPath="ImageName">
+                <ListView.View>
+                  <GridView>
+                    <GridViewColumn
+                      Width="Auto"
+                      DisplayMemberBinding="{Binding ImageName}"
+                      Header="File">
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                    <GridViewColumn
+                      Width="150"
+                      DisplayMemberBinding="{Binding ImagePath}"
+                      Header="Path">
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                    <GridViewColumn
+                      Width="Auto"
+                      DisplayMemberBinding="{Binding ImageSize}"
+                      Header="Size">
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                    <GridViewColumn
+                      Width="Auto"
+                      DisplayMemberBinding="{Binding TimeStamp}"
+                      Header="Timestamp">
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                  </GridView>
+                </ListView.View>
+                <ListView.ItemContainerStyle>
+                  <Style
+                    BasedOn="{StaticResource FlatListViewItem}"
+                    TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background"
+                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                  </Style>
+                </ListView.ItemContainerStyle>
+              </ListView>
+
+              <StackPanel
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="2,4,4,4">
+                <Button
+                  Height="24"
+                  Padding="2"
+                  HorizontalContentAlignment="Left"
+                  Click="RemoveRejectedBinariesButton_Click">
+                  <StackPanel Orientation="Horizontal">
+                    <Image
+                      Width="16"
+                      Height="16"
+                      Source="{StaticResource MinusIcon}"
+                      Style="{StaticResource DisabledImageStyle}" />
+                    <TextBlock
+                      Margin="4,0,0,0"
+                      Text="Remove" />
+                  </StackPanel>
+                </Button>
+                <Button
+                  Height="24"
+                  Margin="0,2,0,0"
+                  Padding="2"
+                  HorizontalContentAlignment="Left"
+                  Click="ClearRejectedBinariesButton_Click">
                   <StackPanel Orientation="Horizontal">
                     <Image
                       Width="16"

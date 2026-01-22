@@ -952,7 +952,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             else {
               DiagnosticLogger.LogWarning($"[SymbolSearch] TIMEOUT after {timeoutSeconds}s for {taskSymbolFile.FileName}");
               result = DebugFileSearchResult.Failure(taskSymbolFile, $"Timeout after {timeoutSeconds}s");
-              symbolSettings.RejectSymbolFile(taskSymbolFile);
+
+              // Track timeout as a failure, but DON'T cache it (transient failure)
+              symbolSettings.RejectSymbolFile(taskSymbolFile,
+                                             SymbolFileRejectionReason.NetworkTimeout,
+                                             $"Timeout after {timeoutSeconds}s");
 
               // After first timeout, reduce timeout for subsequent downloads
               if (!symbolSettings.HadFirstTimeout) {

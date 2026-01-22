@@ -445,7 +445,11 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         }
 
         if (!module.HasDebugInfoLoaded && module.DebugInfoFile != null) {
-          symbolSettings_.RejectSymbolFile(module.DebugInfoFile.SymbolFile);
+          // Post-load rejection: PDB was downloaded but failed to load (corrupt/invalid format)
+          // This is a permanent failure (the PDB file itself is bad), so it's safe to cache
+          symbolSettings_.RejectSymbolFile(module.DebugInfoFile.SymbolFile,
+                                          SymbolFileRejectionReason.InvalidFormat,
+                                          "Failed to load debug info from downloaded PDB");
         }
       }
 
