@@ -13,7 +13,7 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Profile.Data;
 
-public sealed class ProfileModuleBuilder {
+public sealed class ProfileModuleBuilder : IDisposable {
 #if DEBUG
   private static volatile int FuncQueries;
   private static volatile int FuncFoundByAddress;
@@ -32,6 +32,7 @@ public sealed class ProfileModuleBuilder {
   private ConcurrentDictionary<long, bool> loggedFuncAddresses_ = new();
   private ProfileDataReport report_;
   private ReaderWriterLockSlim lock_;
+  private SemaphoreSlim binaryLoadLock_;
   private SymbolFileSourceSettings symbolSettings_;
 
   public ProfileModuleBuilder(ProfileDataReport report, ICompilerInfoProvider compilerInfoProvider) {
@@ -44,6 +45,7 @@ public sealed class ProfileModuleBuilder {
     nameProvider_ = compilerInfoProvider.NameProvider;
     functionMap_ = new ConcurrentDictionary<long, (IRTextFunction, FunctionDebugInfo)>();
     lock_ = new ReaderWriterLockSlim();
+    binaryLoadLock_ = new SemaphoreSlim(1, 1);
   }
 
   public IRTextSummary Summary { get; set; }
@@ -162,76 +164,88 @@ public sealed class ProfileModuleBuilder {
   /// Call this when the user wants to view assembly for a function.
   /// </summary>
   public async Task<bool> EnsureBinaryLoaded() {
-    // Already have a binary loaded
+    // Already have a binary loaded - fast path check without lock
     if (ModuleDocument?.BinaryFile?.Found == true) {
       return true;
     }
 
-    if (binaryInfo_ == null || symbolSettings_ == null) {
-      return false;
+    // Acquire the lock to ensure only one thread loads the binary
+    await binaryLoadLock_.WaitAsync().ConfigureAwait(false);
+    try {
+      // Double-check after acquiring lock - another thread may have loaded it
+      if (ModuleDocument?.BinaryFile?.Found == true) {
+        return true;
+      }
+
+      if (binaryInfo_ == null || symbolSettings_ == null) {
+        return false;
+      }
+
+      string imageName = binaryInfo_.ImageName;
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Loading binary on-demand for {imageName}");
+
+      var binFile = await FindBinaryFilePath(symbolSettings_).ConfigureAwait(false);
+      if (binFile == null || !binFile.Found) {
+        DiagnosticLogger.LogWarning($"[LazyBinaryLoad] Could not find binary for {imageName}");
+        return false;
+      }
+
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Found binary for {imageName}: {binFile.FilePath}");
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] DebugInfo available: {DebugInfo != null}, compilerInfo available: {compilerInfo_ != null}");
+
+      if (DebugInfo == null) {
+        DiagnosticLogger.LogError($"[LazyBinaryLoad] DebugInfo is null for {imageName} - disassembly will fail!");
+      }
+
+      // Create the disassembler loader with the binary.
+      // Pass preloadFunctions=false since we'll register functions manually.
+      bool isManagedImage = binFile.BinaryFile?.IsManagedImage ?? false;
+      var loader = new DisassemblerSectionLoader(binFile.FilePath, compilerInfo_, DebugInfo, false, isManagedImage);
+
+      // Initialize the loader's document with our existing summary.
+      // This is important because functions have already been added to Summary
+      // during profile loading and we need to preserve those references.
+      await Task.Run(async () => {
+        await loader.LoadDocument(null).ConfigureAwait(false);
+      }).ConfigureAwait(false);
+
+      // Verify the disassembler was initialized
+      bool disassemblerReady = loader.IsDisassemblerInitialized;
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Disassembler initialized: {disassemblerReady}");
+      if (!disassemblerReady) {
+        DiagnosticLogger.LogError($"[LazyBinaryLoad] Disassembler failed to initialize for {imageName}!");
+      }
+
+      // Re-register all existing functions with the new loader so it knows about them.
+      // The functions were already created via GetOrCreateFunction during profile loading.
+      int registeredCount = 0;
+      foreach (var kvp in functionMap_) {
+        var (func, debugInfo) = kvp.Value;
+        loader.RegisterFunction(func, debugInfo);
+        registeredCount++;
+      }
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Registered {registeredCount} functions with loader for {imageName}");
+
+      // Update the existing document IN PLACE so the session state reference remains valid.
+      // This is critical - creating a new document would break the reference that
+      // MainWindowSession.LoadAndParseSection() holds.
+      ModuleDocument.BinaryFile = BinaryFileSearchResult.Success(binFile.FilePath);
+      ModuleDocument.DebugInfo = DebugInfo;
+
+      // Dispose the old dummy loader and replace with the real one
+      ModuleDocument.Loader?.Dispose();
+      ModuleDocument.Loader = loader;
+
+      // Update the module load state in the report
+      report_.AddModuleInfo(binaryInfo_, binFile, ModuleLoadState.Loaded);
+      IsManaged = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
+
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Successfully loaded binary for {imageName}");
+      return true;
     }
-
-    string imageName = binaryInfo_.ImageName;
-    DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Loading binary on-demand for {imageName}");
-
-    var binFile = await FindBinaryFilePath(symbolSettings_).ConfigureAwait(false);
-    if (binFile == null || !binFile.Found) {
-      DiagnosticLogger.LogWarning($"[LazyBinaryLoad] Could not find binary for {imageName}");
-      return false;
+    finally {
+      binaryLoadLock_.Release();
     }
-
-    DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Found binary for {imageName}: {binFile.FilePath}");
-    DiagnosticLogger.LogInfo($"[LazyBinaryLoad] DebugInfo available: {DebugInfo != null}, compilerInfo available: {compilerInfo_ != null}");
-
-    if (DebugInfo == null) {
-      DiagnosticLogger.LogError($"[LazyBinaryLoad] DebugInfo is null for {imageName} - disassembly will fail!");
-    }
-
-    // Create the disassembler loader with the binary.
-    // Pass preloadFunctions=false since we'll register functions manually.
-    bool isManagedImage = binFile.BinaryFile?.IsManagedImage ?? false;
-    var loader = new DisassemblerSectionLoader(binFile.FilePath, compilerInfo_, DebugInfo, false, isManagedImage);
-
-    // Initialize the loader's document with our existing summary.
-    // This is important because functions have already been added to Summary
-    // during profile loading and we need to preserve those references.
-    await Task.Run(async () => {
-      await loader.LoadDocument(null).ConfigureAwait(false);
-    }).ConfigureAwait(false);
-
-    // Verify the disassembler was initialized
-    bool disassemblerReady = loader.IsDisassemblerInitialized;
-    DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Disassembler initialized: {disassemblerReady}");
-    if (!disassemblerReady) {
-      DiagnosticLogger.LogError($"[LazyBinaryLoad] Disassembler failed to initialize for {imageName}!");
-    }
-
-    // Re-register all existing functions with the new loader so it knows about them.
-    // The functions were already created via GetOrCreateFunction during profile loading.
-    int registeredCount = 0;
-    foreach (var kvp in functionMap_) {
-      var (func, debugInfo) = kvp.Value;
-      loader.RegisterFunction(func, debugInfo);
-      registeredCount++;
-    }
-    DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Registered {registeredCount} functions with loader for {imageName}");
-
-    // Update the existing document IN PLACE so the session state reference remains valid.
-    // This is critical - creating a new document would break the reference that
-    // MainWindowSession.LoadAndParseSection() holds.
-    ModuleDocument.BinaryFile = BinaryFileSearchResult.Success(binFile.FilePath);
-    ModuleDocument.DebugInfo = DebugInfo;
-
-    // Dispose the old dummy loader and replace with the real one
-    ModuleDocument.Loader?.Dispose();
-    ModuleDocument.Loader = loader;
-
-    // Update the module load state in the report
-    report_.AddModuleInfo(binaryInfo_, binFile, ModuleLoadState.Loaded);
-    IsManaged = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
-
-    DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Successfully loaded binary for {imageName}");
-    return true;
   }
 
   public async Task<bool> InitializeDebugInfo(DebugFileSearchResult debugInfoFile) {
@@ -416,5 +430,10 @@ public sealed class ProfileModuleBuilder {
       Trace.TraceError($"Failed to load document {filePath}: {ex}");
       return null;
     }
+  }
+
+  public void Dispose() {
+    lock_?.Dispose();
+    binaryLoadLock_?.Dispose();
   }
 }

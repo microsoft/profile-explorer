@@ -86,6 +86,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   public void Dispose() {
+    // Dispose all ProfileModuleBuilder instances
+    foreach (var module in imageModuleMap_.Values) {
+      module?.Dispose();
+    }
+    imageModuleMap_.Clear();
   }
 
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
