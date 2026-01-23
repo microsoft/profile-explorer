@@ -34,6 +34,7 @@ public sealed class ProfileModuleBuilder : IDisposable {
   private ReaderWriterLockSlim lock_;
   private SemaphoreSlim binaryLoadLock_;
   private SymbolFileSourceSettings symbolSettings_;
+  private volatile bool disposed_;
 
   public ProfileModuleBuilder(ProfileDataReport report, ICompilerInfoProvider compilerInfoProvider) {
     report_ = report;
@@ -164,13 +165,29 @@ public sealed class ProfileModuleBuilder : IDisposable {
   /// Call this when the user wants to view assembly for a function.
   /// </summary>
   public async Task<bool> EnsureBinaryLoaded() {
+    // Check if disposed before attempting any operations
+    if (disposed_) {
+      return false;
+    }
+
     // Already have a binary loaded - fast path check without lock
     if (ModuleDocument?.BinaryFile?.Found == true) {
       return true;
     }
 
     // Acquire the lock to ensure only one thread loads the binary
-    await binaryLoadLock_.WaitAsync().ConfigureAwait(false);
+    // Check disposed again to avoid race with Dispose()
+    if (disposed_) {
+      return false;
+    }
+
+    try {
+      await binaryLoadLock_.WaitAsync().ConfigureAwait(false);
+    }
+    catch (ObjectDisposedException) {
+      // Semaphore was disposed between our check and WaitAsync
+      return false;
+    }
     try {
       // Double-check after acquiring lock - another thread may have loaded it
       if (ModuleDocument?.BinaryFile?.Found == true) {
@@ -433,6 +450,7 @@ public sealed class ProfileModuleBuilder : IDisposable {
   }
 
   public void Dispose() {
+    disposed_ = true;
     lock_?.Dispose();
     binaryLoadLock_?.Dispose();
   }
