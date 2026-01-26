@@ -86,11 +86,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   public void Dispose() {
-    // Dispose all ProfileModuleBuilder instances
-    foreach (var module in imageModuleMap_.Values) {
-      module?.Dispose();
-    }
-    imageModuleMap_.Clear();
+    // NOTE: Do NOT dispose ProfileModuleBuilder instances here!
+    // They need to remain alive for dynamic on-demand binary loading
+    // (e.g., when user views assembly after trace is loaded).
+    // ProfileModuleBuilder instances should live as long as the profile data is being used.
   }
 
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
