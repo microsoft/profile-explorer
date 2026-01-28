@@ -83,6 +83,10 @@ public partial class App : Application {
   public static DateTime AppStartTime;
   public static ApplicationSettings Settings;
   public static IUISession Session;
+  /// <summary>
+  /// When true, suppresses UI dialogs (like source file prompts) during MCP/automation operations.
+  /// </summary>
+  public static bool SuppressDialogsForAutomation;
   private Task? mcpServerTask;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;
@@ -634,7 +638,7 @@ public partial class App : Application {
     {
       // Create the MCP action executor
       var executor = new McpActionExecutor(mainWindow);
-      
+
       // Start the MCP server in the background
       mcpServerTask = Task.Run(async () =>
       {
@@ -647,7 +651,21 @@ public partial class App : Application {
           Trace.WriteLine($"MCP Server error: {ex}");
         }
       });
-      
+
+      // When MCP session ends, close the application without confirmation
+      // Only shutdown if we were actually in automation mode (MCP client was connected)
+      mcpServerTask.ContinueWith(t =>
+      {
+        if (SuppressDialogsForAutomation)
+        {
+          Trace.WriteLine("MCP session ended, shutting down application");
+          Current.Dispatcher.Invoke(() =>
+          {
+            Current.Shutdown();
+          });
+        }
+      }, TaskContinuationOptions.OnlyOnRanToCompletion);
+
       Trace.WriteLine("MCP Server initialization started");
     }
     catch (Exception ex)

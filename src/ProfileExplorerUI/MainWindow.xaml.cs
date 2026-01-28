@@ -397,6 +397,11 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
       return;
     }
 
+    // Skip confirmation dialogs during MCP automation
+    if (App.SuppressDialogsForAutomation) {
+      return;
+    }
+
     // If the window is minimized, restore it first, otherwise
     // the message box will not be visible even after restoring the window
     // and the entire UI is blocked.

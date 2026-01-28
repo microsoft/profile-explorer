@@ -105,6 +105,14 @@ public class OpenTraceResult
     public bool Success { get; set; }
     public OpenTraceFailureReason FailureReason { get; set; } = OpenTraceFailureReason.None;
     public string? ErrorMessage { get; set; }
+    /// <summary>
+    /// Indicates if the trace was already loaded (no action needed, but success is true)
+    /// </summary>
+    public bool AlreadyLoaded { get; set; }
+    /// <summary>
+    /// Optional message with additional context about the result
+    /// </summary>
+    public string? Message { get; set; }
 }
 
 /// <summary>

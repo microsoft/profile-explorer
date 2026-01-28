@@ -22,8 +22,8 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private DebugFileSearchResult debugInfoFile_;
   private bool resolveCallTargetNames_;
 
-  public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo, IDebugInfoProvider debugInfo
-    , bool preloadFunctions = true) {
+  public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo, IDebugInfoProvider debugInfo,
+    bool preloadFunctions = true, bool isManagedImage = false) {
     Initialize(compilerInfo.IR, false);
     binaryFilePath_ = binaryFilePath;
     debugInfo_ = debugInfo;
@@ -31,7 +31,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     debugInfoProviderFactory_ = compilerInfo.DebugInfoProviderFactory;
     nameProvider_ = compilerInfo.NameProvider;
     preloadFunctions_ = preloadFunctions;
-    isManagedImage_ = debugInfo != null;
+    isManagedImage_ = isManagedImage;
     summary_ = new IRTextSummary();
     funcToDebugInfoMap_ = new Dictionary<IRTextFunction, FunctionDebugInfo>();
   }
@@ -61,6 +61,8 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
       }
     }
   }
+
+  public bool IsDisassemblerInitialized => disassembler_ != null;
 
   public void RegisterFunction(IRTextFunction function, FunctionDebugInfo debugInfo) {
     funcToDebugInfoMap_[function] = debugInfo;

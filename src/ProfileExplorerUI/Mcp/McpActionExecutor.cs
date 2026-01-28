@@ -32,6 +32,9 @@ public class McpActionExecutor : IMcpActionExecutor
 
     public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier)
     {
+        // Mark that MCP automation is active - suppress UI dialogs
+        App.SuppressDialogsForAutomation = true;
+
         // Validate file exists first
         if (!File.Exists(profileFilePath))
         {
@@ -41,6 +44,13 @@ public class McpActionExecutor : IMcpActionExecutor
                 FailureReason = OpenTraceFailureReason.FileNotFound,
                 ErrorMessage = $"Trace file not found: {profileFilePath}"
             };
+        }
+
+        // Check if the requested trace and process is already loaded
+        var alreadyLoadedResult = await CheckIfTraceAlreadyLoadedAsync(profileFilePath, processIdentifier);
+        if (alreadyLoadedResult != null)
+        {
+            return alreadyLoadedResult;
         }
 
         // Try to parse as a process ID first
@@ -60,6 +70,86 @@ public class McpActionExecutor : IMcpActionExecutor
 
         // If not a number, treat as process name
         return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
+    }
+
+    /// <summary>
+    /// Checks if the requested trace file and process is already loaded.
+    /// Returns a successful OpenTraceResult if already loaded, or null if not loaded.
+    /// This helps avoid timeout errors when a trace was already loaded but MCP timed out waiting.
+    /// </summary>
+    private async Task<OpenTraceResult> CheckIfTraceAlreadyLoadedAsync(string profileFilePath, string processIdentifier)
+    {
+        return await dispatcher.InvokeAsync(() =>
+        {
+            try
+            {
+                var sessionState = mainWindow.SessionState;
+                var profileData = sessionState?.ProfileData;
+                var report = profileData?.Report;
+
+                if (report == null)
+                {
+                    return null; // No profile loaded
+                }
+
+                // Get the currently loaded trace path
+                string loadedTracePath = report.TraceInfo?.TraceFilePath;
+                if (string.IsNullOrEmpty(loadedTracePath))
+                {
+                    return null;
+                }
+
+                // Normalize paths for comparison
+                string normalizedRequestedPath = Path.GetFullPath(profileFilePath).ToLowerInvariant();
+                string normalizedLoadedPath = Path.GetFullPath(loadedTracePath).ToLowerInvariant();
+
+                if (normalizedRequestedPath != normalizedLoadedPath)
+                {
+                    return null; // Different trace file
+                }
+
+                // Check if the requested process matches
+                var currentProcess = report.Process;
+                if (currentProcess == null)
+                {
+                    return null;
+                }
+
+                bool processMatches = false;
+                
+                // Check by process ID
+                if (int.TryParse(processIdentifier, out int requestedPid))
+                {
+                    processMatches = currentProcess.ProcessId == requestedPid;
+                }
+                else
+                {
+                    // Check by process name (case-insensitive, partial match)
+                    processMatches = 
+                        (currentProcess.Name != null && 
+                         currentProcess.Name.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase)) ||
+                        (currentProcess.ImageFileName != null && 
+                         currentProcess.ImageFileName.Contains(processIdentifier, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (processMatches)
+                {
+                    // The requested trace and process is already loaded!
+                    return new OpenTraceResult
+                    {
+                        Success = true,
+                        AlreadyLoaded = true,
+                        Message = $"Trace and process already loaded (PID: {currentProcess.ProcessId}, Name: {currentProcess.Name})"
+                    };
+                }
+
+                return null; // Same trace but different process requested
+            }
+            catch (Exception)
+            {
+                return null; // On any error, proceed with normal loading
+            }
+        });
     }
 
     private async Task<OpenTraceResult> OpenTraceByProcessIdAsync(string profileFilePath, int processId)
@@ -241,7 +331,7 @@ public class McpActionExecutor : IMcpActionExecutor
         });
         
         // Step 7: Wait for the profile to finish loading
-        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(5));
+        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
         if (!profileLoadCompleted)
         {
             return new OpenTraceResult
@@ -330,7 +420,7 @@ public class McpActionExecutor : IMcpActionExecutor
         });
 
         // Step 7: Wait for the profile to finish loading
-        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(5));
+        bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
         if (!profileLoadCompleted)
         {
             return new OpenTraceResult
@@ -502,7 +592,8 @@ public class McpActionExecutor : IMcpActionExecutor
     private async Task<bool> WaitForProfileLoadingCompletedAsync(ProfileExplorer.UI.ProfileLoadWindow window, TimeSpan timeout)
     {
         var startTime = DateTime.UtcNow;
-        
+
+        // Phase 1: Wait for the profile load dialog to finish
         while (DateTime.UtcNow - startTime < timeout)
         {
             bool isLoadingProfile = await dispatcher.InvokeAsync(() =>
@@ -510,16 +601,90 @@ public class McpActionExecutor : IMcpActionExecutor
                 var isLoadingProp = window.GetType().GetProperty("IsLoadingProfile");
                 return isLoadingProp?.GetValue(window) as bool? ?? false;
             });
-            
-            // Profile loading is complete when IsLoadingProfile is false
+
+            // Profile dialog loading is complete when IsLoadingProfile is false
             if (!isLoadingProfile)
+            {
+                break;
+            }
+
+            await Task.Delay(500); // Check every 500ms since profile loading can take a long time
+        }
+
+        // Phase 2: Wait for the main window to have fully loaded profile data with functions
+        // This ensures symbol loading is complete and GetAvailableFunctions will work
+        var remainingTimeout = timeout - (DateTime.UtcNow - startTime);
+        if (remainingTimeout <= TimeSpan.Zero)
+        {
+            return false; // Timeout during dialog loading phase
+        }
+
+        return await WaitForMainWindowProfileReadyAsync(remainingTimeout);
+    }
+
+    /// <summary>
+    /// Waits for the main window to have a fully loaded profile with functions available.
+    /// This handles the case where symbol loading continues after the profile dialog closes.
+    /// </summary>
+    private async Task<bool> WaitForMainWindowProfileReadyAsync(TimeSpan timeout)
+    {
+        var startTime = DateTime.UtcNow;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            var (isReady, functionCount) = await dispatcher.InvokeAsync(() =>
+            {
+                try
+                {
+                    var sessionState = mainWindow.SessionState;
+                    var profileData = sessionState?.ProfileData;
+                    var report = profileData?.Report;
+
+                    // Check if we have basic profile data
+                    if (report == null || profileData == null)
+                    {
+                        return (false, 0);
+                    }
+
+                    // Check if function list is populated (indicates symbol loading is complete)
+                    var sectionPanel = mainWindow.FindName("SectionPanel") as ProfileExplorer.UI.SectionPanelPair ??
+                                       mainWindow.FindPanel(ProfileExplorer.UI.ToolPanelKind.Section) as ProfileExplorer.UI.SectionPanelPair;
+
+                    if (sectionPanel?.MainPanel == null)
+                    {
+                        return (false, 0);
+                    }
+
+                    var functionListControl = sectionPanel.MainPanel.FindName("FunctionList") as System.Windows.Controls.ListView;
+                    if (functionListControl?.ItemsSource == null)
+                    {
+                        return (false, 0);
+                    }
+
+                    // Count functions to ensure the list is populated
+                    int count = 0;
+                    foreach (var _ in functionListControl.ItemsSource)
+                    {
+                        count++;
+                        if (count >= 5) break; // We just need to confirm there are functions
+                    }
+
+                    return (count > 0, count);
+                }
+                catch
+                {
+                    return (false, 0);
+                }
+            });
+
+            if (isReady && functionCount > 0)
             {
                 return true;
             }
-            
-            await Task.Delay(500); // Check every 500ms since profile loading can take a long time
+
+            await Task.Delay(500); // Check every 500ms
         }
-        
+
         return false; // Timeout
     }
 
@@ -643,70 +808,173 @@ public class McpActionExecutor : IMcpActionExecutor
     {
         try
         {
-            // Step 1: Get the function list control
+            // Step 1: Get the section panel for UI operations
             var (sectionPanel, functionListControl) = await GetFunctionListControlAsync();
             if (sectionPanel == null || functionListControl == null)
             {
                 return null;
             }
 
-            // Step 3: Find the function in the function list
-            var functionFound = await dispatcher.InvokeAsync(() =>
+            // Step 2: Parse function name - handle "module!function" format
+            string targetModule = null;
+            string targetFuncName = functionName;
+            if (functionName.Contains("!"))
             {
+                var parts = functionName.Split('!', 2);
+                targetModule = parts[0];
+                targetFuncName = parts[1];
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Parsed function name: module={targetModule}, function={targetFuncName}");
+            }
+
+            // Step 3: Search through ALL functions in the profile (not just visible list)
+            var foundFunction = await dispatcher.InvokeAsync(() =>
+            {
+                var sessionState = mainWindow.SessionState;
+                var profileData = sessionState?.ProfileData;
+
+                if (profileData?.FunctionProfiles == null)
+                {
+                    ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning("[MCP] No FunctionProfiles available");
+                    return null;
+                }
+
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Searching through {profileData.FunctionProfiles.Count} functions for '{functionName}'");
+
+                // First, try to find in the visible list (for UI operations later)
+                ProfileExplorer.UI.IRTextFunctionEx visibleFuncEx = null;
                 if (functionListControl?.ItemsSource != null)
                 {
-                    try
+                    foreach (var item in functionListControl.ItemsSource)
                     {
-                        // Search through the function list to find the matching function
-                        foreach (var item in functionListControl.ItemsSource)
+                        if (item is ProfileExplorer.UI.IRTextFunctionEx funcEx)
                         {
-                            if (item is ProfileExplorer.UI.IRTextFunctionEx functionEx)
-                            {
-                                // Check if the function name matches
-                                if (functionEx.ToolTip == functionName)
-                                {
-                                    // Early check: Verify function has assembly data before proceeding
-                                    if (!HasAssemblyData(functionEx))
-                                    {
-                                        return false; // Function found but has no assembly data
-                                    }
-                                    // Select the function
-                                    functionListControl.SelectedItems.Clear();
-                                    functionListControl.SelectedItems.Add(functionEx);
-                                    functionListControl.ScrollIntoView(functionEx);
+                            // Match by exact name or by module!function format
+                            bool matches = funcEx.ToolTip == functionName ||
+                                          funcEx.ToolTip == targetFuncName ||
+                                          funcEx.Name == targetFuncName;
 
-                                    // Programmatically trigger the double-click event
-                                    var method = sectionPanel.MainPanel.GetType().GetMethod("FunctionDoubleClick",
-                                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                    if (method != null)
-                                    {
-                                        // Create a ListViewItem to simulate the sender
-                                        var listViewItem = functionListControl.ItemContainerGenerator.ContainerFromItem(functionEx)
-                                            as System.Windows.Controls.ListViewItem;
-                                        if (listViewItem != null)
-                                        {
-                                            listViewItem.Content = functionEx;
-                                            var mouseEventArgs = new System.Windows.Input.MouseButtonEventArgs(
-                                                System.Windows.Input.Mouse.PrimaryDevice,
-                                                Environment.TickCount,
-                                                System.Windows.Input.MouseButton.Left)
-                                            {
-                                                RoutedEvent = System.Windows.Controls.Control.MouseDoubleClickEvent
-                                            };
-                                            method.Invoke(sectionPanel.MainPanel, new object[] { listViewItem, mouseEventArgs });
-                                            return true;
-                                        }
-                                    }
-                                }
+                            // Also check if module matches when specified
+                            if (matches && targetModule != null)
+                            {
+                                matches = string.Equals(funcEx.ModuleName, targetModule, StringComparison.OrdinalIgnoreCase);
+                            }
+
+                            if (matches)
+                            {
+                                visibleFuncEx = funcEx;
+                                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Found function in visible list: {funcEx.Name} (module: {funcEx.ModuleName})");
+                                break;
                             }
                         }
                     }
-                    catch (Exception)
+                }
+
+                // If found in visible list, use that
+                if (visibleFuncEx != null)
+                {
+                    return visibleFuncEx;
+                }
+
+                // Otherwise, search through ALL functions in the profile
+                foreach (var kvp in profileData.FunctionProfiles)
+                {
+                    var func = kvp.Key;
+                    string funcName = func.Name;
+                    string moduleName = func.ModuleName;
+
+                    // Match by function name
+                    bool matches = funcName == targetFuncName ||
+                                  funcName.Contains(targetFuncName) ||
+                                  (targetFuncName.Contains("::") && funcName.Contains(targetFuncName.Split("::").Last()));
+
+                    // Also check module when specified
+                    if (matches && targetModule != null)
                     {
-                        return false;
+                        matches = string.Equals(moduleName, targetModule, StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    if (matches)
+                    {
+                        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Found function in profile: {funcName} (module: {moduleName})");
+                        // Create a temporary IRTextFunctionEx wrapper for the found function
+                        // We need to get the actual extension from the SectionPanel if possible
+                        var funcExtension = sectionPanel.MainPanel.GetFunctionExtension(func);
+                        if (funcExtension != null)
+                        {
+                            return funcExtension;
+                        }
+                        // If not in extension map, we can still work with the raw function
+                        // Return null here and handle below
+                        return null;
                     }
                 }
-                return false;
+
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning($"[MCP] Function not found in profile: {functionName}");
+                return null;
+            });
+
+            if (foundFunction == null)
+            {
+                return null; // Function not found
+            }
+
+            // Step 3.5: LAZY BINARY LOADING - If binary isn't loaded yet, trigger lazy load
+            // This is needed for MCP automation where binaries are loaded on-demand.
+            var lazyLoadResult = await EnsureBinaryLoadedForFunctionAsync(foundFunction.Function);
+            if (lazyLoadResult.HasValue && !lazyLoadResult.Value)
+            {
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning($"[MCP] Failed to lazy load binary for function {functionName}");
+                // Continue anyway - the function may still have assembly data from other sources
+            }
+            else if (lazyLoadResult.HasValue && lazyLoadResult.Value)
+            {
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Successfully lazy loaded binary for function {functionName}");
+            }
+
+            // Step 4: Verify function has assembly data and trigger double-click
+            var functionFound = await dispatcher.InvokeAsync(() =>
+            {
+                try
+                {
+                    // Check if the function has assembly data
+                    if (!HasAssemblyData(foundFunction))
+                    {
+                        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning($"[MCP] Function has no assembly data after lazy load: {functionName}");
+                        return false; // Function found but has no assembly data
+                    }
+                    // Select the function
+                    functionListControl.SelectedItems.Clear();
+                    functionListControl.SelectedItems.Add(foundFunction);
+                    functionListControl.ScrollIntoView(foundFunction);
+
+                    // Programmatically trigger the double-click event
+                    var method = sectionPanel.MainPanel.GetType().GetMethod("FunctionDoubleClick",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        // Create a ListViewItem to simulate the sender
+                        var listViewItem = functionListControl.ItemContainerGenerator.ContainerFromItem(foundFunction)
+                            as System.Windows.Controls.ListViewItem;
+                        if (listViewItem != null)
+                        {
+                            listViewItem.Content = foundFunction;
+                            var mouseEventArgs = new System.Windows.Input.MouseButtonEventArgs(
+                                System.Windows.Input.Mouse.PrimaryDevice,
+                                Environment.TickCount,
+                                System.Windows.Input.MouseButton.Left)
+                            {
+                                RoutedEvent = System.Windows.Controls.Control.MouseDoubleClickEvent
+                            };
+                            method.Invoke(sectionPanel.MainPanel, new object[] { listViewItem, mouseEventArgs });
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
             });
 
             if (!functionFound)
@@ -732,28 +1000,35 @@ public class McpActionExecutor : IMcpActionExecutor
             {
                 var assemblyText = assemblyDocument.TextView.Text;
                 var columnData = assemblyDocument.TextView.ProfileColumnData;
-                
+
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Extracting timing data - columnData null: {columnData == null}, HasData: {columnData?.HasData ?? false}");
+
                 if (columnData == null || !columnData.HasData)
                 {
                     // No timing information available, return just the assembly text
+                    ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning($"[MCP] No timing data available for assembly");
                     return assemblyText;
                 }
-                
+
                 // Extract timing information and combine with assembly text
                 var lines = assemblyText.Split('\n');
                 var result = new System.Text.StringBuilder();
                 var function = assemblyDocument.TextView.Function;
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Assembly has {lines.Length} lines, function null: {function == null}");
                 
+                int elementsFound = 0;
+                int elementsWithTiming = 0;
+
                 for (int i = 0; i < lines.Length; i++)
                 {
                     var line = lines[i];
-                    
+
                     // Try to get timing information for this line by finding the IR element
                     // Line numbers in TextLocation are 0-based, but we're iterating 0-based as well
                     IRElement elementAtLine = null;
                     string timePercentage = null;
                     string timeValue = null;
-                    
+
                     if (function != null)
                     {
                         // Find elements that correspond to this line
@@ -770,9 +1045,10 @@ public class McpActionExecutor : IMcpActionExecutor
                             if (elementAtLine != null) break;
                         }
                     }
-                    
+
                     if (elementAtLine != null)
                     {
+                        elementsFound++;
                         var rowValue = columnData.GetValues(elementAtLine);
                         if (rowValue != null)
                         {
@@ -781,7 +1057,7 @@ public class McpActionExecutor : IMcpActionExecutor
                             {
                                 var column = columnValue.Key;
                                 var value = columnValue.Value;
-                                
+
                                 // Check for time percentage column
                                 if (column.Title.Contains("Time (%)") || column.ColumnName.Contains("TimePercentage"))
                                 {
@@ -793,9 +1069,13 @@ public class McpActionExecutor : IMcpActionExecutor
                                     timeValue = value.Text;
                                 }
                             }
+                            if (!string.IsNullOrEmpty(timePercentage) || !string.IsNullOrEmpty(timeValue))
+                            {
+                                elementsWithTiming++;
+                            }
                         }
                     }
-                    
+
                     // Build the complete line with timing information on the same line
                     result.Append(line);
                     
@@ -831,7 +1111,8 @@ public class McpActionExecutor : IMcpActionExecutor
                     if (i < lines.Length - 1)
                         result.AppendLine();
                 }
-                
+
+                ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Timing extraction complete: {elementsFound} elements found, {elementsWithTiming} with timing data");
                 return result.ToString();
             });
 
@@ -1506,6 +1787,57 @@ public class McpActionExecutor : IMcpActionExecutor
         }
     }
 
+    /// <summary>
+    /// Ensures the binary for a function's module is loaded, triggering lazy load if needed.
+    /// Returns: null if no lazy load was needed, true if lazy load succeeded, false if it failed.
+    /// </summary>
+    private async Task<bool?> EnsureBinaryLoadedForFunctionAsync(ProfileExplorer.Core.IRTextFunction function)
+    {
+        try
+        {
+            if (function?.ParentSummary == null)
+            {
+                return null; // Cannot determine module
+            }
+
+            // Get the document for this function's module
+            var docInfo = await dispatcher.InvokeAsync(() =>
+            {
+                return mainWindow.SessionState?.FindLoadedDocument(function.ParentSummary);
+            });
+
+            if (docInfo == null)
+            {
+                return null; // Document not found
+            }
+
+            // Check if lazy loading is needed
+            if (docInfo.BinaryFileExists)
+            {
+                return null; // Binary already loaded, no lazy load needed
+            }
+
+            if (docInfo.EnsureBinaryLoaded == null)
+            {
+                return null; // No lazy load callback available
+            }
+
+            // Trigger lazy loading
+            string moduleName = docInfo.ModuleName ?? function.ModuleName ?? "binary";
+            ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Triggering lazy binary load for module: {moduleName}");
+
+            bool loaded = await docInfo.EnsureBinaryLoaded().ConfigureAwait(false);
+
+            ProfileExplorer.Core.Utilities.DiagnosticLogger.LogInfo($"[MCP] Lazy binary load result for {moduleName}: {loaded}");
+            return loaded;
+        }
+        catch (Exception ex)
+        {
+            ProfileExplorer.Core.Utilities.DiagnosticLogger.LogError($"[MCP] Error during lazy binary load: {ex.Message}");
+            return false;
+        }
+    }
+
     public async Task<GetAvailableBinariesResult> GetAvailableBinariesAsync(double? minTimePercentage = null, TimeSpan? minTime = null, int? topCount = null)
     {
         try
@@ -1632,7 +1964,8 @@ public class McpActionExecutor : IMcpActionExecutor
                             Name = module.ModuleName,
                             ExclusivePercentage = weightPercentage * 100.0, // convert 0.abcd decimal to ab.cd percent
                             ExclusiveWeight = pair.Value,
-                            BinaryFileMissing = moduleStatus != null ? !moduleStatus.HasBinaryLoaded : false,
+                            // Use IsBinaryAvailableOrPending to avoid reporting missing when lazy loading is available
+                            BinaryFileMissing = moduleStatus != null ? !moduleStatus.IsBinaryAvailableOrPending : false,
                             DebugFileMissing = moduleStatus != null ? !moduleStatus.HasDebugInfoLoaded : false,
                         };
 

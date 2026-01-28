@@ -146,6 +146,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
       profileProcess.Name = Utilities.Utils.TryGetFileNameWithoutExtension(data.ImageFileName);
       profileProcess.ImageFileName = data.ImageFileName;
       profileProcess.CommandLine = data.CommandLine;
+
+      // Capture WoW64 flag - indicates 32-bit process on 64-bit OS
+      // ProcessFlags.Wow64 = 2
+      profileProcess.IsWow64 = (data.Flags & ProcessFlags.Wow64) != 0;
       return profileProcess;
     }
 
@@ -215,6 +219,10 @@ public sealed partial class ETWEventProcessor : IDisposable {
     ImageIDTraceData lastImageIdData = null;
     ProfileImage lastProfileImage = null;
     long lastProfileImageTime = 0;
+    int imageLoadEventCount = 0;
+    int imageLoadWithTimestampCount = 0;
+    int imageIdEventCount = 0;
+    int imageIdDbgEventCount = 0;
 
     // Info used to associate a sample with the last call stack running on a thread.
     var perThreadLastTimeMap = new Dictionary<int, double>();
@@ -271,16 +279,29 @@ public sealed partial class ETWEventProcessor : IDisposable {
       else {
         // The ImageGroup event should show up later in the stream.
         lastImageIdData = (ImageIDTraceData)data.Clone();
+        imageIdEventCount++;
       }
     };
 
     symbolParser.ImageIDDbgID_RSDS += data => {
+      imageIdDbgEventCount++;
       if (IsAcceptedProcess(data.ProcessID)) {
 #if DEBUG
         Trace.WriteLine($"PDB signature: imageBase: {(long)data.ImageBase}, file: {data.PdbFileName}, age: {data.Age}, guid: {data.GuidSig}, timestamp: {data.TimeStamp}");
 #endif
         var symbolFile = new SymbolFileDescriptor(data.PdbFileName, data.GuidSig, data.Age);
         profile.AddDebugFileForImage(symbolFile, (long)data.ImageBase, data.ProcessID);
+      }
+    };
+
+    // FileVersion events contain version resource info including CompanyName
+    symbolParser.ImageIDFileVersion += data => {
+      // Find the image by timestamp and update its version info
+      var image = profile.FindImageByTimestamp(data.TimeDateStamp);
+      if (image != null) {
+        image.CompanyName = data.CompanyName;
+        image.FileDescription = data.FileDescription;
+        image.ProductName = data.ProductName;
       }
     };
 
@@ -322,6 +343,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     };
 
     kernel.ImageGroup += data => {
+      imageLoadEventCount++;
       string originalName = null;
       int timeStamp = data.TimeDateStamp;
       bool sawImageId = false;
@@ -352,6 +374,9 @@ public sealed partial class ETWEventProcessor : IDisposable {
       var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,
                                    (long)data.DefaultBase, data.ImageSize,
                                    timeStamp, data.ImageChecksum);
+      if (timeStamp != 0) {
+        imageLoadWithTimestampCount++;
+      }
       int imageId = profile.AddImageToProcess(data.ProcessID, image);
 
       if (!sawImageId) {
@@ -778,6 +803,29 @@ public sealed partial class ETWEventProcessor : IDisposable {
     Trace.WriteLine("ETW events summary");
     Trace.WriteLine($"  - samples: {profile.Samples.Count}");
     Trace.WriteLine($"  - pmc events: {profile.PerformanceCountersEvents?.Count}");
+    Trace.WriteLine($"  - ImageLoad events: {imageLoadEventCount} ({imageLoadWithTimestampCount} with valid timestamp)");
+    Trace.WriteLine($"  - ImageID events: {imageIdEventCount}");
+    Trace.WriteLine($"  - ImageID DbgID (RSDS) events: {imageIdDbgEventCount}");
+
+    // Store event counts for later use (symbol loading warnings)
+    profile.TraceInfo.ImageLoadEventCount = imageLoadEventCount;
+    profile.TraceInfo.ImageLoadWithTimestampCount = imageLoadWithTimestampCount;
+    profile.TraceInfo.ImageIdEventCount = imageIdEventCount;
+    profile.TraceInfo.ImageIdDbgEventCount = imageIdDbgEventCount;
+
+    // Log summary to diagnostic log
+    DiagnosticLogger.LogInfo($"[TraceLoad] Event counts: ImageLoad={imageLoadEventCount} ({imageLoadWithTimestampCount} with timestamp), " +
+                             $"ImageID={imageIdEventCount}, ImageID_DbgID={imageIdDbgEventCount}");
+
+    // Warn if trace lacks ImageID events - symbol resolution will likely fail
+    if (imageIdDbgEventCount == 0) {
+      DiagnosticLogger.LogWarning("[TraceLoad] Trace has no ImageID DbgID (RSDS) events - PDB GUID/Age info is missing. " +
+                                  "Symbol resolution will likely fail. Consider re-capturing with ImageID events enabled.");
+    }
+    else if (imageIdDbgEventCount < profile.Images.Count / 2) {
+      DiagnosticLogger.LogWarning($"[TraceLoad] Trace has only {imageIdDbgEventCount} ImageID DbgID events for {profile.Images.Count} images. " +
+                                  "Some symbols may not resolve correctly.");
+    }
 
     // Free temporary data structures.
     profile.LoadingCompleted();

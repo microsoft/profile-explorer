@@ -1694,11 +1694,12 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       if (moduleStatus != null) {
         moduleInfo.Status = moduleStatus;
-        moduleInfo.BinaryFileMissing = !moduleStatus.HasBinaryLoaded;
+        // Use IsBinaryAvailableOrPending to avoid showing error icon when lazy loading is available
+        moduleInfo.BinaryFileMissing = !moduleStatus.IsBinaryAvailableOrPending;
         moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
-        
+
         // Log the module status for debugging
-        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogDebug($"[UI-ModuleStatus] Module {moduleInfo.Name}: BinaryLoaded={moduleStatus.HasBinaryLoaded}, DebugInfoLoaded={moduleStatus.HasDebugInfoLoaded}");
+        ProfileExplorer.Core.Utilities.DiagnosticLogger.LogDebug($"[UI-ModuleStatus] Module {moduleInfo.Name}: BinaryLoaded={moduleStatus.HasBinaryLoaded}, LazyLoadPending={moduleStatus.State == ProfileExplorer.Core.Profile.Data.ModuleLoadState.LazyLoadPending}, DebugInfoLoaded={moduleStatus.HasDebugInfoLoaded}");
         ProfileExplorer.Core.Utilities.DiagnosticLogger.LogDebug($"[UI-ModuleStatus] Module {moduleInfo.Name}: BinaryFileMissing={moduleInfo.BinaryFileMissing}, DebugFileMissing={moduleInfo.DebugFileMissing}");
       } else {
         ProfileExplorer.Core.Utilities.DiagnosticLogger.LogWarning($"[UI-ModuleStatus] No module status found for {moduleInfo.Name}");

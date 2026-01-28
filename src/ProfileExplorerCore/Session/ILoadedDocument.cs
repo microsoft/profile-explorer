@@ -12,6 +12,11 @@ using ProfileExplorer.Core.Utilities;
 
 namespace ProfileExplorer.Core.Session;
 
+/// <summary>
+/// Delegate for lazy binary loading. Called when binary is needed but not yet loaded.
+/// </summary>
+public delegate Task<bool> EnsureBinaryLoadedDelegate();
+
 public interface ILoadedDocument : IDisposable {
   Guid Id { get; set; }
   string ModuleName { get; set; }
@@ -27,6 +32,12 @@ public interface ILoadedDocument : IDisposable {
   bool BinaryFileExists { get; }
   bool HasSymbolFileInfo { get; }
   string FileName { get; }
+
+  /// <summary>
+  /// Callback for lazy binary loading. Set by ProfileModuleBuilder during profiling.
+  /// Call this before accessing assembly/disassembly to ensure binary is downloaded.
+  /// </summary>
+  EnsureBinaryLoadedDelegate EnsureBinaryLoaded { get; set; }
 
   public event EventHandler DocumentChanged;
   public void SetupDocumentWatcher();

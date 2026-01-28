@@ -27,7 +27,7 @@ public delegate Task StartNewSessionHandler(string sessionName, SessionKind sess
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const int IMAGE_LOCK_COUNT = 64;
-  private const int PROGRESS_UPDATE_INTERVAL = 32768; // Progress UI update after pow2 N samples.
+  private const int PROGRESS_UPDATE_INTERVAL = 2048; // Progress UI update after pow2 N samples.
 #if DEBUG
   // For collecting statistics on stack frame resolution.
   private volatile static int UnresolvedStackCount;
@@ -46,6 +46,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private ProfileDataReport report_;
   private ICompilerInfoProvider compilerInfoProvider_;
   private ProfileData profileData_;
+  private Machine defaultArchitecture_ = Machine.Amd64; // Default to x64, updated from trace PointerSize
   private object lockObject_;
   private object[] imageLocks_;
   private ConcurrentDictionary<int, ProfileModuleBuilder> imageModuleMap_;
@@ -85,6 +86,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   public void Dispose() {
+    // NOTE: Do NOT dispose ProfileModuleBuilder instances here!
+    // They need to remain alive for dynamic on-demand binary loading
+    // (e.g., when user views assembly after trace is loaded).
+    // ProfileModuleBuilder instances should live as long as the profile data is being used.
   }
 
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
@@ -761,6 +766,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                              SymbolFileSourceSettings symbolSettings,
                                              ProfileLoadProgressHandler progressCallback,
                                              CancelableTask cancelableTask) {
+    var loadStartTime = Stopwatch.StartNew();
+    DiagnosticLogger.LogInfo($"[SymbolLoading] === Starting LoadBinaryAndDebugFiles for process {mainProcess.ImageFileName} ===");
+    
     var imageList = mainProcess.Images(rawProfile).ToList();
     var kernelProc = rawProfile.FindProcess(ETWEventProcessor.KernelProcessId);
 
@@ -769,6 +777,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     int imageLimit = imageList.Count;
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Total images to process: {imageLimit} (including kernel modules: {kernelProc != null})");
 
     // Find the modules with samples, sorted by sample count.
     // Used to skip loading of insignificant modules with few samples.
@@ -779,129 +788,73 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       moduleSampleCutOff = (int)(symbolSettings.LowSampleModuleCutoff * rawProfile.Samples.Count);
     }
 
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Module filtering: SkipLowSampleModules={symbolSettings.SkipLowSampleModules}, " +
+                             $"Cutoff={moduleSampleCutOff} ({symbolSettings.LowSampleModuleCutoff:P1} of {rawProfile.Samples.Count} samples), " +
+                             $"TopModulesCount={topModules.Count}");
+
+    // Log symbol server configuration for diagnostics
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Symbol server enabled: {symbolSettings.SourceServerEnabled}");
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Symbol paths: {string.Join("; ", symbolSettings.SymbolPaths)}");
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Initial timeout: {symbolSettings.EffectiveTimeoutSeconds}s (Bellwether: {symbolSettings.BellwetherTimeoutSeconds}s, Normal: {symbolSettings.SymbolServerTimeoutSeconds}s, Degraded: {symbolSettings.DegradedTimeoutSeconds}s)");
+
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Sample cutoff calculation: {symbolSettings.LowSampleModuleCutoff} * {rawProfile.Samples.Count} = {moduleSampleCutOff}");
     Trace.WriteLine($"BINARY_FILTER_DEBUG: Skip low sample modules: {symbolSettings.SkipLowSampleModules}");
-    Trace.WriteLine($"BINARY_FILTER_DEBUG: Starting binary filtering for {imageLimit} total modules");
+    Trace.WriteLine($"BINARY_FILTER_DEBUG: Starting PDB filtering for {imageLimit} total modules");
 
-    // Locate the referenced binary files in parallel. This will download them
-    // from the symbol server if not yet on local machine and enabled.
-    UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, 0);
-    var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
+    // PDB task list for parallel downloads
     var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
-    // Start downloading binaries
-    var binTaskSemaphore = new SemaphoreSlim(8);
-
-    for (int i = 0; i < imageLimit; i++) {
-      Trace.WriteLine($"BINARY_FILTER_DEBUG: Processing module {i + 1}/{imageLimit}: {imageList[i].ModuleName}");
-      
-      if (!IsAcceptedModule(imageList[i])) {
-        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: REJECTED at binary name allowlist stage: {imageList[i].ModuleName}");
-        continue;
-      }
-
-      // Accept only images that have any samples from
-      // all the images ones loaded in the process.
-      int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
-      bool acceptModule = moduleIndex >= 0;
-      
-      if (moduleIndex >= 0) {
-        int sampleCount = topModules[moduleIndex].Item2;
-        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module found in top modules at position {moduleIndex + 1}: {imageList[i].ModuleName} with {sampleCount} samples");
-      } else {
-        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module NOT found in top modules list: {imageList[i].ModuleName}");
-        // Check if there's a similar module name that might be a match
-        var similarModules = topModules.Where(tm => 
-          tm.Item1.ModuleName.Contains(imageList[i].ModuleName, StringComparison.OrdinalIgnoreCase) ||
-          imageList[i].ModuleName.Contains(tm.Item1.ModuleName, StringComparison.OrdinalIgnoreCase)
-        ).ToList();
-        
-        if (similarModules.Any()) {
-          Trace.WriteLine($"BINARY_FILTER_DEBUG: Found {similarModules.Count} modules with similar names:");
-          foreach (var sim in similarModules) {
-            int simIndex = topModules.IndexOf(sim);
-            Trace.WriteLine($"BINARY_FILTER_DEBUG:   - {sim.Item1.ModuleName}: {sim.Item2} samples at position {simIndex + 1}");
-          }
-        }
-      }
-      
-      if (!acceptModule) {
-        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: REJECTED at top modules stage: {imageList[i].ModuleName} (not in top modules list)");
-        continue;
-      }
-
-      var binaryFile = FromProfileImage(imageList[i]);
-
-      if (symbolSettings.IsRejectedBinaryFile(binaryFile)) {
-        Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: REJECTED at previously failed stage: {imageList[i].ModuleName}");
-        rejectedDebugModules_.Add(imageList[i]);
-        continue;
-      }
-
-      Trace.WriteLine($"BINARY_FILTER_DEBUG: Module FINAL RESULT: ACCEPTED for binary download: {imageList[i].ModuleName}");
-
-      binTaskList[i] = Task.Run(async () => {
-        await binTaskSemaphore.WaitAsync();
-        BinaryFileSearchResult result;
-
-        try {
-          result = await PEBinaryInfoProvider.LocateBinaryFileAsync(binaryFile, symbolSettings);
-        }
-        finally {
-          binTaskSemaphore.Release();
-        }
-
-        return result;
-      });
+    // Sanity check: Do we have ImageID DbgID events (PDB GUID/Age)?
+    // Without GUID/Age, PDB symbol server lookup is IMPOSSIBLE - the server requires GUID+Age.
+    // The GUID comes from the trace's ImageID DbgID events, NOT from downloading binaries.
+    // The pragmatic solution is to skip symbol server entirely and use local symbols only.
+    // This matches WPA's behavior which requires ImageID events for symbol server lookup.
+    if (!rawProfile.TraceInfo.HasImageIdEvents) {
+      DiagnosticLogger.LogWarning("[SymbolLoading] Trace has no ImageID DbgID events (PDB GUID/Age missing). " +
+                                  "Symbol server lookups require GUID+Age. Disabling symbol server. " +
+                                  "Using local symbols only. Consider re-capturing with 'wpr -start CPU'.");
+      symbolSettings.SourceServerEnabled = false;
     }
 
-    // Determine the compiler target for the new session.
+    // Bellwether test: try to download the ntoskrnl PDB first to check symbol server health
+    // Use 30s timeout for first connection (warmup), then reduce to 10s for subsequent downloads
+    if (symbolSettings.BellwetherTestEnabled && symbolSettings.SourceServerEnabled) {
+      await PerformBellwetherTest(imageList, rawProfile, symbolSettings);
+    }
+
+    // LAZY BINARY LOADING: Skip upfront binary downloads entirely.
+    // Binaries are only needed for disassembly view, not for function name resolution.
+    // Function names come from PDB files, which use GUID/Age from ImageID events in trace.
+    // Binaries will be downloaded on-demand when user views assembly for a function.
+    // This dramatically speeds up trace loading (from minutes to seconds).
+    DiagnosticLogger.LogInfo("[SymbolLoading] Skipping upfront binary downloads (lazy loading enabled). " +
+                             "Binaries will be downloaded on-demand when viewing assembly.");
+
+    // Determine the compiler target from trace metadata instead of binaries.
+    // PointerSize tells us if it's a 64-bit or 32-bit OS.
+    // Note: Individual processes can be 32-bit (WoW64) on 64-bit OS.
+    // We default to the OS architecture here; per-module architecture is inferred
+    // from path (SysWOW64 = 32-bit) or determined when the binary is loaded on-demand.
     var irMode = IRMode.Default;
-
-#if DEBUG
-    var binSw = Stopwatch.StartNew();
-#endif
-
-    for (int i = 0; i < imageLimit; i++) {
-      if (cancelableTask is {IsCanceled: true}) {
-        return;
-      }
-
-      if (binTaskList[i] == null) {
-        continue;
-      }
-
-      var binaryFile = await binTaskList[i].ConfigureAwait(false);
-
-      if (irMode == IRMode.Default && binaryFile is {Found: true}) {
-        var binaryInfo = binaryFile.BinaryFile;
-
-        if (binaryInfo != null) {
-          switch (binaryInfo.Architecture) {
-            case Machine.Arm:
-            case Machine.Arm64: {
-              irMode = IRMode.ARM64;
-              break;
-            }
-            case Machine.I386:
-            case Machine.Amd64: {
-              irMode = IRMode.x86_64;
-              break;
-            }
-          }
-        }
-      }
-
-      if (binaryFile.Found) {
-        Trace.WriteLine($"Downloaded binary: {binaryFile.FilePath}");
-        UpdateProgress(progressCallback, ProfileLoadStage.BinaryLoading, imageLimit, i,
-                       Utilities.Utils.TryGetFileName(binaryFile.BinaryFile.ImageName));
-      }
+    if (rawProfile.TraceInfo.PointerSize == 8) {
+      // 64-bit system - could be x64 or ARM64, but x64 is far more common
+      // TODO: Could potentially detect ARM64 from other trace metadata if needed
+      irMode = IRMode.x86_64;
+      defaultArchitecture_ = Machine.Amd64;
+      DiagnosticLogger.LogInfo("[SymbolLoading] Detected 64-bit OS from trace metadata (PointerSize=8)");
+    }
+    else if (rawProfile.TraceInfo.PointerSize == 4) {
+      irMode = IRMode.x86_64; // x86 is supported under x86_64 mode
+      defaultArchitecture_ = Machine.I386;
+      DiagnosticLogger.LogInfo("[SymbolLoading] Detected 32-bit OS from trace metadata (PointerSize=4)");
+    }
+    else {
+      DiagnosticLogger.LogWarning($"[SymbolLoading] Unknown pointer size {rawProfile.TraceInfo.PointerSize}, defaulting to x86_64");
+      irMode = IRMode.x86_64;
+      defaultArchitecture_ = Machine.Amd64;
     }
 
-#if DEBUG
-    Trace.WriteLine($"Binary download time: {binSw.Elapsed}");
-#endif
+    Trace.WriteLine($"Binary download skipped (lazy loading) - architecture detected from trace: {irMode}");
 
     compilerInfoProvider_ = new ASMCompilerInfoProvider(irMode);
     await (StartNewSessionRequested?.Invoke(mainImageName, SessionKind.FileSession, compilerInfoProvider_) ?? Task.CompletedTask);
@@ -910,22 +863,38 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // from the symbol server if not yet on local machine and enabled.
     int pdbCount = 0;
     var pdbTaskSemaphore = new SemaphoreSlim(12);
+    var pdbSw = Stopwatch.StartNew();
 
-    Trace.WriteLine("=== DEBUG FILE SEARCH LOGGING TEST - This message should ALWAYS appear ===");
+    // Skip PDB symbol server lookups if disabled (e.g., no ImageID events in trace)
+    if (!symbolSettings.SourceServerEnabled) {
+      DiagnosticLogger.LogInfo("[SymbolLoading] Symbol server disabled - skipping PDB downloads. " +
+                               "Will search local paths only.");
+    }
+
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Starting PDB/symbol file search for {imageLimit} images. Sample cutoff: {moduleSampleCutOff}");
+
+    // Log top modules from sample analysis (with Microsoft flag from trace FileVersion events)
+    DiagnosticLogger.LogInfo($"[SymbolLoading] Top 10 modules by sample count:");
+    for (int t = 0; t < Math.Min(10, topModules.Count); t++) {
+      var tm = topModules[t];
+      string msTag = tm.Item1.IsMicrosoft ? " [Microsoft]" : "";
+      DiagnosticLogger.LogInfo($"[SymbolLoading]   {t+1}. {tm.Item1.ModuleName}: {tm.SampleCount} samples{msTag}");
+    }
+
     Trace.WriteLine($"DEBUG_FILTER_DEBUG: Starting debug file search for {imageLimit} modules. Low sample cutoff: {moduleSampleCutOff}");
 
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
+        DiagnosticLogger.LogInfo($"[SymbolLoading] PDB loading cancelled at image {i}/{imageLimit}");
         return;
       }
 
-      if (binTaskList[i] == null) {
-        Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - Module rejected during binary filtering: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
+      // Apply module filtering (same logic that was used for binary filtering)
+      if (!IsAcceptedModule(imageList[i])) {
+        Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - Module rejected by binary name allowlist: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
         rejectedDebugModules_.Add(imageList[i]);
-        continue; // Rejected module.
+        continue;
       }
-
-      var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
       int moduleIndex = topModules.FindIndex(pair => pair.Item1 == imageList[i]);
       bool acceptModule = moduleIndex >= 0 &&
@@ -942,43 +911,78 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         continue;
       }
 
-      // Try to use ETL info if binary not available.
+      // With lazy binary loading, we use ETL symbol file descriptors (ImageID events) for PDB lookup.
+      // This contains GUID/Age which is required for symbol server lookup.
       var symbolFile = rawProfile.GetDebugFileForImage(imageList[i], mainProcess.ProcessId);
+
+      if (symbolFile == null) {
+        // No ImageID_DbgID event for this module - can't download PDB without GUID/Age
+        string msTag = imageList[i].IsMicrosoft ? " [Microsoft]" : "";
+        DiagnosticLogger.LogWarning($"[SymbolLoading] No PDB info (ImageID_DbgID event) for {imageList[i].ModuleName}{msTag} at base 0x{imageList[i].BaseAddress:X} - skipping PDB download");
+        continue;
+      }
 
       if (symbolFile != null) {
         if (symbolSettings.IsRejectedSymbolFile(symbolFile)) {
+          // Log all rejected symbol files - negative cache from previous failed downloads
+          string msTag = imageList[i].IsMicrosoft ? " [Microsoft]" : "";
+          DiagnosticLogger.LogWarning($"[SymbolLoading] REJECTED: {imageList[i].ModuleName}{msTag} symbol file in negative cache: {symbolFile.FileName} (ID: {symbolFile.Id})");
           Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - Symbol file previously rejected: {imageList[i].ModuleName} (symbol: {symbolFile})");
           rejectedDebugModules_.Add(imageList[i]);
           continue;
         }
 
-        Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search STARTED - Using ETL symbol file descriptor: {imageList[i].ModuleName} (symbol: {symbolFile})");
-        pdbTaskList[i] = Task.Run(async () => {
-          await pdbTaskSemaphore.WaitAsync();
-          DebugFileSearchResult result;
-
-          try {
-            result = await compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(symbolFile, symbolSettings);
-          }
-          finally {
-            pdbTaskSemaphore.Release();
-          }
-
-          return result;
-        });
-      }
-      else if (binaryFile is {Found: true}) {
         pdbCount++;
-
-        Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search STARTED - Using binary file path: {imageList[i].ModuleName} (binary: {binaryFile.FilePath})");
+        Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search STARTED - Using ETL symbol file descriptor: {imageList[i].ModuleName} (symbol: {symbolFile})");
+        var taskSymbolFile = symbolFile;
         pdbTaskList[i] = Task.Run(async () => {
           await pdbTaskSemaphore.WaitAsync();
           DebugFileSearchResult result;
+          Task<DebugFileSearchResult> downloadTask = null;
 
           try {
-            result = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(binaryFile.FilePath, symbolSettings).Result;
+            // Apply manual timeout since TraceEvent's ServerTimeout doesn't work reliably
+            int timeoutSeconds = symbolSettings.EffectiveTimeoutSeconds > 0 ? symbolSettings.EffectiveTimeoutSeconds : 10;
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+            downloadTask = compilerInfoProvider_.DebugFileFinder.FindDebugInfoFileAsync(taskSymbolFile, symbolSettings);
+            var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+            var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+
+            if (completedTask == downloadTask) {
+              result = await downloadTask.ConfigureAwait(false);
+            }
+            else {
+              DiagnosticLogger.LogWarning($"[SymbolSearch] TIMEOUT after {timeoutSeconds}s for {taskSymbolFile.FileName}");
+              result = DebugFileSearchResult.Failure(taskSymbolFile, $"Timeout after {timeoutSeconds}s");
+
+              // Track timeout as a failure, but DON'T cache it (transient failure)
+              symbolSettings.RejectSymbolFile(taskSymbolFile,
+                                             SymbolFileRejectionReason.NetworkTimeout,
+                                             $"Timeout after {timeoutSeconds}s");
+
+              // After first timeout, reduce timeout for subsequent downloads
+              if (!symbolSettings.HadFirstTimeout) {
+                symbolSettings.HadFirstTimeout = true;
+                DiagnosticLogger.LogInfo($"[SymbolSearch] First timeout detected - reducing timeout from {timeoutSeconds}s to {symbolSettings.SymbolServerTimeoutSeconds}s for remaining downloads");
+              }
+            }
+          }
+          catch (OperationCanceledException) {
+            result = DebugFileSearchResult.Failure(taskSymbolFile, "Cancelled");
           }
           finally {
+            // Wait for the underlying download to actually complete before releasing semaphore.
+            if (downloadTask != null && !downloadTask.IsCompleted) {
+              try {
+                await downloadTask.ConfigureAwait(false);
+              }
+              catch {
+                // Ignore errors from the orphaned task
+              }
+            }
+
             pdbTaskSemaphore.Release();
           }
 
@@ -986,41 +990,99 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
       }
       else {
-        // Neither symbol file from ETL nor binary file available
-        if (symbolFile == null) {
-          Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - No symbol file descriptor in ETL: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
-        }
-        if (binaryFile is {Found: false}) {
-          Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - Binary file not found: {imageList[i].ModuleName} (details: {binaryFile?.Details})");
-        }
+        // No symbol file descriptor in ETL - this module won't have symbols
+        // until user clicks on a function (lazy binary loading will try then)
+        Trace.WriteLine($"DEBUG_FILTER_DEBUG: Debug file search SKIPPED - No symbol file descriptor in ETL: {imageList[i].ModuleName} (path: {imageList[i].FilePath})");
       }
     }
 
-    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
-#if DEBUG
-    var sw = Stopwatch.StartNew();
-#endif
+    int pdbTasksStarted = pdbTaskList.Count(t => t != null);
+    DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download phase: Started {pdbTasksStarted} download tasks for {pdbCount} eligible modules");
 
-    // Wait for the PDBs to be loaded.
+    // Wait for ALL PDB tasks to complete in parallel before processing results.
+    // Report progress incrementally as tasks complete (not just at the end).
+    var activePdbTasks = pdbTaskList.Where(t => t != null).ToArray();
+    if (activePdbTasks.Length > 0) {
+      DiagnosticLogger.LogInfo($"[SymbolLoading] Waiting for {activePdbTasks.Length} PDB downloads to complete in parallel...");
+
+      // Track completions and report progress incrementally
+      int pdbCompletedCount = 0;
+      int pdbTotalTasks = activePdbTasks.Length;
+
+      // Start a progress monitoring task that reports progress every 500ms
+      var pdbProgressCts = new CancellationTokenSource();
+      var pdbProgressTask = Task.Run(async () => {
+        int lastReported = -1;
+        while (!pdbProgressCts.Token.IsCancellationRequested) {
+          int current = Volatile.Read(ref pdbCompletedCount);
+          if (current != lastReported) {
+            UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbTotalTasks, current, "PDB downloads");
+            lastReported = current;
+          }
+          try {
+            await Task.Delay(500, pdbProgressCts.Token).ConfigureAwait(false);
+          }
+          catch (OperationCanceledException) {
+            break;
+          }
+        }
+      });
+
+      // Attach completion tracking to each task
+      var pdbTrackingTasks = activePdbTasks.Select(task =>
+        task.ContinueWith(_ => Interlocked.Increment(ref pdbCompletedCount), TaskContinuationOptions.ExecuteSynchronously)
+      ).ToArray();
+
+      // Wait for all downloads to complete
+      await Task.WhenAll(activePdbTasks).ConfigureAwait(false);
+
+      // Stop progress monitoring
+      pdbProgressCts.Cancel();
+      try { await pdbProgressTask.ConfigureAwait(false); } catch { }
+
+      DiagnosticLogger.LogInfo($"[SymbolLoading] All PDB downloads completed in {pdbSw.Elapsed.TotalSeconds:F1}s");
+    }
+
+    // Note: Don't reset progress here - we're about to process results which is fast
+    // UpdateProgress is called per-module in the loop below
+    int pdbsFound = 0;
+    int pdbsProcessed = 0;
+
+    // Process results (tasks already completed, so this is fast)
     for (int i = 0; i < imageLimit; i++) {
       if (cancelableTask is {IsCanceled: true}) {
+        DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download cancelled at image {i}/{imageLimit}");
         return;
       }
 
+      // Always update progress even for skipped modules
+      UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, imageLimit, i,
+                     imageList[i].ModuleName);
+
       if (pdbTaskList[i] != null) {
+        pdbsProcessed++;
+        var pdbTaskStart = Stopwatch.StartNew();
         var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
+        var pdbTaskDuration = pdbTaskStart.Elapsed;
+
+        // Log slow PDB lookups (> 2 seconds)
+        if (pdbTaskDuration.TotalSeconds > 2) {
+          DiagnosticLogger.LogWarning($"[SymbolLoading] Slow PDB lookup ({pdbTaskDuration.TotalSeconds:F1}s): {imageList[i].ModuleName} - Found: {pdbPath.Found}");
+        }
 
         if (pdbPath.Found) {
-          UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, i,
-                         Utilities.Utils.TryGetFileName(pdbPath.SymbolFile.FileName));
+          pdbsFound++;
         }
       }
     }
 
-    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, pdbCount, 0);
-#if DEBUG
-    Trace.WriteLine($"PDB download time: {sw.Elapsed}");
-#endif
+    var totalPdbTime = pdbSw.Elapsed;
+    DiagnosticLogger.LogInfo($"[SymbolLoading] PDB download complete: {pdbsFound}/{pdbsProcessed} found in {totalPdbTime.TotalSeconds:F1}s");
+    DiagnosticLogger.LogInfo($"[SymbolLoading] === LoadBinaryAndDebugFiles completed in {loadStartTime.Elapsed.TotalSeconds:F1}s ===");
+    
+    // Report completion (current=total means 100%)
+    UpdateProgress(progressCallback, ProfileLoadStage.SymbolLoading, imageLimit, imageLimit);
+    Trace.WriteLine($"PDB download time: {totalPdbTime}");
   }
 
   private async Task<ProfileModuleBuilder> CreateModuleBuilderAsync(ProfileImage image, RawProfileData rawProfile, int processId,
@@ -1048,9 +1110,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // Time spent on module initialization
     var moduleInitSw = Stopwatch.StartNew();
     Trace.WriteLine($"CreateModuleBuilderAsync: Calling Initialize for {image.ModuleName}");
-    
+
     try {
-      bool moduleInitialized = await imageModule.Initialize(FromProfileImage(image), symbolSettings, imageDebugInfo).ConfigureAwait(false);
+      // LAZY BINARY LOADING: Skip binary download during trace loading.
+      // Binaries will be downloaded on-demand when user views assembly.
+      bool moduleInitialized = await imageModule.Initialize(FromProfileImage(image, rawProfile, processId), symbolSettings, imageDebugInfo, skipBinaryDownload: true).ConfigureAwait(false);
       var moduleInitTime = moduleInitSw.Elapsed;
       
       Trace.WriteLine($"CreateModuleBuilderAsync: Initialize completed for {image.ModuleName}, result: {moduleInitialized}");
@@ -1066,10 +1130,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           return imageModule;
         }
 
-        // Time spent on debug info file lookup
+        // Time spent on debug info file lookup.
+        // Always try to find PDB - it may be cached locally from the initial download phase.
         var debugFileSw = Stopwatch.StartNew();
         var debugInfoFile = await GetDebugInfoFile(imageModule.ModuleDocument.BinaryFile,
-                                             image, rawProfile, processId, symbolSettings);
+                                                   image, rawProfile, processId, symbolSettings);
         var debugFileTime = debugFileSw.Elapsed;
 
         // Time spent on debug info initialization
@@ -1173,9 +1238,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
       // Create the module builder outside the lock to avoid blocking other threads
       imageModule = await CreateModuleBuilderAsync(queryImage, rawProfile, processId, symbolSettings).ConfigureAwait(false);
-      
-      // Add to the cache
-      imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+
+      // Add to the cache. If another thread already added a module, use that one instead
+      // to ensure all threads share the same (hopefully initialized) instance.
+      if (!imageModuleMap_.TryAdd(queryImage.Id, imageModule)) {
+        // Another thread won the race - use their module instead
+        imageModule = imageModuleMap_[queryImage.Id];
+      }
     }
 
     prevImage_ = queryImage;
@@ -1293,14 +1362,134 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
   }
 
-  private BinaryFileDescriptor FromProfileImage(ProfileImage image) {
+  private BinaryFileDescriptor FromProfileImage(ProfileImage image, RawProfileData rawProfile, int processId) {
+    // Architecture detection: Use process's IsWow64 flag from ETW ProcessStart events.
+    // ProcessFlags.Wow64 indicates a 32-bit process running on 64-bit Windows.
+    var architecture = defaultArchitecture_;
+
+    // For kernel modules, use OS architecture (kernel is always native)
+    if (!ETWEventProcessor.IsKernelAddress((ulong)image.BaseAddress, rawProfile.TraceInfo.PointerSize)) {
+      // User-mode module: check if the process is WoW64 (32-bit on 64-bit)
+      var process = rawProfile.FindProcess(processId);
+      if (process != null && process.IsWow64) {
+        architecture = Machine.I386;
+      }
+    }
+
     return new BinaryFileDescriptor {
       ImageName = image.ModuleName,
       ImagePath = image.FilePath,
+      Architecture = architecture,
       Checksum = image.Checksum,
       TimeStamp = image.TimeStamp,
       ImageSize = image.Size
     };
+  }
+
+  /// <summary>
+  /// Performs a "bellwether" test by attempting to download the ntoskrnl PDB (the Windows kernel symbols).
+  /// If this fails, it indicates the symbol server is unavailable or slow, and we should
+  /// reduce timeouts to avoid wasting time on failed downloads.
+  /// </summary>
+  private async Task PerformBellwetherTest(List<ProfileImage> imageList, RawProfileData rawProfile, SymbolFileSourceSettings symbolSettings) {
+    // Find ntoskrnl.exe in the image list - it's always present in ETW traces
+    var bellwetherImage = imageList.FirstOrDefault(img =>
+      img.ModuleName.Equals("ntoskrnl.exe", StringComparison.OrdinalIgnoreCase));
+
+    if (bellwetherImage == null) {
+      // Try ntdll.dll as fallback
+      bellwetherImage = imageList.FirstOrDefault(img =>
+        img.ModuleName.Equals("ntdll.dll", StringComparison.OrdinalIgnoreCase));
+    }
+
+    if (bellwetherImage == null) {
+      DiagnosticLogger.LogInfo("[BellwetherTest] No bellwether image found (ntoskrnl.exe or ntdll.dll), skipping test");
+      return;
+    }
+
+    // Get the PDB info for the bellwether image from the trace's ImageID DbgID events.
+    // ntoskrnl is a kernel module, so use KernelProcessId.
+    var symbolFile = rawProfile.GetDebugFileForImage(bellwetherImage, ETWEventProcessor.KernelProcessId);
+
+    if (symbolFile == null) {
+      DiagnosticLogger.LogWarning($"[BellwetherTest] No PDB info (ImageID DbgID event) for {bellwetherImage.ModuleName}, skipping test");
+      return;
+    }
+
+    var sw = Stopwatch.StartNew();
+    // Use EffectiveTimeoutSeconds which is PreAuthTimeoutSeconds (10 min) until auth is validated.
+    // This allows time for the user to interact with the auth dialog without timing out.
+    int timeoutSeconds = symbolSettings.EffectiveTimeoutSeconds;
+
+    // Log symbol server configuration
+    DiagnosticLogger.LogInfo($"[BellwetherTest] Symbol paths configured: {string.Join("; ", symbolSettings.SymbolPaths)}");
+    DiagnosticLogger.LogInfo($"[BellwetherTest] Testing symbol server health with {symbolFile.FileName} PDB (timeout: {timeoutSeconds}s, pre-auth: {!symbolSettings.HadFirstSuccessfulNetworkRequest})");
+    DiagnosticLogger.LogInfo($"[BellwetherTest] PDB GUID: {symbolFile.Id}, Age: {symbolFile.Age}");
+
+    try {
+      using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+      // Run the synchronous PDB lookup in a background task with timeout
+      var downloadTask = Task.Run(() => PDBDebugInfoProvider.LocateDebugInfoFile(symbolFile, symbolSettings), cts.Token);
+      var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+      var completedTask = await Task.WhenAny(downloadTask, timeoutTask).ConfigureAwait(false);
+
+      if (completedTask == downloadTask) {
+        var result = await downloadTask.ConfigureAwait(false);
+        var elapsedMs = sw.ElapsedMilliseconds;
+
+        if (result.Found) {
+          // Check if this was a cache hit (very fast response, < 500ms)
+          // A real network download would take longer
+          bool likelyCacheHit = elapsedMs < 500;
+          string cacheNote = likelyCacheHit ? " (likely from local cache - not a true network test)" : "";
+
+          DiagnosticLogger.LogInfo($"[BellwetherTest] SUCCESS: {symbolFile.FileName} PDB found at {result.FilePath} in {sw.Elapsed.TotalSeconds:F1}s{cacheNote}");
+
+          if (likelyCacheHit) {
+            // Cache hit doesn't prove network works - the first REAL network request will be the true bellwether
+            DiagnosticLogger.LogInfo("[BellwetherTest] Fast response suggests local cache hit. Network connectivity not verified.");
+            DiagnosticLogger.LogInfo("[BellwetherTest] First real network request will determine timeout strategy.");
+            // Don't change any flags - first real network request will set HadFirstTimeout or HadFirstSuccessfulNetworkRequest
+          }
+          else {
+            // Actual network download succeeded - THIS is the real bellwether, network is verified
+            DiagnosticLogger.LogInfo("[BellwetherTest] Network download verified (took real network time). Symbol server is healthy.");
+            symbolSettings.HadFirstSuccessfulNetworkRequest = true;
+          }
+          symbolSettings.SymbolServerDegraded = false;
+        }
+        else {
+          // PDB not found on symbol server - this is expected for some builds
+          // Mark as degraded so we use shorter timeouts for other PDBs
+          DiagnosticLogger.LogWarning($"[BellwetherTest] FAILED: {symbolFile.FileName} PDB not found on symbol server ({sw.Elapsed.TotalSeconds:F1}s) - " +
+                                      $"Symbols may not be available for this build. Using reduced timeout ({symbolSettings.DegradedTimeoutSeconds}s)");
+          symbolSettings.SymbolServerDegraded = true;
+        }
+      }
+      else {
+        // Timeout - symbol server is slow or unreachable
+        DiagnosticLogger.LogWarning($"[BellwetherTest] TIMEOUT: {symbolFile.FileName} PDB timed out after {timeoutSeconds}s - " +
+                                    $"Symbol server may be slow or unreachable. Using reduced timeout ({symbolSettings.DegradedTimeoutSeconds}s)");
+        symbolSettings.SymbolServerDegraded = true;
+      }
+    }
+    catch (OperationCanceledException) {
+      DiagnosticLogger.LogWarning($"[BellwetherTest] TIMEOUT: {symbolFile.FileName} PDB timed out after {timeoutSeconds}s - Using reduced timeout");
+      symbolSettings.SymbolServerDegraded = true;
+    }
+    catch (Exception ex) {
+      DiagnosticLogger.LogWarning($"[BellwetherTest] ERROR: {symbolFile.FileName} PDB failed with exception: {ex.Message} - Using reduced timeout");
+      symbolSettings.SymbolServerDegraded = true;
+    }
+
+    if (symbolSettings.SymbolServerDegraded) {
+      DiagnosticLogger.LogWarning($"[BellwetherTest] Symbol server marked as DEGRADED - using {symbolSettings.DegradedTimeoutSeconds}s timeout instead of {symbolSettings.SymbolServerTimeoutSeconds}s");
+    }
+    else {
+      DiagnosticLogger.LogInfo($"[BellwetherTest] Using initial timeout: {symbolSettings.EffectiveTimeoutSeconds}s (will reduce to {symbolSettings.SymbolServerTimeoutSeconds}s after first timeout)");
+    }
   }
 
 #if DEBUG

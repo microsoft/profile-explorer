@@ -141,6 +141,32 @@ public partial class MainWindow : Window, IUISession {
         return null;
       }
 
+      // LAZY BINARY LOADING: If binary isn't loaded yet, try to load it now.
+      // This happens during profiling when binaries are skipped during trace load.
+      if (!docInfo.BinaryFileExists && docInfo.EnsureBinaryLoaded != null) {
+        string moduleName = docInfo.ModuleName ?? section.ParentFunction.ParentSummary?.ModuleName ?? "binary";
+        Trace.WriteLine($"LoadAndParseSection: Binary not loaded for {section.ParentFunction.Name}, attempting lazy load...");
+
+        // Show status in UI while downloading
+        await Dispatcher.InvokeAsync(() => {
+          OptionalStatusText.Text = $"Downloading {moduleName} from symbol server...";
+          OptionalStatusText.ToolTip = $"Lazy loading binary for disassembly view. This may take a few seconds.";
+        });
+
+        bool loaded = await docInfo.EnsureBinaryLoaded().ConfigureAwait(false);
+        Trace.WriteLine($"LoadAndParseSection: Lazy binary load result: {loaded}");
+
+        // Clear status after download completes
+        await Dispatcher.InvokeAsync(() => {
+          if (loaded) {
+            OptionalStatusText.Text = $"Downloaded {moduleName}";
+          } else {
+            OptionalStatusText.Text = $"Failed to download {moduleName}";
+          }
+          OptionalStatusText.ToolTip = "";
+        });
+      }
+
       var parsedSection = docInfo.Loader.LoadSection(section);
 
       if (parsedSection != null && parsedSection.Function != null) {
@@ -874,7 +900,9 @@ public partial class MainWindow : Window, IUISession {
   private async Task<ILoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                         IDebugInfoProvider debugInfo,
                                                         ProgressInfoHandler progressHandler) {
-    var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
+    var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
+    bool isManagedImage = binaryInfo?.IsManagedImage ?? false;
+    var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo, true, isManagedImage);
     var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
 
     if (result != null) {

@@ -591,7 +591,7 @@ public static class ProfileExplorerTools
             }
 
             string? filePath = await _executor.GetFunctionAssemblyToFileAsync(functionName);
-            
+
             if (string.IsNullOrEmpty(filePath))
             {
                 var notFoundResult = new
@@ -605,12 +605,28 @@ public static class ProfileExplorerTools
                 return System.Text.Json.JsonSerializer.Serialize(notFoundResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
 
+            // Read the assembly content from the file to include in the response
+            string assemblyContent = "";
+            try
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    assemblyContent = await System.IO.File.ReadAllTextAsync(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                // If we can't read the file, log the error and just return the path without content
+                Console.Error.WriteLine($"Failed to read assembly file '{filePath}' for function '{functionName}': {ex.Message}");
+            }
+
             var result = new
             {
                 Action = "GetFunctionAssembly",
                 FunctionName = functionName,
                 Status = "Success",
                 FilePath = filePath,
+                Assembly = assemblyContent,
                 Description = $"Successfully retrieved assembly code for the function and saved to {filePath}",
                 Timestamp = DateTime.UtcNow
             };

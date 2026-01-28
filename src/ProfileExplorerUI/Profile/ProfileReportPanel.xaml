@@ -120,6 +120,43 @@
               </StackPanel>
             </Expander>
 
+            <!-- Symbol loading warning - shown when ImageID events are missing -->
+            <Border
+              Margin="0,10,0,0"
+              Padding="8"
+              Background="#FFFFF0"
+              BorderBrush="#FFD700"
+              BorderThickness="1"
+              CornerRadius="4"
+              Visibility="{Binding TraceInfo.HasImageIdEvents, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Margin="0,0,6,0"
+                    Source="{StaticResource WarningIconColor}" />
+                  <TextBlock
+                    FontWeight="SemiBold"
+                    Foreground="#B8860B"
+                    Text="Symbol Loading Limited" />
+                </StackPanel>
+                <TextBlock
+                  Margin="22,4,0,0"
+                  Foreground="#666666"
+                  TextWrapping="Wrap">
+                  <Run Text="This trace is missing ImageID DbgID events (PDB GUID/Age). Symbol server lookups are disabled because PDB matching requires this information." />
+                  <LineBreak />
+                  <LineBreak />
+                  <Run Text="Function names will show as unresolved addresses. To get symbols, re-capture using:" />
+                  <LineBreak />
+                  <Run Text="  • Profile Explorer's built-in trace capture (File → Record Profile)" />
+                  <LineBreak />
+                  <Run Text="  • Or from command line: " /><Run FontFamily="Consolas" Text="wpr -start CPU" />
+                </TextBlock>
+              </StackPanel>
+            </Border>
+
             <Expander
               Margin="0,10,0,0"
               Header="Machine details"
@@ -344,6 +381,18 @@
       Style="{StaticResource TabControlStyle}"
       ToolTip="List of modules loaded by the main process">
       <DockPanel LastChildFill="True">
+        <StackPanel
+          Margin="0,4,0,4"
+          DockPanel.Dock="Top"
+          Orientation="Horizontal">
+          <Button
+            x:Name="LoadAllBinariesButton"
+            Height="22"
+            Padding="8,2,8,2"
+            Click="LoadAllBinariesButton_Click"
+            Content="Load All Binaries"
+            ToolTip="Load binaries for all modules that have symbols loaded (for disassembly view)" />
+        </StackPanel>
         <ListView
           x:Name="ModuleList"
           Height="250"
@@ -404,7 +453,12 @@
                                 <DataTrigger
                                   Binding="{Binding State}"
                                   Value="{x:Static profileData:ModuleLoadState.Failed}">
-                                  <Setter Property="Source" Value="{StaticResource WarningYellow}" />
+                                  <Setter Property="Source" Value="{StaticResource WarningIconColor}" />
+                                </DataTrigger>
+                                <DataTrigger
+                                  Binding="{Binding State}"
+                                  Value="{x:Static profileData:ModuleLoadState.LazyLoadPending}">
+                                  <Setter Property="Source" Value="{StaticResource DotIconYellow}" />
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>
@@ -429,6 +483,11 @@
                                   Binding="{Binding State}"
                                   Value="{x:Static profileData:ModuleLoadState.Failed}">
                                   <Setter Property="Text" Value="Failed" />
+                                </DataTrigger>
+                                <DataTrigger
+                                  Binding="{Binding State}"
+                                  Value="{x:Static profileData:ModuleLoadState.LazyLoadPending}">
+                                  <Setter Property="Text" Value="On-demand" />
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>

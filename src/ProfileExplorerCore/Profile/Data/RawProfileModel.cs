@@ -273,8 +273,21 @@ public class ProfileTraceInfo {
   public string TraceFilePath { get; set; }
   [ProtoMember(10)]
   public TimeSpan SamplingInterval { get; set; }
+  [ProtoMember(11)]
+  public int ImageLoadEventCount { get; set; }
+  [ProtoMember(12)]
+  public int ImageLoadWithTimestampCount { get; set; }
+  [ProtoMember(13)]
+  public int ImageIdEventCount { get; set; }
+  [ProtoMember(14)]
+  public int ImageIdDbgEventCount { get; set; }
   public bool Is64Bit => PointerSize == 8;
   public TimeSpan ProfileDuration => ProfileEndTime - ProfileStartTime;
+  public bool HasImageIdEvents => ImageIdDbgEventCount > 0;
+  /// <summary>
+  /// True if trace has valid binary lookup info (timestamps for symbol server).
+  /// </summary>
+  public bool HasValidBinaryLookupInfo => ImageLoadWithTimestampCount > 0;
 
   public bool HasSameTraceFilePath(ProfileTraceInfo other) {
     if (!string.IsNullOrEmpty(TraceFilePath) &&
@@ -387,8 +400,23 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
   public int TimeStamp { get; set; }
   [ProtoMember(8)]
   public long Checksum { get; set; }
+  [ProtoMember(9)]
+  public string CompanyName { get; set; }
+  [ProtoMember(10)]
+  public string FileDescription { get; set; }
+  [ProtoMember(11)]
+  public string ProductName { get; set; }
   public long BaseAddressEnd => BaseAddress + Size;
   public string ModuleName => Utilities.Utils.TryGetFileName(FilePath);
+
+  /// <summary>
+  /// Returns true if this appears to be a Microsoft binary based on version info from trace.
+  /// Checks CompanyName, FileDescription, and ProductName fields.
+  /// </summary>
+  public bool IsMicrosoft =>
+    (!string.IsNullOrEmpty(CompanyName) && CompanyName.Contains("Microsoft", StringComparison.OrdinalIgnoreCase)) ||
+    (!string.IsNullOrEmpty(FileDescription) && FileDescription.Contains("Microsoft", StringComparison.OrdinalIgnoreCase)) ||
+    (!string.IsNullOrEmpty(ProductName) && ProductName.Contains("Microsoft", StringComparison.OrdinalIgnoreCase));
 
   public int CompareTo(ProfileImage other) {
     if (BaseAddress < other.BaseAddress && BaseAddressEnd < other.BaseAddressEnd) {
@@ -498,6 +526,8 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
   public List<int> ThreadIds { get; set; }
   [ProtoMember(8)]
   public DateTime StartTime { get; set; }
+  [ProtoMember(9)]
+  public bool IsWow64 { get; set; } // True if 32-bit process on 64-bit OS (WoW64)
 
   public bool Equals(ProfileProcess other) {
     Debug.Assert(other != null);

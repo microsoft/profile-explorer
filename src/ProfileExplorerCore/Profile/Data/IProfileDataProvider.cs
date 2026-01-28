@@ -15,7 +15,8 @@ public delegate void ProcessListProgressHandler(ProcessListProgress info);
 public enum ModuleLoadState {
   Loaded,
   NotFound,
-  Failed
+  Failed,
+  LazyLoadPending  // Binary will be downloaded on-demand when user views assembly
 }
 
 public enum ProfileLoadStage {

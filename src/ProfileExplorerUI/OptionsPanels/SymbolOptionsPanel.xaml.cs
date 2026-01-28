@@ -41,7 +41,7 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
     if (Utils.ShowYesNoMessageBox("Do you want to remove all excluded binaries and symbols?", this) ==
         MessageBoxResult.Yes) {
       symbolSettings_.ClearRejectedFiles();
-      ReloadSettings();
+      ReloadSymbolPathsList();
     }
   }
 

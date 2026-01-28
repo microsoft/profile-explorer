@@ -152,5 +152,10 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
     public DebugFileSearchResult DebugInfoFile { get; set; }
     public bool HasBinaryLoaded => State == ModuleLoadState.Loaded;
     public bool HasDebugInfoLoaded => DebugInfoFile is {Found: true};
+    /// <summary>
+    /// Returns true if binary is loaded OR if lazy loading is pending (binary can be loaded on-demand).
+    /// Use this for UI display to avoid showing error icons when lazy loading is available.
+    /// </summary>
+    public bool IsBinaryAvailableOrPending => State == ModuleLoadState.Loaded || State == ModuleLoadState.LazyLoadPending;
   }
 }

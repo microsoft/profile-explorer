@@ -523,6 +523,18 @@ public partial class MainWindow : Window, IUISession {
     StopUIUpdate();
     ResetApplicationProgress();
     SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
+
+    // Check for critical errors like DIA SDK registration failure
+    if (PDBDebugInfoProvider.HasDiaRegistrationError) {
+      await Dispatcher.BeginInvoke(() => {
+        MessageBox.Show(this,
+          $"Symbol resolution failed: {PDBDebugInfoProvider.DiaRegistrationError}\n\n" +
+          "Function names will not be displayed until this is fixed.",
+          "DIA SDK Not Registered",
+          MessageBoxButton.OK,
+          MessageBoxImage.Error);
+      });
+    }
   }
 
   private async Task RefreshProfilingPanels() {
