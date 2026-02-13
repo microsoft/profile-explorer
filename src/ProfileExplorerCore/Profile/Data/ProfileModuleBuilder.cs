@@ -201,9 +201,24 @@ public sealed class ProfileModuleBuilder : IDisposable {
       string imageName = binaryInfo_.ImageName;
       DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Loading binary on-demand for {imageName}");
 
-      var binFile = await FindBinaryFilePath(symbolSettings_).ConfigureAwait(false);
+      // Clone settings with fresh timeout state for on-demand download.
+      // The shared symbolSettings_ may have degraded/reduced timeouts from the PDB pre-download phase,
+      // but the user is actively waiting for this binary so use generous timeout (BellwetherTimeoutSeconds = 60s).
+      var downloadSettings = symbolSettings_.Clone();
+      downloadSettings.HadFirstSuccessfulNetworkRequest = true;
+      DiagnosticLogger.LogInfo($"[LazyBinaryLoad] Cloned settings for {imageName}: " +
+        $"EffectiveTimeout={downloadSettings.EffectiveTimeoutSeconds}s, " +
+        $"BellwetherTimeout={downloadSettings.BellwetherTimeoutSeconds}s, " +
+        $"HadFirstSuccess={downloadSettings.HadFirstSuccessfulNetworkRequest}, " +
+        $"Degraded={downloadSettings.SymbolServerDegraded}, " +
+        $"HadTimeout={downloadSettings.HadFirstTimeout}");
+
+      var binFile = await FindBinaryFilePath(downloadSettings).ConfigureAwait(false);
       if (binFile == null || !binFile.Found) {
         DiagnosticLogger.LogWarning($"[LazyBinaryLoad] Could not find binary for {imageName}");
+
+        // Update state from LazyLoadPending to NotFound so the UI shows the failure.
+        report_.AddModuleInfo(binaryInfo_, binFile, ModuleLoadState.NotFound);
         return false;
       }
 

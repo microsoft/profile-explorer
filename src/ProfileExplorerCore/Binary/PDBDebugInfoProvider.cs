@@ -479,7 +479,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     // Check for auth failure on primary server, but ONLY if primary has never been verified working.
     // Once we've successfully downloaded from symweb, we NEVER fall back to msdl (would get worse symbols).
-    if (!settings.PrimaryServerVerified && !settings.PrimaryServerAuthFailed && DetectPrimaryServerAuthFailure(searchLog)) {
+    if (!settings.PrimaryServerVerified && !settings.PrimaryServerAuthFailed && SymbolFileSourceSettings.DetectPrimaryServerAuthFailure(searchLog)) {
       settings.PrimaryServerAuthFailed = true;
       DiagnosticLogger.LogWarning($"[SymbolSearch] Primary server (symweb) auth FAILED - switching to secondary (public) server for remaining downloads");
     }
@@ -505,7 +505,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       // If download succeeded and log shows symweb was used, mark primary as verified
       if (!settings.PrimaryServerVerified &&
           searchLog.Contains("symweb", StringComparison.OrdinalIgnoreCase) &&
-          !DetectPrimaryServerAuthFailure(searchLog)) {
+          !SymbolFileSourceSettings.DetectPrimaryServerAuthFailure(searchLog)) {
         settings.PrimaryServerVerified = true;
         DiagnosticLogger.LogInfo($"[SymbolSearch] Primary server (symweb) auth VERIFIED - will continue using primary server");
       }
@@ -518,7 +518,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       settings.SessionSymbolFailureCount++;
 
       // Classify the failure to determine if it should be cached
-      var reason = ClassifySymbolSearchFailure(searchLog, settings);
+      var reason = settings.ClassifySearchFailure(searchLog);
       DiagnosticLogger.LogInfo($"[SymbolSearch] Failure classified as: {reason}");
 
       // Record failed lookup with reason - RejectSymbolFile has safeguards to prevent caching transient failures
@@ -528,44 +528,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
     DiagnosticLogger.LogInfo($"[SymbolSearch] Cached search result for {symbolFile.FileName}: {(searchResult.Found ? "Success" : "Failure")}");
     return searchResult;
-  }
-
-  /// <summary>
-  /// Classifies a symbol search failure based on the search log to determine if it should be cached.
-  /// Returns a SymbolFileRejectionReason indicating whether the failure is permanent (cacheable)
-  /// or transient (should not be cached).
-  /// </summary>
-  private static SymbolFileRejectionReason ClassifySymbolSearchFailure(
-    string searchLog, SymbolFileSourceSettings settings) {
-
-    // Check for auth failures (401/403)
-    if (DetectPrimaryServerAuthFailure(searchLog)) {
-      return SymbolFileRejectionReason.AuthenticationFailure;
-    }
-
-    // Check for server errors (5xx)
-    if (!string.IsNullOrEmpty(searchLog) &&
-        (searchLog.Contains("500") || searchLog.Contains("503") ||
-         searchLog.Contains("Internal Server Error", StringComparison.OrdinalIgnoreCase))) {
-      return SymbolFileRejectionReason.ServerError;
-    }
-
-    // Check for timeout patterns
-    if (!string.IsNullOrEmpty(searchLog) &&
-        (searchLog.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
-         searchLog.Contains("timed out", StringComparison.OrdinalIgnoreCase))) {
-      return SymbolFileRejectionReason.NetworkTimeout;
-    }
-
-    // If file not found in search log (404 or no result)
-    if (string.IsNullOrEmpty(searchLog) ||
-        searchLog.Contains("404") ||
-        searchLog.Contains("not found", StringComparison.OrdinalIgnoreCase)) {
-      return SymbolFileRejectionReason.PermanentNotFound;
-    }
-
-    // Default: unknown (treat conservatively - don't cache if unsure)
-    return SymbolFileRejectionReason.Unknown;
   }
 
   // Track if we've logged detailed symbol path info (only log once per session unless auth state changes)
@@ -626,48 +588,6 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
 
     return symbolPath;
-  }
-
-  /// <summary>
-  /// Checks if the search log indicates an auth failure (401/403) on the primary server.
-  /// Uses specific patterns to avoid false positives from GUIDs/paths that contain "401" or "403".
-  /// </summary>
-  private static bool DetectPrimaryServerAuthFailure(string searchLog) {
-    if (string.IsNullOrEmpty(searchLog)) {
-      return false;
-    }
-
-    // Must involve symweb to be a primary server auth failure
-    if (!searchLog.Contains("symweb", StringComparison.OrdinalIgnoreCase)) {
-      return false;
-    }
-
-    // Look for specific auth failure patterns - not just "401"/"403" which can match GUIDs/paths
-    // TraceEvent typically outputs HTTP errors with context like "Response: 401" or "401 Unauthorized"
-    // Use regex with word boundaries to avoid matching 401/403 within hex GUIDs
-    var authFailurePatterns = new[] {
-      @"\b401\b",           // 401 at word boundary (not in hex GUIDs like A3401B)
-      @"\b403\b",           // 403 at word boundary
-      "Unauthorized",       // HTTP 401 description
-      "Forbidden"           // HTTP 403 description
-    };
-
-    foreach (var pattern in authFailurePatterns) {
-      if (pattern.StartsWith(@"\b")) {
-        // Regex pattern - check for word boundaries
-        if (System.Text.RegularExpressions.Regex.IsMatch(searchLog, pattern)) {
-          return true;
-        }
-      }
-      else {
-        // Simple string search for descriptive terms
-        if (searchLog.Contains(pattern, StringComparison.OrdinalIgnoreCase)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   public static async Task<DebugFileSearchResult>

@@ -404,7 +404,7 @@ public class ModuleEx {
   public Brush BackColor { get; set; }
   public double ExclusivePercentage { get; set; }
   public TimeSpan ExclusiveWeight { get; set; }
-  public bool BinaryFileMissing { get; set; }
+  public bool BinaryFileMissing => Status != null ? !Status.IsBinaryAvailableOrPending : false;
   public bool DebugFileMissing { get; set; }
   public ProfileDataReport.ModuleStatus Status { get; set; }
 }
@@ -1694,8 +1694,6 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
 
       if (moduleStatus != null) {
         moduleInfo.Status = moduleStatus;
-        // Use IsBinaryAvailableOrPending to avoid showing error icon when lazy loading is available
-        moduleInfo.BinaryFileMissing = !moduleStatus.IsBinaryAvailableOrPending;
         moduleInfo.DebugFileMissing = !moduleStatus.HasDebugInfoLoaded;
 
         // Log the module status for debugging
