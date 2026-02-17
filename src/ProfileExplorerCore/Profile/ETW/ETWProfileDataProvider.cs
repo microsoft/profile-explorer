@@ -92,6 +92,55 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     // ProfileModuleBuilder instances should live as long as the profile data is being used.
   }
 
+  /// <summary>
+  /// Get the debug info provider for a module by its image ID.
+  /// Used by headless MCP server for source line resolution.
+  /// </summary>
+  public IDebugInfoProvider GetDebugInfoForModule(int imageId) {
+    return imageModuleMap_.TryGetValue(imageId, out var builder) ? builder.DebugInfo : null;
+  }
+
+  /// <summary>
+  /// Get the debug info provider for a function's parent module.
+  /// </summary>
+  public IDebugInfoProvider GetDebugInfoForFunction(IRTextFunction function) {
+    if (function?.ParentSummary == null) return null;
+    foreach (var builder in imageModuleMap_.Values) {
+      if (builder.Summary == function.ParentSummary) {
+        return builder.DebugInfo;
+      }
+    }
+    return null;
+  }
+
+  /// <summary>
+  /// Disassemble a function to text using capstone. Locates the binary on-demand
+  /// via symbol server if needed. Returns null if binary cannot be found.
+  /// </summary>
+  public async Task<string> DisassembleFunctionAsync(IRTextFunction function, FunctionDebugInfo funcDebugInfo,
+                                                      SymbolFileSourceSettings symbolSettings) {
+    if (function?.ParentSummary == null || funcDebugInfo == null) return null;
+
+    ProfileModuleBuilder moduleBuilder = null;
+    foreach (var builder in imageModuleMap_.Values) {
+      if (builder.Summary == function.ParentSummary) {
+        moduleBuilder = builder;
+        break;
+      }
+    }
+    if (moduleBuilder == null) return null;
+
+    // Find the binary file (may download from symbol server)
+    var binFile = await moduleBuilder.FindBinaryFilePath(symbolSettings);
+    if (binFile == null || !binFile.Found) return null;
+
+    // Create disassembler and decode
+    using var disasm = Disassembler.CreateForBinary(binFile.FilePath, moduleBuilder.DebugInfo, null);
+    if (disasm == null) return null;
+
+    return disasm.DisassembleToText(funcDebugInfo);
+  }
+
   public async Task<ProfileData> LoadTraceAsync(string tracePath, List<int> processIds,
                                                 ProfileDataProviderOptions options,
                                                 SymbolFileSourceSettings symbolSettings,

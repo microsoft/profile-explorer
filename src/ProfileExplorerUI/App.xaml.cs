@@ -628,8 +628,11 @@ public partial class App : Application {
     var mainWindow = new MainWindow();
     mainWindow.Show();
 
-    // Initialize MCP server if enabled
-    InitializeMcpServerAsync(mainWindow);
+    // Initialize embedded MCP server only when explicitly requested.
+    // The headless ProfileExplorer.McpServer is preferred for AI assistant workflows.
+    if (Array.Exists(e.Args, a => a.Equals("--mcp", StringComparison.OrdinalIgnoreCase))) {
+      InitializeMcpServerAsync(mainWindow);
+    }
   }
 
   private void InitializeMcpServerAsync(MainWindow mainWindow)
