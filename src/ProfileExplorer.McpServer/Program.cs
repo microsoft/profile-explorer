@@ -45,7 +45,6 @@ public static class ProfileSession
   public static ETWProfileDataProvider? Provider { get; set; }
   public static SymbolFileSourceSettings? SymbolSettings { get; set; }
   public static string? LoadedFilePath { get; set; }
-  public static string? LoadedProcessName { get; set; }
   public static List<int> LoadedProcessIds { get; set; } = new();
   public static TimeSpan TotalWeight { get; set; }
 
@@ -185,7 +184,7 @@ public static class ProfileTools
 
         ProfileSession.LoadedProcessIds = processIds;
 
-        var cancelTask3 = new CancelableTask();
+        using var cancelTask3 = new CancelableTask();
         var profile = await provider.LoadTraceAsync(
           profileFilePath,
           processIds,
@@ -206,6 +205,7 @@ public static class ProfileTools
         ProfileSession.TotalWeight = totalWeight;
         ProfileSession.LoadedProfile = profile;
         ProfileSession.LoadedFilePath = profileFilePath;
+        (ProfileSession.Provider as IDisposable)?.Dispose();
         ProfileSession.Provider = provider;
         return profile;
       }
@@ -459,10 +459,8 @@ public static class ProfileTools
     // sample's weight to the preceding valid instruction offset (same as UI's
     // TryFindElementForOffset with InitialMultiplier=1).
     var adjustedWeights = data.InstructionWeight;
-    long[]? sortedOffsets = null;
     if (disasmMap != null && data.InstructionWeight != null)
     {
-      sortedOffsets = disasmMap.Keys.OrderBy(k => k).ToArray();
       var adjusted = new Dictionary<long, TimeSpan>();
       foreach (var kv in data.InstructionWeight)
       {
