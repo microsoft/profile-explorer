@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using ProfileExplorer.Core;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Profile.CallTree;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.ETW;
 using ProfileExplorer.Core.Settings;
@@ -377,7 +378,7 @@ public static class ProfileTools
       double totalPct = totalWeightMs > 0 ? data.Weight.TotalMilliseconds / totalWeightMs * 100 : 0;
       return new
       {
-        Name = func.Name,
+        Name = ResolveFunctionName(func),
         ModuleName = func.ModuleName ?? "Unknown",
         SelfTimePercentage = Math.Round(selfPct, 2),
         TotalTimePercentage = Math.Round(totalPct, 2),
@@ -617,7 +618,7 @@ public static class ProfileTools
     {
       Action = "GetFunctionAssembly",
       Status = "Success",
-      FunctionName = match.Name,
+      FunctionName = ResolveFunctionName(match),
       ModuleName = match.ModuleName ?? "Unknown",
       SelfTime = data.ExclusiveWeight.ToString(),
       TotalTime = data.Weight.ToString(),
@@ -672,7 +673,7 @@ public static class ProfileTools
       foreach (var caller in inst.Callers)
       {
         if (caller?.Function == null) continue;
-        var key = $"{caller.Function.ModuleName}!{caller.Function.Name}";
+        var key = $"{caller.Function.ModuleName}!{ResolveFunctionName(caller)}";
         if (!callerAgg.TryGetValue(key, out var existing))
           existing = (TimeSpan.Zero, TimeSpan.Zero, caller.Function.ModuleName ?? "Unknown");
         callerAgg[key] = (existing.weight + caller.Weight, existing.exclusiveWeight + caller.ExclusiveWeight, existing.module);
@@ -701,7 +702,7 @@ public static class ProfileTools
         .Take(calleeLimit)
         .Select(c => new
         {
-          Function = $"{c.Function.ModuleName}!{c.Function.Name}",
+          Function = $"{c.Function.ModuleName}!{ResolveFunctionName(c)}",
           InclusiveTimeMs = Math.Round(c.Weight.TotalMilliseconds, 2),
           InclusivePct = totalWeightMs > 0 ? Math.Round(c.Weight.TotalMilliseconds / totalWeightMs * 100, 2) : 0,
           FunctionPct = functionWeightMs > 0 ? Math.Round(c.Weight.TotalMilliseconds / functionWeightMs * 100, 2) : 0,
@@ -721,7 +722,7 @@ public static class ProfileTools
           WeightMs = Math.Round(inst.Weight.TotalMilliseconds, 2),
           WeightPct = totalWeightMs > 0 ? Math.Round(inst.Weight.TotalMilliseconds / totalWeightMs * 100, 2) : 0,
           FunctionPct = functionWeightMs > 0 ? Math.Round(inst.Weight.TotalMilliseconds / functionWeightMs * 100, 2) : 0,
-          Stack = bt.Select(n => $"{n.Function?.ModuleName}!{n.Function?.Name}").ToArray()
+          Stack = bt.Select(n => $"{n.Function?.ModuleName}!{ResolveFunctionName(n)}").ToArray()
         };
       }).ToArray();
 
@@ -729,7 +730,7 @@ public static class ProfileTools
     {
       Action = "GetFunctionCallerCallee",
       Status = "Success",
-      FunctionName = match.Name,
+      FunctionName = ResolveFunctionName(match),
       ModuleName = match.ModuleName ?? "Unknown",
       SelfTime = data.ExclusiveWeight.ToString(),
       TotalTime = data.Weight.ToString(),
@@ -781,10 +782,34 @@ public static class ProfileTools
   }
 
   // Prefer exact name match, then fall back to Contains
+  /// <summary>
+  /// Returns the PDB-resolved name for a function, falling back to IRTextFunction.Name (hex placeholder).
+  /// </summary>
+  private static string ResolveFunctionName(IRTextFunction func)
+  {
+    var data = ProfileSession.LoadedProfile?.FunctionProfiles.GetValueOrDefault(func);
+    var debugName = data?.FunctionDebugInfo?.Name;
+    return !string.IsNullOrEmpty(debugName) ? debugName : func.Name;
+  }
+
+  /// <summary>
+  /// Returns the PDB-resolved name for a call tree node.
+  /// </summary>
+  private static string ResolveFunctionName(ProfileCallTreeNode node)
+  {
+    var debugName = node.FunctionDebugInfo?.Name;
+    return !string.IsNullOrEmpty(debugName) ? debugName : node.Function?.Name ?? "Unknown";
+  }
+
   private static IRTextFunction? FindFunction(ProfileData profile, string functionName)
   {
+    // Search by resolved PDB name first, then by IRTextFunction.Name (hex placeholder)
     return profile.FunctionProfiles.Keys
+      .FirstOrDefault(f => ResolveFunctionName(f).Equals(functionName, StringComparison.OrdinalIgnoreCase))
+      ?? profile.FunctionProfiles.Keys
       .FirstOrDefault(f => f.Name.Equals(functionName, StringComparison.OrdinalIgnoreCase))
+      ?? profile.FunctionProfiles.Keys
+      .FirstOrDefault(f => ResolveFunctionName(f).Contains(functionName, StringComparison.OrdinalIgnoreCase))
       ?? profile.FunctionProfiles.Keys
       .FirstOrDefault(f => f.Name.Contains(functionName, StringComparison.OrdinalIgnoreCase));
   }
