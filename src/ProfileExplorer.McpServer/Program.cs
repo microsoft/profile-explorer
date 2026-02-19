@@ -20,6 +20,9 @@ public class Program
 {
   public static async Task Main(string[] args)
   {
+    // Force-enable diagnostic logging — the MCP server is headless, always-on logging is essential.
+    Environment.SetEnvironmentVariable("PROFILE_EXPLORER_DEBUG", "1");
+
     var builder = Host.CreateDefaultBuilder()
       .ConfigureLogging(logging =>
       {
@@ -32,6 +35,8 @@ public class Program
           .WithToolsFromAssembly();
       });
 
+    DiagnosticLogger.LogInfo("[MCP] ProfileExplorer MCP Server starting");
+    DiagnosticLogger.LogInfo($"[MCP] Log file: {DiagnosticLogger.LogFilePath}");
     await builder.Build().RunAsync();
   }
 }
@@ -47,12 +52,39 @@ public static class ProfileSession
   public static string? LoadedFilePath { get; set; }
   public static List<int> LoadedProcessIds { get; set; } = new();
   public static TimeSpan TotalWeight { get; set; }
+  public static ProfileDataReport? Report { get; set; }
 
   // Async loading state
   public static Task<ProfileData?>? PendingLoad { get; set; }
   public static string? PendingFilePath { get; set; }
   public static string? PendingProcessId { get; set; }
   public static Exception? LoadException { get; set; }
+
+  // Concurrency guard — only one trace load at a time.
+  public static readonly SemaphoreSlim LoadSemaphore = new(1, 1);
+
+  /// <summary>
+  /// Resets all session state and static caches for a clean trace load.
+  /// </summary>
+  public static void Reset()
+  {
+    (Provider as IDisposable)?.Dispose();
+    LoadedProfile = null;
+    Provider = null;
+    SymbolSettings = null;
+    LoadedFilePath = null;
+    LoadedProcessIds = new();
+    TotalWeight = TimeSpan.Zero;
+    Report = null;
+    PendingLoad = null;
+    PendingFilePath = null;
+    PendingProcessId = null;
+    LoadException = null;
+
+    // Clear static resolution caches so each trace starts fresh.
+    PDBDebugInfoProvider.ClearResolvedCache();
+    PEBinaryInfoProvider.ClearResolvedCache();
+  }
 }
 
 [McpServerToolType]
@@ -68,6 +100,9 @@ public static class ProfileTools
     [Description("Limit results to top N heaviest processes")]
     int? topCount = null)
   {
+    DiagnosticLogger.LogInfo($"[MCP] GetAvailableProcesses called: profileFilePath={profileFilePath}, minWeightPercentage={minWeightPercentage}, topCount={topCount}");
+    var sw = Stopwatch.StartNew();
+
     if (!File.Exists(profileFilePath))
       return Error("GetAvailableProcesses", $"File not found: {profileFilePath}");
 
@@ -121,6 +156,7 @@ public static class ProfileTools
     }
     catch (Exception ex)
     {
+      DiagnosticLogger.LogError($"[MCP] GetAvailableProcesses failed: {ex.Message}", ex);
       return Error("GetAvailableProcesses", ex.Message);
     }
   }
@@ -133,14 +169,23 @@ public static class ProfileTools
     [Description("Optional additional symbol search path (e.g. 'd:\\temp\\landy' for custom kernel symbols)")]
     string? symbolPath = null)
   {
+    DiagnosticLogger.LogInfo($"[MCP] OpenTrace called: profileFilePath={profileFilePath}, processNameOrId={processNameOrId}, symbolPath={symbolPath ?? "(none)"}");
+
     if (!File.Exists(profileFilePath))
       return Error("OpenTrace", $"File not found: {profileFilePath}");
 
-    // Reset state
-    ProfileSession.LoadedProfile = null;
-    ProfileSession.LoadException = null;
+    // Concurrency guard — only one trace load at a time.
+    if (!ProfileSession.LoadSemaphore.Wait(0))
+    {
+      DiagnosticLogger.LogWarning("[MCP] OpenTrace rejected — another trace is currently loading");
+      return Error("OpenTrace", "A trace is already loading. Wait for it to complete or call CloseTrace first.");
+    }
+
+    // Reset all session state and static caches for a clean load.
+    ProfileSession.Reset();
     ProfileSession.PendingFilePath = profileFilePath;
     ProfileSession.PendingProcessId = processNameOrId;
+    var loadStopwatch = Stopwatch.StartNew();
 
     ProfileSession.PendingLoad = Task.Run(async () =>
     {
@@ -152,6 +197,10 @@ public static class ProfileTools
         if (!string.IsNullOrWhiteSpace(symbolPath))
           symbolSettings.InsertSymbolPath(symbolPath);
         ProfileSession.SymbolSettings = symbolSettings;
+
+        DiagnosticLogger.LogInfo($"[MCP] SymbolSettings: UseEnvVar=true, CustomPath={symbolPath ?? "(none)"}, EnvVar={symbolSettings.EnvironmentVarSymbolPath ?? "(not set)"}");
+        DiagnosticLogger.LogInfo($"[MCP] SymbolPaths: {string.Join("; ", symbolSettings.SymbolPaths)}");
+
         var report = new ProfileDataReport();
         var provider = new ETWProfileDataProvider();
 
@@ -163,6 +212,7 @@ public static class ProfileTools
         {
           // All parts are numeric — explicit PID list
           processIds = parts.Select(int.Parse).ToList();
+          DiagnosticLogger.LogInfo($"[MCP] Using explicit PIDs: {string.Join(", ", processIds)}");
         }
         else
         {
@@ -180,6 +230,7 @@ public static class ProfileTools
             throw new Exception($"Process '{processNameOrId}' not found in trace");
 
           processIds = matches.Select(s => s.Process.ProcessId).ToList();
+          DiagnosticLogger.LogInfo($"[MCP] Matched process '{processNameOrId}' to {matches.Count} PID(s): {string.Join(", ", processIds)}");
         }
 
         ProfileSession.LoadedProcessIds = processIds;
@@ -205,15 +256,21 @@ public static class ProfileTools
         ProfileSession.TotalWeight = totalWeight;
         ProfileSession.LoadedProfile = profile;
         ProfileSession.LoadedFilePath = profileFilePath;
-        (ProfileSession.Provider as IDisposable)?.Dispose();
         ProfileSession.Provider = provider;
+        ProfileSession.Report = report;
+
+        DiagnosticLogger.LogInfo($"[MCP] OpenTrace completed in {loadStopwatch.ElapsedMilliseconds}ms — {profile.FunctionProfiles.Count} functions, {report.Modules?.Count ?? 0} modules");
         return profile;
       }
       catch (Exception ex)
       {
         ProfileSession.LoadException = ex;
-        Trace.TraceError($"OpenTrace failed: {ex}");
+        DiagnosticLogger.LogError($"[MCP] OpenTrace failed after {loadStopwatch.ElapsedMilliseconds}ms: {ex.Message}", ex);
         return null;
+      }
+      finally
+      {
+        ProfileSession.LoadSemaphore.Release();
       }
     });
 
@@ -256,6 +313,23 @@ public static class ProfileTools
     if (ProfileSession.LoadedProfile != null)
     {
       ProfileSession.PendingLoad = null;
+
+      // Build symbol resolution summary from the report.
+      object[]? moduleReport = null;
+      if (ProfileSession.Report?.Modules != null)
+      {
+        moduleReport = ProfileSession.Report.Modules
+          .OrderByDescending(m => m.HasDebugInfoLoaded ? 0 : 1)
+          .Select(m => (object)new
+          {
+            Module = m.ImageFileInfo?.ImageName ?? "Unknown",
+            SymbolsLoaded = m.HasDebugInfoLoaded,
+            BinaryState = m.State.ToString(),
+            PdbPath = m.DebugInfoFile?.FilePath,
+            BinaryPath = m.BinaryFileInfo?.FilePath
+          }).ToArray();
+      }
+
       return JsonSerializer.Serialize(new
       {
         Action = "GetTraceLoadStatus",
@@ -265,6 +339,7 @@ public static class ProfileTools
         ProcessIds = ProfileSession.LoadedProcessIds,
         FunctionCount = ProfileSession.LoadedProfile.FunctionProfiles.Count,
         ModuleCount = ProfileSession.LoadedProfile.Modules?.Count ?? 0,
+        SymbolResolution = moduleReport,
         Timestamp = DateTime.UtcNow
       }, JsonOpts);
     }
@@ -400,6 +475,9 @@ public static class ProfileTools
   [McpServerTool, Description("Get assembly code for a specific function by name")]
   public static async Task<string> GetFunctionAssembly(string functionName)
   {
+    DiagnosticLogger.LogInfo($"[MCP] GetFunctionAssembly called: functionName={functionName}");
+    var sw = Stopwatch.StartNew();
+
     var profile = ProfileSession.LoadedProfile;
     if (profile == null)
       return Error("GetFunctionAssembly", "No profile loaded. Call OpenTrace and wait for completion first.");
@@ -562,6 +640,8 @@ public static class ProfileTools
     [Description("Max number of full back-traces (call stacks) to return (default 5)")]
     int? maxBacktraces = null)
   {
+    DiagnosticLogger.LogInfo($"[MCP] GetFunctionCallerCallee called: functionName={functionName}, maxCallers={maxCallers}, maxCallees={maxCallees}, maxBacktraces={maxBacktraces}");
+
     var profile = ProfileSession.LoadedProfile;
     if (profile == null)
       return Error("GetFunctionCallerCallee", "No profile loaded. Call OpenTrace and wait for completion first.");
@@ -660,6 +740,20 @@ public static class ProfileTools
     return JsonSerializer.Serialize(result, JsonOpts);
   }
 
+  [McpServerTool, Description("Close the currently loaded trace and reset all session state. Use this to abandon a stuck load or free resources before loading a new trace.")]
+  public static string CloseTrace()
+  {
+    DiagnosticLogger.LogInfo("[MCP] CloseTrace called");
+    ProfileSession.Reset();
+    return JsonSerializer.Serialize(new
+    {
+      Action = "CloseTrace",
+      Status = "Success",
+      Description = "Trace closed and all session state reset.",
+      Timestamp = DateTime.UtcNow
+    }, JsonOpts);
+  }
+
   [McpServerTool, Description("Get help information about available MCP commands")]
   public static string GetHelp()
   {
@@ -675,7 +769,8 @@ public static class ProfileTools
         "3. GetTraceLoadStatus() — poll until 'Complete'",
         "4. GetAvailableFunctions/GetAvailableBinaries — query the loaded profile",
         "5. GetFunctionAssembly(name) — get instruction-level hotspot data",
-        "6. GetFunctionCallerCallee(name) — get callers, callees, and full call stacks"
+        "6. GetFunctionCallerCallee(name) — get callers, callees, and full call stacks",
+        "7. CloseTrace() — close trace and reset state (required before loading a new trace)"
       }
     };
     return JsonSerializer.Serialize(help, JsonOpts);
