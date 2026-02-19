@@ -135,7 +135,7 @@ There are two MCP-related projects in the repo. Only the headless server is acti
 | **Architecture** | Library defining `IMcpActionExecutor` interface. The WPF app implements this interface (`McpActionExecutor.cs`) and routes MCP calls through the UI dispatcher. | Standalone console exe. Calls `ProfileExplorerCore` APIs directly — no WPF, no dispatcher. |
 | **Status** | **Not used.** Deadlocks when the WPF `Dispatcher.Invoke` blocks the MCP thread waiting for UI operations. | **Active.** All AI assistant workflows use this server. |
 | **Coupling** | Loose — interface-based. Requires UI to implement the executor. | Tight — directly uses `ETWProfileDataProvider`, `ProfileData`, `CallTree`, `Disassembler`. |
-| **Tools** | 6 tools via interface (`OpenTrace`, `GetStatus`, `GetAvailableProcesses`, `GetAvailableFunctions`, `GetAvailableBinaries`, `GetFunctionAssemblyToFile`) | 8 tools with richer features: multi-process selection, caller/callee analysis, Capstone disassembly with per-instruction source lines and inline function info. |
+| **Tools** | 6 tools via interface (`OpenTrace`, `GetStatus`, `GetAvailableProcesses`, `GetAvailableFunctions`, `GetAvailableBinaries`, `GetFunctionAssemblyToFile`) | 9 tools with richer features: multi-process selection, custom symbol paths, caller/callee with FunctionPct, CloseTrace for state reset, Capstone disassembly with per-instruction source lines and inline function info. |
 | **State** | Stateless — each call is dispatched to the UI which holds state. | Stateful — `ProfileSession` singleton holds loaded profile, provider, and symbol settings. |
 
 The embedded approach (`ProfileExplorer.Mcp`) was the repo's original attempt at MCP support. It works conceptually but in practice the WPF dispatcher serialization creates deadlocks: MCP tool calls block on `Dispatcher.Invoke`, but the dispatcher is waiting for previous work to complete. The headless server (`ProfileExplorer.McpServer`) solves this by bypassing the UI entirely.
@@ -164,30 +164,60 @@ Registered in `~/.copilot/mcp-config.json` as `profile-explorer`:
 | Tool | Description |
 |------|-------------|
 | `GetAvailableProcesses` | List processes in a trace file with weight percentages. Filtering by min weight %, top N. |
-| `OpenTrace` | Start async loading of a trace for a specific process. Returns immediately. |
+| `OpenTrace` | Start async loading of a trace for a specific process. Optional `symbolPath` for custom/private PDBs. Returns immediately. |
 | `GetTraceLoadStatus` | Poll loading progress. Returns Loading/Complete/Failed. |
-| `GetAvailableFunctions` | List functions with self-time/total-time %. Filter by module, min %, top N. |
+| `CloseTrace` | Close the current trace and fully reset session state (including symbol caches). Required before loading a new trace. |
+| `GetAvailableFunctions` | List functions with self-time/total-time %. Filter by module, min %, top N. Uses PDB-resolved names. |
 | `GetAvailableBinaries` | List modules/DLLs aggregated by CPU time. Filter by min %, top N. |
 | `GetFunctionAssembly` | Instruction-level hotspots with Capstone disassembly, source line mapping, and inline function info. |
-| `GetFunctionCallerCallee` | Callers, callees, and full backtraces for a function. |
+| `GetFunctionCallerCallee` | Callers, callees, and full backtraces for a function. Includes both trace-relative (`WeightPct`) and function-relative (`FunctionPct`) percentages. |
 | `GetHelp` | Usage workflow documentation. |
 
 ### Session Model
 
 `ProfileSession` is a static singleton holding loaded state:
 - `LoadedProfile` — the `ProfileData` after successful load
-- `Provider` — kept alive for on-demand source line resolution
+- `Provider` — kept alive for on-demand source line resolution and disassembly
 - `PendingLoad` — `Task<ProfileData?>` for async loading
 - `TotalWeight` — pre-computed total weight for percentage calculations
+- `LoadSemaphore` — concurrency guard preventing overlapping trace loads
+- `SymbolSettings` — `SymbolFileSourceSettings` used for the current load (needed for disassembly)
+- `LoadException` — captured exception if loading fails
+- `LoadedFilePath` / `PendingFilePath` / `PendingProcessId` — track current and pending load targets
+- `LoadedProcessIds` — list of process IDs included in the loaded profile
+- `Report` — symbol resolution report with per-module resolution stats
+
+`Reset()` clears all state including static symbol caches (`PDBDebugInfoProvider.ClearResolvedCache()`), ensuring no stale negative caching between loads with different symbol paths.
+
+### Function Name Resolution
+
+`IRTextFunction.Name` is frozen as a hex placeholder (e.g., `28BC63`) during ETL parsing when PDB symbols are not yet loaded. The actual resolved name (e.g., `ExpWaitForSpinLockSharedAndAcquire`) lives on `FunctionDebugInfo.Name`, accessed via `FunctionProfileData.FunctionDebugInfo`.
+
+Two `ResolveFunctionName` helpers handle the lookup:
+- `ResolveFunctionName(IRTextFunction)` — looks up `profile.FunctionProfiles[func].FunctionDebugInfo?.Name`
+- `ResolveFunctionName(ProfileCallTreeNode)` — uses `node.FunctionDebugInfo?.Name`
+
+`FindFunction` searches by resolved PDB name first, falling back to the hex name.
+
+### FunctionPct vs WeightPct
+
+Call stack data includes two percentage types:
+- `WeightPct` / `InclusivePct` — percentage of entire trace time (weight ÷ totalTraceWeight × 100)
+- `FunctionPct` — percentage of the target function's time (weight ÷ functionWeight × 100), matching the GUI's drill-down view
+
+### Diagnostic Logging
+
+Structured diagnostic logging via `DiagnosticLogger` traces MCP operations, function resolution, and symbol loading. Log files are written alongside the trace file with timestamps.
 
 ### Typical Workflow
 
 1. `GetAvailableProcesses(filePath)` — discover processes in a trace
-2. `OpenTrace(filePath, processId)` — start loading (async)
+2. `OpenTrace(filePath, processId, symbolPath?)` — start loading (async), optionally with custom symbol path
 3. `GetTraceLoadStatus()` — poll until Complete
 4. `GetAvailableFunctions(topCount: 20)` — find hot functions
 5. `GetFunctionAssembly(name)` — drill into instruction-level hotspots
-6. `GetFunctionCallerCallee(name)` — understand call context
+6. `GetFunctionCallerCallee(name)` — understand call context (with FunctionPct for drill-down)
+7. `CloseTrace()` — reset state before loading a different trace
 
 ---
 
@@ -255,7 +285,7 @@ The core and UI projects have additional dependencies (TraceEvent for ETW, DIA S
 | Limitation | Impact |
 |-----------|--------|
 | Windows only | ETW and WPF are Windows-specific technologies |
-| One trace at a time (MCP) | The headless MCP server holds a single `ProfileSession` — loading a new trace replaces the previous one |
+| One trace at a time (MCP) | The headless MCP server holds a single `ProfileSession` — call `CloseTrace()` before loading a new trace |
 | Symbol server latency | First load of a trace can be slow if PDBs need downloading from symbol servers |
 | Large trace memory | Very large traces consume significant memory for the in-memory call tree and profile data |
 | Release builds required | The user's MCP config points to Release output; Debug builds won't be picked up |
