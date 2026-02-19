@@ -655,6 +655,7 @@ public static class ProfileTools
 
     var data = profile.FunctionProfiles[match];
     var totalWeightMs = ProfileSession.TotalWeight.TotalMilliseconds;
+    var functionWeightMs = data.Weight.TotalMilliseconds;
     int callerLimit = maxCallers ?? 10;
     int calleeLimit = maxCallees ?? 10;
     int backtraceLimit = maxBacktraces ?? 5;
@@ -685,7 +686,8 @@ public static class ProfileTools
       {
         Function = kv.Key,
         InclusiveTimeMs = Math.Round(kv.Value.weight.TotalMilliseconds, 2),
-        InclusivePct = totalWeightMs > 0 ? Math.Round(kv.Value.weight.TotalMilliseconds / totalWeightMs * 100, 2) : 0
+        InclusivePct = totalWeightMs > 0 ? Math.Round(kv.Value.weight.TotalMilliseconds / totalWeightMs * 100, 2) : 0,
+        FunctionPct = functionWeightMs > 0 ? Math.Round(kv.Value.weight.TotalMilliseconds / functionWeightMs * 100, 2) : 0
       }).ToArray();
 
     // Aggregate callees from the combined node's children
@@ -702,6 +704,7 @@ public static class ProfileTools
           Function = $"{c.Function.ModuleName}!{c.Function.Name}",
           InclusiveTimeMs = Math.Round(c.Weight.TotalMilliseconds, 2),
           InclusivePct = totalWeightMs > 0 ? Math.Round(c.Weight.TotalMilliseconds / totalWeightMs * 100, 2) : 0,
+          FunctionPct = functionWeightMs > 0 ? Math.Round(c.Weight.TotalMilliseconds / functionWeightMs * 100, 2) : 0,
           SelfTimeMs = Math.Round(c.ExclusiveWeight.TotalMilliseconds, 2),
           SelfPct = totalWeightMs > 0 ? Math.Round(c.ExclusiveWeight.TotalMilliseconds / totalWeightMs * 100, 2) : 0
         }).ToArray<object>();
@@ -717,6 +720,7 @@ public static class ProfileTools
         {
           WeightMs = Math.Round(inst.Weight.TotalMilliseconds, 2),
           WeightPct = totalWeightMs > 0 ? Math.Round(inst.Weight.TotalMilliseconds / totalWeightMs * 100, 2) : 0,
+          FunctionPct = functionWeightMs > 0 ? Math.Round(inst.Weight.TotalMilliseconds / functionWeightMs * 100, 2) : 0,
           Stack = bt.Select(n => $"{n.Function?.ModuleName}!{n.Function?.Name}").ToArray()
         };
       }).ToArray();
