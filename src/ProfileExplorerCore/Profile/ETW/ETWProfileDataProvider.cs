@@ -298,6 +298,24 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           Trace.WriteLine(
             $"LoadTraceAsync: Done processing trace in {processingSw.Elapsed}, {processingSw.ElapsedMilliseconds} ms");
 
+          // If the trace has registered PMU counters (from PerfInfoCollectionEnd events)
+          // but no PerfInfoPMCSample events, the PMU counters were used as sampling sources
+          // rather than as separate counting events. Create synthetic counter events from
+          // the regular samples, similar to how samples without stacks get a synthetic
+          // single-frame stack (see ProcessSamplesChunk).
+          if (!rawProfile.HasPerformanceCountersEvents && rawProfile.PerformanceCounters.Count > 0) {
+            Trace.WriteLine($"LoadTraceAsync: Generating synthetic PMC events from {rawProfile.Samples.Count} samples " +
+                           $"for {rawProfile.PerformanceCounters.Count} PMU sampling source counter(s)");
+
+            foreach (var sample in rawProfile.Samples) {
+              foreach (var counter in rawProfile.PerformanceCounters) {
+                var counterEvent = new PerformanceCounterEvent(
+                  sample.IP, sample.Time, sample.ContextId, (short)counter.Id);
+                rawProfile.AddPerformanceCounterEvent(counterEvent);
+              }
+            }
+          }
+
           // Process performance counters.
           if (rawProfile.HasPerformanceCountersEvents) {
             Trace.WriteLine($"LoadTraceAsync: Processing {rawProfile.PerformanceCountersEvents.Count} performance counter events");
@@ -1340,8 +1358,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           continue;
         }
 
-        if (!profileModuleBuilder.Initialized || !profileModuleBuilder.HasDebugInfo) {
-          //Trace.WriteLine($"Uninitialized module {image.FileName}");
+        if (!profileModuleBuilder.HasDebugInfo) {
           continue;
         }
 
