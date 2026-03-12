@@ -301,7 +301,7 @@ class DoubleScalingConverter : IValueConverter {
       return 0.0;
     }
 
-    double maxValue = double.Parse((string)parameter);
+    double maxValue = double.Parse((string)parameter, CultureInfo.InvariantCulture);
     return doubleValue * maxValue;
   }
 
@@ -311,7 +311,7 @@ class DoubleScalingConverter : IValueConverter {
     }
 
     double doubleValue = (double)value;
-    double maxValue = double.Parse((string)parameter);
+    double maxValue = double.Parse((string)parameter, CultureInfo.InvariantCulture);
 
     if (maxValue == 0) {
       return 0.0;
@@ -384,7 +384,7 @@ class TreeViewLineConverter : IValueConverter {
 class ColorBrushOpacityConverter : IValueConverter {
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
     var brush = value as SolidColorBrush;
-    double opacity = double.Parse((string)parameter);
+    double opacity = double.Parse((string)parameter, CultureInfo.InvariantCulture);
 
     if (brush == null) {
       return ColorBrushes.Transparent;
