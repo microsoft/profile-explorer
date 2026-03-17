@@ -395,6 +395,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
 
       var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
+      thread.Win32StartAddr = (long)data.Win32StartAddr;
       profile.AddThreadToProcess(data.ProcessID, thread);
     };
 

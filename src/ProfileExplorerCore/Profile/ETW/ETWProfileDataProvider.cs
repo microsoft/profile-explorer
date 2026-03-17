@@ -84,10 +84,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         var thread = profileData_.FindThread(threadId);
-
-        string funcName = thread?.HasName == true
-          ? $"[Unknown Module Thread {threadId} ({thread.Name})]"
-          : $"[Unknown Module Thread {threadId}]";
+        string startModule = ResolveStartModule(thread);
+        string funcName = FormatFuncName(threadId, thread?.Name, startModule);
 
         // RVA is set to a non-zero value (threadId) so FunctionDebugInfo.IsUnknown
         // returns false, and the frame's RVA matches so offset computes to 0.
@@ -99,6 +97,50 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         threadFunctions_[threadId] = result;
         return result;
       }
+    }
+
+    /// <summary>
+    /// Resolves the module containing the thread's Win32 start address.
+    /// </summary>
+    private string ResolveStartModule(ProfileThread thread) {
+      if (thread == null || thread.Win32StartAddr == 0) {
+        return null;
+      }
+
+      foreach (var module in profileData_.Modules.Values) {
+        if (module.HasAddress(thread.Win32StartAddr)) {
+          return module.ModuleName;
+        }
+      }
+
+      return null;
+    }
+
+    /// <summary>
+    /// Formats function as [JIT ThreadName (ThreadId) StartModule].
+    /// </summary>
+    private static string FormatFuncName(int threadId, string threadName, string startModule) {
+      // Examples:
+      //   [JIT WorkerThread (1234) lua51.dll]
+      //   [JIT Thread 1234 lua51.dll]
+      //   [JIT WorkerThread (1234)]
+      //   [JIT Thread 1234]
+      var sb = new System.Text.StringBuilder("[JIT ");
+
+      if (!string.IsNullOrEmpty(threadName)) {
+        sb.Append($"{threadName} ({threadId})");
+      }
+      else {
+        sb.Append($"Thread {threadId}");
+      }
+
+      if (!string.IsNullOrEmpty(startModule)) {
+        sb.Append(' ');
+        sb.Append(startModule);
+      }
+
+      sb.Append(']');
+      return sb.ToString();
     }
   }
 

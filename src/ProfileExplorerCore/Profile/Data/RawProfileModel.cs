@@ -630,6 +630,8 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
   public int ProcessId { get; set; }
   [ProtoMember(3)]
   public string Name { get; set; }
+  [ProtoMember(4)]
+  public long Win32StartAddr { get; set; }
   public bool HasName => !string.IsNullOrEmpty(Name);
 
   public bool Equals(ProfileThread other) {
