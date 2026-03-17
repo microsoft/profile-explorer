@@ -271,10 +271,12 @@ public class RawProfileData : IDisposable {
   }
 
   public void LoadingCompleted() {
-    // Free objects used while reading the profile.
+    // Free objects used only during trace event processing.
+    // imagesMap_ is kept alive (should be small) so AddImage
+    // can be called after loading for synthetic images.
     stacksMap_ = null;
     contextsMap_ = null;
-    imagesMap_ = null;
+    // imagesMap_ = null; 
     threadsMap_ = null;
     stackData_ = null;
     lastProcStacks_ = null;
