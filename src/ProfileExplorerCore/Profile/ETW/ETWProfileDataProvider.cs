@@ -69,6 +69,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     for (int i = 0; i < imageLocks_.Length; i++) {
       imageLocks_[i] = new object();
     }
+
+    // Clear static caches from any previous trace load to prevent
+    // stale frame/function references leaking across sessions.
+    ResolvedProfileStack.uniqueFrames_.Clear();
+    ResolvedProfileStack.frameInstances_.Clear();
+    ResolvedProfileStack.kernelFrameInstances_.Clear();
   }
 
   public static async Task<List<ProcessSummary>>
@@ -425,6 +431,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         SymbolFileSourceSettings symbolSettings,
                         ProfileLoadProgressHandler progressCallback,
                         CancelableTask cancelableTask, int chunks) {
+
+    // Clear thread-local caches to prevent stale data from previous trace loads
+    prevImage_ = null;
+    prevProfileModuleBuilder_ = null;
+    RawProfileData.ClearThreadLocalCaches();
+
     var totalWeight = TimeSpan.Zero;
     var profileWeight = TimeSpan.Zero;
     var samples = new List<(ProfileSample Sample, ResolvedProfileStack Stack)>(end - start + 1);

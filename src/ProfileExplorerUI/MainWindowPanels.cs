@@ -1028,9 +1028,14 @@ public partial class MainWindow : Window, IUISession {
   }
 
   private async Task SetupSectionPanel() {
+    Trace.WriteLine($"SetupSectionPanel: MainSummary={SectionPanel.MainSummary?.ModuleName ?? "NULL"}, Docs={sessionState_.Documents.Count}");
+
     if (SectionPanel.MainSummary == null) {
       SectionPanel.CompilerInfo = compilerInfo_;
       SectionPanel.Session = this;
+
+      // Clear stale module summaries from any previous session.
+      SectionPanel.ClearModuleSummaries();
 
       foreach (var doc in sessionState_.Documents) {
         if (doc != sessionState_.MainDocument &&
@@ -1040,7 +1045,7 @@ public partial class MainWindow : Window, IUISession {
         }
       }
 
-      await SectionPanel.SetMainSummary(sessionState_.MainDocument.Summary);
+      await SectionPanel.SetMainSummary(sessionState_.MainDocument.Summary, updateFunctionList: true);
       SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
       SectionPanel.OnSessionStart();
     }

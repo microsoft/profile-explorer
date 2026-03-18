@@ -26,6 +26,15 @@ public class RawProfileData : IDisposable {
   private static ProfileImage lastIpImage_;
   [ThreadStatic]
   private static IpToImageCache globalIpImageCache_;
+
+  /// <summary>
+  /// Clears thread-local caches on the current thread
+  /// </summary>
+  public static void ClearThreadLocalCaches() {
+    ipImageCache_ = null;
+    lastIpImage_ = null;
+    globalIpImageCache_ = null;
+  }
   [ProtoMember(1)]
   private List<ProfileSample> samples_;
   [ProtoMember(2)]

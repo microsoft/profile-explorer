@@ -1252,6 +1252,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  public void ClearModuleSummaries() {
+    moduleSummaries_.Clear();
+    sectionExtensionComputed_ = false;
+  }
+
   public bool HasSummary(IRTextSummary summary) {
     return summary == summary_ ||
            moduleSummaries_.Contains(summary);
