@@ -750,33 +750,34 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     return resolvedStack;
   }
 
+  private ProfileImage unknownModuleImage_;
+
   /// <summary>
   /// Pre-creates the synthetic [Unknown Module] for a process. Must be called
   /// before parallel sample processing begins.
   /// </summary>
   private void PreCreateUnknownModule(RawProfileData rawProfile, int processId) {
-    ProfileImage image = new ProfileImage(
-      filePath: UnknownModuleName,
-      originalFileName: UnknownModuleName,
-      baseAddress: 0,
-      defaultBaseAddress: 0,
-      size: 0,
-      timeStamp: 0,
-      checksum: 0);
+    // Share a single image across all processes to match how real modules
+    // are deduplicated by AddImage.
+    if (unknownModuleImage_ == null) {
+      unknownModuleImage_ = new ProfileImage(
+        filePath: UnknownModuleName,
+        originalFileName: UnknownModuleName,
+        baseAddress: 0,
+        defaultBaseAddress: 0,
+        size: 0,
+        timeStamp: 0,
+        checksum: 0);
 
-    // Gets a proper sequential ID via RawProfileData.AddImage.
-    int imageId = rawProfile.AddImageToProcess(processId, image);
+      // Use AddImageDirect since LoadingCompleted() has already freed imagesMap_.
+      rawProfile.AddImageDirect(unknownModuleImage_);
+      profileData_.Modules[unknownModuleImage_.Id] = unknownModuleImage_;
+    }
 
-    // AddImage deduplicates; ie. if another process already created the same
-    // synthetic image, the passed-in image.Id won't be set. Use the
-    // returned ID to find the canonical instance.
-    image = rawProfile.FindImage(imageId);
-    profileData_.Modules[image.Id] = image;
-
-    UnknownModuleState state = new UnknownModuleState(image, profileData_);
+    var state = new UnknownModuleState(unknownModuleImage_, profileData_);
     unknownModules_[processId] = state;
 
-    Trace.WriteLine($"Pre-created synthetic {UnknownModuleName} for process {processId}, ImageId={image.Id}");
+    Trace.WriteLine($"Pre-created synthetic {UnknownModuleName} for process {processId}, ImageId={unknownModuleImage_.Id}");
   }
 
   /// <summary>

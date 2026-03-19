@@ -272,17 +272,24 @@ public class RawProfileData : IDisposable {
 
   public void LoadingCompleted() {
     // Free objects used only during trace event processing.
-    // imagesMap_ is kept alive (should be small) so AddImage
-    // can be called after loading for synthetic images.
     stacksMap_ = null;
     contextsMap_ = null;
-    // imagesMap_ = null; 
+    imagesMap_ = null;
     threadsMap_ = null;
     stackData_ = null;
     lastProcStacks_ = null;
 
     // Wait for any compression tasks.
     perfCountersEvents_?.Wait();
+  }
+
+  /// <summary>
+  /// Adds an image directly to the images list and assigns it a sequential ID,
+  /// bypassing deduplication. Safe to call after LoadingCompleted().
+  /// </summary>
+  public void AddImageDirect(ProfileImage image) {
+    images_.Add(image);
+    image.Id = images_.Count;
   }
 
   public void ManagedLoadingCompleted() {
