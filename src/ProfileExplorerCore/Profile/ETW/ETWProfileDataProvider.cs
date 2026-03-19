@@ -72,9 +72,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     // Clear static caches from any previous trace load to prevent
     // stale frame/function references leaking across sessions.
-    ResolvedProfileStack.uniqueFrames_.Clear();
-    ResolvedProfileStack.frameInstances_.Clear();
-    ResolvedProfileStack.kernelFrameInstances_.Clear();
+    ResolvedProfileStack.ResetCaches();
   }
 
   public static async Task<List<ProcessSummary>>
