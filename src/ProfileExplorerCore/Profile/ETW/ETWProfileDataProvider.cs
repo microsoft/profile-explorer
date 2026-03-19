@@ -675,12 +675,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
           // IP doesn't map to any known module (e.g., JITted). Attribute
           // to a synthetic JIT function, but skip consecutive unknown frames
           // to avoid recursive self-call chains in the call tree.
-          if (!prevFrameWasUnknownJit) {
+            if (!prevFrameWasUnknownJit) {
             var unknownState = GetUnknownModule(context.ProcessId);
             if (unknownState != null) {
-              (IRTextFunction Function, FunctionDebugInfo DebugInfo) = unknownState.GetOrCreateThreadFunction(context.ThreadId);
-              ResolvedProfileStackFrameKey unknownFrame = new ResolvedProfileStackFrameKey(DebugInfo, unknownState.Image, false);
-              resolvedStack.AddFrame(Function, frameIp, DebugInfo.RVA,
+              (IRTextFunction function, FunctionDebugInfo debugInfo) = unknownState.GetOrCreateThreadFunction(context.ThreadId);
+              ResolvedProfileStackFrameKey unknownFrame = new ResolvedProfileStackFrameKey(debugInfo, unknownState.Image, false);
+              resolvedStack.AddFrame(function, frameIp, debugInfo.RVA,
                                     frameIndex, unknownFrame, stack, pointerSize);
               prevFrameWasUnknownJit = true;
               continue;
