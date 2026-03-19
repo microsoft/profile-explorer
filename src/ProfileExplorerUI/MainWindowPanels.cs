@@ -1043,7 +1043,7 @@ public partial class MainWindow : Window, IUISession {
         }
       }
 
-      await SectionPanel.SetMainSummary(sessionState_.MainDocument.Summary, updateFunctionList: true);
+      await SectionPanel.SetMainSummary(sessionState_.MainDocument.Summary);
       SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
       SectionPanel.OnSessionStart();
     }
