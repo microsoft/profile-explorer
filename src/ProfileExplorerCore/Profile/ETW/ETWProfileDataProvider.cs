@@ -765,7 +765,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       checksum: 0);
 
     // Gets a proper sequential ID via RawProfileData.AddImage.
-    rawProfile.AddImageToProcess(processId, image);
+    int imageId = rawProfile.AddImageToProcess(processId, image);
+
+    // AddImage deduplicates; ie. if another process already created the same
+    // synthetic image, the passed-in image.Id won't be set. Use the
+    // returned ID to find the canonical instance.
+    image = rawProfile.FindImage(imageId);
     profileData_.Modules[image.Id] = image;
 
     UnknownModuleState state = new UnknownModuleState(image, profileData_);
