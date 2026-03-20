@@ -685,6 +685,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
               prevFrameWasUnknownJit = true;
               continue;
             }
+
+            // Fallback when no synthetic module state for this process
+            resolvedStack.AddFrame(null, frameIp, 0, frameIndex,
+                                  ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+            continue;
           }
 
           // Consecutive unknown frame or no UnknownModule state -- skip.
