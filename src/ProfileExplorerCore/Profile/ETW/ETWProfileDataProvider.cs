@@ -680,7 +680,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             if (unknownState != null) {
               (IRTextFunction function, FunctionDebugInfo debugInfo) = unknownState.GetOrCreateThreadFunction(context.ThreadId);
               ResolvedProfileStackFrameKey unknownFrame = new ResolvedProfileStackFrameKey(debugInfo, unknownState.Image, false);
-              resolvedStack.AddFrame(function, frameIp, debugInfo.RVA,
+
+              // Use a synthetic IP keyed by thread ID to prevent cache collisions
+              // in ResolvedProfileStack.frameInstances_ when multiple threads
+              // share the same unmapped IP
+              long syntheticIp = -((long)context.ProcessId << 32 | (uint)context.ThreadId);
+              resolvedStack.AddFrame(function, syntheticIp, debugInfo.RVA,
                                     frameIndex, unknownFrame, stack, pointerSize);
               prevFrameWasUnknownJit = true;
               continue;
