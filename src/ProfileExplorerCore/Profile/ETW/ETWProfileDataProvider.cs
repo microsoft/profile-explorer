@@ -57,6 +57,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   // known module loaded in the process. This can be dynamically generated code
   // (e.g., LUA JIT, Java JIT), code from unloaded modules, or other unmapped regions.
   private const string UnknownModuleName = "[Unknown Module]";
+
+  private const ulong SyntheticIpBase = 0x0000_8000_0000_0000UL;
+  private const ulong ProcessIdMask   = 0x7FFF_FFFFUL;
+
   private sealed class UnknownModuleState(ProfileImage image, ProfileData profileData) {
     private readonly object lock_ = new();
     private readonly ConcurrentDictionary<int, (IRTextFunction Function, FunctionDebugInfo DebugInfo)> threadFunctions_ = new();
@@ -121,27 +125,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     /// Formats function as [JIT ThreadName (ThreadId) StartModule].
     /// </summary>
     private static string FormatFuncName(int threadId, string threadName, string startModule) {
-      // Examples:
-      //   [JIT WorkerThread (1234) lua51.dll]
-      //   [JIT Thread 1234 lua51.dll]
-      //   [JIT WorkerThread (1234)]
-      //   [JIT Thread 1234]
-      var sb = new System.Text.StringBuilder("[JIT ");
-
+      // Examples: [JIT WorkerThread (1234) lua51.dll], [JIT Thread 1234]
       if (!string.IsNullOrEmpty(threadName)) {
-        sb.Append($"{threadName} ({threadId})");
-      }
-      else {
-        sb.Append($"Thread {threadId}");
-      }
-
-      if (!string.IsNullOrEmpty(startModule)) {
-        sb.Append(' ');
-        sb.Append(startModule);
+        return string.IsNullOrEmpty(startModule)
+          ? $"[JIT {threadName} ({threadId})]"
+          : $"[JIT {threadName} ({threadId}) {startModule}]";
       }
 
-      sb.Append(']');
-      return sb.ToString();
+      return string.IsNullOrEmpty(startModule)
+        ? $"[JIT Thread {threadId}]"
+        : $"[JIT Thread {threadId} {startModule}]";
     }
   }
 
@@ -673,10 +666,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         if (frameImage == null) {
           unknownFrames++;
           // IP doesn't map to any known module (e.g., JITted). Attribute
-          // to a synthetic JIT function, but skip consecutive unknown frames
-          // to avoid recursive self-call chains in the call tree.
-            if (!prevFrameWasUnknownJit) {
-            var unknownState = GetUnknownModule(context.ProcessId);
+          // to a synthetic per-thread JIT function, but collapse consecutive
+          // unknown frames to avoid self-recursive chains in the call tree
+          if (!prevFrameWasUnknownJit) {
+            UnknownModuleState? unknownState = GetUnknownModule(context.ProcessId);
+
             if (unknownState != null) {
               (IRTextFunction function, FunctionDebugInfo debugInfo) = unknownState.GetOrCreateThreadFunction(context.ThreadId);
               ResolvedProfileStackFrameKey unknownFrame = new ResolvedProfileStackFrameKey(debugInfo, unknownState.Image, false);
@@ -684,7 +678,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
               // Use a synthetic IP keyed by thread ID to prevent cache collisions
               // in ResolvedProfileStack.frameInstances_ when multiple threads
               // share the same unmapped IP
-              long syntheticIp = -((long)context.ProcessId << 32 | (uint)context.ThreadId);
+              long syntheticIp = MakeSyntheticIp(context.ProcessId, context.ThreadId);
               resolvedStack.AddFrame(function, syntheticIp, debugInfo.RVA,
                                     frameIndex, unknownFrame, stack, pointerSize);
               prevFrameWasUnknownJit = true;
@@ -697,7 +691,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             continue;
           }
 
-          // Consecutive unknown frame or no UnknownModule state -- skip.
+          // Consecutive unknown frame after a named JIT frame -- skip
+          // to avoid self-recursive chains in the call tree.
           continue;
         }
       }
@@ -796,6 +791,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   /// </summary>
   private UnknownModuleState? GetUnknownModule(int processId) {
     return unknownModules_.GetValueOrDefault(processId);
+  }
+
+  /// <summary>
+  /// Creates a synthetic IP that is unique per (processId, threadId) and
+  /// lives in a non-canonical user-mode range so it never collides with
+  /// real IPs or gets misclassified as kernel code.
+  /// </summary>
+  private static long MakeSyntheticIp(int processId, int threadId) {
+    ulong pid = (ulong)processId & ProcessIdMask;
+    ulong tid = (uint)threadId;
+    return unchecked((long)(SyntheticIpBase | (pid << 32) | tid));
   }
 
   private ILoadedDocument FindSessionDocuments(string imageName, out List<ILoadedDocument> otherDocuments) {
