@@ -288,6 +288,11 @@ public class RawProfileData : IDisposable {
   /// bypassing deduplication. Safe to call after LoadingCompleted().
   /// </summary>
   public void AddImageDirect(ProfileImage image) {
+    if (imagesMap_ != null) {
+      throw new InvalidOperationException(
+        "AddImageDirect can only be called after LoadingCompleted() has been invoked.");
+    }
+
     images_.Add(image);
     image.Id = images_.Count;
   }
