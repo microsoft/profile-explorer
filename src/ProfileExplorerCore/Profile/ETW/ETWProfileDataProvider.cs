@@ -61,10 +61,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const ulong SyntheticIpBase = 0x0000_8000_0000_0000UL;
   private const ulong ProcessIdMask   = 0x7FFF_FFFFUL;
 
-  private sealed class UnknownModuleState(ProfileImage image, ProfileData profileData) {
+  private sealed class UnknownModuleState(ProfileImage image, ProfileData profileData, int processId) {
     private readonly object lock_ = new();
     private readonly ConcurrentDictionary<int, (IRTextFunction Function, FunctionDebugInfo DebugInfo)> threadFunctions_ = new();
     private readonly ProfileData profileData_ = profileData;
+    private readonly int processId_ = processId;
     private readonly ILoadedDocument document_ = LoadedDocument.CreateDummyDocument(UnknownModuleName);
 
     public ProfileImage Image { get; } = image;
@@ -96,7 +97,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // returns false, and the frame's RVA matches so offset computes to 0.
         // Else, IsUnknown is dep on RVA==0 and Size==0, so this is somewhat a 
         // hack workaround (though similar is used elsewhere in codebase).
-        FunctionDebugInfo debugInfo = new FunctionDebugInfo(funcName, threadId, 1);
+        FunctionDebugInfo debugInfo = new FunctionDebugInfo(funcName, threadId, 1, id: processId_);
         IRTextFunction func = document_.AddDummyFunction(funcName);
         (IRTextFunction func, FunctionDebugInfo debugInfo) result = (func, debugInfo);
         threadFunctions_[threadId] = result;
@@ -779,7 +780,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       profileData_.Modules[unknownModuleImage_.Id] = unknownModuleImage_;
     }
 
-    var state = new UnknownModuleState(unknownModuleImage_, profileData_);
+    var state = new UnknownModuleState(unknownModuleImage_, profileData_, processId);
     unknownModules_[processId] = state;
 
     Trace.WriteLine($"Pre-created synthetic {UnknownModuleName} for process {processId}, ImageId={unknownModuleImage_.Id}");
