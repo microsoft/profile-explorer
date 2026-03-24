@@ -58,8 +58,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   // (e.g., LUA JIT, Java JIT), code from unloaded modules, or other unmapped regions.
   private const string UnknownModuleName = "[Unknown Module]";
 
-  private const ulong SyntheticIpBase = 0x0000_8000_0000_0000UL;
-  private const ulong ProcessIdMask   = 0x7FFF_FFFFUL;
+  // Synthetic IP layout: [base bit48] [PID 16-bit] [TID 32-bit].
+  // Chosen arbitrarily, just with constrait of being between 
+  // max user VA and IsKernelAddress threshold. See `IsKernelAddress` 
+  // in ETWEventProcessor.cs and https://learn.microsoft.com/en-us/windows-hardware/drivers/gettingstarted/virtual-address-spaces
+  private const ulong SyntheticIpBase = 0x0001_0000_0000_0000UL;
+
+// ProcessId (and ThreadId) is a DWORD (32-bit unsigned)
+// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessid
+  private const ulong ProcessIdMask   = 0xFFFFUL;
 
   private sealed class UnknownModuleState(ProfileImage image, ProfileData profileData, int processId) {
     private readonly object lock_ = new();
@@ -93,10 +100,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         string startModule = ResolveStartModule(thread);
         string funcName = FormatFuncName(threadId, thread?.Name, startModule);
 
-        // RVA is set to a non-zero value (threadId) so FunctionDebugInfo.IsUnknown
-        // returns false, and the frame's RVA matches so offset computes to 0.
-        // Else, IsUnknown is dep on RVA==0 and Size==0, so this is somewhat a 
-        // hack workaround (though similar is used elsewhere in codebase).
+        // RVA = threadId so FunctionDebugInfo.IsUnknown (RVA==0 && Size==0) is false.
+        // Id = processId_ so FunctionDebugInfo.Equals differentiates across processes
+        // (Id is normally MethodToken for managed code, repurposed here for dedup keying).
         FunctionDebugInfo debugInfo = new FunctionDebugInfo(funcName, threadId, 1, id: processId_);
         IRTextFunction func = document_.AddDummyFunction(funcName);
         (IRTextFunction func, FunctionDebugInfo debugInfo) result = (func, debugInfo);
@@ -666,6 +672,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (frameImage == null) {
           unknownFrames++;
+
+          // for case when some kernel address used without a named corresponding module,
+          // we should not label it as JIT immediately
+          if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
+            resolvedStack.AddFrame(null, frameIp, 0, frameIndex,
+                                  ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+            prevFrameWasUnknownJit = false;
+            continue;
+          }
+
           // IP doesn't map to any known module (e.g., JITted). Attribute
           // to a synthetic per-thread JIT function, but collapse consecutive
           // unknown frames to avoid self-recursive chains in the call tree
@@ -708,6 +724,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       if (profileModuleBuilder == null) {
         unknownFrames++;
         resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+        prevFrameWasUnknownJit = false;
         continue;
       }
 
@@ -795,9 +812,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   }
 
   /// <summary>
-  /// Creates a synthetic IP that is unique per (processId, threadId) and
-  /// lives in a non-canonical user-mode range so it never collides with
-  /// real IPs or gets misclassified as kernel code.
+  /// Creates a synthetic IP that is unique per (processId, threadId).
+  /// Uses made up x64 address that shouldn't naturally be scene in traces,
+  /// that stays below the IsKernelAddress threshold.
   /// </summary>
   private static long MakeSyntheticIp(int processId, int threadId) {
     ulong pid = (ulong)processId & ProcessIdMask;
