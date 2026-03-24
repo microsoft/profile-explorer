@@ -285,7 +285,7 @@ public class ETWUnmappedFrameResolutionTests {
   #region Helpers
 
   private static readonly ProfileImage RealImage =
-    new("app.exe", "app.exe", 0x1000, 0x1000, 0x100000, 0, 0xABCDEF);
+    new("app.exe", "app.exe", 0x1000, 0x1000, 0x100000, 0, 0xABCDEF) { Id = 1 };
 
   private static ProfileImage CreateUnknownModuleImage() =>
     new("[Unknown Module]", "[Unknown Module]", 0, 0, 0, 0, 0) { Id = 9999 };
