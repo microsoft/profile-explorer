@@ -44,8 +44,8 @@ The application was originally a compiler IR viewer and retains the ability to p
 |---------|------|-------------|
 | **ProfileExplorerUI** | WPF app (.NET 8) | Main desktop application. All UI panels, session management, profiling views, scripting, VS extension integration. |
 | **ProfileExplorerCore** | Class library | UI-independent engine: ETW trace loading, profile data model, call tree construction, IR parsing, binary analysis, symbol resolution, Capstone disassembly, Tree-sitter parsing, graph algorithms. |
-| **ProfileExplorer.McpServer** | Console app (.NET 8) | Headless MCP server exposing profiling tools over stdio. Uses `ProfileExplorerCore` directly — no UI dependency. **This is the active MCP server.** |
-| **ProfileExplorer.Mcp** | Class library + mock exe | Original MCP server designed to be embedded inside the WPF app via `IMcpActionExecutor`. Not used by the headless server. See [MCP: Embedded vs Headless](#mcp-embedded-vs-headless) below. |
+| **ProfileExplorer.McpServer** | Console app (.NET 8) | Headless MCP server exposing profiling tools over stdio. Uses `ProfileExplorerCore` directly — no UI dependency. See [MCP Servers](#mcp-servers) below. |
+| **ProfileExplorer.Mcp** | Class library | Shared MCP library used by the UI's embedded MCP server. Defines `IMcpActionExecutor` interface, tool routing (`ProfileExplorerTools`), and server configuration. Also includes a mock executor (`Program.cs`) for standalone testing of the MCP plumbing. |
 | **ProfileExplorerCoreTests** | xUnit tests | Unit tests for the core library. |
 | **ProfileExplorerUITests** | xUnit tests | Unit tests for UI logic. |
 | **ManagedProfiler** | .NET profiler | JIT profiler extension for capturing JIT output assembly. |
@@ -126,19 +126,31 @@ Key settings in `SymbolFileSourceSettings`:
 
 ---
 
-## MCP: Embedded vs Headless
+## MCP Servers
 
-There are two MCP-related projects in the repo. Only the headless server is actively used.
+Profile Explorer exposes two MCP (Model Context Protocol) servers for AI assistant integration:
 
-| Aspect | `ProfileExplorer.Mcp` (embedded) | `ProfileExplorer.McpServer` (headless) |
-|--------|----------------------------------|----------------------------------------|
-| **Architecture** | Library defining `IMcpActionExecutor` interface. The WPF app implements this interface (`McpActionExecutor.cs`) and routes MCP calls through the UI dispatcher. | Standalone console exe. Calls `ProfileExplorerCore` APIs directly — no WPF, no dispatcher. |
-| **Status** | **Not used.** Deadlocks when the WPF `Dispatcher.Invoke` blocks the MCP thread waiting for UI operations. | **Active.** All AI assistant workflows use this server. |
-| **Coupling** | Loose — interface-based. Requires UI to implement the executor. | Tight — directly uses `ETWProfileDataProvider`, `ProfileData`, `CallTree`, `Disassembler`. |
-| **Tools** | 6 tools via interface (`OpenTrace`, `GetStatus`, `GetAvailableProcesses`, `GetAvailableFunctions`, `GetAvailableBinaries`, `GetFunctionAssemblyToFile`) | 9 tools with richer features: multi-process selection, custom symbol paths, caller/callee with FunctionPct, CloseTrace for state reset, Capstone disassembly with per-instruction source lines and inline function info. |
-| **State** | Stateless — each call is dispatched to the UI which holds state. | Stateful — `ProfileSession` singleton holds loaded profile, provider, and symbol settings. |
+### 1. Embedded MCP (UI)
 
-The embedded approach (`ProfileExplorer.Mcp`) was the repo's original attempt at MCP support. It works conceptually but in practice the WPF dispatcher serialization creates deadlocks: MCP tool calls block on `Dispatcher.Invoke`, but the dispatcher is waiting for previous work to complete. The headless server (`ProfileExplorer.McpServer`) solves this by bypassing the UI entirely.
+The WPF desktop app (`ProfileExplorerUI`) starts an embedded MCP stdio server on launch. This uses the `ProfileExplorer.Mcp` library:
+
+- `ProfileExplorer.Mcp` defines the `IMcpActionExecutor` interface and tool routing
+- `ProfileExplorerUI` implements `McpActionExecutor`, which translates MCP tool calls into UI actions via the WPF dispatcher
+- This enables "co-investigation" — a user interacts with the UI while an AI assistant simultaneously drives actions
+
+The library also includes a `MockMcpActionExecutor` (`Program.cs`) for standalone testing of the MCP plumbing without the full UI.
+
+### 2. Headless MCP (Console)
+
+`ProfileExplorer.McpServer` is a standalone console application that calls `ProfileExplorerCore` APIs directly — no WPF, no dispatcher, no UI dependency. It is the preferred server for pure AI-driven analysis workflows.
+
+| Aspect | Embedded (UI) | Headless (Console) |
+|--------|---------------|-------------------|
+| **Binary** | `ProfileExplorerUI.exe` | `ProfileExplorer.McpServer.exe` |
+| **Engine** | `ProfileExplorer.Mcp` library → `IMcpActionExecutor` → WPF dispatcher | `ProfileExplorerCore` directly |
+| **Coupling** | Loose — interface-based, requires UI | Tight — direct API calls, no UI |
+| **Tools** | 6 tools via interface (`OpenTrace`, `GetStatus`, `GetAvailableProcesses`, `GetAvailableFunctions`, `GetAvailableBinaries`, `GetFunctionAssemblyToFile`) | 9 tools with richer features: multi-process selection, custom symbol paths, caller/callee with FunctionPct, CloseTrace for state reset, Capstone disassembly with per-instruction source lines and inline function info |
+| **State** | Stateless — each call dispatched to UI which holds state | Stateful — `ProfileSession` singleton holds loaded profile, provider, and symbol settings |
 
 ---
 
