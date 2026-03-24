@@ -59,13 +59,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private const string UnknownModuleName = "[Unknown Module]";
 
   // Synthetic IP layout: [base bit48] [PID 16-bit] [TID 32-bit].
-  // Chosen arbitrarily, just with constrait of being between 
+  // Chosen arbitrarily, just with constraint of being between 
   // max user VA and IsKernelAddress threshold. See `IsKernelAddress` 
   // in ETWEventProcessor.cs and https://learn.microsoft.com/en-us/windows-hardware/drivers/gettingstarted/virtual-address-spaces
   private const ulong SyntheticIpBase = 0x0001_0000_0000_0000UL;
 
 // ProcessId (and ThreadId) is a DWORD (32-bit unsigned)
 // https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessid
+// though with only 16 bits here, as a full 32-bit PID << 32 (in `MakeSyntheticIp`) 
+// can flow into kernel addr range.
   private const ulong ProcessIdMask   = 0xFFFFUL;
 
   private sealed class UnknownModuleState(ProfileImage image, ProfileData profileData, int processId) {
@@ -293,9 +295,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       Trace.WriteLine($"LoadTraceAsync: Adding {moduleCount} modules from raw profile");
       profileData_.AddModules(rawProfile.Images);
 
-      // Pre-create synthetic [Unknown Module] images for each profiled process.
+      // Pre-create synthetic [Unknown Module] state for each profiled process.
       // This must happen before parallel sample processing begins, since
-      // RawProfileData.AddImage is not thread-safe.
+      // RawProfileData.AddImageDirect is not thread-safe.
       foreach (int procId in processIds) {
         PreCreateUnknownModule(rawProfile, procId);
       }
@@ -813,7 +815,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
   /// <summary>
   /// Creates a synthetic IP that is unique per (processId, threadId).
-  /// Uses made up x64 address that shouldn't naturally be scene in traces,
+  /// Uses made up x64 address that shouldn't naturally be seen in traces,
   /// that stays below the IsKernelAddress threshold.
   /// </summary>
   private static long MakeSyntheticIp(int processId, int threadId) {
