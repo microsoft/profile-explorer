@@ -1032,10 +1032,13 @@ public partial class MainWindow : Window, IUISession {
       SectionPanel.CompilerInfo = compilerInfo_;
       SectionPanel.Session = this;
 
+      // Clear stale module summaries from any previous session
+      // before adding the new ones.
+      SectionPanel.ClearModuleSummaries();
+
       foreach (var doc in sessionState_.Documents) {
         if (doc != sessionState_.MainDocument &&
             doc != sessionState_.DiffDocument) {
-          // Add optional modules, usually used for profiling.
           SectionPanel.AddModuleSummary(doc.Summary);
         }
       }
