@@ -53,6 +53,102 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
   private HashSet<ProfileImage> rejectedDebugModules_;
   private int currentSampleIndex_;
 
+  // Synthetic module for samples whose instruction pointers don't map to any
+  // known module loaded in the process. This can be dynamically generated code
+  // (e.g., LUA JIT, Java JIT), code from unloaded modules, or other unmapped regions.
+  private const string UnknownModuleName = "[Unknown Module]";
+
+  // Synthetic IP layout: [base bit48] [PID 16-bit] [TID 32-bit].
+  // Chosen arbitrarily, just with constraint of being between 
+  // max user VA and IsKernelAddress threshold. See `IsKernelAddress` 
+  // in ETWEventProcessor.cs and https://learn.microsoft.com/en-us/windows-hardware/drivers/gettingstarted/virtual-address-spaces
+  private const ulong SyntheticIpBase = 0x0001_0000_0000_0000UL;
+
+// ProcessId (and ThreadId) is a DWORD (32-bit unsigned)
+// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessid
+// though with only 16 bits here, as a full 32-bit PID << 32 (in `MakeSyntheticIp`) 
+// can flow into kernel addr range.
+  private const ulong ProcessIdMask   = 0xFFFFUL;
+
+  private sealed class UnknownModuleState(ProfileImage image, ProfileData profileData, int processId) {
+    private readonly object lock_ = new();
+    private readonly ConcurrentDictionary<int, (IRTextFunction Function, FunctionDebugInfo DebugInfo)> threadFunctions_ = new();
+    private readonly ProfileData profileData_ = profileData;
+    private readonly int processId_ = processId;
+    private readonly ILoadedDocument document_ = LoadedDocument.CreateDummyDocument(UnknownModuleName);
+
+    public ProfileImage Image { get; } = image;
+    public ILoadedDocument Document => document_;
+
+    /// <summary>
+    /// Gets or creates a synthetic function for samples with unmapped IPs
+    /// on a specific thread.
+    /// </summary>
+    public (IRTextFunction Function, FunctionDebugInfo DebugInfo) GetOrCreateThreadFunction(int threadId) {
+      // Lock-free fast path for threads we've already seen
+      (IRTextFunction Function, FunctionDebugInfo DebugInfo) existing;
+      if (threadFunctions_.TryGetValue(threadId, out existing)) {
+        return existing;
+      }
+
+      // Serialize creation to ensure AddDummyFunction is called exactly once per threadId
+      lock (lock_) {
+        // Check again, in case another thread *just* created the entry since we checked previously
+        if (threadFunctions_.TryGetValue(threadId, out existing)) {
+          return existing;
+        }
+
+        ProfileThread thread = profileData_.FindThread(threadId);
+        string startModule = ResolveStartModule(thread);
+        string funcName = FormatFuncName(threadId, thread?.Name, startModule);
+
+        // RVA = threadId so FunctionDebugInfo.IsUnknown (RVA==0 && Size==0) is false.
+        // Id = processId_ so FunctionDebugInfo.Equals differentiates across processes
+        // (Id is normally MethodToken for managed code, repurposed here for dedup keying).
+        FunctionDebugInfo debugInfo = new FunctionDebugInfo(funcName, threadId, 1, id: processId_);
+        IRTextFunction func = document_.AddDummyFunction(funcName);
+        (IRTextFunction func, FunctionDebugInfo debugInfo) result = (func, debugInfo);
+        threadFunctions_[threadId] = result;
+        return result;
+      }
+    }
+
+    /// <summary>
+    /// Resolves the module containing the thread's Win32 start address.
+    /// </summary>
+    private string ResolveStartModule(ProfileThread thread) {
+      if (thread == null || thread.Win32StartAddr == 0) {
+        return null;
+      }
+
+      foreach (var module in profileData_.Modules.Values) {
+        if (module.HasAddress(thread.Win32StartAddr)) {
+          return module.ModuleName;
+        }
+      }
+
+      return null;
+    }
+
+    /// <summary>
+    /// Formats function as [JIT ThreadName (ThreadId) StartModule].
+    /// </summary>
+    private static string FormatFuncName(int threadId, string threadName, string startModule) {
+      // Examples: [JIT WorkerThread (1234) lua51.dll], [JIT Thread 1234]
+      if (!string.IsNullOrEmpty(threadName)) {
+        return string.IsNullOrEmpty(startModule)
+          ? $"[JIT {threadName} ({threadId})]"
+          : $"[JIT {threadName} ({threadId}) {startModule}]";
+      }
+
+      return string.IsNullOrEmpty(startModule)
+        ? $"[JIT Thread {threadId}]"
+        : $"[JIT Thread {threadId} {startModule}]";
+    }
+  }
+
+  private readonly ConcurrentDictionary<int, UnknownModuleState> unknownModules_ = new();
+
   // Events for session lifecycle callbacks
   public event SetupNewSessionHandler SetupNewSessionRequested;
   public event StartNewSessionHandler StartNewSessionRequested;
@@ -198,6 +294,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       int moduleCount = rawProfile.Images.Count();
       Trace.WriteLine($"LoadTraceAsync: Adding {moduleCount} modules from raw profile");
       profileData_.AddModules(rawProfile.Images);
+
+      // Pre-create synthetic [Unknown Module] state for each profiled process.
+      // This must happen before parallel sample processing begins, since
+      // RawProfileData.AddImageDirect is not thread-safe.
+      foreach (int procId in processIds) {
+        PreCreateUnknownModule(rawProfile, procId);
+      }
 
       string imageName = Utilities.Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
       Trace.WriteLine($"LoadTraceAsync: Main image name: {imageName}");
@@ -540,6 +643,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     int managedFrames = 0;
     int unknownFrames = 0;
     int resolvedFrames = 0;
+    bool prevFrameWasUnknownJit = false;
 
     //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
     //? for ex it never gets to main. Easy example is a quicksort impl
@@ -570,8 +674,44 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         if (frameImage == null) {
           unknownFrames++;
-          resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack,
-                                 pointerSize);
+
+          // for case when some kernel address used without a named corresponding module,
+          // we should not label it as JIT immediately
+          if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
+            resolvedStack.AddFrame(null, frameIp, 0, frameIndex,
+                                  ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+            prevFrameWasUnknownJit = false;
+            continue;
+          }
+
+          // IP doesn't map to any known module (e.g., JITted). Attribute
+          // to a synthetic per-thread JIT function, but collapse consecutive
+          // unknown frames to avoid self-recursive chains in the call tree
+          if (!prevFrameWasUnknownJit) {
+            UnknownModuleState? unknownState = GetUnknownModule(context.ProcessId);
+
+            if (unknownState != null) {
+              (IRTextFunction function, FunctionDebugInfo debugInfo) = unknownState.GetOrCreateThreadFunction(context.ThreadId);
+              ResolvedProfileStackFrameKey unknownFrame = new ResolvedProfileStackFrameKey(debugInfo, unknownState.Image, false);
+
+              // Use a synthetic IP keyed by thread ID to prevent cache collisions
+              // in ResolvedProfileStack.frameInstances_ when multiple threads
+              // share the same unmapped IP
+              long syntheticIp = MakeSyntheticIp(context.ProcessId, context.ThreadId);
+              resolvedStack.AddFrame(function, syntheticIp, debugInfo.RVA,
+                                    frameIndex, unknownFrame, stack, pointerSize);
+              prevFrameWasUnknownJit = true;
+              continue;
+            }
+
+            // Fallback when no synthetic module state for this process
+            resolvedStack.AddFrame(null, frameIp, 0, frameIndex,
+                                  ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+            continue;
+          }
+
+          // Consecutive unknown frame after a named JIT frame -- skip
+          // to avoid self-recursive chains in the call tree.
           continue;
         }
       }
@@ -586,6 +726,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       if (profileModuleBuilder == null) {
         unknownFrames++;
         resolvedStack.AddFrame(null, frameIp, 0, frameIndex, ResolvedProfileStackFrameKey.Unknown, stack, pointerSize);
+        prevFrameWasUnknownJit = false;
         continue;
       }
 
@@ -620,6 +761,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       resolvedStack.AddFrame(funcPair.Function, frameIp, frameRva, frameIndex,
                              resolvedFrame, stack, pointerSize);
       resolvedFrames++;
+      prevFrameWasUnknownJit = false; // Known frame breaks unknown frame run.
     }
 
     var totalTime = sw.Elapsed;
@@ -631,6 +773,55 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     return resolvedStack;
+  }
+
+  private ProfileImage unknownModuleImage_;
+
+  /// <summary>
+  /// Pre-creates the synthetic [Unknown Module] for a process. Must be called
+  /// before parallel sample processing begins.
+  /// </summary>
+  private void PreCreateUnknownModule(RawProfileData rawProfile, int processId) {
+    // Share a single image across all processes to match how real modules
+    // are deduplicated by AddImage.
+    if (unknownModuleImage_ == null) {
+      unknownModuleImage_ = new ProfileImage(
+        filePath: UnknownModuleName,
+        originalFileName: UnknownModuleName,
+        baseAddress: 0,
+        defaultBaseAddress: 0,
+        size: 0,
+        timeStamp: 0,
+        checksum: 0);
+
+      // Use AddImageDirect since LoadingCompleted() has already freed imagesMap_.
+      rawProfile.AddImageDirect(unknownModuleImage_);
+      profileData_.Modules[unknownModuleImage_.Id] = unknownModuleImage_;
+    }
+
+    var state = new UnknownModuleState(unknownModuleImage_, profileData_, processId);
+    unknownModules_[processId] = state;
+
+    Trace.WriteLine($"Pre-created synthetic {UnknownModuleName} for process {processId}, ImageId={unknownModuleImage_.Id}");
+  }
+
+  /// <summary>
+  /// Gets the pre-created synthetic module state for a process.
+  /// Returns null if PreCreateUnknownModule was not called for this process.
+  /// </summary>
+  private UnknownModuleState? GetUnknownModule(int processId) {
+    return unknownModules_.GetValueOrDefault(processId);
+  }
+
+  /// <summary>
+  /// Creates a synthetic IP that is unique per (processId, threadId).
+  /// Uses made up x64 address that shouldn't naturally be seen in traces,
+  /// that stays below the IsKernelAddress threshold.
+  /// </summary>
+  private static long MakeSyntheticIp(int processId, int threadId) {
+    ulong pid = (ulong)processId & ProcessIdMask;
+    ulong tid = (uint)threadId;
+    return unchecked((long)(SyntheticIpBase | (pid << 32) | tid));
   }
 
   private ILoadedDocument FindSessionDocuments(string imageName, out List<ILoadedDocument> otherDocuments) {
@@ -662,6 +853,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         // Used after profiling completes to unload debug info and free memory.
         profileData_.RegisterModuleDebugInfo(moduleDoc.ModuleName, module.DebugInfo);
       }
+    }
+
+    // Include synthetic [Unknown Module] documents so the UI can
+    // navigate to JIT functions via FindLoadedDocument.
+    foreach (var state in unknownModules_.Values) {
+      otherDocuments.Add(state.Document);
     }
 
     return exeDocument;
@@ -1347,6 +1544,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             frameImage = managedFunc.Image;
             managedBaseAddress = 1;
           }
+        }
+
+        // If real module and managed method lookup both fail, attribute to synthetic "Unknown" to preserve counts
+        if (frameImage == null) {
+          frameImage = GetUnknownModule(context.ProcessId)?.Image;
         }
       }
 
