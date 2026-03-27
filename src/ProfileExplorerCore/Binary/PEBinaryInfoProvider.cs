@@ -264,6 +264,14 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       return searchResult;
     }
 
+    // Resolve NT kernel paths like \SystemRoot\system32\ntoskrnl.exe
+    // to actual file system paths like C:\Windows\system32\ntoskrnl.exe.
+    string resolvedPath = ResolveNtKernelPath(binaryFile.ImagePath);
+    if (resolvedPath != binaryFile.ImagePath) {
+      DiagnosticLogger.LogInfo($"[BinarySearch] Resolved NT path for {binaryFile.ImageName}: {binaryFile.ImagePath} -> {resolvedPath}");
+      binaryFile.ImagePath = resolvedPath;
+    }
+
     // Quick check if trace was recorded on local machine.
     string result = FindExactLocalBinaryFile(binaryFile);
 
@@ -279,8 +287,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
     try {
       // Try to use symbol server to download binary.
+      // Add local binary path directly instead of using WithSymbolPaths (which clones
+      // settings again and resets runtime state like timeout overrides).
       if (File.Exists(binaryFile.ImagePath)) {
-        settings = settings.WithSymbolPaths(binaryFile.ImagePath);
+        settings.InsertSymbolPath(binaryFile.ImagePath);
       }
 
       string userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(settings);
@@ -341,12 +351,27 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
       searchResult = BinaryFileSearchResult.Failure(binaryFile, searchLog);
 
-      // Record failed lookup to avoid retrying in future sessions.
-      settings.RejectBinaryFile(binaryFile);
+      // Record failed lookup to avoid retrying in future sessions,
+      // but skip transient failures (timeout, auth, server errors).
+      var reason = settings.ClassifySearchFailure(searchLog);
+      settings.RejectBinaryFile(binaryFile, reason, searchLog);
     }
 
     resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
     return searchResult;
+  }
+
+  private static string ResolveNtKernelPath(string path) {
+    if (string.IsNullOrEmpty(path)) {
+      return path;
+    }
+
+    if (path.StartsWith(@"\SystemRoot", StringComparison.OrdinalIgnoreCase)) {
+      string systemRoot = Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows";
+      return systemRoot + path.Substring(@"\SystemRoot".Length);
+    }
+
+    return path;
   }
 
   private static string FindExactLocalBinaryFile(BinaryFileDescriptor binaryFile) {

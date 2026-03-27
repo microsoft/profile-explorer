@@ -1964,8 +1964,7 @@ public class McpActionExecutor : IMcpActionExecutor
                             Name = module.ModuleName,
                             ExclusivePercentage = weightPercentage * 100.0, // convert 0.abcd decimal to ab.cd percent
                             ExclusiveWeight = pair.Value,
-                            // Use IsBinaryAvailableOrPending to avoid reporting missing when lazy loading is available
-                            BinaryFileMissing = moduleStatus != null ? !moduleStatus.IsBinaryAvailableOrPending : false,
+                            Status = moduleStatus,
                             DebugFileMissing = moduleStatus != null ? !moduleStatus.HasDebugInfoLoaded : false,
                         };
 

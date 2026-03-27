@@ -597,11 +597,13 @@ foreach ($line in $log) {
     }
     if ($lazyLoadStart -and ($line -match '\[LazyBinaryLoad\] Successfully loaded|\[LazyBinaryLoad\] Could not find|\[LazyBinaryLoad\] Found binary')) {
         $lazyLoadEnd = Get-TimestampFromLine $line
+        $lazyLoadSuccess = $line -match '\[LazyBinaryLoad\] (Successfully loaded|Found binary)'
         if ($lazyLoadEnd) {
             $lazyLoadMs = ($lazyLoadEnd - $lazyLoadStart).TotalMilliseconds
             [void]$lazyLoadOps.Add([PSCustomObject]@{
                 Module = $lazyLoadModule
                 DurationMs = $lazyLoadMs
+                Success = $lazyLoadSuccess
                 StartLine = $lazyLoadStartLine
                 EndLine = $lineNum
                 StartTime = $lazyLoadStart.ToString("HH:mm:ss.fff")
@@ -649,7 +651,10 @@ Write-Host "Total timestamped lines: $totalTimestamped"
 Write-Host "Initial load gaps > 500ms: $($gaps.Count)" -ForegroundColor $(if ($gaps.Count -gt 0) { "Yellow" } else { "Green" })
 if ($lazyLoadOps.Count -gt 0) {
     $lazyLoadTotal = ($lazyLoadOps | Measure-Object -Property DurationMs -Sum).Sum / 1000
-    Write-Host "Lazy load operations: $($lazyLoadOps.Count) binaries ($([math]::Round($lazyLoadTotal, 1))s total)" -ForegroundColor Cyan
+    $lazyLoadFailCount = @($lazyLoadOps | Where-Object { -not $_.Success }).Count
+    $lazyLoadColor = if ($lazyLoadFailCount -gt 0) { "Red" } else { "Cyan" }
+    $lazyLoadSuffix = if ($lazyLoadFailCount -gt 0) { ", $lazyLoadFailCount FAILED" } else { "" }
+    Write-Host "Lazy load operations: $($lazyLoadOps.Count) binaries ($([math]::Round($lazyLoadTotal, 1))s total$lazyLoadSuffix)" -ForegroundColor $lazyLoadColor
 }
 Write-Host ""
 
@@ -726,14 +731,24 @@ if ($lazyLoadOps.Count -gt 0) {
     Write-Host "Time spent downloading binaries when user views assembly/graph." -ForegroundColor Gray
     Write-Host ""
 
+    $lazyLoadSucceeded = @($lazyLoadOps | Where-Object { $_.Success })
+    $lazyLoadFailed = @($lazyLoadOps | Where-Object { -not $_.Success })
+
     foreach ($op in $lazyLoadOps | Sort-Object DurationMs -Descending | Select-Object -First 10) {
         $secs = [math]::Round($op.DurationMs / 1000, 2)
-        $color = if ($op.DurationMs -gt 5000) { "Red" } elseif ($op.DurationMs -gt 2000) { "Yellow" } else { "White" }
-        Write-Host ("  {0,6}ms ({1,5}s) - {2}" -f [int]$op.DurationMs, $secs, $op.Module) -ForegroundColor $color
+        $status = if ($op.Success) { "OK" } else { "FAILED" }
+        $color = if (-not $op.Success) { "Red" } elseif ($op.DurationMs -gt 5000) { "Yellow" } elseif ($op.DurationMs -gt 2000) { "Yellow" } else { "Green" }
+        Write-Host ("  {0,6}ms ({1,5}s) - {2} [{3}]" -f [int]$op.DurationMs, $secs, $op.Module, $status) -ForegroundColor $color
     }
 
     $lazyLoadTotal = ($lazyLoadOps | Measure-Object -Property DurationMs -Sum).Sum / 1000
     Write-Host ""
+    if ($lazyLoadFailed.Count -gt 0) {
+        Write-Host "  Succeeded: $($lazyLoadSucceeded.Count), Failed: $($lazyLoadFailed.Count)" -ForegroundColor Red
+        Write-Host "  Failed modules: $($lazyLoadFailed.Module -join ', ')" -ForegroundColor Red
+    } else {
+        Write-Host "  All $($lazyLoadSucceeded.Count) lazy loads succeeded" -ForegroundColor Green
+    }
     Write-Host "  Total lazy load time: $([math]::Round($lazyLoadTotal, 1))s" -ForegroundColor Cyan
 }
 

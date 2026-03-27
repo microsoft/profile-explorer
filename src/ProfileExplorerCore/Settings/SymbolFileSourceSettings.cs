@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Utilities;
@@ -246,6 +247,72 @@ public class SymbolFileSourceSettings : SettingsBase {
   }
 
   /// <summary>
+  /// Classifies a search failure based on the search log to determine if it should be cached.
+  /// Used by both PDB and binary rejection to distinguish transient failures (timeout, auth, server errors)
+  /// from permanent failures (404 not found).
+  /// </summary>
+  public SymbolFileRejectionReason ClassifySearchFailure(string searchLog) {
+    if (DetectPrimaryServerAuthFailure(searchLog)) {
+      return SymbolFileRejectionReason.AuthenticationFailure;
+    }
+
+    if (!string.IsNullOrEmpty(searchLog) &&
+        (searchLog.Contains("500") || searchLog.Contains("503") ||
+         searchLog.Contains("Internal Server Error", StringComparison.OrdinalIgnoreCase))) {
+      return SymbolFileRejectionReason.ServerError;
+    }
+
+    if (!string.IsNullOrEmpty(searchLog) &&
+        (searchLog.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
+         searchLog.Contains("timed out", StringComparison.OrdinalIgnoreCase))) {
+      return SymbolFileRejectionReason.NetworkTimeout;
+    }
+
+    if (string.IsNullOrEmpty(searchLog) ||
+        searchLog.Contains("404") ||
+        searchLog.Contains("not found", StringComparison.OrdinalIgnoreCase)) {
+      return SymbolFileRejectionReason.PermanentNotFound;
+    }
+
+    return SymbolFileRejectionReason.Unknown;
+  }
+
+  /// <summary>
+  /// Detects if the search log indicates a primary symbol server (symweb) authentication failure.
+  /// </summary>
+  public static bool DetectPrimaryServerAuthFailure(string searchLog) {
+    if (string.IsNullOrEmpty(searchLog)) {
+      return false;
+    }
+
+    if (!searchLog.Contains("symweb", StringComparison.OrdinalIgnoreCase)) {
+      return false;
+    }
+
+    var authFailurePatterns = new[] {
+      @"\b401\b",           // 401 at word boundary (not in hex GUIDs like A3401B)
+      @"\b403\b",           // 403 at word boundary
+      "Unauthorized",       // HTTP 401 description
+      "Forbidden"           // HTTP 403 description
+    };
+
+    foreach (var pattern in authFailurePatterns) {
+      if (pattern.StartsWith(@"\b")) {
+        if (Regex.IsMatch(searchLog, pattern)) {
+          return true;
+        }
+      }
+      else {
+        if (searchLog.Contains(pattern, StringComparison.OrdinalIgnoreCase)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
   /// Checks if a symbol file exists in the local symbol cache directories.
   /// Searches all paths from _NT_SYMBOL_PATH including structured (foo.pdb/GUID/foo.pdb) and flat directories.
   /// </summary>
@@ -354,14 +421,34 @@ public class SymbolFileSourceSettings : SettingsBase {
     return false;
   }
 
-  public void RejectBinaryFile(BinaryFileDescriptor file) {
-    if (RejectPreviouslyFailedFiles) {
-      RejectedBinaryFiles.Add(file);
-      // Update cache time on first rejection
-      if (RejectedFilesCacheTime == default) {
-        RejectedFilesCacheTime = DateTime.UtcNow;
-      }
+  public bool RejectBinaryFile(BinaryFileDescriptor file,
+                               SymbolFileRejectionReason reason = SymbolFileRejectionReason.Unknown,
+                               string searchLog = null) {
+    if (!RejectPreviouslyFailedFiles) return false;
+
+    // Same safeguards as RejectSymbolFile: don't cache transient failures.
+    if (IsTransientFailure(reason)) {
+      DiagnosticLogger.LogInfo($"[NegativeCache] Skipping transient binary failure: {file.ImageName} - {reason}");
+      return false;
     }
+
+    if (PrimaryServerAuthFailed) {
+      DiagnosticLogger.LogWarning($"[NegativeCache] Auth failure detected - skipping binary rejection for {file.ImageName}");
+      return false;
+    }
+
+    if (ShouldSkipNegativeCachingDueToSuspiciousFailureRate()) {
+      DiagnosticLogger.LogWarning($"[NegativeCache] Suspicious failure rate - skipping binary rejection");
+      return false;
+    }
+
+    RejectedBinaryFiles.Add(file);
+    if (RejectedFilesCacheTime == default) {
+      RejectedFilesCacheTime = DateTime.UtcNow;
+    }
+
+    DiagnosticLogger.LogInfo($"[NegativeCache] Added binary: {file.ImageName} - Reason: {reason}");
+    return true;
   }
 
   /// <summary>
