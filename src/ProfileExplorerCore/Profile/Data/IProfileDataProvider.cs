@@ -63,6 +63,8 @@ public class ProcessSummary {
   public TimeSpan Weight { get; set; }
   [ProtoMember(3)]
   public double WeightPercentage { get; set; }
+  [ProtoMember(5)]
+  public double WeightPercentageExcludingIdle { get; set; }
   [ProtoMember(4)]
   public TimeSpan Duration { get; set; }
 

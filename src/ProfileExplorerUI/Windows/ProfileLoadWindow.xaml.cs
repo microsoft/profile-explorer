@@ -54,6 +54,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private string profileFilePath_;
   private string binaryFilePath_;
   private bool showOnlyManagedProcesses_;
+  private bool excludeIdleProcess_ = true;
   private bool showLoadingProgress_;
   private bool openLoadedSession_;
   private double lastProgressPercentage_ = 0;
@@ -223,6 +224,16 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       if (showOnlyManagedProcesses_ != value) {
         showOnlyManagedProcesses_ = value;
         UpdateRunningProcessList();
+      }
+    }
+  }
+
+  public bool ExcludeIdleProcess {
+    get => excludeIdleProcess_;
+    set {
+      if (excludeIdleProcess_ != value) {
+        excludeIdleProcess_ = value;
+        OnPropertyChange(nameof(ExcludeIdleProcess));
       }
     }
   }
@@ -715,9 +726,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
 
   private void DisplayProcessList(List<ProcessSummary> list, List<ProcessSummary> selectedProcSummary = null) {
     ProcessList.ItemsSource = null;
-    ProcessList.ItemsSource = new ListCollectionView(list);
+    var view = new ListCollectionView(list);
+    ProcessList.ItemsSource = view;
     ShowProcessList = true;
-    
+
+    ApplyIdleFilter(view);
+
     // Set default sort by weight (highest first) to maintain current behavior
     processListSorter_.SortByField(ProcessSortField.Weight, ListSortDirection.Descending);
 
@@ -726,6 +740,27 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       foreach (var proc in selectedProcSummary) {
         ProcessList.SelectedItems.Add(list.Find(item => item.Process == proc.Process));
       }
+    }
+  }
+
+  private void ApplyIdleFilter(ListCollectionView view) {
+    // Update the weight column binding based on the exclude-idle toggle.
+    string bindingPath = excludeIdleProcess_ ? "WeightPercentageExcludingIdle" : "WeightPercentage";
+    WeightColumn.DisplayMemberBinding = new System.Windows.Data.Binding(bindingPath) {
+      StringFormat = "{0:#0.00'%'}"
+    };
+
+    if (excludeIdleProcess_) {
+      view.Filter = item => ((ProcessSummary)item).Process.ProcessId != 0;
+    }
+    else {
+      view.Filter = null;
+    }
+  }
+
+  private void ExcludeIdleCheckBox_Changed(object sender, RoutedEventArgs e) {
+    if (ProcessList.ItemsSource is ListCollectionView view) {
+      ApplyIdleFilter(view);
     }
   }
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
@@ -9,8 +9,8 @@ namespace ProfileExplorer.Core.Profile.Data;
 
 public class ProcessSummaryBuilder {
   private RawProfileData profile_;
-  private Dictionary<ProfileProcess, TimeSpan> processSamples_ = new();
-  private Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)> procDuration_ = new();
+  private Dictionary<int, TimeSpan> processSamples_ = new();
+  private Dictionary<int, (TimeSpan First, TimeSpan Last)> procDuration_ = new();
   private TimeSpan totalWeight_;
 
   public ProcessSummaryBuilder(RawProfileData profile) {
@@ -19,12 +19,13 @@ public class ProcessSummaryBuilder {
 
   public void AddSample(ProfileSample sample) {
     var context = sample.GetContext(profile_);
-    var process = profile_.GetOrCreateProcess(context.ProcessId);
-    processSamples_.AccumulateValue(process, sample.Weight);
+    int processId = context.ProcessId;
+    profile_.GetOrCreateProcess(processId); // Ensure process object exists.
+    processSamples_.AccumulateValue(processId, sample.Weight);
     totalWeight_ += sample.Weight;
 
     // Modify in-place.
-    ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, process, out bool found);
+    ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, processId, out bool found);
 
     if (!found) {
       durationRef.First = sample.Time;
@@ -34,12 +35,12 @@ public class ProcessSummaryBuilder {
   }
 
   public void AddSample(TimeSpan sampleWeight, TimeSpan sampleTime, int processId) {
-    var process = profile_.GetOrCreateProcess(processId);
-    processSamples_.AccumulateValue(process, sampleWeight);
+    profile_.GetOrCreateProcess(processId); // Ensure process object exists.
+    processSamples_.AccumulateValue(processId, sampleWeight);
     totalWeight_ += sampleWeight;
 
     // Modify in-place.
-    ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, process, out bool found);
+    ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration_, processId, out bool found);
 
     if (!found) {
       durationRef.First = sampleTime;
@@ -51,9 +52,22 @@ public class ProcessSummaryBuilder {
   public List<ProcessSummary> MakeSummaries() {
     var list = new List<ProcessSummary>(procDuration_.Count);
 
+    // Calculate non-idle total weight for the excluding-idle percentage.
+    long nonIdleWeightTicks = totalWeight_.Ticks;
+
+    if (processSamples_.TryGetValue(ETW.ETWEventProcessor.KernelProcessId, out var idleWeight)) {
+      nonIdleWeightTicks -= idleWeight.Ticks;
+    }
+
     foreach (var pair in processSamples_) {
-      var item = new ProcessSummary(pair.Key, pair.Value) {
-        WeightPercentage = 100 * (double)pair.Value.Ticks / totalWeight_.Ticks
+      var process = profile_.GetOrCreateProcess(pair.Key);
+      var item = new ProcessSummary(process, pair.Value) {
+        WeightPercentage = totalWeight_.Ticks > 0
+          ? 100 * (double)pair.Value.Ticks / totalWeight_.Ticks
+          : 0,
+        WeightPercentageExcludingIdle = nonIdleWeightTicks > 0
+          ? 100 * (double)pair.Value.Ticks / nonIdleWeightTicks
+          : 0
       };
 
       list.Add(item);

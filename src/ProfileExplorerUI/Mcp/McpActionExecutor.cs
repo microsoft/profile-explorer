@@ -1346,14 +1346,17 @@ public class McpActionExecutor : IMcpActionExecutor
                 };
             }
 
-            var processes = processSummaries.Select(p => new ProcessInfo
+            // Exclude Idle (PID 0) and use non-idle percentages for meaningful results.
+            var processes = processSummaries
+                .Where(p => p.Process.ProcessId != 0)
+                .Select(p => new ProcessInfo
             {
                 ProcessId = p.Process.ProcessId,
                 Name = p.Process.Name ?? string.Empty,
                 ImageFileName = p.Process.ImageFileName,
                 CommandLine = p.Process.CommandLine,
                 Weight = p.Weight,
-                WeightPercentage = p.WeightPercentage,
+                WeightPercentage = p.WeightPercentageExcludingIdle,
                 Duration = p.Duration
             }).ToArray();
 
