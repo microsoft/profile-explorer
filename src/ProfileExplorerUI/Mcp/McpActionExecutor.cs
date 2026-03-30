@@ -11,6 +11,8 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Mcp;
 using ProfileExplorer.Core.Profile.Data;
+using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.Core.IR;
 
 namespace ProfileExplorer.UI.Mcp;
@@ -1325,20 +1327,39 @@ public class McpActionExecutor : IMcpActionExecutor
 
         try
         {
-            // Load the trace and prepare the process list (similar to OpenTraceAsync but standalone)
-            var loadResult = await LoadTraceAsync(profileFilePath);
-            if (!loadResult.Success)
+            // Call FindTraceProcesses directly instead of opening the UI window.
+            // This avoids a race condition where the UI's double TextChanged invocation
+            // could cause WaitForProcessListLoadedAsync to read an incomplete intermediate list.
+            using var cancelableTask = new CancelableTask();
+            var options = App.Settings.ProfileOptions;
+
+            // Progress callback must be non-null (ETWEventProcessor calls it unconditionally).
+            var processSummaries = await ETWProfileDataProvider.FindTraceProcesses(
+                profileFilePath, options, _ => { }, cancelableTask);
+
+            if (processSummaries == null || processSummaries.Count == 0)
             {
                 return new GetAvailableProcessesResult
                 {
                     Success = false,
-                    ErrorMessage = loadResult.Result?.ErrorMessage ?? "Failed to load trace file"
+                    ErrorMessage = "Failed to extract process list from trace file"
                 };
             }
 
-            // Extract process information from the loaded trace
-            var processes = await ExtractProcessInfoAsync(loadResult.ProfileLoadWindow);
-            
+            // Exclude Idle/kernel process and use non-idle percentages for meaningful results.
+            var processes = processSummaries
+                .Where(p => p.Process.ProcessId != ETWEventProcessor.KernelProcessId)
+                .Select(p => new ProcessInfo
+            {
+                ProcessId = p.Process.ProcessId,
+                Name = p.Process.Name ?? string.Empty,
+                ImageFileName = p.Process.ImageFileName,
+                CommandLine = p.Process.CommandLine,
+                Weight = p.Weight,
+                WeightPercentage = p.WeightPercentageExcludingIdle,
+                Duration = p.Duration
+            }).ToArray();
+
             // Apply weight filtering if specified
             if (minWeightPercentage.HasValue)
             {
@@ -1354,7 +1375,7 @@ public class McpActionExecutor : IMcpActionExecutor
                     .Where(p => p.WeightPercentage >= minWeightPercentage.Value)
                     .ToArray();
             }
-            
+
             // Apply top N filtering if specified
             if (topCount.HasValue)
             {
@@ -1372,12 +1393,6 @@ public class McpActionExecutor : IMcpActionExecutor
                     .ToArray();
                 }
             }
-            
-            // Close the profile load window since we're just extracting process info
-            await dispatcher.InvokeAsync(() =>
-            {
-                loadResult.ProfileLoadWindow?.Close();
-            });
 
             return new GetAvailableProcessesResult
             {
@@ -1469,46 +1484,6 @@ public class McpActionExecutor : IMcpActionExecutor
         }
         
         return sanitized;
-    }
-
-    /// <summary>
-    /// Extract process information from the ProfileLoadWindow
-    /// </summary>
-    private async Task<ProcessInfo[]> ExtractProcessInfoAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
-    {
-        try
-        {
-            return await dispatcher.InvokeAsync(() =>
-            {
-                var processListControl = profileLoadWindow.FindName("ProcessList") as System.Windows.Controls.ListView;
-                if (processListControl?.ItemsSource != null)
-                {
-                    try
-                    {
-                        var processSummaries = processListControl.ItemsSource.Cast<ProcessSummary>().ToList();
-                        return processSummaries.Select(p => new ProcessInfo
-                        {
-                            ProcessId = p.Process.ProcessId,
-                            Name = p.Process.Name ?? string.Empty,
-                            ImageFileName = p.Process.ImageFileName,
-                            CommandLine = p.Process.CommandLine,
-                            Weight = p.Weight,
-                            WeightPercentage = p.WeightPercentage,
-                            Duration = p.Duration
-                        }).ToArray();
-                    }
-                    catch
-                    {
-                        return Array.Empty<ProcessInfo>();
-                    }
-                }
-                return Array.Empty<ProcessInfo>();
-            });
-        }
-        catch
-        {
-            return Array.Empty<ProcessInfo>();
-        }
     }
 
     public async Task<GetAvailableFunctionsResult> GetAvailableFunctionsAsync(FunctionFilter? filter = null)
