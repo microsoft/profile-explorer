@@ -751,7 +751,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     };
 
     if (excludeIdleProcess_) {
-      view.Filter = item => ((ProcessSummary)item).Process.ProcessId != 0;
+      view.Filter = item => ((ProcessSummary)item).Process.ProcessId != ETWEventProcessor.KernelProcessId;
     }
     else {
       view.Filter = null;

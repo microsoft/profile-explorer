@@ -1346,9 +1346,9 @@ public class McpActionExecutor : IMcpActionExecutor
                 };
             }
 
-            // Exclude Idle (PID 0) and use non-idle percentages for meaningful results.
+            // Exclude Idle/kernel process and use non-idle percentages for meaningful results.
             var processes = processSummaries
-                .Where(p => p.Process.ProcessId != 0)
+                .Where(p => p.Process.ProcessId != ETWEventProcessor.KernelProcessId)
                 .Select(p => new ProcessInfo
             {
                 ProcessId = p.Process.ProcessId,

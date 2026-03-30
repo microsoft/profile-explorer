@@ -61,13 +61,27 @@ public class ProcessSummaryBuilder {
 
     foreach (var pair in processSamples_) {
       var process = profile_.GetOrCreateProcess(pair.Key);
+
+      double weightPercentage = totalWeight_.Ticks > 0
+        ? 100 * (double)pair.Value.Ticks / totalWeight_.Ticks
+        : 0;
+
+      double weightPercentageExcludingIdle;
+      if (nonIdleWeightTicks > 0) {
+        if (pair.Key == ETW.ETWEventProcessor.KernelProcessId) {
+          // For the idle/kernel process, the excluding-idle percentage is not meaningful.
+          // Set it equal to the overall weight percentage to avoid confusing values.
+          weightPercentageExcludingIdle = weightPercentage;
+        } else {
+          weightPercentageExcludingIdle = 100 * (double)pair.Value.Ticks / nonIdleWeightTicks;
+        }
+      } else {
+        weightPercentageExcludingIdle = 0;
+      }
+
       var item = new ProcessSummary(process, pair.Value) {
-        WeightPercentage = totalWeight_.Ticks > 0
-          ? 100 * (double)pair.Value.Ticks / totalWeight_.Ticks
-          : 0,
-        WeightPercentageExcludingIdle = nonIdleWeightTicks > 0
-          ? 100 * (double)pair.Value.Ticks / nonIdleWeightTicks
-          : 0
+        WeightPercentage = weightPercentage,
+        WeightPercentageExcludingIdle = weightPercentageExcludingIdle
       };
 
       list.Add(item);
