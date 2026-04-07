@@ -152,7 +152,7 @@ public static class ProfileExplorerTools
                 ProfileFilePath = profileFilePath,
                 ProcessNameOrId = processNameOrId,
                 Status = "Failed",
-                FailureReason = "ProcessListEmpty",
+                FailureReason = "GetAvailableProcessesFailed",
                 Description = processesResult.ErrorMessage ?? "Could not extract process list from trace file. The trace may use an unsupported format or be corrupted.",
                 Timestamp = DateTime.UtcNow
             };
