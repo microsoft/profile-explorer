@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -75,8 +76,12 @@ public static class ProfileExplorerTools
                 throw new InvalidOperationException("MCP action executor is not initialized");
             }
 
+            Trace.TraceInformation($"[MCP] OpenTrace: file={profileFilePath}, process={processNameOrId}");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             // First, check if this might be an ambiguous query by getting available processes
             GetAvailableProcessesResult processesResult = await _executor.GetAvailableProcessesAsync(profileFilePath);
+            Trace.TraceInformation($"[MCP] OpenTrace: GetAvailableProcesses completed in {stopwatch.ElapsedMilliseconds}ms, success={processesResult.Success}, count={processesResult.Processes?.Length ?? 0}");
             
             if (processesResult.Success)
             {
@@ -86,26 +91,36 @@ public static class ProfileExplorerTools
                     var exactIdMatch = processesResult.Processes.FirstOrDefault(p => p.ProcessId == processId);
                     if (exactIdMatch != null)
                     {
-                        // Direct match by ID - proceed with OpenTrace
+                        Trace.TraceInformation($"[MCP] OpenTrace: exact ID match found (PID {processId})");
                         OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
                         return SerializeOpenTraceResult(result, profileFilePath, processNameOrId);
                     }
                 }
 
-                // Check for exact name matches
-                var exactNameMatches = processesResult.Processes
-                    .Where(p => p.Name.Equals(processNameOrId, StringComparison.OrdinalIgnoreCase) ||
-                               (p.ImageFileName?.Equals(processNameOrId, StringComparison.OrdinalIgnoreCase) ?? false))
+                // Check for name matches using bidirectional Contains to handle compound names
+                // like "msedgewebview2.exe webview-exe-name=searchhost.exe" matching process "msedgewebview2"
+                var nameMatches = processesResult.Processes
+                    .Where(p => (p.Name != null && (
+                                    p.Name.Contains(processNameOrId, StringComparison.OrdinalIgnoreCase) ||
+                                    processNameOrId.Contains(p.Name, StringComparison.OrdinalIgnoreCase))) ||
+                               (p.ImageFileName != null && (
+                                    p.ImageFileName.Contains(processNameOrId, StringComparison.OrdinalIgnoreCase) ||
+                                    processNameOrId.Contains(p.ImageFileName, StringComparison.OrdinalIgnoreCase))))
                     .ToArray();
 
-                if (exactNameMatches.Length == 1)
+                Trace.TraceInformation($"[MCP] OpenTrace: name matching found {nameMatches.Length} match(es)");
+
+                if (nameMatches.Length == 1)
                 {
-                    // Single exact match - proceed with OpenTrace
-                    OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                    // Single match - proceed with OpenTrace using the matched process ID
+                    string matchedProcessId = nameMatches[0].ProcessId.ToString();
+                    Trace.TraceInformation($"[MCP] OpenTrace: single name match, using PID {matchedProcessId} (name={nameMatches[0].Name})");
+                    OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, matchedProcessId);
                     return SerializeOpenTraceResult(result, profileFilePath, processNameOrId);
                 }
 
                 // For ambiguous queries, provide all processes for LLM analysis
+                Trace.TraceInformation($"[MCP] OpenTrace: returning RequiresLLMAnalysis ({nameMatches.Length} matches)");
                 var llmAnalysisResult = new
                 {
                     Action = "OpenTrace",
@@ -128,9 +143,20 @@ public static class ProfileExplorerTools
                 return System.Text.Json.JsonSerializer.Serialize(llmAnalysisResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
 
-            // Fallback to direct OpenTrace call if we can't get the process list
-            OpenTraceResult directResult = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
-            return SerializeOpenTraceResult(directResult, profileFilePath, processNameOrId);
+            // Process list extraction failed - return error instead of falling back to
+            // OpenTraceAsync which would open a UI dialog that also can't load processes.
+            Trace.TraceInformation($"[MCP] OpenTrace: GetAvailableProcesses failed, returning error (not falling back to UI)");
+            var errorResult2 = new
+            {
+                Action = "OpenTrace",
+                ProfileFilePath = profileFilePath,
+                ProcessNameOrId = processNameOrId,
+                Status = "Failed",
+                FailureReason = "ProcessListEmpty",
+                Description = processesResult.ErrorMessage ?? "Could not extract process list from trace file. The trace may use an unsupported format or be corrupted.",
+                Timestamp = DateTime.UtcNow
+            };
+            return System.Text.Json.JsonSerializer.Serialize(errorResult2, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
         }
         catch (Exception ex)
         {
