@@ -85,6 +85,24 @@ public static class ProfileExplorerTools
             
             if (processesResult.Success)
             {
+                // Check if the trace has any profiling data (CPU sampling, PMC, etc.)
+                bool hasProfilingData = processesResult.Processes.Any(p => p.WeightPercentage > 0);
+                if (!hasProfilingData)
+                {
+                    Trace.TraceInformation("[MCP] OpenTrace: trace has no profiling samples (no CPU sampling, PMC, or CSwitch data)");
+                    var noSamplesResult = new
+                    {
+                        Action = "OpenTrace",
+                        ProfileFilePath = profileFilePath,
+                        ProcessNameOrId = processNameOrId,
+                        Status = "Failed",
+                        FailureReason = "NoProfilingData",
+                        Description = "The trace file does not contain CPU sampling or performance counter data. It may have been collected without profiling enabled.",
+                        Timestamp = DateTime.UtcNow
+                    };
+                    return System.Text.Json.JsonSerializer.Serialize(noSamplesResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
+
                 // Check for exact matches first (process ID or exact name)
                 if (int.TryParse(processNameOrId, out int processId))
                 {
