@@ -188,7 +188,7 @@ public class McpActionExecutor : IMcpActionExecutor
         }
         finally
         {
-            await CloseProfileLoadWindowOnFailureAsync(profileLoadWindow);
+            await CloseProfileLoadWindowIfVisibleAsync(profileLoadWindow);
         }
     }
 
@@ -215,7 +215,7 @@ public class McpActionExecutor : IMcpActionExecutor
         }
         finally
         {
-            await CloseProfileLoadWindowOnFailureAsync(profileLoadWindow);
+            await CloseProfileLoadWindowIfVisibleAsync(profileLoadWindow);
         }
     }
 
@@ -239,10 +239,11 @@ public class McpActionExecutor : IMcpActionExecutor
     }
 
     /// <summary>
-    /// Closes the ProfileLoadWindow if it's still open after an MCP operation fails or completes.
+    /// Closes the ProfileLoadWindow if it's still visible.
     /// Prevents dialog accumulation across multiple open_trace calls.
+    /// On success the dialog closes itself via LoadButton_Click; this is a safety net.
     /// </summary>
-    private async Task CloseProfileLoadWindowOnFailureAsync(ProfileExplorer.UI.ProfileLoadWindow window)
+    private async Task CloseProfileLoadWindowIfVisibleAsync(ProfileExplorer.UI.ProfileLoadWindow window)
     {
         if (window == null) return;
         try
