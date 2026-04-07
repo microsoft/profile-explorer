@@ -57,6 +57,7 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   private bool excludeIdleProcess_ = true;
   private bool showLoadingProgress_;
   private bool openLoadedSession_;
+  private bool skipTextChangedProcessing_;
   private double lastProgressPercentage_ = 0;
 
   public ProfileLoadWindow(IUISession session, bool recordMode,
@@ -236,6 +237,26 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         OnPropertyChange(nameof(ExcludeIdleProcess));
       }
     }
+  }
+
+  /// <summary>
+  /// When true, ProfileAutocompleteBox_TextChanged skips loading the process list.
+  /// Used by MCP automation to inject a pre-loaded process list without re-parsing the ETL file.
+  /// </summary>
+  public bool SkipTextChangedProcessing {
+    get => skipTextChangedProcessing_;
+    set => skipTextChangedProcessing_ = value;
+  }
+
+  /// <summary>
+  /// Injects a pre-loaded process list, bypassing the ETL file re-parse.
+  /// Used by MCP automation when the process list was already obtained via GetAvailableProcessesAsync.
+  /// </summary>
+  public void SetPreloadedProcessList(List<ProcessSummary> processList) {
+    DiagnosticLogger.LogInfo($"[MCP] SetPreloadedProcessList: {processList?.Count ?? 0} processes");
+    processList_ = processList;
+    DisplayProcessList(processList_);
+    DiagnosticLogger.LogInfo($"[MCP] SetPreloadedProcessList: DisplayProcessList done, ShowProcessList={ShowProcessList}, ItemsSource null={ProcessList.ItemsSource == null}");
   }
 
   public event PropertyChangedEventHandler PropertyChanged;
@@ -427,9 +448,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
     UpdateRejectedFiles(report);
 
     if (!success && !task.IsCanceled) {
-      using var centerForm = new DialogCenteringHelper(this);
-      MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "Profile Explorer",
-                      MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      if (!App.SuppressDialogsForAutomation) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "Profile Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
+
       ProfileReportPanel.ShowReportWindow(report, Session);
     }
 
@@ -652,17 +676,23 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       string appPath = SetSessionApplicationPath();
 
       if (!File.Exists(appPath)) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show($"Could not find profiled application: {appPath}", "Profile Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+        if (!App.SuppressDialogsForAutomation) {
+          using var centerForm = new DialogCenteringHelper(this);
+          MessageBox.Show($"Could not find profiled application: {appPath}", "Profile Explorer",
+                          MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
         return;
       }
     }
     else if (recordingOptions_.SessionKind == ProfileSessionKind.AttachToProcess) {
       if (selectedProcSummary_ == null) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show("Select a running process to attach to", "Profile Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+        if (!App.SuppressDialogsForAutomation) {
+          using var centerForm = new DialogCenteringHelper(this);
+          MessageBox.Show("Select a running process to attach to", "Profile Explorer",
+                          MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
         return;
       }
 
@@ -705,9 +735,11 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       DisplayProcessList(processList_);
     }
     else {
-      using var centerForm = new DialogCenteringHelper(this);
-      MessageBox.Show("Failed to record ETW sampling profile!", "Profile Explorer",
-                      MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      if (!App.SuppressDialogsForAutomation) {
+        using var centerForm = new DialogCenteringHelper(this);
+        MessageBox.Show("Failed to record ETW sampling profile!", "Profile Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+      }
     }
   }
 
@@ -781,8 +813,8 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
   }
 
   private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
-    if (IsLoadingProfile) {
-      return; // Ignore during load of previous session.
+    if (IsLoadingProfile || skipTextChangedProcessing_) {
+      return; // Ignore during load of previous session or MCP pre-loaded list injection.
     }
 
     ShowProcessList = false;
@@ -792,9 +824,12 @@ public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
       processList_ = await LoadProcessList(ProfileFilePath);
 
       if (processList_ == null) {
-        using var centerForm = new DialogCenteringHelper(this);
-        MessageBox.Show("Failed to load ETL process list!", "Profile Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        if (!App.SuppressDialogsForAutomation) {
+          using var centerForm = new DialogCenteringHelper(this);
+          MessageBox.Show("Failed to load ETL process list!", "Profile Explorer",
+                          MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        }
+
         return;
       }
 
