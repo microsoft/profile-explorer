@@ -257,7 +257,18 @@ public sealed partial class ETWEventProcessor : IDisposable {
     DiagnosticLogger.LogInfo("[BuildProcessSummary] Starting second Process() call");
     source_.Process();
     var result = summaryBuilder.MakeSummaries();
-    DiagnosticLogger.LogInfo($"[BuildProcessSummary] Second Process() done, sampleId={sampleId}, processes={result?.Count ?? 0}");
+    DiagnosticLogger.LogInfo($"[BuildProcessSummary] Second Process() done, sampleId={sampleId}, processes={result?.Count ?? 0}, profileProcesses={profile.Processes?.Count ?? 0}");
+
+    // For traces without sampling events (e.g., CSwitch/context-switch traces),
+    // no samples are collected but processes are discovered via ProcessStart/ProcessEnd.
+    // Build summaries from those processes with zero weight so the list isn't empty.
+    if (result.Count == 0 && profile.Processes != null && profile.Processes.Count > 0) {
+      DiagnosticLogger.LogInfo($"[BuildProcessSummary] No samples found, building process list from {profile.Processes.Count} discovered processes");
+      foreach (var proc in profile.Processes) {
+        result.Add(new ProcessSummary(proc, TimeSpan.Zero));
+      }
+    }
+
     profile.Dispose();
     return result;
   }
