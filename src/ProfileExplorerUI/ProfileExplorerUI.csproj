@@ -325,13 +325,13 @@
 	</ItemGroup>
 
 	<!-- Copy msdia140.dll to output root so COM registration path (AppContext.BaseDirectory) works -->
-	<ItemGroup Condition="'$(PlatformTarget)' == 'ARM64'">
+	<ItemGroup Condition="'$(Platform)' == 'ARM64'">
 		<Content Include="..\external\arm64\msdia140.dll">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<Link>msdia140.dll</Link>
 		</Content>
 	</ItemGroup>
-	<ItemGroup Condition="'$(PlatformTarget)' != 'ARM64'">
+	<ItemGroup Condition="'$(Platform)' != 'ARM64'">
 		<Content Include="..\external\msdia140.dll">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<Link>msdia140.dll</Link>
