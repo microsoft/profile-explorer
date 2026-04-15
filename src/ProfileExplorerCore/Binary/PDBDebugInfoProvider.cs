@@ -34,6 +34,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
   private static readonly StringWriter authLogWriter_;
   private static readonly SymwebHandler authSymwebHandler_;
+  private static readonly AzureDevOpsSourceHandler authAzDevOpsHandler_;
   private static readonly string authRecordPath_ = Path.Combine(Path.GetTempPath(), "ProfileExplorer", "auth_record.bin");
   private static object undecorateLock_ = new(); // Global lock for undname.
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
@@ -119,6 +120,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
     authLogWriter_ = new StringWriter();
     authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
+    authAzDevOpsHandler_ = new AzureDevOpsSourceHandler(authLogWriter_, authCredential);
   }
 
   /// <summary>
@@ -414,6 +416,7 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   public static SymbolReaderAuthenticationHandler CreateAuthHandler(SymbolFileSourceSettings settings) {
     var authHandler = new SymbolReaderAuthenticationHandler();
     authHandler.AddHandler(authSymwebHandler_);
+    authHandler.AddHandler(authAzDevOpsHandler_);
 
     if (settings.AuthorizationTokenEnabled) {
       authHandler.AddHandler(new BasicAuthenticationHandler(settings, authLogWriter_));
@@ -1292,6 +1295,49 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
     }
     catch (Exception ex) {
       Trace.TraceError($"Failed to get function symbol for {functionName}: {ex.Message}");
+      return null;
+    }
+  }
+}
+
+/// <summary>
+/// Handles Azure AD authentication for Azure DevOps source server URLs.
+/// The source server for Windows OS PDBs uses Azure DevOps (*.visualstudio.com, dev.azure.com),
+/// which requires a Bearer token with the Azure DevOps scope.
+/// </summary>
+sealed class AzureDevOpsSourceHandler : SymbolReaderAuthHandler {
+  private const string AzureDevOpsScope = "499b84ac-1321-427f-aa17-267ca6975798/.default";
+  private readonly TokenCredential credential_;
+
+  public AzureDevOpsSourceHandler(TextWriter log, TokenCredential credential) :
+    base(log, "AzureDevOps Source") {
+    credential_ = credential;
+  }
+
+  protected override bool TryGetAuthority(Uri requestUri, out Uri authority) {
+    string host = requestUri.Host;
+
+    if (host.EndsWith(".visualstudio.com", StringComparison.OrdinalIgnoreCase) ||
+        host.EndsWith("dev.azure.com", StringComparison.OrdinalIgnoreCase)) {
+      authority = new Uri($"{requestUri.Scheme}://{requestUri.Host}");
+      return true;
+    }
+
+    authority = null;
+    return false;
+  }
+
+  protected override async Task<AuthToken?> GetAuthTokenAsync(RequestContext context,
+                                                               SymbolReaderHandlerDelegate next,
+                                                               Uri authority,
+                                                               CancellationToken cancellationToken) {
+    try {
+      var tokenRequest = new TokenRequestContext(new[] { AzureDevOpsScope });
+      var accessToken = await credential_.GetTokenAsync(tokenRequest, cancellationToken);
+      return new AuthToken(AuthScheme.Bearer, accessToken.Token, accessToken.ExpiresOn.UtcDateTime, null);
+    }
+    catch (Exception ex) {
+      WriteLog($"AzureDevOps auth failed: {ex.Message}");
       return null;
     }
   }
