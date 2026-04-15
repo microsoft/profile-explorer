@@ -367,14 +367,19 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       // Fallback: use a binary with matching timestamp but different size.
       // This handles cases where the kernel-reported ImageSize in the ETW trace
       // differs from the PE header SizeOfImage, or the DLL was serviced.
+      long traceImageSize = binaryFile.ImageSize;
+      var originalDescriptor = binaryFile;
       DiagnosticLogger.LogWarning(
         $"[BinarySearch] Using APPROXIMATE match for {binaryFile.ImageName} " +
         $"at {approximateMatchPath} ({searchDuration.TotalMilliseconds:F0}ms) - " +
         $"timestamp matches but image size differs");
       binaryFile = GetBinaryFileInfo(approximateMatchPath);
       string details = $"Approximate match: timestamp matches but image size differs " +
-        $"(trace: {binaryFile.ImageSize}). Disassembly may not be fully accurate.\n{searchLog}";
+        $"(trace: {traceImageSize}, on-disk: {binaryFile.ImageSize}). Disassembly may not be fully accurate.\n{searchLog}";
       searchResult = BinaryFileSearchResult.ApproximateSuccess(binaryFile, approximateMatchPath, details);
+      // Cache under the original trace descriptor so subsequent lookups for the
+      // same trace module hit the cache instead of repeating the search.
+      resolvedBinariesCache_.TryAdd(originalDescriptor, searchResult);
     }
     else {
       DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
