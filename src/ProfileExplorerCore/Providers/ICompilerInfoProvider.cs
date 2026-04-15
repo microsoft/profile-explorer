@@ -41,6 +41,8 @@ public class BinaryFileSearchResult {
   public string FilePath { get; set; }
   [ProtoMember(4)]
   public string Details { get; set; }
+  [ProtoMember(5)]
+  public bool IsApproximateMatch { get; set; }
 
   public static BinaryFileSearchResult Success(BinaryFileDescriptor file, string filePath, string details = null) {
     return new BinaryFileSearchResult {Found = true, BinaryFile = file, FilePath = filePath, Details = details};
@@ -53,6 +55,10 @@ public class BinaryFileSearchResult {
     }
 
     return new BinaryFileSearchResult {Found = false, BinaryFile = null, FilePath = filePath};
+  }
+
+  public static BinaryFileSearchResult ApproximateSuccess(BinaryFileDescriptor file, string filePath, string details = null) {
+    return new BinaryFileSearchResult {Found = true, BinaryFile = file, FilePath = filePath, Details = details, IsApproximateMatch = true};
   }
 
   public static BinaryFileSearchResult Failure(BinaryFileDescriptor file, string details) {

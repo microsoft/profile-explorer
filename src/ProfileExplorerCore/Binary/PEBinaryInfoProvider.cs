@@ -273,7 +273,9 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     }
 
     // Quick check if trace was recorded on local machine.
-    string result = FindExactLocalBinaryFile(binaryFile);
+    string approximateMatchPath = null;
+    long correctedImageSize = 0;
+    string result = FindExactLocalBinaryFile(binaryFile, out approximateMatchPath, out correctedImageSize);
 
     if (result != null) {
       DiagnosticLogger.LogInfo($"[BinarySearch] Found exact local binary for {binaryFile.ImageName} at {result} ({sw.ElapsedMilliseconds}ms)");
@@ -281,6 +283,18 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       searchResult = BinaryFileSearchResult.Success(binaryFile, result, "");
       resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
       return searchResult;
+    }
+
+    // Correct ImageSize if the file exists locally with matching timestamp but
+    // different size. The symbol server indexes binaries by TimeDateStamp+SizeOfImage
+    // from the PE header, but the ETW kernel event may report a larger mapped view size
+    // (the kernel mapping can include extra slack pages). Using the wrong size causes
+    // 404s on the symbol server even when the binary IS indexed there.
+    if (correctedImageSize > 0 && correctedImageSize != binaryFile.ImageSize) {
+      DiagnosticLogger.LogInfo(
+        $"[BinarySearch] Correcting ImageSize for {binaryFile.ImageName} from ETW value {binaryFile.ImageSize} " +
+        $"to PE SizeOfImage {correctedImageSize} for symbol server lookup");
+      binaryFile.ImageSize = correctedImageSize;
     }
 
     using var logWriter = new StringWriter();
@@ -324,7 +338,7 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       if (result == null) {
         // Finally, try an approximate manual search.
         DiagnosticLogger.LogDebug($"[BinarySearch] Symbol server search failed, trying approximate local search for {binaryFile.ImageName}");
-        result = FindMatchingLocalBinaryFile(binaryFile, settings);
+        result = FindMatchingLocalBinaryFile(binaryFile, settings, ref approximateMatchPath);
       }
     }
     catch (Exception ex) {
@@ -346,6 +360,21 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       // Read the binary info from the local file to fill in all fields.
       binaryFile = GetBinaryFileInfo(result);
       searchResult = BinaryFileSearchResult.Success(binaryFile, result, searchLog);
+    }
+    else if (settings.AllowApproximateBinaryMatch &&
+             !string.IsNullOrEmpty(approximateMatchPath) &&
+             File.Exists(approximateMatchPath)) {
+      // Fallback: use a binary with matching timestamp but different size.
+      // This handles cases where the kernel-reported ImageSize in the ETW trace
+      // differs from the PE header SizeOfImage, or the DLL was serviced.
+      DiagnosticLogger.LogWarning(
+        $"[BinarySearch] Using APPROXIMATE match for {binaryFile.ImageName} " +
+        $"at {approximateMatchPath} ({searchDuration.TotalMilliseconds:F0}ms) - " +
+        $"timestamp matches but image size differs");
+      binaryFile = GetBinaryFileInfo(approximateMatchPath);
+      string details = $"Approximate match: timestamp matches but image size differs " +
+        $"(trace: {binaryFile.ImageSize}). Disassembly may not be fully accurate.\n{searchLog}";
+      searchResult = BinaryFileSearchResult.ApproximateSuccess(binaryFile, approximateMatchPath, details);
     }
     else {
       DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
@@ -374,14 +403,31 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     return path;
   }
 
-  private static string FindExactLocalBinaryFile(BinaryFileDescriptor binaryFile) {
+  private static string FindExactLocalBinaryFile(BinaryFileDescriptor binaryFile,
+                                                  out string approximateMatchPath,
+                                                  out long correctedImageSize) {
+    approximateMatchPath = null;
+    correctedImageSize = 0;
+
     if (File.Exists(binaryFile.ImagePath)) {
       var fileInfo = GetBinaryFileInfo(binaryFile.ImagePath);
 
-      if (fileInfo != null &&
-          fileInfo.TimeStamp == binaryFile.TimeStamp &&
-          fileInfo.ImageSize == binaryFile.ImageSize) {
-        return binaryFile.ImagePath;
+      if (fileInfo != null && fileInfo.TimeStamp == binaryFile.TimeStamp) {
+        if (fileInfo.ImageSize == binaryFile.ImageSize) {
+          return binaryFile.ImagePath;
+        }
+
+        // Timestamp matches but size differs. This commonly happens because the
+        // kernel-reported ImageSize in ETW events is the mapped view size, which
+        // can exceed the PE header's SizeOfImage by a few pages of slack.
+        // Record the local file as an approximate match and save the PE SizeOfImage
+        // so we can correct the symbol server lookup key.
+        approximateMatchPath = binaryFile.ImagePath;
+        correctedImageSize = fileInfo.ImageSize;
+        DiagnosticLogger.LogInfo(
+          $"[BinarySearch] Local binary for {binaryFile.ImageName} at {binaryFile.ImagePath}: " +
+          $"timestamp matches ({fileInfo.TimeStamp}), size differs " +
+          $"(PE SizeOfImage: {fileInfo.ImageSize}, ETW ImageSize: {binaryFile.ImageSize})");
       }
     }
 
@@ -389,7 +435,8 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   }
 
   private static string FindMatchingLocalBinaryFile(BinaryFileDescriptor binaryFile,
-                                                    SymbolFileSourceSettings settings) {
+                                                    SymbolFileSourceSettings settings,
+                                                    ref string approximateMatchPath) {
     // Manually search in the provided directories.
     // This helps in cases where the original fine name doesn't match
     // the one on disk, like it seems to happen sometimes with the SPEC runner.
@@ -421,10 +468,18 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
           var fileInfo = GetBinaryFileInfo(file);
 
-          if (fileInfo != null &&
-              fileInfo.TimeStamp == binaryFile.TimeStamp &&
-              fileInfo.ImageSize == binaryFile.ImageSize) {
-            return file;
+          if (fileInfo != null && fileInfo.TimeStamp == binaryFile.TimeStamp) {
+            if (fileInfo.ImageSize == binaryFile.ImageSize) {
+              return file;
+            }
+
+            // Track first approximate match (timestamp matches, size differs).
+            if (approximateMatchPath == null) {
+              approximateMatchPath = file;
+              DiagnosticLogger.LogInfo(
+                $"[BinarySearch] Approximate match for {binaryFile.ImageName} in search paths: " +
+                $"{file} (on-disk: {fileInfo.ImageSize}, trace: {binaryFile.ImageSize})");
+            }
           }
         }
       }

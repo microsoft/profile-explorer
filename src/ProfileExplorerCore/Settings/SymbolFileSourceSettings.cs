@@ -83,6 +83,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   public DateTime RejectedFilesCacheTime { get; set; }
   [ProtoMember(23)][OptionValue(3)] // 3 days default expiration
   public int RejectedFilesCacheExpirationDays { get; set; }
+  [ProtoMember(25)][OptionValue(true)]
+  public bool AllowApproximateBinaryMatch { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public bool HasCompanyFilter => CompanyFilterEnabled;
 

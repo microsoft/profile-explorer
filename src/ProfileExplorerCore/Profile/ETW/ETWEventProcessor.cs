@@ -275,6 +275,12 @@ public sealed partial class ETWEventProcessor : IDisposable {
         if (lastProfileImage.TimeStamp == 0) {
           lastProfileImage.TimeStamp = data.TimeDateStamp;
         }
+
+        // Prefer ImageSize from ImageID (PE header value from merge) over the kernel
+        // ImageGroup value (mapped view size which can have extra slack pages).
+        if (data.ImageSize > 0) {
+          lastProfileImage.Size = (int)data.ImageSize;
+        }
       }
       else {
         // The ImageGroup event should show up later in the stream.
@@ -346,6 +352,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
       imageLoadEventCount++;
       string originalName = null;
       int timeStamp = data.TimeDateStamp;
+      int imageSize = data.ImageSize;
       bool sawImageId = false;
 
       if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
@@ -355,6 +362,15 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
         if (timeStamp == 0) {
           timeStamp = lastImageIdData.TimeDateStamp;
+        }
+
+        // Prefer the ImageSize from the ImageID event over the kernel ImageGroup event.
+        // The kernel reports the mapped view size which can exceed the PE SizeOfImage
+        // by a few slack pages. The ImageID event's ImageSize comes from reading the
+        // actual PE file during trace merge, so it matches the PE header and is the
+        // correct value for symbol server lookups (TimeDateStamp+SizeOfImage key).
+        if (lastImageIdData.ImageSize > 0) {
+          imageSize = (int)lastImageIdData.ImageSize;
         }
       }
       else if (isRealTime_) {
@@ -372,7 +388,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
 #endif
 
       var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,
-                                   (long)data.DefaultBase, data.ImageSize,
+                                   (long)data.DefaultBase, imageSize,
                                    timeStamp, data.ImageChecksum);
       if (timeStamp != 0) {
         imageLoadWithTimestampCount++;
