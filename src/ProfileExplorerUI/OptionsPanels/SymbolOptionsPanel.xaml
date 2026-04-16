@@ -59,6 +59,11 @@
       </StackPanel>
       <CheckBox
         Margin="0,4,0,0"
+        Content="Allow approximate binary match (matching timestamp, different size)"
+        IsChecked="{Binding Path=AllowApproximateBinaryMatch, Mode=TwoWay}"
+        ToolTip="When a binary file is found with a matching timestamp but different image size, use it as a fallback for disassembly. This helps when the kernel-reported image size differs from the PE header, or when a DLL was serviced." />
+      <CheckBox
+        Margin="0,4,0,0"
         Content="Don't load symbols that failed in previous sessions"
         IsChecked="{Binding Path=RejectPreviouslyFailedFiles, Mode=TwoWay}"
         ToolTip="Skip downloading and loading of symbols that could not be found in previous sessions" />
