@@ -22,6 +22,10 @@ OutputDir=userdocs:ProfileExplorer
 ChangesAssociations = yes
 ChangesEnvironment = yes
 OutputBaseFilename=profile_explorer_installer_{#APP_VERSION}_arm64
+; Run installer in 64-bit (ARM64) mode so {sys} resolves to System32 and the
+; correct architecture regsvr32.exe registers msdia140.dll.
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
 
 [Registry]
 Root: HKCR; Subkey: "{#MyAppName}";                     ValueData: "Program {#MyAppName}";  Flags: uninsdeletekey;   ValueType: string;  ValueName: ""
@@ -38,7 +42,10 @@ Name: "{group}\Profile Explorer"; Filename: "{app}\ProfileExplorer.exe"
 Name: envPath; Description: "Add to PATH env. variable as ProfileExplorer.exe" 
 
 [Run]
-Filename: "{sys}\Regsvr32.exe"; Parameters: "/s msdia140.dll"; WorkingDir: "{app}"; Flags: shellexec runhidden; 
+Filename: "{sys}\Regsvr32.exe"; Parameters: "/s ""{app}\msdia140.dll"""; WorkingDir: "{app}"; Flags: runhidden;
+
+[UninstallRun]
+Filename: "{sys}\Regsvr32.exe"; Parameters: "/s /u ""{app}\msdia140.dll"""; Flags: runhidden;
 
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);
