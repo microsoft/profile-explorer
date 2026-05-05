@@ -163,20 +163,33 @@ public sealed partial class ETWEventProcessor : IDisposable {
       HandleProcessEvent(data);
     };
 
+    // Track per-thread ProcessID from StackWalk events for deferred resolution
+    // of PerfInfoSample events where TraceEvent reports ProcessID = -1.
+    var lastKnownThreadPid = new Dictionary<int, int>();
+    var pendingSamples = new Dictionary<int, (TimeSpan Weight, TimeSpan Time)>();
+
     kernel.PerfInfoSample += data => {
       if (cancelableTask.IsCanceled) {
         source_.StopProcessing();
       }
 
-      // The thread ID -> process ID mapping is used internally.
-      if (data.ProcessID < 0) {
-        return;
+      int processId = data.ProcessID;
+
+      // Resolve unknown ProcessID using last known PID for this thread.
+      if (processId < 0) {
+        if (!lastKnownThreadPid.TryGetValue(data.ThreadID, out processId)) {
+          // No known PID yet; store as pending for deferred StackWalk resolution.
+          var pendingWeight = TimeSpan.FromMilliseconds(samplingIntervalMS_);
+          var pendingTime = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
+          pendingSamples[data.ThreadID] = (pendingWeight, pendingTime);
+          return;
+        }
       }
 
       sampleId++;
       var sampleWeight = TimeSpan.FromMilliseconds(samplingIntervalMS_);
       var sampleTime = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
-      summaryBuilder.AddSample(sampleWeight, sampleTime, data.ProcessID);
+      summaryBuilder.AddSample(sampleWeight, sampleTime, processId);
 
       // Rebuild process list and update UI from time to time.
       if (sampleId - lastReportedSample >= SampleReportingInterval) {
@@ -203,6 +216,22 @@ public sealed partial class ETWEventProcessor : IDisposable {
         }
 
         lastReportedSample = sampleId;
+      }
+    };
+
+    // Use StackWalk events to resolve ProcessID for threads where
+    // PerfInfoSample reports ProcessID = -1.
+    kernel.StackWalkStack += data => {
+      if (data.ProcessID >= 0) {
+        int tid = data.ThreadID;
+        lastKnownThreadPid[tid] = data.ProcessID;
+
+        // Resolve any pending sample for this thread.
+        if (pendingSamples.TryGetValue(tid, out var pending)) {
+          pendingSamples.Remove(tid);
+          sampleId++;
+          summaryBuilder.AddSample(pending.Weight, pending.Time, data.ProcessID);
+        }
       }
     };
 
@@ -235,6 +264,14 @@ public sealed partial class ETWEventProcessor : IDisposable {
     var kernelStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
     var userStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
     var profile = new RawProfileData(tracePath_, handleDotNetEvents_);
+
+    // Track per-thread ProcessID from StackWalk events for deferred resolution
+    // of PerfInfoSample events where TraceEvent reports ProcessID = -1.
+    // StackWalk events immediately follow their PerfInfoSample in the event stream
+    // and reliably carry valid ProcessIDs even when PerfInfoSample doesn't.
+    var lastKnownThreadPid = new Dictionary<int, int>();
+    var pendingPidSamples = new Dictionary<int, (long IP, double TimestampMs, double WeightMs,
+                                                  bool IsKernelCode, int ThreadId, int Cpu)>();
 
     // Enable building of a thread ID -> process ID table
     // that is used for circular traces to get the event process ID
@@ -442,7 +479,36 @@ public sealed partial class ETWEventProcessor : IDisposable {
     };
 
     kernel.StackWalkStack += data => {
-      if (!IsAcceptedProcess(data.ProcessID)) {
+      int stackProcessId = data.ProcessID;
+
+      // Track per-thread ProcessID from StackWalk events for resolving
+      // PerfInfoSample events where TraceEvent reports ProcessID = -1.
+      if (stackProcessId >= 0) {
+        lastKnownThreadPid[data.ThreadID] = stackProcessId;
+      }
+      else if (lastKnownThreadPid.TryGetValue(data.ThreadID, out int knownPid)) {
+        stackProcessId = knownPid;
+      }
+
+      // Create any deferred sample whose PID was unknown at PerfInfoSample time.
+      if (pendingPidSamples.TryGetValue(data.ThreadID, out var pending)) {
+        pendingPidSamples.Remove(data.ThreadID);
+
+        if (stackProcessId >= 0 && IsAcceptedProcess(stackProcessId)) {
+          var pendingCtx = profile.RentTempContext(stackProcessId, pending.ThreadId, pending.Cpu);
+          int pendingCtxId = profile.AddContext(pendingCtx);
+          var pendingSample = new ProfileSample(pending.IP,
+                                                TimeSpan.FromMilliseconds(pending.TimestampMs),
+                                                TimeSpan.FromMilliseconds(pending.WeightMs),
+                                                pending.IsKernelCode, pendingCtxId);
+          int pendingSampleId = profile.AddSample(pendingSample);
+          profile.ReturnContext(pendingCtxId);
+          perThreadLastSampleMap[data.ThreadID] = pendingSampleId;
+          perContextLastSampleMap[pendingCtxId] = pendingSampleId;
+        }
+      }
+
+      if (!IsAcceptedProcess(stackProcessId)) {
         return; // Ignore events from other processes.
       }
 
@@ -457,9 +523,9 @@ public sealed partial class ETWEventProcessor : IDisposable {
       //   Trace.WriteLine($"   kernel {isKernelStack}, kernelStart {isKernelStackStart}");
       // }
 
-      //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
+      //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {stackProcessId}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
 #endif
-      var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+      var context = profile.RentTempContext(stackProcessId, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
       int frameCount = data.FrameCount;
       ProfileStack kstack = null;
@@ -537,11 +603,38 @@ public sealed partial class ETWEventProcessor : IDisposable {
     };
 
     kernel.StackWalkStackKeyKernel += data => {
-      if (!IsAcceptedProcess(data.ProcessID)) {
+      int keyKernelProcessId = data.ProcessID;
+
+      if (keyKernelProcessId >= 0) {
+        lastKnownThreadPid[data.ThreadID] = keyKernelProcessId;
+      }
+      else if (lastKnownThreadPid.TryGetValue(data.ThreadID, out int knownPid)) {
+        keyKernelProcessId = knownPid;
+      }
+
+      // Create any deferred sample whose PID was unknown at PerfInfoSample time.
+      if (pendingPidSamples.TryGetValue(data.ThreadID, out var pending)) {
+        pendingPidSamples.Remove(data.ThreadID);
+
+        if (keyKernelProcessId >= 0 && IsAcceptedProcess(keyKernelProcessId)) {
+          var pendingCtx = profile.RentTempContext(keyKernelProcessId, pending.ThreadId, pending.Cpu);
+          int pendingCtxId = profile.AddContext(pendingCtx);
+          var pendingSample = new ProfileSample(pending.IP,
+                                                TimeSpan.FromMilliseconds(pending.TimestampMs),
+                                                TimeSpan.FromMilliseconds(pending.WeightMs),
+                                                pending.IsKernelCode, pendingCtxId);
+          int pendingSampleId = profile.AddSample(pendingSample);
+          profile.ReturnContext(pendingCtxId);
+          perThreadLastSampleMap[data.ThreadID] = pendingSampleId;
+          perContextLastSampleMap[pendingCtxId] = pendingSampleId;
+        }
+      }
+
+      if (!IsAcceptedProcess(keyKernelProcessId)) {
         return; // Ignore events from other processes.
       }
 
-      var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+      var context = profile.RentTempContext(keyKernelProcessId, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
 
       int sampleId = perThreadLastSampleMap.GetValueOrDefault(data.ThreadID);
@@ -569,11 +662,38 @@ public sealed partial class ETWEventProcessor : IDisposable {
     };
 
     kernel.StackWalkStackKeyUser += delegate(StackWalkRefTraceData data) {
-      if (!IsAcceptedProcess(data.ProcessID)) {
+      int keyUserProcessId = data.ProcessID;
+
+      if (keyUserProcessId >= 0) {
+        lastKnownThreadPid[data.ThreadID] = keyUserProcessId;
+      }
+      else if (lastKnownThreadPid.TryGetValue(data.ThreadID, out int knownPid)) {
+        keyUserProcessId = knownPid;
+      }
+
+      // Create any deferred sample whose PID was unknown at PerfInfoSample time.
+      if (pendingPidSamples.TryGetValue(data.ThreadID, out var pending)) {
+        pendingPidSamples.Remove(data.ThreadID);
+
+        if (keyUserProcessId >= 0 && IsAcceptedProcess(keyUserProcessId)) {
+          var pendingCtx = profile.RentTempContext(keyUserProcessId, pending.ThreadId, pending.Cpu);
+          int pendingCtxId = profile.AddContext(pendingCtx);
+          var pendingSample = new ProfileSample(pending.IP,
+                                                TimeSpan.FromMilliseconds(pending.TimestampMs),
+                                                TimeSpan.FromMilliseconds(pending.WeightMs),
+                                                pending.IsKernelCode, pendingCtxId);
+          int pendingSampleId = profile.AddSample(pendingSample);
+          profile.ReturnContext(pendingCtxId);
+          perThreadLastSampleMap[data.ThreadID] = pendingSampleId;
+          perContextLastSampleMap[pendingCtxId] = pendingSampleId;
+        }
+      }
+
+      if (!IsAcceptedProcess(keyUserProcessId)) {
         return; // Ignore events from other processes.
       }
 
-      var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+      var context = profile.RentTempContext(keyUserProcessId, data.ThreadID, data.ProcessorNumber);
       int contextId = profile.AddContext(context);
 
       int sampleId = perThreadLastSampleMap.GetValueOrDefault(data.ThreadID);
@@ -710,8 +830,11 @@ public sealed partial class ETWEventProcessor : IDisposable {
     };
 
     kernel.PerfInfoSample += data => {
-      if (!IsAcceptedProcess(data.ProcessID)) {
-        return; // Ignore events from other processes.
+      int processId = data.ProcessID;
+
+      // Resolve unknown ProcessID from cached StackWalk-based thread→process mapping.
+      if (processId < 0 && lastKnownThreadPid.TryGetValue(data.ThreadID, out int knownPid)) {
+        processId = knownPid;
       }
 
       // If the time since the last sample is greater than the sampling interval + some error margin,
@@ -729,11 +852,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
 
       perThreadLastTime = timestamp;
 
-      // Skip unknown process.
-      if (data.ProcessID < 0) {
-        return;
-      }
-
       // Skip idle thread on non-kernel code.
       bool isKernelCode = data.ExecutingDPC || data.ExecutingISR;
 
@@ -741,8 +859,20 @@ public sealed partial class ETWEventProcessor : IDisposable {
         return;
       }
 
+      if (processId < 0) {
+        // ProcessID still unknown — defer sample creation until the
+        // immediately-following StackWalk event provides a valid ProcessID.
+        pendingPidSamples[data.ThreadID] = ((long)data.InstructionPointer, timestamp,
+                                             weight, isKernelCode, data.ThreadID, cpu);
+        return;
+      }
+
+      if (!IsAcceptedProcess(processId)) {
+        return; // Ignore events from other processes.
+      }
+
       // Save sample.
-      var context = profile.RentTempContext(data.ProcessID, data.ThreadID, cpu);
+      var context = profile.RentTempContext(processId, data.ThreadID, cpu);
       int contextId = profile.AddContext(context);
 
       var sample = new ProfileSample((long)data.InstructionPointer,
@@ -751,7 +881,6 @@ public sealed partial class ETWEventProcessor : IDisposable {
                                      isKernelCode, contextId);
       int sampleId = profile.AddSample(sample);
       profile.ReturnContext(contextId);
-      // Trace.WriteLine($"Sample {sampleId}, timestamp {timestamp}, IP {data.InstructionPointer:X} kernel {isKernelCode}, CPU {cpu}, thread {data.ThreadID}");
 
       // Remember the sample, to be matched later with a call stack.
       perThreadLastSampleMap[data.ThreadID] = sampleId;
@@ -781,11 +910,17 @@ public sealed partial class ETWEventProcessor : IDisposable {
       Trace.WriteLine("Enable PMC event handling");
 
       kernel.PerfInfoPMCSample += data => {
-        if (!IsAcceptedProcess(data.ProcessID)) {
+        int pmcProcessId = data.ProcessID;
+
+        if (pmcProcessId < 0) {
+          lastKnownThreadPid.TryGetValue(data.ThreadID, out pmcProcessId);
+        }
+
+        if (!IsAcceptedProcess(pmcProcessId)) {
           return; // Ignore events from other processes.
         }
 
-        var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+        var context = profile.RentTempContext(pmcProcessId, data.ThreadID, data.ProcessorNumber);
         int contextId = profile.AddContext(context);
         double timestamp = data.TimeStampRelativeMSec;
 
