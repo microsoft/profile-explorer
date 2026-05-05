@@ -236,7 +236,7 @@ public sealed partial class ETWEventProcessor : IDisposable {
     var userStackKeyToPendingSamples = new Dictionary<ulong, List<int>>();
     var profile = new RawProfileData(tracePath_, handleDotNetEvents_);
 
-    // Enable building of a thead ID -> process ID table
+    // Enable building of a thread ID -> process ID table
     // that is used for circular traces to get the event process ID
     // when it is not set in the trace (-1).
     var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.ParserTrackingOptions.ThreadToProcess);
@@ -259,6 +259,13 @@ public sealed partial class ETWEventProcessor : IDisposable {
       // Process the trace in case it's using circular buffers
       // to build the thread -> process ID table.
       source_.Process();
+
+      // Always reopen the trace for the main processing pass. This ensures
+      // the ThreadToProcess mapping is built from scratch during the pass,
+      // reflecting temporal thread ownership rather than final state.
+      // Without this, merged WPR traces ("[multiple files]") would resolve
+      // reused thread IDs to the wrong process for earlier samples.
+      kernel = ReopenTrace();
     }
 
     // For ETL file, the image timestamp (needed to find a binary on a symbol server)
