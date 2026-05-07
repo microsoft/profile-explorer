@@ -43,7 +43,6 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
 
     return binaryInfo?.Architecture switch {
       Machine.Arm64 => new ASMCompilerIRInfo(IRMode.ARM64),
-      Machine.Arm   => new ASMCompilerIRInfo(IRMode.ARM64),
       Machine.I386  => new ASMCompilerIRInfo(IRMode.x86_64),
       Machine.Amd64 => new ASMCompilerIRInfo(IRMode.x86_64),
       _             => compilerInfo.IR
