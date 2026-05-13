@@ -47,9 +47,16 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
-        // Strict precondition: a profile must not already be loaded. Caller is
-        // expected to invoke close_trace first. This also avoids the silent
-        // no-op from LoadProfile.CanExecute (MainWindowProfiling.cs:577 —
+        // Idempotent: if the same trace+process is already loaded, succeed without reloading.
+        var alreadyLoadedResult = await CheckIfTraceAlreadyLoadedAsync(profileFilePath, processIdentifier);
+        if (alreadyLoadedResult != null)
+        {
+            return alreadyLoadedResult;
+        }
+
+        // Strict precondition: a different profile must not already be loaded.
+        // Caller must call close_trace first. This also avoids the silent no-op
+        // from LoadProfile.CanExecute (MainWindowProfiling.cs:577 —
         // !IsSessionStarted || ProfileData == null) when a profile is loaded.
         var existingProfile = await GetLoadedProfileSummaryAsync();
         if (existingProfile != null)
@@ -58,21 +65,12 @@ public class McpActionExecutor : IMcpActionExecutor
             {
                 Success = false,
                 FailureReason = OpenTraceFailureReason.TraceAlreadyLoaded,
-                ErrorMessage = $"A trace is already loaded ('{existingProfile.Value.tracePath}', " +
+                ErrorMessage = $"A different trace is already loaded ('{existingProfile.Value.tracePath}', " +
                                $"PID {existingProfile.Value.processId}). Call close_trace before open_trace."
             };
         }
 
-        // In --mcp mode the MainWindow was created hidden; show it now that we're
-        // about to load and display a trace.
-        await dispatcher.InvokeAsync(() =>
-        {
-            if (!mainWindow.IsVisible)
-            {
-                mainWindow.Show();
-            }
-        });
-
+        OpenTraceResult result;
         if (int.TryParse(processIdentifier, out int processId))
         {
             if (processId <= 0)
@@ -84,11 +82,27 @@ public class McpActionExecutor : IMcpActionExecutor
                     ErrorMessage = "Process ID must be a positive integer."
                 };
             }
-            return await OpenTraceByProcessIdAsync(profileFilePath, processId);
+            result = await OpenTraceByProcessIdAsync(profileFilePath, processId);
+        }
+        else
+        {
+            // If not a number, treat as process name
+            result = await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
         }
 
-        // If not a number, treat as process name
-        return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
+        // In --mcp mode MainWindow is hidden; show it only on a successful load,
+        // not earlier — a late load failure should not leave a window behind.
+        if (result.Success)
+        {
+            await dispatcher.InvokeAsync(() =>
+            {
+                if (!mainWindow.IsVisible)
+                {
+                    mainWindow.Show();
+                }
+            });
+        }
+        return result;
     }
 
     /// <summary>

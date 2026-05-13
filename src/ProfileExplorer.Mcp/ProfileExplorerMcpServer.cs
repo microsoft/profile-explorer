@@ -75,20 +75,15 @@ public static class ProfileExplorerTools
                 throw new InvalidOperationException("MCP action executor is not initialized");
             }
 
-            // Strict precondition: a profile must not already be loaded. Enforce here
-            // (before the process-list preflight below) so ambiguous-process responses
-            // don't bypass the check.
+            // If a profile is loaded, route directly to OpenTraceAsync so it can either
+            // succeed idempotently (same trace+process) or fail with TraceAlreadyLoaded
+            // (different trace). Skipping the ambiguity preflight ensures the agent gets
+            // a clear answer instead of a process list.
             var status = await _executor.GetStatusAsync();
             if (status.IsProfileLoaded)
             {
-                return SerializeOpenTraceResult(new OpenTraceResult
-                {
-                    Success = false,
-                    FailureReason = OpenTraceFailureReason.TraceAlreadyLoaded,
-                    ErrorMessage = $"A trace is already loaded ('{status.CurrentProfilePath}'" +
-                                   (status.CurrentProcess != null ? $", PID {status.CurrentProcess.ProcessId}" : "") +
-                                   "). Call close_trace before open_trace."
-                }, profileFilePath, processNameOrId);
+                OpenTraceResult preconditionResult = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                return SerializeOpenTraceResult(preconditionResult, profileFilePath, processNameOrId);
             }
 
             // First, check if this might be an ambiguous query by getting available processes
