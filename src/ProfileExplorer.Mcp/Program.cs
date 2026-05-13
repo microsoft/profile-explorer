@@ -428,4 +428,14 @@ ret";
             Binaries = filteredBinaries
         });
     }
+
+    public Task<CloseTraceResult> CloseTraceAsync()
+    {
+        Console.WriteLine("Mock: CloseTraceAsync called");
+        return Task.FromResult(new CloseTraceResult
+        {
+            Success = true,
+            WasLoaded = false
+        });
+    }
 }

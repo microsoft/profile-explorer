@@ -709,6 +709,14 @@ public partial class MainWindow : Window, IUISession {
     HideStartPage();
   }
 
+  /// <summary>
+  /// Public wrapper around <see cref="EndSession"/> for callers outside MainWindow
+  /// (in particular the MCP layer).
+  /// </summary>
+  public Task CloseSessionAsync(bool showStartPage = true) {
+    return EndSession(showStartPage);
+  }
+
   private async Task EndSession(bool showStartPage = true) {
     await BeginSessionStateChange();
 
