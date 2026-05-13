@@ -636,13 +636,11 @@ public partial class App : Application {
       // Stay alive without a visible window until MCP shuts us down or a tool shows the window.
       ShutdownMode = ShutdownMode.OnExplicitShutdown;
       SuppressDialogsForAutomation = true;
+      InitializeMcpServerAsync(mainWindow);
     }
     else {
       mainWindow.Show();
     }
-
-    // Initialize MCP server if enabled
-    InitializeMcpServerAsync(mainWindow);
   }
 
   private void InitializeMcpServerAsync(MainWindow mainWindow)
