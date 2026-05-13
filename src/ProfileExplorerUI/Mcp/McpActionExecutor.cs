@@ -70,7 +70,17 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
-        OpenTraceResult result;
+        // In --mcp mode the MainWindow was created hidden; show it now that we're
+        // about to load a trace. WPF requires Owner to have been Show()n before
+        // ProfileLoadWindow.Owner can be set during the load.
+        dispatcher.Invoke(() =>
+        {
+            if (!mainWindow.IsVisible)
+            {
+                mainWindow.Show();
+            }
+        });
+
         if (int.TryParse(processIdentifier, out int processId))
         {
             if (processId <= 0)
@@ -82,27 +92,11 @@ public class McpActionExecutor : IMcpActionExecutor
                     ErrorMessage = "Process ID must be a positive integer."
                 };
             }
-            result = await OpenTraceByProcessIdAsync(profileFilePath, processId);
-        }
-        else
-        {
-            // If not a number, treat as process name
-            result = await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
+            return await OpenTraceByProcessIdAsync(profileFilePath, processId);
         }
 
-        // In --mcp mode MainWindow is hidden; show it only on a successful load,
-        // not earlier — a late load failure should not leave a window behind.
-        if (result.Success)
-        {
-            await dispatcher.InvokeAsync(() =>
-            {
-                if (!mainWindow.IsVisible)
-                {
-                    mainWindow.Show();
-                }
-            });
-        }
-        return result;
+        // If not a number, treat as process name
+        return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
     }
 
     /// <summary>
