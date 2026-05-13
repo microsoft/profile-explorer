@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -2053,7 +2052,7 @@ public class McpActionExecutor : IMcpActionExecutor
     /// Returns identifying details of the currently loaded profile session, or null when
     /// no profile is loaded. Reads via the dispatcher because it touches MainWindow state.
     /// </summary>
-    private async Task<(string? tracePath, int? processId, string? processName)?> GetLoadedProfileSummaryAsync()
+    private async Task<(string tracePath, int? processId, string processName)?> GetLoadedProfileSummaryAsync()
     {
         return await dispatcher.InvokeAsync(() =>
         {
@@ -2063,12 +2062,12 @@ public class McpActionExecutor : IMcpActionExecutor
 
             if (report == null)
             {
-                return ((string? tracePath, int? processId, string? processName)?)null;
+                return ((string tracePath, int? processId, string processName)?)null;
             }
 
-            string? tracePath = report.TraceInfo?.TraceFilePath;
+            string tracePath = report.TraceInfo?.TraceFilePath;
             int? processId = report.Process?.ProcessId;
-            string? processName = report.Process?.Name;
+            string processName = report.Process?.Name;
             return (tracePath, processId, processName);
         });
     }
