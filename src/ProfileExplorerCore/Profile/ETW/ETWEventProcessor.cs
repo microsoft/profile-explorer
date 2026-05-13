@@ -124,6 +124,8 @@ public sealed partial class ETWEventProcessor : IDisposable {
     // when it is not set in the trace (-1).
     var kernel = new KernelTraceEventParser(source_, KernelTraceEventParser.ParserTrackingOptions.ThreadToProcess);
 
+    bool traceReopened = false;
+
     if (!isRealTime_) {
       kernel.EventTraceHeader += data => {
         // If the trace has a known file name it's unlikely
@@ -131,10 +133,20 @@ public sealed partial class ETWEventProcessor : IDisposable {
         // stop reading the entire trace early.
         if (data.LogFileName != "[multiple files]") {
           kernel = ReopenTrace();
+          traceReopened = true;
         }
       };
 
       source_.Process();
+
+      // For merged traces ("[multiple files]"), the first Process() call consumed
+      // all events to build the thread→process ID table. Reopen the trace so the
+      // second Process() call can re-read events for the actual sample collection.
+      DiagnosticLogger.LogInfo($"[BuildProcessSummary] First Process() done, traceReopened={traceReopened}");
+      if (!traceReopened) {
+        kernel = ReopenTrace();
+        DiagnosticLogger.LogInfo("[BuildProcessSummary] Reopened trace for merged ETL second pass");
+      }
     }
 
     ProfileProcess HandleProcessEvent(ProcessTraceData data) {
@@ -163,20 +175,24 @@ public sealed partial class ETWEventProcessor : IDisposable {
       HandleProcessEvent(data);
     };
 
-    kernel.PerfInfoSample += data => {
+    void HandleSampleEvent(int processId, double timeStampRelativeMSec) {
       if (cancelableTask.IsCanceled) {
         source_.StopProcessing();
       }
 
       // The thread ID -> process ID mapping is used internally.
-      if (data.ProcessID < 0) {
+      if (processId < 0) {
         return;
       }
 
       sampleId++;
       var sampleWeight = TimeSpan.FromMilliseconds(samplingIntervalMS_);
-      var sampleTime = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
-      summaryBuilder.AddSample(sampleWeight, sampleTime, data.ProcessID);
+      var sampleTime = TimeSpan.FromMilliseconds(timeStampRelativeMSec);
+      summaryBuilder.AddSample(sampleWeight, sampleTime, processId);
+    }
+
+    kernel.PerfInfoSample += data => {
+      HandleSampleEvent(data.ProcessID, data.TimeStampRelativeMSec);
 
       // Rebuild process list and update UI from time to time.
       if (sampleId - lastReportedSample >= SampleReportingInterval) {
@@ -206,10 +222,55 @@ public sealed partial class ETWEventProcessor : IDisposable {
       }
     };
 
+    // Also handle PMC (Performance Monitor Counter) sample events, which are used
+    // in traces collected with hardware counter profiling instead of standard CPU sampling.
+    kernel.PerfInfoPMCSample += data => {
+      HandleSampleEvent(data.ProcessID, data.TimeStampRelativeMSec);
+
+      if (sampleId - lastReportedSample >= SampleReportingInterval) {
+        List<ProcessSummary> processList = null;
+        var currentTime = DateTime.UtcNow;
+
+        if (sampleId - lastProcessListSample >= nextProcessListSample &&
+            (currentTime - lastProcessListReport).TotalMilliseconds > 1000) {
+          processList = summaryBuilder.MakeSummaries();
+          lastProcessListSample = sampleId;
+          lastProcessListReport = currentTime;
+        }
+
+        if (progressCallback != null) {
+          int current = (int)data.TimeStampRelativeMSec;
+          int total = (int)source_.SessionDuration.TotalMilliseconds;
+
+          progressCallback(new ProcessListProgress {
+            Total = total,
+            Current = current,
+            Processes = processList
+          });
+        }
+
+        lastReportedSample = sampleId;
+      }
+    };
+
     // Go again over events and accumulate samples to build the process summary.
+    DiagnosticLogger.LogInfo("[BuildProcessSummary] Starting second Process() call");
     source_.Process();
+    var result = summaryBuilder.MakeSummaries();
+    DiagnosticLogger.LogInfo($"[BuildProcessSummary] Second Process() done, sampleId={sampleId}, processes={result?.Count ?? 0}, profileProcesses={profile.Processes?.Count ?? 0}");
+
+    // For traces without sampling events (e.g., CSwitch/context-switch traces),
+    // no samples are collected but processes are discovered via ProcessStart/ProcessEnd.
+    // Build summaries from those processes with zero weight so the list isn't empty.
+    if (result.Count == 0 && profile.Processes != null && profile.Processes.Count > 0) {
+      DiagnosticLogger.LogInfo($"[BuildProcessSummary] No samples found, building process list from {profile.Processes.Count} discovered processes");
+      foreach (var proc in profile.Processes) {
+        result.Add(new ProcessSummary(proc, TimeSpan.Zero));
+      }
+    }
+
     profile.Dispose();
-    return summaryBuilder.MakeSummaries();
+    return result;
   }
 
   public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback,
