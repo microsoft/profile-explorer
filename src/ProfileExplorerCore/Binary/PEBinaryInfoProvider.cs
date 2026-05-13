@@ -65,6 +65,16 @@ public sealed class PEVersionInfo {
 public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ = new();
   private static ConcurrentDictionary<string, PEVersionInfo> versionInfoCache_ = new();
+
+  /// <summary>
+  /// Clears the static resolved binaries and version info caches.
+  /// Call between trace loads to ensure a clean resolution state.
+  /// </summary>
+  public static void ClearResolvedCache() {
+    resolvedBinariesCache_.Clear();
+    versionInfoCache_.Clear();
+  }
+
   private string filePath_;
   private PEReader reader_;
 
