@@ -115,6 +115,10 @@ public class Disassembler : IDisposable {
   public void UseSymbolNameResolver(SymbolNameResolverDelegate symbolNameResolver) {
     symbolNameResolver_ = symbolNameResolver;
     checkValidCallAddress_ = false;
+    // IAT-slot name resolution is cached per-instance; invalidate the cache so
+    // disabling/swapping the resolver takes effect immediately for subsequent
+    // disassembly calls.
+    iatSymbolCache_?.Clear();
   }
 
   public string DisassembleToText(FunctionDebugInfo funcInfo) {
