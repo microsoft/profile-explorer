@@ -168,9 +168,11 @@ public static class ProfileTools
     [Description("Process name or ID. A name like 'diskspd' selects ALL matching processes. Comma-separated IDs (e.g. '9492,9500') select specific ones.")]
     string processNameOrId,
     [Description("Optional additional symbol search path (e.g. 'd:\\temp\\landy' for custom kernel symbols)")]
-    string? symbolPath = null)
+    string? symbolPath = null,
+    [Description("Optional additional binary search path (e.g. 'd:\\temp' for loose binaries like storport.sys). Required for assembly-level disassembly via GetFunctionAssembly when the binary isn't on the symbol server.")]
+    string? binaryPath = null)
   {
-    DiagnosticLogger.LogInfo($"[MCP] OpenTrace called: profileFilePath={profileFilePath}, processNameOrId={processNameOrId}, symbolPath={symbolPath ?? "(none)"}");
+    DiagnosticLogger.LogInfo($"[MCP] OpenTrace called: profileFilePath={profileFilePath}, processNameOrId={processNameOrId}, symbolPath={symbolPath ?? "(none)"}, binaryPath={binaryPath ?? "(none)"}");
 
     if (!File.Exists(profileFilePath))
       return Error("OpenTrace", $"File not found: {profileFilePath}");
@@ -197,10 +199,16 @@ public static class ProfileTools
         symbolSettings.UseEnvironmentVarSymbolPaths = true;
         if (!string.IsNullOrWhiteSpace(symbolPath))
           symbolSettings.InsertSymbolPath(symbolPath);
+        if (!string.IsNullOrWhiteSpace(binaryPath))
+        {
+          options.BinarySearchPathsEnabled = true;
+          options.InsertBinaryPath(binaryPath);
+        }
         ProfileSession.SymbolSettings = symbolSettings;
 
         DiagnosticLogger.LogInfo($"[MCP] SymbolSettings: UseEnvVar=true, CustomPath={symbolPath ?? "(none)"}, EnvVar={symbolSettings.EnvironmentVarSymbolPath ?? "(not set)"}");
         DiagnosticLogger.LogInfo($"[MCP] SymbolPaths: {string.Join("; ", symbolSettings.SymbolPaths)}");
+        DiagnosticLogger.LogInfo($"[MCP] BinarySearchPaths: {(options.HasBinarySearchPaths ? string.Join("; ", options.BinarySearchPaths) : "(none)")}");
 
         var report = new ProfileDataReport();
         var provider = new ETWProfileDataProvider();
@@ -529,6 +537,7 @@ public static class ProfileTools
       }
       catch (Exception ex)
       {
+        DiagnosticLogger.LogError($"[MCP] Disassembly failed for {functionName}: {ex.Message}", ex);
         Trace.TraceError($"Disassembly failed for {functionName}: {ex.Message}");
       }
     }
