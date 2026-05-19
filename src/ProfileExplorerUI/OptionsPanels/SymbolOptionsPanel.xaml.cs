@@ -226,6 +226,11 @@ public partial class SymbolOptionsPanel : OptionsPanelBase, INotifyPropertyChang
     var symbolList = symbolSettings_.RejectedSymbolFiles.ToList();
     symbolList.Sort((a, b) => string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
     RejectedSymbolsList.ItemsSource = symbolList;
+
+    // Force refresh of count bindings since HashSet doesn't notify on changes.
+    var dc = DataContext;
+    DataContext = null;
+    DataContext = dc;
   }
 
   public void OnPropertyChange(string propertyname) {

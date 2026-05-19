@@ -151,6 +151,10 @@ public partial class SectionPanelPair : ToolPanelControl {
     MainPanel.AddModuleSummary(summary);
   }
 
+  public void ClearModuleSummaries() {
+    MainPanel.ClearModuleSummaries();
+  }
+
   public async Task RefreshDocumentsDiffs() {
     if (MainPanel.CurrentFunction == null) {
       return;

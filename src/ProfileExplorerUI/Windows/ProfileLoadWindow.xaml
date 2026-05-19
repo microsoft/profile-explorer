@@ -15,11 +15,9 @@
   Height="600"
   MinWidth="600"
   MinHeight="400"
-  MaxHeight="800"
   d:DesignHeight="1200"
   ResizeMode="CanResizeWithGrip"
   ShowInTaskbar="False"
-  SizeToContent="Height"
   WindowStartupLocation="CenterOwner"
   WindowStyle="ToolWindow"
   mc:Ignorable="d">
@@ -134,9 +132,6 @@
           </ListBox.ItemContainerStyle>
         </ListBox>
       </Grid>
-      <ScrollViewer
-        HorizontalScrollBarVisibility="Disabled"
-        VerticalScrollBarVisibility="Auto">
         <TabControl
           VerticalAlignment="Stretch"
           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -145,9 +140,10 @@
           <TabItem
             Header="Session"
             Style="{StaticResource TabControlStyle}">
-            <StackPanel Orientation="Vertical">
+            <DockPanel>
               <StackPanel
                 x:Name="ProfileCapturePanel"
+                DockPanel.Dock="Top"
                 Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock
                   Margin="8,6,8,0"
@@ -568,6 +564,7 @@
 
               <StackPanel
                 x:Name="ProfileLoadPanel"
+                DockPanel.Dock="Top"
                 Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                 <TextBlock
                   Margin="8,8,8,0"
@@ -596,9 +593,21 @@
                     IsEnabled="{Binding InputControlsEnabled}" />
                 </Grid>
 
-                <TextBlock
-                  Margin="8,4,8,0"
-                  Text="Process executable binary" />
+                <Grid Margin="8,4,8,0">
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    Text="Process executable binary" />
+                  <CheckBox
+                    x:Name="ExcludeIdleCheckBox"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Content="Exclude Idle"
+                    IsChecked="{Binding ExcludeIdleProcess}"
+                    ToolTip="Hide the Idle process (PID 0) and recalculate weight percentages without it"
+                    Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}"
+                    Checked="ExcludeIdleCheckBox_Changed"
+                    Unchecked="ExcludeIdleCheckBox_Changed" />
+                </Grid>
                 <Grid Margin="8,2,8,0">
                   <TextBox
                     x:Name="BinaryAutocompleteBox"
@@ -612,109 +621,7 @@
                 </Grid>
               </StackPanel>
 
-              <ListView
-                x:Name="ProcessList"
-                MinHeight="100"
-                MaxHeight="300"
-                Margin="8,4,8,0"
-                VerticalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                IsEnabled="{Binding ProcessListEnabled}"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                SelectionChanged="ProcessList_OnSelectionChanged"
-                SelectionMode="Extended"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
-                Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
-                <ListView.View>
-                  <GridView>
-                    <GridViewColumn
-                      Width="150"
-                      DisplayMemberBinding="{Binding Process.Name}">
-                      <GridViewColumnHeader Name="ProcessNameColumn" Content="Process" />
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-
-                    <GridViewColumn
-                      Width="80"
-                      DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
-                      <GridViewColumnHeader Name="WeightPercentageColumn" Content="Weight" />
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-
-                    <GridViewColumn
-                      Width="80"
-                      DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
-                      <GridViewColumnHeader Name="DurationColumn" Content="Duration" />
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-
-                    <GridViewColumn
-                      Width="70"
-                      DisplayMemberBinding="{Binding Process.ProcessId}">
-                      <GridViewColumnHeader Name="ProcessIdColumn" Content="Process ID" />
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-
-                    <GridViewColumn
-                      Width="150"
-                      DisplayMemberBinding="{Binding Process.CommandLine}">
-                      <GridViewColumnHeader Name="ProcessCommandLineColumn" Content="Command line" />
-                      <GridViewColumn.HeaderContainerStyle>
-                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                          <Setter Property="HorizontalContentAlignment" Value="Left" />
-                        </Style>
-                      </GridViewColumn.HeaderContainerStyle>
-                    </GridViewColumn>
-                  </GridView>
-                </ListView.View>
-
-                <ListView.ItemContainerStyle>
-                  <Style
-                    BasedOn="{StaticResource FlatListViewItem}"
-                    TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background"
-                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
-                    <EventSetter
-                      Event="MouseDoubleClick"
-                      Handler="LoadButton_Click" />
-                    <EventSetter
-                      Event="PreviewKeyDown"
-                      Handler="ProcessList_PreviewKeyDown" />
-                  </Style>
-                </ListView.ItemContainerStyle>
-
-                <ListView.ContextMenu>
-                  <ContextMenu>
-                    <MenuItem
-                      Click="ProcessListMenuItem_OnClick"
-                      Header="Copy Process Details" />
-                    <MenuItem
-                      Click="ProcessListMenuItem_OnClick"
-                      Header="Copy Process List"
-                      IsEnabled="False" />
-                  </ContextMenu>
-                </ListView.ContextMenu>
-              </ListView>
-
-              <Grid Margin="8,8,8,4">
+              <Grid Margin="8,8,8,4" DockPanel.Dock="Bottom">
                 <StackPanel
                   Width="400"
                   HorizontalAlignment="Left">
@@ -765,7 +672,109 @@
                     Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </StackPanel>
               </Grid>
-            </StackPanel>
+
+              <ListView
+                x:Name="ProcessList"
+                MinHeight="100"
+                Margin="8,4,8,8"
+                VerticalAlignment="Stretch"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                IsEnabled="{Binding ProcessListEnabled}"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                SelectionChanged="ProcessList_OnSelectionChanged"
+                SelectionMode="Extended"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
+                <ListView.View>
+                  <GridView>
+                    <GridViewColumn
+                      Width="150"
+                      DisplayMemberBinding="{Binding Process.Name}">
+                      <GridViewColumnHeader Name="ProcessNameColumn" Content="Process" />
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                      x:Name="WeightColumn"
+                      Width="80"
+                      DisplayMemberBinding="{Binding WeightPercentageExcludingIdle, StringFormat={}{0:#0.00'%'}}">
+                      <GridViewColumnHeader Name="WeightPercentageColumn" Content="Weight" />
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                      Width="80"
+                      DisplayMemberBinding="{Binding Duration, StringFormat={}{0:mm\\:ss\\.ff}}">
+                      <GridViewColumnHeader Name="DurationColumn" Content="Duration" />
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                      Width="70"
+                      DisplayMemberBinding="{Binding Process.ProcessId}">
+                      <GridViewColumnHeader Name="ProcessIdColumn" Content="Process ID" />
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                      Width="500"
+                      DisplayMemberBinding="{Binding Process.CommandLine}">
+                      <GridViewColumnHeader Name="ProcessCommandLineColumn" Content="Command line" />
+                      <GridViewColumn.HeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                          <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        </Style>
+                      </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                  </GridView>
+                </ListView.View>
+
+                <ListView.ItemContainerStyle>
+                  <Style
+                    BasedOn="{StaticResource FlatListViewItem}"
+                    TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background"
+                            Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="ToolTip" Value="{Binding Process.CommandLine}" />
+                    <EventSetter
+                      Event="MouseDoubleClick"
+                      Handler="LoadButton_Click" />
+                    <EventSetter
+                      Event="PreviewKeyDown"
+                      Handler="ProcessList_PreviewKeyDown" />
+                  </Style>
+                </ListView.ItemContainerStyle>
+
+                <ListView.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem
+                      Click="ProcessListMenuItem_OnClick"
+                      Header="Copy Process Details" />
+                    <MenuItem
+                      Click="ProcessListMenuItem_OnClick"
+                      Header="Copy Process List"
+                      IsEnabled="False" />
+                  </ContextMenu>
+                </ListView.ContextMenu>
+              </ListView>
+            </DockPanel>
           </TabItem>
 
           <TabItem
@@ -784,6 +793,7 @@
             Header="Options"
             IsEnabled="{Binding InputControlsEnabled}"
             Style="{StaticResource TabControlStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel
               Margin="0,4,0,8"
               Orientation="Vertical">
@@ -904,6 +914,7 @@
                 </StackPanel>
               </Expander>
             </StackPanel>
+            </ScrollViewer>
           </TabItem>
           <TabItem
             Header="CPU counters"
@@ -1252,7 +1263,6 @@
             </Grid>
           </TabItem>
         </TabControl>
-      </ScrollViewer>
     </DockPanel>
   </Grid>
 </Window>

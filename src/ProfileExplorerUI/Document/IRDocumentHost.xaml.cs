@@ -1190,9 +1190,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
     // Add the columns to the View menu.
     ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, () => {
-      // TODO: Force non-async run to ensure no events from SetViewMenuItemEvents
-      // are set yet, can cause an infinite update loop. Find a better way.
-      Utils.RunSync(UpdateProfilingColumns);
+      // UpdateProfilingColumns handles reentrancy by calling ResetViewMenuItemEvents()
+      // synchronously before any await, which unsubscribes the event handlers.
+      _ = UpdateProfilingColumns();
     });
 
     SetViewMenuItemEvents();

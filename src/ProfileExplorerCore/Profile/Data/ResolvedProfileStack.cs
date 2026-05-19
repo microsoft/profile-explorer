@@ -86,6 +86,16 @@ public sealed class ResolvedProfileStack {
   public static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
   public static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ = new();
 
+  /// <summary>
+  /// Clears all static frame caches. Must be called before processing a new trace
+  /// to prevent stale frame references from a previous session.
+  /// </summary>
+  public static void ResetCaches() {
+    uniqueFrames_.Clear();
+    frameInstances_.Clear();
+    kernelFrameInstances_.Clear();
+  }
+
   public ResolvedProfileStack(int frameCount, ProfileContext context) {
     StackFrames = new List<ResolvedProfileStackFrame>(frameCount);
     Context = context;

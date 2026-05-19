@@ -26,6 +26,15 @@ public class RawProfileData : IDisposable {
   private static ProfileImage lastIpImage_;
   [ThreadStatic]
   private static IpToImageCache globalIpImageCache_;
+
+  /// <summary>
+  /// Clears thread-local caches on the current thread
+  /// </summary>
+  public static void ClearThreadLocalCaches() {
+    ipImageCache_ = null;
+    lastIpImage_ = null;
+    globalIpImageCache_ = null;
+  }
   [ProtoMember(1)]
   private List<ProfileSample> samples_;
   [ProtoMember(2)]
@@ -271,7 +280,7 @@ public class RawProfileData : IDisposable {
   }
 
   public void LoadingCompleted() {
-    // Free objects used while reading the profile.
+    // Free objects used only during trace event processing.
     stacksMap_ = null;
     contextsMap_ = null;
     imagesMap_ = null;
@@ -281,6 +290,20 @@ public class RawProfileData : IDisposable {
 
     // Wait for any compression tasks.
     perfCountersEvents_?.Wait();
+  }
+
+  /// <summary>
+  /// Adds an image directly to the images list and assigns it a sequential ID,
+  /// bypassing deduplication. Safe to call after LoadingCompleted().
+  /// </summary>
+  public void AddImageDirect(ProfileImage image) {
+    if (imagesMap_ != null) {
+      throw new InvalidOperationException(
+        "AddImageDirect can only be called after LoadingCompleted() has been invoked.");
+    }
+
+    images_.Add(image);
+    image.Id = images_.Count;
   }
 
   public void ManagedLoadingCompleted() {

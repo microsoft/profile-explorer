@@ -438,6 +438,10 @@ public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
 
   public void BringElementIntoView(IRElement op,
                                    BringIntoViewStyle style = BringIntoViewStyle.Default) {
+    if (op.TextLocation.Offset < 0 || op.TextLocation.Offset >= Document.TextLength) {
+      return;
+    }
+
     ignoreNextHoverEvent_ = true;
     ignoreNextCaretEvent_ = true;
     int line = Document.GetLineByOffset(op.TextLocation.Offset).LineNumber;

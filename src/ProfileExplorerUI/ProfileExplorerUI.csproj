@@ -5,9 +5,9 @@
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
-		<AssemblyVersion>1.2.0</AssemblyVersion>
-		<FileVersion>1.2.0</FileVersion>
-		<Version>1.2.0</Version>
+		<AssemblyVersion>1.2.1</AssemblyVersion>
+		<FileVersion>1.2.1</FileVersion>
+		<Version>1.2.1</Version>
 		<Authors></Authors>
 		<Company>Microsoft Corporation</Company>
 		<Product>Profile Explorer</Product>
@@ -167,7 +167,7 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.11.0" />
 		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.0-beta.24314.3" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.28" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.30" />
 		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles" Version="1.0.23" />
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="17.7.47">
 			<PrivateAssets>all</PrivateAssets>
@@ -322,6 +322,20 @@
 		<Reference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication">
 			<HintPath>..\external\Microsoft.Diagnostics.Tracing.TraceEvent.SymbolsAuthentication.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<!-- Copy msdia140.dll to output root so COM registration path (AppContext.BaseDirectory) works -->
+	<ItemGroup Condition="'$(Platform)' == 'ARM64'">
+		<Content Include="..\external\arm64\msdia140.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>msdia140.dll</Link>
+		</Content>
+	</ItemGroup>
+	<ItemGroup Condition="'$(Platform)' != 'ARM64'">
+		<Content Include="..\external\msdia140.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>msdia140.dll</Link>
+		</Content>
 	</ItemGroup>
 
 
