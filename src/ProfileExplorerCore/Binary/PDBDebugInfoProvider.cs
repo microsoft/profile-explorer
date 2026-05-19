@@ -64,6 +64,16 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   private static string diaRegistrationError_;
 
   /// <summary>
+  /// Clears the static resolved symbols cache and resets logging state.
+  /// Call between trace loads to ensure a clean resolution state.
+  /// </summary>
+  public static void ClearResolvedCache() {
+    resolvedSymbolsCache_.Clear();
+    loggedSymbolPathDetails_ = false;
+    lastLoggedAuthFailedState_ = false;
+  }
+
+  /// <summary>
   /// Returns true if DIA SDK (msdia140.dll) failed to load due to COM registration issues.
   /// </summary>
   public static bool HasDiaRegistrationError => diaRegistrationFailed_;
