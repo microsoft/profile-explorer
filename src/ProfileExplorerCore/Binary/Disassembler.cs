@@ -71,6 +71,7 @@ public class Disassembler : IDisposable {
   private SymbolNameResolverDelegate symbolNameResolver_;
   private FunctionNameFormatter funcNameFormatter_;
   private object sectionLock_;
+  private Dictionary<long, string> iatSymbolCache_;
 
   private Disassembler(Machine architecture,
                        PEBinaryInfoProvider peInfo,
@@ -114,6 +115,10 @@ public class Disassembler : IDisposable {
   public void UseSymbolNameResolver(SymbolNameResolverDelegate symbolNameResolver) {
     symbolNameResolver_ = symbolNameResolver;
     checkValidCallAddress_ = false;
+    // IAT-slot name resolution is cached per-instance; invalidate the cache so
+    // disabling/swapping the resolver takes effect immediately for subsequent
+    // disassembly calls.
+    iatSymbolCache_?.Clear();
   }
 
   public string DisassembleToText(FunctionDebugInfo funcInfo) {
@@ -206,7 +211,18 @@ public class Disassembler : IDisposable {
         long hexValue = 0;
 
         if (letter == '[') {
-          sawBracket = true; // Reject lookups for call ptr [rip + 0xABCD] and similar.
+          // For x64, try to resolve RIP-relative [rip + 0xN] / [rip - 0xN]
+          // memory operands, which are typically IAT slots for indirect
+          // calls/jumps through imported functions. The PDB has public
+          // symbols (e.g., _imp_FunctionName) at these slot addresses.
+          if (architecture_ == Machine.Amd64 && !sawBracket &&
+              TryResolveRipRelativeOperand(instr, letterPtr, index, builder,
+                                           out int consumedLength)) {
+            index += consumedLength;
+            continue;
+          }
+
+          sawBracket = true; // Reject lookups for call ptr [rax + 0xN] and similar.
         }
         else if (letter == '#' && isArm && !sawBracket) {
           hexLength = FindHexNumber(letterPtr, index + 1, out hexValue); // Skip over #
@@ -289,6 +305,139 @@ public class Disassembler : IDisposable {
     }
 
     return null;
+  }
+
+  // Attempt to detect and resolve an x64 RIP-relative memory operand of the
+  // form "[rip + 0xN]" or "[rip - 0xN]" (and the rare "[rip]"). On success,
+  // appends "[symbol]" to the builder and returns true with consumedLength
+  // set to the number of characters that should be skipped in the operand
+  // text (including the leading '[' and trailing ']'). On failure leaves the
+  // builder unchanged and returns false.
+  private unsafe bool TryResolveRipRelativeOperand(Interop.Instruction instr, byte* letterPtr,
+                                                   int startIdx, StringBuilder builder,
+                                                   out int consumedLength) {
+    consumedLength = 0;
+
+    if (letterPtr[startIdx] != (byte)'[') {
+      return false;
+    }
+
+    int idx = startIdx + 1;
+    SkipOperandWhitespace(letterPtr, ref idx);
+
+    // Match "rip".
+    if (idx + 2 >= Interop.Instruction.OperandLength ||
+        letterPtr[idx] != (byte)'r' ||
+        letterPtr[idx + 1] != (byte)'i' ||
+        letterPtr[idx + 2] != (byte)'p') {
+      return false;
+    }
+
+    idx += 3;
+    SkipOperandWhitespace(letterPtr, ref idx);
+
+    long signedOffset = 0;
+
+    if (idx < Interop.Instruction.OperandLength && letterPtr[idx] == (byte)']') {
+      // Bare [rip] with no displacement.
+      idx++;
+    }
+    else {
+      // Expect + or -, then a hex number, then ].
+      int sign;
+
+      if (idx >= Interop.Instruction.OperandLength) {
+        return false;
+      }
+
+      if (letterPtr[idx] == (byte)'+') {
+        sign = 1;
+      }
+      else if (letterPtr[idx] == (byte)'-') {
+        sign = -1;
+      }
+      else {
+        return false;
+      }
+
+      idx++;
+      SkipOperandWhitespace(letterPtr, ref idx);
+
+      int hexLen = FindHexNumber(letterPtr, idx, out long hexValue);
+
+      if (hexLen <= 0) {
+        return false;
+      }
+
+      idx += hexLen;
+      signedOffset = sign * hexValue;
+      SkipOperandWhitespace(letterPtr, ref idx);
+
+      if (idx >= Interop.Instruction.OperandLength || letterPtr[idx] != (byte)']') {
+        return false;
+      }
+
+      idx++;
+    }
+
+    // Resolve the target. For RIP-relative addressing the effective address is
+    // (next-instruction address) + displacement, i.e. instr.Address + instr.Size + disp.
+    long iatSlotAddr = instr.Address + instr.Size + signedOffset;
+    long iatSlotRva = iatSlotAddr - baseAddress_;
+
+    string symbolName = TryResolveIatSlotSymbol(iatSlotRva);
+
+    if (string.IsNullOrEmpty(symbolName)) {
+      return false;
+    }
+
+    builder.Append('[');
+
+    if (funcNameFormatter_ != null) {
+      builder.Append(funcNameFormatter_(symbolName));
+    }
+    else {
+      builder.Append(symbolName);
+    }
+
+    builder.Append(']');
+    consumedLength = idx - startIdx;
+    return true;
+  }
+
+  // Look up a symbol at an exact RVA, intended for IAT slot resolution.
+  // Mirrors TryAppendFunctionName's resolver semantics: if symbolNameResolver_
+  // is set, only consult it (do not fall through to debugInfo_). For the
+  // debugInfo_ path, require an exact RVA match so we don't accidentally
+  // report a nearby function/symbol as if it were the IAT entry.
+  private string TryResolveIatSlotSymbol(long rva) {
+    iatSymbolCache_ ??= new Dictionary<long, string>();
+
+    if (iatSymbolCache_.TryGetValue(rva, out string cached)) {
+      return cached;
+    }
+
+    string name = null;
+
+    if (symbolNameResolver_ != null) {
+      name = symbolNameResolver_(rva);
+    }
+    else if (debugInfo_ != null) {
+      var funcInfo = FindFunctionByRva(rva);
+
+      if (funcInfo != null && funcInfo.StartRVA == rva) {
+        name = funcInfo.Name;
+      }
+    }
+
+    iatSymbolCache_[rva] = name;
+    return name;
+  }
+
+  private static unsafe void SkipOperandWhitespace(byte* letterPtr, ref int idx) {
+    while (idx < Interop.Instruction.OperandLength && letterPtr[idx] == (byte)' ') {
+      idx++;
+    }
   }
 
   private bool ShouldLookupAddressByName(Interop.Instruction instr, ref bool isJump) {

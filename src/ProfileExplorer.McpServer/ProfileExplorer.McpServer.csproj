@@ -19,4 +19,20 @@
     <ProjectReference Include="..\ProfileExplorerCore\ProfileExplorerCore.csproj" />
   </ItemGroup>
 
+  <!--
+    Copy native dependencies (capstone, msdia, etc.) to the output folder.
+    These are required at runtime by Disassembler (capstone.dll) and the PDB
+    debug info provider (msdia140.dll). They live in src\external and are
+    built/staged by build.cmd / build-external.cmd.
+  -->
+  <ItemGroup>
+    <NativeDependency Include="..\external\capstone\build\Release\capstone.dll" Condition="Exists('..\external\capstone\build\Release\capstone.dll')" />
+    <NativeDependency Include="..\external\msdia140.dll" Condition="Exists('..\external\msdia140.dll')" />
+    <NativeDependency Include="..\external\tree-sitter\build\*.dll" />
+  </ItemGroup>
+
+  <Target Name="CopyNativeDependencies" AfterTargets="Build" Inputs="@(NativeDependency)" Outputs="@(NativeDependency -> '$(OutputPath)%(Filename)%(Extension)')">
+    <Copy SourceFiles="@(NativeDependency)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
