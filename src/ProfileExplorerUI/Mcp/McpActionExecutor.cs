@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -26,6 +27,11 @@ public class McpActionExecutor : IMcpActionExecutor
     private readonly MainWindow mainWindow;
     private readonly Dispatcher dispatcher;
 
+    // Cached process list from GetAvailableProcessesAsync to avoid re-parsing
+    // the ETL file when OpenTraceAsync is called immediately after.
+    private List<ProcessSummary> cachedProcessList_;
+    private string cachedProcessListFilePath_;
+
     public McpActionExecutor(MainWindow mainWindow)
     {
         this.mainWindow = mainWindow ?? throw new ArgumentNullException(nameof(mainWindow));
@@ -34,6 +40,8 @@ public class McpActionExecutor : IMcpActionExecutor
 
     public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier)
     {
+        DiagnosticLogger.LogInfo($"[MCP] OpenTraceAsync: file={profileFilePath}, process={processIdentifier}");
+
         // Mark that MCP automation is active - suppress UI dialogs
         App.SuppressDialogsForAutomation = true;
 
@@ -156,15 +164,18 @@ public class McpActionExecutor : IMcpActionExecutor
 
     private async Task<OpenTraceResult> OpenTraceByProcessIdAsync(string profileFilePath, int processId)
     {
+        ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow = null;
         try
         {
-            var loadResult = await LoadTraceAsync(profileFilePath);
+            var cachedList = ConsumeCachedProcessList(profileFilePath);
+            var loadResult = await LoadTraceAsync(profileFilePath, cachedList);
+            profileLoadWindow = loadResult.ProfileLoadWindow;
             if (!loadResult.Success) {
                 return loadResult.Result;
             }
-            
+
             // Select the process by PID
-            return await SelectProcessByPidAsync(loadResult.ProfileLoadWindow, processId);
+            return await SelectProcessByPidAsync(profileLoadWindow, processId);
         }
         catch (Exception ex)
         {
@@ -175,18 +186,25 @@ public class McpActionExecutor : IMcpActionExecutor
                 ErrorMessage = $"Unexpected error: {ex.Message}"
             };
         }
+        finally
+        {
+            await CloseProfileLoadWindowIfVisibleAsync(profileLoadWindow);
+        }
     }
 
     private async Task<OpenTraceResult> OpenTraceByProcessNameAsync(string profileFilePath, string processName) {
+        ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow = null;
         try {
             // Load the trace and prepare the process list
-            var loadResult = await LoadTraceAsync(profileFilePath);
+            var cachedList = ConsumeCachedProcessList(profileFilePath);
+            var loadResult = await LoadTraceAsync(profileFilePath, cachedList);
+            profileLoadWindow = loadResult.ProfileLoadWindow;
             if (!loadResult.Success) {
                 return loadResult.Result;
             }
 
             // Select the process by name
-            return await SelectProcessByNameAsync(loadResult.ProfileLoadWindow, processName);
+            return await SelectProcessByNameAsync(profileLoadWindow, processName);
         }
         catch (Exception ex) {
             return new OpenTraceResult {
@@ -195,20 +213,69 @@ public class McpActionExecutor : IMcpActionExecutor
                 ErrorMessage = $"Unexpected error: {ex.Message}"
             };
         }
+        finally
+        {
+            await CloseProfileLoadWindowIfVisibleAsync(profileLoadWindow);
+        }
     }
 
-    private async Task<(bool Success, ProfileExplorer.UI.ProfileLoadWindow ProfileLoadWindow, OpenTraceResult Result)> LoadTraceAsync(string profileFilePath) {
+    /// <summary>
+    /// Returns and clears the cached process list if it matches the given file path.
+    /// </summary>
+    private List<ProcessSummary> ConsumeCachedProcessList(string profileFilePath)
+    {
+        var cachedList = cachedProcessList_;
+        var cachedPath = cachedProcessListFilePath_;
+        cachedProcessList_ = null;
+        cachedProcessListFilePath_ = null;
+
+        if (cachedList != null && cachedPath != null &&
+            Path.GetFullPath(cachedPath).Equals(Path.GetFullPath(profileFilePath), StringComparison.OrdinalIgnoreCase))
+        {
+            return cachedList;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Closes the ProfileLoadWindow if it's still visible.
+    /// Prevents dialog accumulation across multiple open_trace calls.
+    /// On success the dialog closes itself via LoadButton_Click; this is a safety net.
+    /// </summary>
+    private async Task CloseProfileLoadWindowIfVisibleAsync(ProfileExplorer.UI.ProfileLoadWindow window)
+    {
+        if (window == null) return;
+        try
+        {
+            await dispatcher.InvokeAsync(() =>
+            {
+                if (window.IsVisible)
+                {
+                    window.Close();
+                }
+            });
+        }
+        catch
+        {
+            // Ignore errors during cleanup
+        }
+    }
+
+    private async Task<(bool Success, ProfileExplorer.UI.ProfileLoadWindow ProfileLoadWindow, OpenTraceResult Result)> LoadTraceAsync(string profileFilePath, List<ProcessSummary> cachedProcessList = null) {
+        DiagnosticLogger.LogInfo($"[MCP] LoadTraceAsync: file={profileFilePath}, cachedProcessList={cachedProcessList != null} ({cachedProcessList?.Count ?? 0} processes)");
+
         // Execute the command in the background since ShowDialog() blocks
         var task = Task.Run(() =>
         {
             dispatcher.Invoke(() => AppCommand.LoadProfile.Execute(null, mainWindow));
         });
-        
+
         // Wait for the dialog to be created and shown (with timeout)
         var profileLoadWindow = await WaitForWindowAsync<ProfileExplorer.UI.ProfileLoadWindow>(TimeSpan.FromSeconds(5));
         if (profileLoadWindow == null)
         {
-            var errorResult = new OpenTraceResult 
+            var errorResult = new OpenTraceResult
             {
                 Success = false,
                 FailureReason = OpenTraceFailureReason.UIError,
@@ -216,47 +283,64 @@ public class McpActionExecutor : IMcpActionExecutor
             };
             return (false, null, errorResult);
         }
-        
-        // Step 1: Set the profile file path
-        await dispatcher.InvokeAsync(() => {
-            profileLoadWindow.ProfileFilePath = profileFilePath;
-        });
 
-        // Step 2: Trigger the text changed logic to load the process list
-        await dispatcher.InvokeAsync(() => 
+        if (cachedProcessList != null)
         {
-            var textChangedMethod = profileLoadWindow.GetType().GetMethod("ProfileAutocompleteBox_TextChanged",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            if (textChangedMethod != null) 
-            {
-                textChangedMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-            }
-        });
-
-        // Step 3: Wait for process list to finish loading (with timeout)
-        bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
-        if (!processListLoaded) 
-        {
-            var errorResult = new OpenTraceResult 
-            {
-                Success = false,
-                FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
-                ErrorMessage = "Timeout while loading process list from trace file"
-            };
-            return (false, profileLoadWindow, errorResult);
+            // Fast path: inject the cached process list directly, skipping ETL re-parse.
+            // Keep SkipTextChangedProcessing=true permanently for MCP - the autocomplete box
+            // may fire TextChanged asynchronously (deferred for filtering), so resetting the
+            // flag to false would let the deferred event clear the process list we just set.
+            DiagnosticLogger.LogInfo($"[MCP] LoadTraceAsync: injecting cached process list ({cachedProcessList.Count} processes)");
+            await dispatcher.InvokeAsync(() => {
+                profileLoadWindow.SkipTextChangedProcessing = true;
+                profileLoadWindow.ProfileFilePath = profileFilePath;
+                profileLoadWindow.SetPreloadedProcessList(cachedProcessList);
+            });
         }
-
-        // Step 4: Additional verification that ItemsSource is actually populated
-        var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
-        if (!verificationResult) 
+        else
         {
-            var errorResult = new OpenTraceResult 
+            // Normal path: set the file path and let the UI load the process list.
+            // Step 1: Set the profile file path
+            await dispatcher.InvokeAsync(() => {
+                profileLoadWindow.ProfileFilePath = profileFilePath;
+            });
+
+            // Step 2: Trigger the text changed logic to load the process list
+            await dispatcher.InvokeAsync(() =>
             {
-                Success = false,
-                FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
-                ErrorMessage = "Process list failed to load properly"
-            };
-            return (false, profileLoadWindow, errorResult);
+                var textChangedMethod = profileLoadWindow.GetType().GetMethod("ProfileAutocompleteBox_TextChanged",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                if (textChangedMethod != null)
+                {
+                    textChangedMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+                }
+            });
+
+            // Step 3: Wait for process list to finish loading (with timeout)
+            bool processListLoaded = await WaitForProcessListLoadedAsync(profileLoadWindow, TimeSpan.FromMinutes(2));
+            if (!processListLoaded)
+            {
+                var errorResult = new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                    ErrorMessage = "Timeout while loading process list from trace file"
+                };
+                return (false, profileLoadWindow, errorResult);
+            }
+
+            // Step 4: Additional verification that ItemsSource is actually populated
+            var verificationResult = await WaitForItemsSourceAsync(profileLoadWindow, TimeSpan.FromSeconds(10));
+            if (!verificationResult)
+            {
+                var errorResult = new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.ProcessListLoadTimeout,
+                    ErrorMessage = "Process list failed to load properly"
+                };
+                return (false, profileLoadWindow, errorResult);
+            }
         }
 
         return (true, profileLoadWindow, null);
@@ -467,7 +551,7 @@ public class McpActionExecutor : IMcpActionExecutor
     private async Task<bool> WaitForProcessListLoadedAsync(ProfileExplorer.UI.ProfileLoadWindow window, TimeSpan timeout)
     {
         var startTime = DateTime.UtcNow;
-        const int MinimumProcessCount = 2; // Wait for at least 2 processes to ensure full loading
+        const int MinimumProcessCount = 1; // Reduced from 2: the Idle filter hides PID 0, so single-process traces show count=1
         
         while (DateTime.UtcNow - startTime < timeout)
         {
@@ -1315,9 +1399,12 @@ public class McpActionExecutor : IMcpActionExecutor
 
     public async Task<GetAvailableProcessesResult> GetAvailableProcessesAsync(string profileFilePath, double? minWeightPercentage = null, int? topCount = null)
     {
+        DiagnosticLogger.LogInfo($"[MCP] GetAvailableProcessesAsync: file={profileFilePath}");
+
         // Validate file exists first
         if (!File.Exists(profileFilePath))
         {
+            DiagnosticLogger.LogInfo($"[MCP] GetAvailableProcessesAsync: file not found");
             return new GetAvailableProcessesResult
             {
                 Success = false,
@@ -1334,8 +1421,10 @@ public class McpActionExecutor : IMcpActionExecutor
             var options = App.Settings.ProfileOptions;
 
             // Progress callback must be non-null (ETWEventProcessor calls it unconditionally).
+            var sw = Stopwatch.StartNew();
             var processSummaries = await ETWProfileDataProvider.FindTraceProcesses(
                 profileFilePath, options, _ => { }, cancelableTask);
+            DiagnosticLogger.LogInfo($"[MCP] GetAvailableProcessesAsync: FindTraceProcesses completed in {sw.ElapsedMilliseconds}ms, count={processSummaries?.Count ?? 0}");
 
             if (processSummaries == null || processSummaries.Count == 0)
             {
@@ -1345,6 +1434,10 @@ public class McpActionExecutor : IMcpActionExecutor
                     ErrorMessage = "Failed to extract process list from trace file"
                 };
             }
+
+            // Cache for reuse by OpenTraceAsync to avoid re-parsing the ETL file.
+            cachedProcessList_ = processSummaries;
+            cachedProcessListFilePath_ = profileFilePath;
 
             // Exclude Idle/kernel process and use non-idle percentages for meaningful results.
             var processes = processSummaries
