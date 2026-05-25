@@ -47,10 +47,21 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
+        if (string.IsNullOrWhiteSpace(processIdentifier))
+        {
+            return new OpenTraceResult
+            {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.UnknownError,
+                ErrorMessage = "Process identifier must be a process ID or process name."
+            };
+        }
+
         // Idempotent: if the same trace+process is already loaded, succeed without reloading.
         var alreadyLoadedResult = await CheckIfTraceAlreadyLoadedAsync(profileFilePath, processIdentifier);
         if (alreadyLoadedResult != null)
         {
+            await EnsureMainWindowReadyAsync();
             return alreadyLoadedResult;
         }
 
@@ -61,25 +72,19 @@ public class McpActionExecutor : IMcpActionExecutor
         var existingProfile = await GetLoadedProfileSummaryAsync();
         if (existingProfile != null)
         {
+            string errorMessage = IsSameTraceFile(profileFilePath, existingProfile.Value.tracePath)
+                ? $"Trace '{existingProfile.Value.tracePath}' is already loaded with a different process " +
+                  $"(PID {existingProfile.Value.processId}). Call close_trace before open_trace to switch processes."
+                : $"A different trace is already loaded ('{existingProfile.Value.tracePath}', " +
+                  $"PID {existingProfile.Value.processId}). Call close_trace before open_trace.";
+
             return new OpenTraceResult
             {
                 Success = false,
                 FailureReason = OpenTraceFailureReason.TraceAlreadyLoaded,
-                ErrorMessage = $"A different trace is already loaded ('{existingProfile.Value.tracePath}', " +
-                               $"PID {existingProfile.Value.processId}). Call close_trace before open_trace."
+                ErrorMessage = errorMessage
             };
         }
-
-        // In --mcp mode the MainWindow was created hidden; show it now that we're
-        // about to load a trace. WPF requires Owner to have been Show()n before
-        // ProfileLoadWindow.Owner can be set during the load.
-        dispatcher.Invoke(() =>
-        {
-            if (!mainWindow.IsVisible)
-            {
-                mainWindow.Show();
-            }
-        });
 
         if (int.TryParse(processIdentifier, out int processId))
         {
@@ -92,11 +97,46 @@ public class McpActionExecutor : IMcpActionExecutor
                     ErrorMessage = "Process ID must be a positive integer."
                 };
             }
+
             return await OpenTraceByProcessIdAsync(profileFilePath, processId);
         }
 
         // If not a number, treat as process name
         return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
+    }
+
+    private async Task EnsureMainWindowReadyAsync()
+    {
+        await dispatcher.InvokeAsync(() =>
+        {
+            if (!mainWindow.IsVisible)
+            {
+                mainWindow.Show();
+            }
+        });
+
+        await mainWindow.InitialLoadCompleted;
+    }
+
+    private static bool IsSameTraceFile(string requestedPath, string loadedPath)
+    {
+        if (string.IsNullOrEmpty(requestedPath) || string.IsNullOrEmpty(loadedPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            return string.Equals(Path.GetFullPath(requestedPath),
+                                 Path.GetFullPath(loadedPath),
+                                 StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException ||
+                                   ex is NotSupportedException ||
+                                   ex is PathTooLongException)
+        {
+            return string.Equals(requestedPath, loadedPath, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     /// <summary>
@@ -185,11 +225,17 @@ public class McpActionExecutor : IMcpActionExecutor
         {
             var loadResult = await LoadTraceAsync(profileFilePath);
             if (!loadResult.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
                 return loadResult.Result;
             }
             
             // Select the process by PID
-            return await SelectProcessByPidAsync(loadResult.ProfileLoadWindow, processId);
+            var result = await SelectProcessByPidAsync(loadResult.ProfileLoadWindow, processId);
+            if (!result.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -207,11 +253,17 @@ public class McpActionExecutor : IMcpActionExecutor
             // Load the trace and prepare the process list
             var loadResult = await LoadTraceAsync(profileFilePath);
             if (!loadResult.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
                 return loadResult.Result;
             }
 
             // Select the process by name
-            return await SelectProcessByNameAsync(loadResult.ProfileLoadWindow, processName);
+            var result = await SelectProcessByNameAsync(loadResult.ProfileLoadWindow, processName);
+            if (!result.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
+            }
+
+            return result;
         }
         catch (Exception ex) {
             return new OpenTraceResult {
@@ -287,6 +339,22 @@ public class McpActionExecutor : IMcpActionExecutor
         return (true, profileLoadWindow, null);
     }
 
+    private async Task CloseProfileLoadWindowAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
+    {
+        if (profileLoadWindow == null)
+        {
+            return;
+        }
+
+        await dispatcher.InvokeAsync(() =>
+        {
+            if (profileLoadWindow.IsVisible)
+            {
+                profileLoadWindow.Close();
+            }
+        });
+    }
+
     private async Task<OpenTraceResult> SelectProcessByPidAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow, int processId) {
         // Step 5: Select the specified process from the process list
         // Use retry logic in case there are still brief timing issues
@@ -345,17 +413,15 @@ public class McpActionExecutor : IMcpActionExecutor
                 ErrorMessage = $"Process with ID {processId} not found in trace file",
             };
         }
-        
+
+        await EnsureMainWindowReadyAsync();
+
         // Step 6: Execute the profile load (click Load button)
-        await dispatcher.InvokeAsync(() =>
+        var loadClickResult = await InvokeLoadButtonClickAsync(profileLoadWindow);
+        if (!loadClickResult.Success)
         {
-            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            if (loadButtonClickMethod != null)
-            {
-                loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-            }
-        });
+            return loadClickResult;
+        }
         
         // Step 7: Wait for the profile to finish loading
         bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
@@ -437,14 +503,13 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
+        await EnsureMainWindowReadyAsync();
+
         // Step 6: Execute the profile load (click Load button)
-        await dispatcher.InvokeAsync(() => {
-            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            if (loadButtonClickMethod != null) {
-                loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-            }
-        });
+        var loadClickResult = await InvokeLoadButtonClickAsync(profileLoadWindow);
+        if (!loadClickResult.Success) {
+            return loadClickResult;
+        }
 
         // Step 7: Wait for the profile to finish loading
         bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
@@ -461,6 +526,32 @@ public class McpActionExecutor : IMcpActionExecutor
         return new OpenTraceResult { Success = true };
     }
 
+    private async Task<OpenTraceResult> InvokeLoadButtonClickAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
+    {
+        OpenTraceResult errorResult = null;
+
+        await dispatcher.InvokeAsync(() =>
+        {
+            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (loadButtonClickMethod == null)
+            {
+                errorResult = new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.UIError,
+                    ErrorMessage = "Failed to find profile load action."
+                };
+                return;
+            }
+
+            loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+        });
+
+        return errorResult ?? new OpenTraceResult { Success = true };
+    }
+
     /// <summary>
     /// Waits for a window of type T to appear, with a timeout.
     /// </summary>
@@ -470,8 +561,8 @@ public class McpActionExecutor : IMcpActionExecutor
         
         while (DateTime.UtcNow - startTime < timeout)
         {
-            var window = await dispatcher.InvokeAsync(() => 
-                mainWindow.OwnedWindows.OfType<T>().FirstOrDefault());
+            var window = await dispatcher.InvokeAsync(() =>
+                Application.Current.Windows.OfType<T>().FirstOrDefault(window => window.IsVisible));
             
             if (window != null)
             {

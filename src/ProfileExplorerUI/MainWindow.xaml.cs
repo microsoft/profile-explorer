@@ -99,6 +99,8 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   private DocumentSearchPanel documentSearchPanel_;
   private bool initialDockLayoutRestored_;
   private bool profileControlsVisible;
+  private readonly TaskCompletionSource<bool> initialLoadCompleted_ =
+    new(TaskCreationOptions.RunContinuationsAsynchronously);
 
   public MainWindow() {
     InitializeComponent();
@@ -127,6 +129,7 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
 
   public event PropertyChangedEventHandler PropertyChanged;
   public SessionStateManager SessionState => sessionState_;
+  public Task InitialLoadCompleted => initialLoadCompleted_.Task;
 
   public IRTextSummary GetDocumentSummary(IRTextSection section) {
     return sessionState_.FindLoadedDocument(section).Summary;
@@ -579,36 +582,50 @@ public partial class MainWindow : Window, IUISession, INotifyPropertyChanged {
   }
 
   private async void Window_Loaded(object sender, RoutedEventArgs e) {
-    await SetupCompilerTarget();
-    SectionPanel.OpenSection += SectionPanel_OpenSection;
-    SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
-    SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
-    SectionPanel.DisplayCallGraph += SectionPanel_DisplayCallGraph;
-    SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
+    try {
+      if (compilerInfo_ == null) {
+        await SetupCompilerTarget();
+      }
+      else {
+        SetupMainWindowCompilerTarget();
+      }
 
-    if (!RestoreDockLayout()) {
-      RegisterDefaultToolPanels();
+      SectionPanel.OpenSection += SectionPanel_OpenSection;
+      SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
+      SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
+      SectionPanel.DisplayCallGraph += SectionPanel_DisplayCallGraph;
+      SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
+
+      if (!RestoreDockLayout()) {
+        RegisterDefaultToolPanels();
+      }
+
+      ResetStatusBar();
+
+      // Make help panel active on the first run.
+      if (App.IsFirstRun) {
+        await ShowPanel(ToolPanelKind.Help);
+      }
+
+      await ProcessStartupArgs();
+
+      if (!IsSessionStarted) {
+        UpdatePanelEnabledState(false);
+      }
+      else {
+        // Hide the start page if a file was loaded on start.
+        HideStartPage();
+      }
+
+      if (App.Settings.GeneralSettings.CheckForUpdates) {
+        StartApplicationUpdateTimer();
+      }
+
+      initialLoadCompleted_.TrySetResult(true);
     }
-
-    ResetStatusBar();
-
-    // Make help panel active on the first run.
-    if (App.IsFirstRun) {
-      await ShowPanel(ToolPanelKind.Help);
-    }
-
-    await ProcessStartupArgs();
-
-    if (!IsSessionStarted) {
-      UpdatePanelEnabledState(false);
-    }
-    else {
-      // Hide the start page if a file was loaded on start.
-      HideStartPage();
-    }
-
-    if (App.Settings.GeneralSettings.CheckForUpdates) {
-      StartApplicationUpdateTimer();
+    catch (Exception ex) {
+      initialLoadCompleted_.TrySetException(ex);
+      throw;
     }
   }
 

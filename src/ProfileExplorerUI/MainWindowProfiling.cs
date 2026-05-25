@@ -503,7 +503,10 @@ public partial class MainWindow : Window, IUISession {
 
   private async Task LoadProfile() {
     var window = new ProfileLoadWindow(this, false);
-    window.Owner = this;
+    if (IsVisible) {
+      window.Owner = this;
+    }
+
     bool? result = window.ShowDialog();
 
     if (result.HasValue && result.Value) {

@@ -595,6 +595,9 @@ public partial class App : Application {
     AppStartTime = DateTime.UtcNow;
     base.OnStartup(e);
 
+    IsMcpMode = Array.Exists(e.Args, a => string.Equals(a, "--mcp", StringComparison.OrdinalIgnoreCase));
+    SuppressDialogsForAutomation = IsMcpMode;
+
     // Initialize UI-specific JSON converters
     UIJsonUtils.Initialize();
 
@@ -602,7 +605,7 @@ public partial class App : Application {
     RegisterSettingsTypeConverters();
 
     if (!Debugger.IsAttached) {
-      SetupExceptionHandling();
+      SetupExceptionHandling(showUIPrompt: !IsMcpMode);
     }
 
     FixPopupPlacement();
@@ -631,11 +634,9 @@ public partial class App : Application {
 
     // Create and show the main window manually
     var mainWindow = new MainWindow();
-    IsMcpMode = Array.Exists(e.Args, a => string.Equals(a, "--mcp", StringComparison.OrdinalIgnoreCase));
     if (IsMcpMode) {
       // Stay alive without a visible window until MCP shuts us down or a tool shows the window.
       ShutdownMode = ShutdownMode.OnExplicitShutdown;
-      SuppressDialogsForAutomation = true;
       InitializeMcpServerAsync(mainWindow);
     }
     else {
