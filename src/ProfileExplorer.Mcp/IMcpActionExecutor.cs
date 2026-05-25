@@ -58,6 +58,14 @@ public interface IMcpActionExecutor
     /// <param name="topCount">Optional number to limit results to the top N binaries by performance (e.g., 10 for top 10 most time-consuming binaries)</param>
     /// <returns>Task that completes with the list of available binaries in the currently loaded process</returns>
     Task<GetAvailableBinariesResult> GetAvailableBinariesAsync(double? minTimePercentage = null, TimeSpan? minTime = null, int? topCount = null);
+
+    /// <summary>
+    /// Closes the currently loaded trace/profile session and releases its resources.
+    /// Idempotent: returns Success=true with WasLoaded=false when no profile session is loaded.
+    /// Only closes profile sessions; non-profile sessions (e.g. IR documents) are left untouched.
+    /// </summary>
+    /// <returns>Task that completes with details about what was closed</returns>
+    Task<CloseTraceResult> CloseTraceAsync();
 }
 
 /// <summary>
@@ -126,6 +134,49 @@ public enum OpenTraceFailureReason
     TraceLoadTimeout,
     ProcessListLoadTimeout,
     ProfileLoadTimeout,
+    UIError,
+    UnknownError,
+    TraceAlreadyLoaded
+}
+
+/// <summary>
+/// Result of a CloseTrace operation. Idempotent — Success=true with WasLoaded=false
+/// is the expected response when no trace was loaded at the time of the call.
+/// </summary>
+public class CloseTraceResult
+{
+    public bool Success { get; set; }
+    public CloseTraceFailureReason FailureReason { get; set; } = CloseTraceFailureReason.None;
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// True if a profile session was actually loaded and closed by this call.
+    /// False (with Success=true) when no profile was loaded — the call is a no-op.
+    /// </summary>
+    public bool WasLoaded { get; set; }
+
+    /// <summary>
+    /// Path of the trace that was closed, if any.
+    /// </summary>
+    public string? ClosedProfilePath { get; set; }
+
+    /// <summary>
+    /// Process id that was loaded in the closed trace, if known.
+    /// </summary>
+    public int? ClosedProcessId { get; set; }
+
+    /// <summary>
+    /// Friendly name of the process that was loaded in the closed trace, if known.
+    /// </summary>
+    public string? ClosedProcessName { get; set; }
+}
+
+/// <summary>
+/// Specific reasons why a CloseTrace operation might fail.
+/// </summary>
+public enum CloseTraceFailureReason
+{
+    None,
     UIError,
     UnknownError
 }

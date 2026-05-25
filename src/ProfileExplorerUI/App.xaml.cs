@@ -87,6 +87,11 @@ public partial class App : Application {
   /// When true, suppresses UI dialogs (like source file prompts) during MCP/automation operations.
   /// </summary>
   public static bool SuppressDialogsForAutomation;
+  /// <summary>
+  /// True when launched with --mcp: skip showing the MainWindow at startup
+  /// (lazily shown on first MCP tool call that needs the UI).
+  /// </summary>
+  public static bool IsMcpMode;
   private Task? mcpServerTask;
   private static List<SyntaxFileInfo> cachedSyntaxHighlightingFiles_;
   public static string ApplicationPath => Process.GetCurrentProcess().MainModule?.FileName;
@@ -590,6 +595,9 @@ public partial class App : Application {
     AppStartTime = DateTime.UtcNow;
     base.OnStartup(e);
 
+    IsMcpMode = Array.Exists(e.Args, a => string.Equals(a, "--mcp", StringComparison.OrdinalIgnoreCase));
+    SuppressDialogsForAutomation = IsMcpMode;
+
     // Initialize UI-specific JSON converters
     UIJsonUtils.Initialize();
 
@@ -597,7 +605,7 @@ public partial class App : Application {
     RegisterSettingsTypeConverters();
 
     if (!Debugger.IsAttached) {
-      SetupExceptionHandling();
+      SetupExceptionHandling(showUIPrompt: !IsMcpMode);
     }
 
     FixPopupPlacement();
@@ -626,10 +634,14 @@ public partial class App : Application {
 
     // Create and show the main window manually
     var mainWindow = new MainWindow();
-    mainWindow.Show();
-
-    // Initialize MCP server if enabled
-    InitializeMcpServerAsync(mainWindow);
+    if (IsMcpMode) {
+      // Stay alive without a visible window until MCP shuts us down or a tool shows the window.
+      ShutdownMode = ShutdownMode.OnExplicitShutdown;
+      InitializeMcpServerAsync(mainWindow);
+    }
+    else {
+      mainWindow.Show();
+    }
   }
 
   private void InitializeMcpServerAsync(MainWindow mainWindow)

@@ -364,6 +364,10 @@ public class SessionStateManager : IDisposable {
 
     documents_.Clear();
     IsAutoSaveEnabled = false;
+
+    // Required so MainWindow.LoadProfile.CanExecute (checks ProfileData == null)
+    // re-enables and the MCP "is profile loaded" probe goes false after a close.
+    ProfileData = null;
   }
 
   public async Task CancelPendingTasks() {

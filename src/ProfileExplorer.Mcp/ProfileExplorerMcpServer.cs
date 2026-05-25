@@ -59,7 +59,7 @@ public static class ProfileExplorerTools
 
     #region Simplified MCP Tool
 
-    [McpServerTool, Description("Open and load a trace file with a specific process by name or ID in one complete operation")]
+    [McpServerTool, Description("Open and load a trace file with a specific process by name or ID. Precondition: no trace may be loaded; call close_trace first if one is. Returns Failed/TraceAlreadyLoaded otherwise.")]
     public static async Task<string> OpenTrace(string profileFilePath, string processNameOrId)
     {
         if (string.IsNullOrWhiteSpace(profileFilePath))
@@ -73,6 +73,17 @@ public static class ProfileExplorerTools
             if (_executor == null)
             {
                 throw new InvalidOperationException("MCP action executor is not initialized");
+            }
+
+            // If a profile is loaded, route directly to OpenTraceAsync so it can either
+            // succeed idempotently (same trace+process) or fail with TraceAlreadyLoaded
+            // (different trace). Skipping the ambiguity preflight ensures the agent gets
+            // a clear answer instead of a process list.
+            var status = await _executor.GetStatusAsync();
+            if (status.IsProfileLoaded)
+            {
+                OpenTraceResult preconditionResult = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                return SerializeOpenTraceResult(preconditionResult, profileFilePath, processNameOrId);
             }
 
             // First, check if this might be an ambiguous query by getting available processes
@@ -648,6 +659,60 @@ public static class ProfileExplorerTools
         }
     }
 
+    [McpServerTool, Description("Close the currently loaded trace and release its resources. Use between iterations when capturing fresh traces (build → capture → close_trace → open_trace → analyze). Idempotent: succeeds with WasLoaded=false when no trace is loaded. Only closes profile/trace sessions; non-profile sessions are left untouched.")]
+    public static async Task<string> CloseTrace()
+    {
+        try
+        {
+            if (_executor == null)
+            {
+                throw new InvalidOperationException("MCP action executor is not initialized");
+            }
+
+            var result = await _executor.CloseTraceAsync();
+
+            if (!result.Success)
+            {
+                var errorResult = new
+                {
+                    Action = "CloseTrace",
+                    Status = "Failed",
+                    FailureReason = result.FailureReason.ToString(),
+                    Description = result.ErrorMessage ?? "Unknown error closing trace",
+                    Timestamp = DateTime.UtcNow
+                };
+                return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+
+            var successResult = new
+            {
+                Action = "CloseTrace",
+                Status = "Success",
+                WasLoaded = result.WasLoaded,
+                ClosedProfilePath = result.ClosedProfilePath,
+                ClosedProcessId = result.ClosedProcessId,
+                ClosedProcessName = result.ClosedProcessName,
+                Description = result.WasLoaded
+                    ? $"Closed trace '{result.ClosedProfilePath}' (PID: {result.ClosedProcessId})"
+                    : "No trace was loaded; close was a no-op",
+                Timestamp = DateTime.UtcNow
+            };
+            return System.Text.Json.JsonSerializer.Serialize(successResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new
+            {
+                Action = "CloseTrace",
+                Status = "Error",
+                Error = ex.Message,
+                Timestamp = DateTime.UtcNow
+            };
+
+            return System.Text.Json.JsonSerializer.Serialize(errorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+    }
+
     #endregion
 
     #region Help Tool
@@ -693,6 +758,11 @@ public static class ProfileExplorerTools
                     Name = "GetFunctionAssembly", 
                     Description = "Get assembly code for a specific function by double-clicking on it in the Summary pane, and save it to a file for later contextual reference by Copilot",
                     Parameters = "functionName (string) - Name of the function to retrieve assembly for (supports partial matching)"
+                },
+                new {
+                    Name = "CloseTrace",
+                    Description = "Close the currently loaded trace and release its resources. Use between iterations when capturing fresh traces. Idempotent: succeeds even if no trace is loaded.",
+                    Parameters = "none"
                 },
                 new { 
                     Name = "GetHelp", 

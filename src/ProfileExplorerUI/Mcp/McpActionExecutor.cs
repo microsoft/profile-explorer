@@ -37,7 +37,6 @@ public class McpActionExecutor : IMcpActionExecutor
         // Mark that MCP automation is active - suppress UI dialogs
         App.SuppressDialogsForAutomation = true;
 
-        // Validate file exists first
         if (!File.Exists(profileFilePath))
         {
             return new OpenTraceResult
@@ -48,14 +47,45 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
-        // Check if the requested trace and process is already loaded
+        if (string.IsNullOrWhiteSpace(processIdentifier))
+        {
+            return new OpenTraceResult
+            {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.UnknownError,
+                ErrorMessage = "Process identifier must be a process ID or process name."
+            };
+        }
+
+        // Idempotent: if the same trace+process is already loaded, succeed without reloading.
         var alreadyLoadedResult = await CheckIfTraceAlreadyLoadedAsync(profileFilePath, processIdentifier);
         if (alreadyLoadedResult != null)
         {
+            await EnsureMainWindowReadyAsync();
             return alreadyLoadedResult;
         }
 
-        // Try to parse as a process ID first
+        // Strict precondition: a different profile must not already be loaded.
+        // Caller must call close_trace first. This also avoids the silent no-op
+        // from LoadProfile.CanExecute (MainWindowProfiling.cs:577 —
+        // !IsSessionStarted || ProfileData == null) when a profile is loaded.
+        var existingProfile = await GetLoadedProfileSummaryAsync();
+        if (existingProfile != null)
+        {
+            string errorMessage = IsSameTraceFile(profileFilePath, existingProfile.Value.tracePath)
+                ? $"Trace '{existingProfile.Value.tracePath}' is already loaded with a different process " +
+                  $"(PID {existingProfile.Value.processId}). Call close_trace before open_trace to switch processes."
+                : $"A different trace is already loaded ('{existingProfile.Value.tracePath}', " +
+                  $"PID {existingProfile.Value.processId}). Call close_trace before open_trace.";
+
+            return new OpenTraceResult
+            {
+                Success = false,
+                FailureReason = OpenTraceFailureReason.TraceAlreadyLoaded,
+                ErrorMessage = errorMessage
+            };
+        }
+
         if (int.TryParse(processIdentifier, out int processId))
         {
             if (processId <= 0)
@@ -67,11 +97,46 @@ public class McpActionExecutor : IMcpActionExecutor
                     ErrorMessage = "Process ID must be a positive integer."
                 };
             }
+
             return await OpenTraceByProcessIdAsync(profileFilePath, processId);
         }
 
         // If not a number, treat as process name
         return await OpenTraceByProcessNameAsync(profileFilePath, processIdentifier);
+    }
+
+    private async Task EnsureMainWindowReadyAsync()
+    {
+        await dispatcher.InvokeAsync(() =>
+        {
+            if (!mainWindow.IsVisible)
+            {
+                mainWindow.Show();
+            }
+        });
+
+        await mainWindow.InitialLoadCompleted;
+    }
+
+    private static bool IsSameTraceFile(string requestedPath, string loadedPath)
+    {
+        if (string.IsNullOrEmpty(requestedPath) || string.IsNullOrEmpty(loadedPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            return string.Equals(Path.GetFullPath(requestedPath),
+                                 Path.GetFullPath(loadedPath),
+                                 StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException ||
+                                   ex is NotSupportedException ||
+                                   ex is PathTooLongException)
+        {
+            return string.Equals(requestedPath, loadedPath, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     /// <summary>
@@ -160,11 +225,17 @@ public class McpActionExecutor : IMcpActionExecutor
         {
             var loadResult = await LoadTraceAsync(profileFilePath);
             if (!loadResult.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
                 return loadResult.Result;
             }
             
             // Select the process by PID
-            return await SelectProcessByPidAsync(loadResult.ProfileLoadWindow, processId);
+            var result = await SelectProcessByPidAsync(loadResult.ProfileLoadWindow, processId);
+            if (!result.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -182,11 +253,17 @@ public class McpActionExecutor : IMcpActionExecutor
             // Load the trace and prepare the process list
             var loadResult = await LoadTraceAsync(profileFilePath);
             if (!loadResult.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
                 return loadResult.Result;
             }
 
             // Select the process by name
-            return await SelectProcessByNameAsync(loadResult.ProfileLoadWindow, processName);
+            var result = await SelectProcessByNameAsync(loadResult.ProfileLoadWindow, processName);
+            if (!result.Success) {
+                await CloseProfileLoadWindowAsync(loadResult.ProfileLoadWindow);
+            }
+
+            return result;
         }
         catch (Exception ex) {
             return new OpenTraceResult {
@@ -262,6 +339,22 @@ public class McpActionExecutor : IMcpActionExecutor
         return (true, profileLoadWindow, null);
     }
 
+    private async Task CloseProfileLoadWindowAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
+    {
+        if (profileLoadWindow == null)
+        {
+            return;
+        }
+
+        await dispatcher.InvokeAsync(() =>
+        {
+            if (profileLoadWindow.IsVisible)
+            {
+                profileLoadWindow.Close();
+            }
+        });
+    }
+
     private async Task<OpenTraceResult> SelectProcessByPidAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow, int processId) {
         // Step 5: Select the specified process from the process list
         // Use retry logic in case there are still brief timing issues
@@ -320,17 +413,15 @@ public class McpActionExecutor : IMcpActionExecutor
                 ErrorMessage = $"Process with ID {processId} not found in trace file",
             };
         }
-        
+
+        await EnsureMainWindowReadyAsync();
+
         // Step 6: Execute the profile load (click Load button)
-        await dispatcher.InvokeAsync(() =>
+        var loadClickResult = await InvokeLoadButtonClickAsync(profileLoadWindow);
+        if (!loadClickResult.Success)
         {
-            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            if (loadButtonClickMethod != null)
-            {
-                loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-            }
-        });
+            return loadClickResult;
+        }
         
         // Step 7: Wait for the profile to finish loading
         bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
@@ -412,14 +503,13 @@ public class McpActionExecutor : IMcpActionExecutor
             };
         }
 
+        await EnsureMainWindowReadyAsync();
+
         // Step 6: Execute the profile load (click Load button)
-        await dispatcher.InvokeAsync(() => {
-            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            if (loadButtonClickMethod != null) {
-                loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
-            }
-        });
+        var loadClickResult = await InvokeLoadButtonClickAsync(profileLoadWindow);
+        if (!loadClickResult.Success) {
+            return loadClickResult;
+        }
 
         // Step 7: Wait for the profile to finish loading
         bool profileLoadCompleted = await WaitForProfileLoadingCompletedAsync(profileLoadWindow, TimeSpan.FromMinutes(30));
@@ -436,6 +526,32 @@ public class McpActionExecutor : IMcpActionExecutor
         return new OpenTraceResult { Success = true };
     }
 
+    private async Task<OpenTraceResult> InvokeLoadButtonClickAsync(ProfileExplorer.UI.ProfileLoadWindow profileLoadWindow)
+    {
+        OpenTraceResult errorResult = null;
+
+        await dispatcher.InvokeAsync(() =>
+        {
+            var loadButtonClickMethod = profileLoadWindow.GetType().GetMethod("LoadButton_Click",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (loadButtonClickMethod == null)
+            {
+                errorResult = new OpenTraceResult
+                {
+                    Success = false,
+                    FailureReason = OpenTraceFailureReason.UIError,
+                    ErrorMessage = "Failed to find profile load action."
+                };
+                return;
+            }
+
+            loadButtonClickMethod.Invoke(profileLoadWindow, new object[] { profileLoadWindow, new RoutedEventArgs() });
+        });
+
+        return errorResult ?? new OpenTraceResult { Success = true };
+    }
+
     /// <summary>
     /// Waits for a window of type T to appear, with a timeout.
     /// </summary>
@@ -445,8 +561,8 @@ public class McpActionExecutor : IMcpActionExecutor
         
         while (DateTime.UtcNow - startTime < timeout)
         {
-            var window = await dispatcher.InvokeAsync(() => 
-                mainWindow.OwnedWindows.OfType<T>().FirstOrDefault());
+            var window = await dispatcher.InvokeAsync(() =>
+                Application.Current.Windows.OfType<T>().FirstOrDefault(window => window.IsVisible));
             
             if (window != null)
             {
@@ -1986,5 +2102,72 @@ public class McpActionExecutor : IMcpActionExecutor
         {
             return null;
         }
+    }
+
+    public async Task<CloseTraceResult> CloseTraceAsync()
+    {
+        try
+        {
+            var loaded = await GetLoadedProfileSummaryAsync();
+            if (loaded == null)
+            {
+                return new CloseTraceResult
+                {
+                    Success = true,
+                    WasLoaded = false
+                };
+            }
+
+            // Drive the close on the UI thread. dispatcher.InvokeAsync(Func<Task>) returns a
+            // DispatcherOperation<Task>; awaiting only that DispatcherOperation would surface
+            // the inner Task without awaiting it ("Task<Task>" trap). Use .Task.Unwrap() so
+            // the await actually blocks until CloseSessionAsync completes.
+            await dispatcher
+                .InvokeAsync(() => mainWindow.CloseSessionAsync())
+                .Task
+                .Unwrap();
+
+            return new CloseTraceResult
+            {
+                Success = true,
+                WasLoaded = true,
+                ClosedProfilePath = loaded.Value.tracePath,
+                ClosedProcessId = loaded.Value.processId,
+                ClosedProcessName = loaded.Value.processName
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CloseTraceResult
+            {
+                Success = false,
+                FailureReason = CloseTraceFailureReason.UnknownError,
+                ErrorMessage = $"Unexpected error closing trace: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Returns identifying details of the currently loaded profile session, or null when
+    /// no profile is loaded. Reads via the dispatcher because it touches MainWindow state.
+    /// </summary>
+    private async Task<(string tracePath, int? processId, string processName)?> GetLoadedProfileSummaryAsync()
+    {
+        return await dispatcher.InvokeAsync(() =>
+        {
+            var sessionState = mainWindow.SessionState;
+            var profileData = sessionState?.ProfileData;
+            var report = profileData?.Report;
+
+            if (report == null)
+            {
+                return ((string tracePath, int? processId, string processName)?)null;
+            }
+
+            string tracePath = report.TraceInfo?.TraceFilePath;
+            int? processId = report.Process?.ProcessId;
+            string processName = report.Process?.Name;
+            return (tracePath, processId, processName);
+        });
     }
 }
