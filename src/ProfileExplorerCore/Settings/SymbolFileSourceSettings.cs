@@ -85,6 +85,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   public int RejectedFilesCacheExpirationDays { get; set; }
   [ProtoMember(25)][OptionValue(true)]
   public bool AllowApproximateBinaryMatch { get; set; }
+  [ProtoMember(26)][OptionValue(false)]
+  public bool ManagedIdentityEnabled { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public bool HasCompanyFilter => CompanyFilterEnabled;
 

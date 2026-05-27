@@ -170,9 +170,11 @@ public static class ProfileTools
     [Description("Optional additional symbol search path (e.g. 'd:\\temp\\landy' for custom kernel symbols)")]
     string? symbolPath = null,
     [Description("Optional additional binary search path (e.g. 'd:\\temp' for loose binaries like storport.sys). Required for assembly-level disassembly via GetFunctionAssembly when the binary isn't on the symbol server.")]
-    string? binaryPath = null)
+    string? binaryPath = null,
+    [Description("Enable Azure Managed Identity for symbol server authentication. Use in headless/Azure environments where interactive browser auth is unavailable.")]
+    bool useManagedIdentity = false)
   {
-    DiagnosticLogger.LogInfo($"[MCP] OpenTrace called: profileFilePath={profileFilePath}, processNameOrId={processNameOrId}, symbolPath={symbolPath ?? "(none)"}, binaryPath={binaryPath ?? "(none)"}");
+    DiagnosticLogger.LogInfo($"[MCP] OpenTrace called: profileFilePath={profileFilePath}, processNameOrId={processNameOrId}, symbolPath={symbolPath ?? "(none)"}, binaryPath={binaryPath ?? "(none)"}, useManagedIdentity={useManagedIdentity}");
 
     if (!File.Exists(profileFilePath))
       return Error("OpenTrace", $"File not found: {profileFilePath}");
@@ -197,6 +199,7 @@ public static class ProfileTools
         var options = new ProfileDataProviderOptions();
         var symbolSettings = new SymbolFileSourceSettings();
         symbolSettings.UseEnvironmentVarSymbolPaths = true;
+        symbolSettings.ManagedIdentityEnabled = useManagedIdentity;
         if (!string.IsNullOrWhiteSpace(symbolPath))
           symbolSettings.InsertSymbolPath(symbolPath);
         if (!string.IsNullOrWhiteSpace(binaryPath))
@@ -206,7 +209,10 @@ public static class ProfileTools
         }
         ProfileSession.SymbolSettings = symbolSettings;
 
-        DiagnosticLogger.LogInfo($"[MCP] SymbolSettings: UseEnvVar=true, CustomPath={symbolPath ?? "(none)"}, EnvVar={symbolSettings.EnvironmentVarSymbolPath ?? "(not set)"}");
+        // Reinitialize credential chain to pick up ManagedIdentityEnabled flag.
+        PDBDebugInfoProvider.ReinitializeCredentials(symbolSettings);
+
+        DiagnosticLogger.LogInfo($"[MCP] SymbolSettings: UseEnvVar=true, CustomPath={symbolPath ?? "(none)"}, EnvVar={symbolSettings.EnvironmentVarSymbolPath ?? "(not set)"}, ManagedIdentity={useManagedIdentity}");
         DiagnosticLogger.LogInfo($"[MCP] SymbolPaths: {string.Join("; ", symbolSettings.SymbolPaths)}");
         DiagnosticLogger.LogInfo($"[MCP] BinarySearchPaths: {(options.HasBinarySearchPaths ? string.Join("; ", options.BinarySearchPaths) : "(none)")}");
 
