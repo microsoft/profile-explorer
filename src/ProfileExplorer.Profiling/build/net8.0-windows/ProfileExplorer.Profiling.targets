@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\capstone.dll"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\capstone.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>capstone.dll</Link>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\msdia140.dll"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\msdia140.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>msdia140.dll</Link>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+</Project>

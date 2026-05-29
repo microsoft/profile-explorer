@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>ProfileExplorer.Profiling</RootNamespace>
+    <AssemblyName>ProfileExplorer.Profiling</AssemblyName>
+    <Description>Function-level CPU profiling, disassembly, and performance counter attribution from ETW traces.</Description>
+    <PackageId>ProfileExplorer.Profiling</PackageId>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ProfileExplorer.Profiling.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.11.4" />
+    <PackageReference Include="protobuf-net" Version="3.2.45" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Dia2Lib">
+      <HintPath>external\Dia2Lib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Native dependencies: capstone.dll and msdia140.dll -->
+  <!-- These are copied to output for local builds AND packed into the NuGet package -->
+  <ItemGroup>
+    <None Include="..\external\capstone\build\Release\capstone.dll" Condition="Exists('..\external\capstone\build\Release\capstone.dll')" Pack="true" PackagePath="runtimes\win-x64\native">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>capstone.dll</Link>
+    </None>
+    <None Include="..\external\msdia140.dll" Condition="Exists('..\external\msdia140.dll')" Pack="true" PackagePath="runtimes\win-x64\native">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>msdia140.dll</Link>
+    </None>
+  </ItemGroup>
+
+  <!-- Ensure native DLLs from runtimes/ folder are copied to output by consumers -->
+  <ItemGroup>
+    <None Include="external\Dia2Lib.dll" Pack="true" PackagePath="lib\net8.0-windows7.0\Dia2Lib.dll" />
+    <None Include="build\net8.0-windows\ProfileExplorer.Profiling.targets" Pack="true" PackagePath="build\net8.0-windows7.0" />
+  </ItemGroup>
+
+  <!-- MSBuild targets file to copy native deps for package consumers -->
+  <PropertyGroup>
+    <BuildOutputTargetFolder>lib</BuildOutputTargetFolder>
+  </PropertyGroup>
+
+</Project>
