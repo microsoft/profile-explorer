@@ -34,31 +34,21 @@ public class McpActionExecutor : IMcpActionExecutor
         this.dispatcher = mainWindow.Dispatcher;
     }
 
-    public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false)
+    public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false, string? symbolPath = null)
     {
-        // Configure symbol credential chain before loading the trace.
-        // In Azure Batch, useManagedIdentity=true routes PDB fetching through the
-        // user-assigned managed identity (client ID from MANAGED_IDENTITY_CLIENT_ID env var).
-        PDBDebugInfoProvider.ReinitializeCredentials(new SymbolFileSourceSettings
-        {
-            ManagedIdentityEnabled = useManagedIdentity
-        });
+        // Start from the current saved settings (preserves user-configured paths, cache dir, etc.),
+        // then overlay caller-supplied parameters. On Batch nodes there are no saved settings so
+        // App.Settings.SymbolSettings will be the Reset() default (msdl only), and the caller is
+        // responsible for passing symweb via symbolPath.
+        var symbolSettings = App.Settings.SymbolSettings.Clone();
+        symbolSettings.ManagedIdentityEnabled = useManagedIdentity;
+        if (!string.IsNullOrWhiteSpace(symbolPath))
+            symbolSettings.InsertSymbolPath(symbolPath);
 
-        if (useManagedIdentity)
-        {
-            // Ensure symweb is in the symbol paths.
-            // Azure Batch nodes are not domain/AAD-joined, so SymbolFileSourceSettings.Reset()
-            // only adds msdl (public server), which ConstructSymbolSearchPath skips when
-            // PrimaryServerAuthFailed=false (it expects symweb to be primary). The result
-            // is an empty effective symbol path and all symbol downloads fail with NotFound.
-            // Force-add symweb here so MI-authenticated downloads work on Batch nodes.
-            var symSettings = App.Settings.SymbolSettings;
-            if (!symSettings.SymbolPaths.Any(p => p.Contains("symweb", StringComparison.OrdinalIgnoreCase)))
-            {
-                symSettings.AddSymbolServer(usePrivateServer: true);
-                Console.Error.WriteLine("[PE][Auth] Added symweb to symbol paths for managed identity mode");
-            }
-        }
+        // Apply settings so ProfileLoadWindow picks them up, and reinitialize
+        // the credential chain so PDB downloads use the right auth.
+        App.Settings.SymbolSettings = symbolSettings;
+        PDBDebugInfoProvider.ReinitializeCredentials(symbolSettings);
 
         // Mark that MCP automation is active - suppress UI dialogs
         App.SuppressDialogsForAutomation = true;

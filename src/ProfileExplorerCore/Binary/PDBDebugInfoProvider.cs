@@ -119,13 +119,12 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
       // Developer credentials (VS, CLI, browser) are unnecessary and can be
       // slow or misleading when running in a cloud context.
       // For user-assigned managed identities, the client ID must be passed explicitly.
-      // Read MANAGED_IDENTITY_CLIENT_ID from the environment (set by the Batch task).
+      // Read MANAGED_IDENTITY_CLIENT_ID from the environment.
       var managedIdentityClientId = Environment.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
       var managedIdentityCredential = string.IsNullOrEmpty(managedIdentityClientId)
         ? new ManagedIdentityCredential()
         : new ManagedIdentityCredential(managedIdentityClientId);
       Trace.WriteLine($"[Auth] Building credential chain: ManagedIdentity-only (clientId={managedIdentityClientId ?? "system-assigned"})");
-      Console.Error.WriteLine($"[PE][Auth] ManagedIdentity credential chain initialized (clientId={managedIdentityClientId ?? "system-assigned"})");
       credentials = new List<TokenCredential>
       {
         WrapCredential(managedIdentityCredential),
