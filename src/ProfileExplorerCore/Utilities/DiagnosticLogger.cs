@@ -68,8 +68,9 @@ public static class DiagnosticLogger {
   /// </summary>
   private static void Initialize() {
     try {
-      // Prefer Azure Batch task working directory so logs are retrievable via Batch API
-      string tempDir = Environment.GetEnvironmentVariable("AZ_BATCH_TASK_WORKING_DIR") ?? Path.GetTempPath();
+      // Create log file in user's temp directory with timestamp
+      // Allow a custom log directory via environment variable for easier access in some environments
+      string tempDir = Environment.GetEnvironmentVariable("PROFILE_EXPLORER_LOG_DIR") ?? Path.GetTempPath();
       string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
       string processId = Process.GetCurrentProcess().Id.ToString();
       logFilePath_ = Path.Combine(tempDir, $"ProfileExplorer_Diagnostic_{timestamp}_{processId}.log");
