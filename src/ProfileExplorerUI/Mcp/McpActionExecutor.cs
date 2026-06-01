@@ -10,8 +10,10 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Mcp;
+using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.Core.IR;
 
@@ -32,8 +34,32 @@ public class McpActionExecutor : IMcpActionExecutor
         this.dispatcher = mainWindow.Dispatcher;
     }
 
-    public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier)
+    public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false)
     {
+        // Configure symbol credential chain before loading the trace.
+        // In Azure Batch, useManagedIdentity=true routes PDB fetching through the
+        // user-assigned managed identity (client ID from MANAGED_IDENTITY_CLIENT_ID env var).
+        PDBDebugInfoProvider.ReinitializeCredentials(new SymbolFileSourceSettings
+        {
+            ManagedIdentityEnabled = useManagedIdentity
+        });
+
+        if (useManagedIdentity)
+        {
+            // Ensure symweb is in the symbol paths.
+            // Azure Batch nodes are not domain/AAD-joined, so SymbolFileSourceSettings.Reset()
+            // only adds msdl (public server), which ConstructSymbolSearchPath skips when
+            // PrimaryServerAuthFailed=false (it expects symweb to be primary). The result
+            // is an empty effective symbol path and all symbol downloads fail with NotFound.
+            // Force-add symweb here so MI-authenticated downloads work on Batch nodes.
+            var symSettings = App.Settings.SymbolSettings;
+            if (!symSettings.SymbolPaths.Any(p => p.Contains("symweb", StringComparison.OrdinalIgnoreCase)))
+            {
+                symSettings.AddSymbolServer(usePrivateServer: true);
+                Console.Error.WriteLine("[PE][Auth] Added symweb to symbol paths for managed identity mode");
+            }
+        }
+
         // Mark that MCP automation is active - suppress UI dialogs
         App.SuppressDialogsForAutomation = true;
 

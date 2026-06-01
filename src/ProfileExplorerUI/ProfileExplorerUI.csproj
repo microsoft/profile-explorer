@@ -5,9 +5,9 @@
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
-		<AssemblyVersion>1.2.1</AssemblyVersion>
-		<FileVersion>1.2.1</FileVersion>
-		<Version>1.2.1</Version>
+		<AssemblyVersion>1.2.2</AssemblyVersion>
+		<FileVersion>1.2.2</FileVersion>
+		<Version>1.2.2</Version>
 		<Authors></Authors>
 		<Company>Microsoft Corporation</Company>
 		<Product>Profile Explorer</Product>
@@ -68,6 +68,7 @@
 
 	<ItemGroup>
 		<Compile Remove="Themes\**" />
+		<Compile Remove="publish\**" />
 		<EmbeddedResource Remove="Themes\**" />
 		<None Remove="Themes\**" />
 		<Page Remove="Themes\**" />

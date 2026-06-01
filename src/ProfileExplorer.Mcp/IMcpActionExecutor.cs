@@ -16,7 +16,7 @@ public interface IMcpActionExecutor
     /// <param name="profileFilePath">Path to the ETL trace file to open</param>
     /// <param name="processIdentifier">Process ID (e.g., "12345") or process name (e.g., "chrome.exe", "POWERPNT") to select and load from the trace</param>
     /// <returns>Task that completes when the trace is fully loaded, with detailed result information</returns>
-    Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier);
+    Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false);
 
     /// <summary>
     /// Get the current status of the Profile Explorer UI
