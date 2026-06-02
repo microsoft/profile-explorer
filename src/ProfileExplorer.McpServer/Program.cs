@@ -12,6 +12,7 @@ using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Profile.CallTree;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 
@@ -76,6 +77,10 @@ public static class ProfileSession
   // Concurrency guard — only one trace load at a time.
   public static readonly SemaphoreSlim LoadSemaphore = new(1, 1);
 
+  // Lazy-built lookup: demangled function name → IRTextFunction.
+  // Populated on first FindFunction call after a trace loads.
+  public static Dictionary<string, IRTextFunction>? DemangledFunctionLookup { get; set; }
+
   /// <summary>
   /// Resets all session state and static caches for a clean trace load.
   /// </summary>
@@ -93,6 +98,7 @@ public static class ProfileSession
     PendingFilePath = null;
     PendingProcessId = null;
     LoadException = null;
+    DemangledFunctionLookup = null;
 
     // Clear static resolution caches so each trace starts fresh.
     PDBDebugInfoProvider.ClearResolvedCache();
@@ -830,12 +836,44 @@ public static class ProfileTools
 
   private static IRTextFunction? FindFunction(ProfileData profile, string functionName)
   {
-    // Search by resolved PDB name first, then by IRTextFunction.Name (hex placeholder)
+    // 1. Exact match on PDB-resolved (possibly decorated) name.
+    var exactMatch = profile.FunctionProfiles.Keys
+      .FirstOrDefault(f => ResolveFunctionName(f).Equals(functionName, StringComparison.OrdinalIgnoreCase));
+    if (exactMatch != null) return exactMatch;
+
+    // 2. Exact match on demangled name (callers pass human-readable names; PE stores decorated MSVC names).
+    if (ProfileSession.DemangledFunctionLookup == null)
+    {
+      // Build once per trace load — demangling is not thread-safe so do it lazily here.
+      var lookup = new Dictionary<string, IRTextFunction>(StringComparer.OrdinalIgnoreCase);
+      foreach (var f in profile.FunctionProfiles.Keys)
+      {
+        var raw = ResolveFunctionName(f);
+        var demangled = PDBDebugInfoProvider.DemangleFunctionName(raw,
+          FunctionNameDemanglingOptions.OnlyName | FunctionNameDemanglingOptions.NoReturnType |
+          FunctionNameDemanglingOptions.NoSpecialKeywords);
+        lookup.TryAdd(demangled, f);
+        lookup.TryAdd(raw, f);      // also keep decorated so we re-use this dict for all lookups
+      }
+      ProfileSession.DemangledFunctionLookup = lookup;
+    }
+
+    if (ProfileSession.DemangledFunctionLookup.TryGetValue(functionName, out var demangledMatch))
+      return demangledMatch;
+
+    // 3. Exact match on IRTextFunction.Name (hex placeholder when no symbols).
+    var hexMatch = profile.FunctionProfiles.Keys
+      .FirstOrDefault(f => f.Name.Equals(functionName, StringComparison.OrdinalIgnoreCase));
+    if (hexMatch != null) return hexMatch;
+
+    // 4. Contains on demangled name (partial match).
+    var containsMatch = ProfileSession.DemangledFunctionLookup.Keys
+      .FirstOrDefault(k => k.Contains(functionName, StringComparison.OrdinalIgnoreCase));
+    if (containsMatch != null && ProfileSession.DemangledFunctionLookup.TryGetValue(containsMatch, out var partialMatch))
+      return partialMatch;
+
+    // 5. Contains on decorated or hex placeholder name.
     return profile.FunctionProfiles.Keys
-      .FirstOrDefault(f => ResolveFunctionName(f).Equals(functionName, StringComparison.OrdinalIgnoreCase))
-      ?? profile.FunctionProfiles.Keys
-      .FirstOrDefault(f => f.Name.Equals(functionName, StringComparison.OrdinalIgnoreCase))
-      ?? profile.FunctionProfiles.Keys
       .FirstOrDefault(f => ResolveFunctionName(f).Contains(functionName, StringComparison.OrdinalIgnoreCase))
       ?? profile.FunctionProfiles.Keys
       .FirstOrDefault(f => f.Name.Contains(functionName, StringComparison.OrdinalIgnoreCase));
