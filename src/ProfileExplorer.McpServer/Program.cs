@@ -24,6 +24,18 @@ public class Program
     // Force-enable diagnostic logging — the MCP server is headless, always-on logging is essential.
     Environment.SetEnvironmentVariable("PROFILE_EXPLORER_DEBUG", "1");
 
+    // Allow caller to specify the log directory via --log-dir <path>.
+    // Must be applied before the first DiagnosticLogger call so Initialize() picks it up.
+    for (int i = 0; i < args.Length - 1; i++)
+    {
+      if (args[i].Equals("--log-dir", StringComparison.OrdinalIgnoreCase) &&
+          !string.IsNullOrEmpty(args[i + 1]))
+      {
+        Environment.SetEnvironmentVariable("PROFILE_EXPLORER_LOG_DIR", args[i + 1]);
+        break;
+      }
+    }
+
     var builder = Host.CreateDefaultBuilder()
       .ConfigureLogging(logging =>
       {
