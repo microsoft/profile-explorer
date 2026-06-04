@@ -33,9 +33,10 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
   private static readonly StringWriter authLogWriter_;
-  private static readonly SymwebHandler authSymwebHandler_;
-  private static readonly AzureDevOpsSourceHandler authAzDevOpsHandler_;
+  private static SymwebHandler authSymwebHandler_;
+  private static AzureDevOpsSourceHandler authAzDevOpsHandler_;
   private static readonly string authRecordPath_ = Path.Combine(Path.GetTempPath(), "ProfileExplorer", "auth_record.bin");
+  private static readonly object credentialLock_ = new();
   private static object undecorateLock_ = new(); // Global lock for undname.
   private ConcurrentDictionary<long, SourceFileDebugInfo> sourceFileByRvaCache_ = new();
   private ConcurrentDictionary<string, SourceFileDebugInfo> sourceFileByNameCache_ = new();
@@ -84,53 +85,90 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
   public static string DiaRegistrationError => diaRegistrationError_;
 
   static PDBDebugInfoProvider() {
+    authLogWriter_ = new StringWriter();
+    BuildAndSetCredentialChain(managedIdentityEnabled: false);
+  }
+
+  /// <summary>
+  /// Rebuilds the token credential chain based on the provided settings.
+  /// This exists because the static constructor runs at class-load time, before
+  /// application settings are available. Call this after settings are loaded to
+  /// pick up the ManagedIdentityEnabled flag.
+  /// Thread-safe — uses credentialLock_.
+  /// </summary>
+  public static void ReinitializeCredentials(SymbolFileSourceSettings settings) {
+    BuildAndSetCredentialChain(settings?.ManagedIdentityEnabled ?? false);
+  }
+
+  private static void BuildAndSetCredentialChain(bool managedIdentityEnabled) {
     // Create a single instance of the Symweb handler so that
     // when concurrent requests are made and login must be done,
     // the login page is displayed a single time, with other requests waiting for a token.
 
     // DefaultAzureCredential is not allowed per SFI. Mimic behavior while continuing
-    // to exclude the managed identity credential.
+    // to exclude the managed identity credential unless explicitly opted in.
     // NOTE: ChainedTokenCredential only falls through on CredentialUnavailableException.
     // Other exceptions (like "needs re-authentication") stop the chain. We wrap each
     // credential to catch auth failures and convert them to CredentialUnavailableException
     // so the chain continues to InteractiveBrowserCredential which prompts the user.
 
-    // Enable token cache persistence for browser credential so tokens survive process restarts.
-    // Additionally, load existing AuthenticationRecord for true silent auth across sessions.
-    // This prevents re-authentication on every trace load if VS credential fails.
-    var authRecord = LoadAuthenticationRecord();
-    var browserCredentialOptions = new InteractiveBrowserCredentialOptions {
-      TokenCachePersistenceOptions = new TokenCachePersistenceOptions {
-        Name = "ProfileExplorer" // Unique cache name for this app
-      },
-      AuthenticationRecord = authRecord // Enable silent auth with cached identity
-    };
+    List<TokenCredential> credentials;
 
-    TokenCredential browserCredential = new InteractiveBrowserCredential(browserCredentialOptions);
-
-    // If no auth record exists yet, the user will be prompted on first symbol download.
-    // After first successful auth, capture and save the AuthenticationRecord for future sessions.
-    if (authRecord == null) {
-      browserCredential = new CaptureAuthRecordCredential((InteractiveBrowserCredential)browserCredential);
+    if (managedIdentityEnabled) {
+      // In Azure/headless environments use Managed Identity exclusively.
+      // Developer credentials (VS, CLI, browser) are unnecessary and can be
+      // slow or misleading when running in a cloud context.
+      // For user-assigned managed identities, the client ID must be passed explicitly.
+      // Read MANAGED_IDENTITY_CLIENT_ID from the environment.
+      var managedIdentityClientId = Environment.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
+      var managedIdentityCredential = string.IsNullOrEmpty(managedIdentityClientId)
+        ? new ManagedIdentityCredential()
+        : new ManagedIdentityCredential(managedIdentityClientId);
+      Trace.WriteLine($"[Auth] Building credential chain: ManagedIdentity-only (clientId={managedIdentityClientId ?? "system-assigned"})");
+      credentials = new List<TokenCredential>
+      {
+        WrapCredential(managedIdentityCredential),
+      };
     }
+    else {
+      // Developer/interactive chain. Enable token cache persistence for browser
+      // credential so tokens survive process restarts. Load any existing
+      // AuthenticationRecord for true silent auth across sessions.
+      var authRecord = LoadAuthenticationRecord();
+      var browserCredentialOptions = new InteractiveBrowserCredentialOptions {
+        TokenCachePersistenceOptions = new TokenCachePersistenceOptions {
+          Name = "ProfileExplorer"
+        },
+        AuthenticationRecord = authRecord
+      };
 
-    var credentials = new List<TokenCredential>
-    {
-      WrapCredential(new EnvironmentCredential()),
-      WrapCredential(new WorkloadIdentityCredential()),
-      WrapCredential(new SharedTokenCacheCredential()),
-      WrapCredential(new VisualStudioCredential()),
-      WrapCredential(new AzureCliCredential()),
-      WrapCredential(new AzurePowerShellCredential()),
-      WrapCredential(new AzureDeveloperCliCredential()),
-      browserCredential // Don't wrap - final fallback should show errors
-    };
+      TokenCredential browserCredential = new InteractiveBrowserCredential(browserCredentialOptions);
+
+      // If no auth record exists yet, the user will be prompted on first symbol download.
+      // After first successful auth, capture and save the record for future sessions.
+      if (authRecord == null) {
+        browserCredential = new CaptureAuthRecordCredential((InteractiveBrowserCredential)browserCredential);
+      }
+
+      credentials = new List<TokenCredential>
+      {
+        WrapCredential(new EnvironmentCredential()),
+        WrapCredential(new WorkloadIdentityCredential()),
+        WrapCredential(new SharedTokenCacheCredential()),
+        WrapCredential(new VisualStudioCredential()),
+        WrapCredential(new AzureCliCredential()),
+        WrapCredential(new AzurePowerShellCredential()),
+        WrapCredential(new AzureDeveloperCliCredential()),
+        browserCredential // Don't wrap - final fallback should show errors
+      };
+    }
 
     var authCredential = new ChainedTokenCredential(credentials.ToArray());
 
-    authLogWriter_ = new StringWriter();
-    authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
-    authAzDevOpsHandler_ = new AzureDevOpsSourceHandler(authLogWriter_, authCredential);
+    lock (credentialLock_) {
+      authSymwebHandler_ = new SymwebHandler(authLogWriter_, authCredential);
+      authAzDevOpsHandler_ = new AzureDevOpsSourceHandler(authLogWriter_, authCredential);
+    }
   }
 
   /// <summary>
@@ -425,8 +463,11 @@ public sealed class PDBDebugInfoProvider : IDebugInfoProvider {
 
   public static SymbolReaderAuthenticationHandler CreateAuthHandler(SymbolFileSourceSettings settings) {
     var authHandler = new SymbolReaderAuthenticationHandler();
-    authHandler.AddHandler(authSymwebHandler_);
-    authHandler.AddHandler(authAzDevOpsHandler_);
+
+    lock (credentialLock_) {
+      authHandler.AddHandler(authSymwebHandler_);
+      authHandler.AddHandler(authAzDevOpsHandler_);
+    }
 
     if (settings.AuthorizationTokenEnabled) {
       authHandler.AddHandler(new BasicAuthenticationHandler(settings, authLogWriter_));

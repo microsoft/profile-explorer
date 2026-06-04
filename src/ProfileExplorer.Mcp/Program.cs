@@ -34,7 +34,7 @@ public class Program
 /// Provides mock responses for all MCP tools to enable standalone testing
 /// </summary>
 public class MockMcpActionExecutor : IMcpActionExecutor {
-    public Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier) {
+    public Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false, string? symbolPath = null) {
         Console.WriteLine($"Mock: OpenTraceAsync called with process identifier: {processIdentifier}");
         return Task.FromResult(new OpenTraceResult { Success = true });
     }

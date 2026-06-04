@@ -11,6 +11,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shell;
 using System.Xml;
+using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.UI.Settings;
 using ProfileExplorer.UI.Mcp;
@@ -615,6 +616,12 @@ public partial class App : Application {
       Settings = new ApplicationSettings();
       IsFirstRun = true;
     }
+
+    // Reinitialize the PDB credential chain now that settings are loaded.
+    // The static constructor always defaults to the interactive (non-MI) chain;
+    // this picks up ManagedIdentityEnabled from saved user settings so that
+    // traces loaded via the GUI (not MCP) also use the correct auth path.
+    PDBDebugInfoProvider.ReinitializeCredentials(Settings.SymbolSettings);
 
     // Configure CoreSettingsProvider to use UI settings instead of defaults
     CoreSettingsProvider.SetProvider(new UISettingsProvider());

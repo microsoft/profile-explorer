@@ -35,4 +35,8 @@
     <Copy SourceFiles="@(NativeDependency)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 
+  <Target Name="CopyNativeDependenciesOnPublish" AfterTargets="Publish" Inputs="@(NativeDependency)" Outputs="@(NativeDependency -> '$(PublishDir)%(Filename)%(Extension)')">
+    <Copy SourceFiles="@(NativeDependency)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

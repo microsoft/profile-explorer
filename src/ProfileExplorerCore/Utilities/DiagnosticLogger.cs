@@ -69,7 +69,8 @@ public static class DiagnosticLogger {
   private static void Initialize() {
     try {
       // Create log file in user's temp directory with timestamp
-      string tempDir = Path.GetTempPath();
+      // Allow a custom log directory via environment variable for easier access in some environments
+      string tempDir = Environment.GetEnvironmentVariable("PROFILE_EXPLORER_LOG_DIR") ?? Path.GetTempPath();
       string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
       string processId = Process.GetCurrentProcess().Id.ToString();
       logFilePath_ = Path.Combine(tempDir, $"ProfileExplorer_Diagnostic_{timestamp}_{processId}.log");

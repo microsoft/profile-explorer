@@ -60,7 +60,8 @@ public static class ProfileExplorerTools
     #region Simplified MCP Tool
 
     [McpServerTool, Description("Open and load a trace file with a specific process by name or ID in one complete operation")]
-    public static async Task<string> OpenTrace(string profileFilePath, string processNameOrId)
+    public static async Task<string> OpenTrace(string profileFilePath, string processNameOrId,
+        bool useManagedIdentity = false, string? symbolPath = null)
     {
         if (string.IsNullOrWhiteSpace(profileFilePath))
             throw new ArgumentException("Profile file path cannot be empty", nameof(profileFilePath));
@@ -87,7 +88,7 @@ public static class ProfileExplorerTools
                     if (exactIdMatch != null)
                     {
                         // Direct match by ID - proceed with OpenTrace
-                        OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                        OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId, useManagedIdentity, symbolPath);
                         return SerializeOpenTraceResult(result, profileFilePath, processNameOrId);
                     }
                 }
@@ -101,7 +102,7 @@ public static class ProfileExplorerTools
                 if (exactNameMatches.Length == 1)
                 {
                     // Single exact match - proceed with OpenTrace
-                    OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+                    OpenTraceResult result = await _executor.OpenTraceAsync(profileFilePath, processNameOrId, useManagedIdentity, symbolPath);
                     return SerializeOpenTraceResult(result, profileFilePath, processNameOrId);
                 }
 
@@ -129,7 +130,7 @@ public static class ProfileExplorerTools
             }
 
             // Fallback to direct OpenTrace call if we can't get the process list
-            OpenTraceResult directResult = await _executor.OpenTraceAsync(profileFilePath, processNameOrId);
+            OpenTraceResult directResult = await _executor.OpenTraceAsync(profileFilePath, processNameOrId, useManagedIdentity, symbolPath);
             return SerializeOpenTraceResult(directResult, profileFilePath, processNameOrId);
         }
         catch (Exception ex)

@@ -85,6 +85,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   public int RejectedFilesCacheExpirationDays { get; set; }
   [ProtoMember(25)][OptionValue(true)]
   public bool AllowApproximateBinaryMatch { get; set; }
+  [ProtoMember(26)][OptionValue(false)]
+  public bool ManagedIdentityEnabled { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public bool HasCompanyFilter => CompanyFilterEnabled;
 
@@ -187,7 +189,7 @@ public class SymbolFileSourceSettings : SettingsBase {
   }
 
   public bool HasSymbolPath(string path) {
-    path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
+    path = NormalizeSymbolPath(path).ToLowerInvariant();
     return SymbolPaths.Find(item => item.ToLowerInvariant() == path) != null;
   }
 
@@ -197,12 +199,27 @@ public class SymbolFileSourceSettings : SettingsBase {
     }
 
     foreach (string p in path.Split(";")) {
-      string dir = Utils.TryGetDirectoryName(p);
+      string dir = NormalizeSymbolPath(p);
 
       if (!string.IsNullOrEmpty(dir) && !HasSymbolPath(dir)) {
         SymbolPaths.Insert(0, dir); // Prepend path.
       }
     }
+  }
+
+  /// <summary>
+  /// Returns the canonical form of a symbol path entry.
+  /// Symbol server paths (starting with "srv*") contain URLs and must not be processed
+  /// with Path.GetDirectoryName — doing so would strip the URL host (e.g. //symweb.azurefd.net).
+  /// </summary>
+  private static string NormalizeSymbolPath(string path) {
+    if (string.IsNullOrEmpty(path)) {
+      return path;
+    }
+
+    return path.TrimStart().StartsWith("srv*", StringComparison.OrdinalIgnoreCase)
+      ? path.Trim()
+      : Utils.TryGetDirectoryName(path);
   }
 
   public void InsertSymbolPaths(IEnumerable<string> paths) {

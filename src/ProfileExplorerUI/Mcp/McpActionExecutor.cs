@@ -10,8 +10,10 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Mcp;
+using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.ETW;
+using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.Core.IR;
 
@@ -32,8 +34,22 @@ public class McpActionExecutor : IMcpActionExecutor
         this.dispatcher = mainWindow.Dispatcher;
     }
 
-    public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier)
+    public async Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false, string? symbolPath = null)
     {
+        // Start from the current saved settings (preserves user-configured paths, cache dir, etc.),
+        // then overlay caller-supplied parameters. On Batch nodes there are no saved settings so
+        // App.Settings.SymbolSettings will be the Reset() default (msdl only), and the caller is
+        // responsible for passing symweb via symbolPath.
+        var symbolSettings = App.Settings.SymbolSettings.Clone();
+        symbolSettings.ManagedIdentityEnabled = useManagedIdentity;
+        if (!string.IsNullOrWhiteSpace(symbolPath))
+            symbolSettings.InsertSymbolPath(symbolPath);
+
+        // Apply settings so ProfileLoadWindow picks them up, and reinitialize
+        // the credential chain so PDB downloads use the right auth.
+        App.Settings.SymbolSettings = symbolSettings;
+        PDBDebugInfoProvider.ReinitializeCredentials(symbolSettings);
+
         // Mark that MCP automation is active - suppress UI dialogs
         App.SuppressDialogsForAutomation = true;
 

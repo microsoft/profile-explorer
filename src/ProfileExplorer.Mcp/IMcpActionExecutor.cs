@@ -15,8 +15,10 @@ public interface IMcpActionExecutor
     /// </summary>
     /// <param name="profileFilePath">Path to the ETL trace file to open</param>
     /// <param name="processIdentifier">Process ID (e.g., "12345") or process name (e.g., "chrome.exe", "POWERPNT") to select and load from the trace</param>
+    /// <param name="useManagedIdentity">If true, authenticates symbol downloads using a managed identity credential instead of interactive login</param>
+    /// <param name="symbolPath">Optional semicolon-separated symbol search path (e.g., "https://symweb.azurefd.net;C:\Symbols"). Prepended to any paths already configured.</param>
     /// <returns>Task that completes when the trace is fully loaded, with detailed result information</returns>
-    Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier);
+    Task<OpenTraceResult> OpenTraceAsync(string profileFilePath, string processIdentifier, bool useManagedIdentity = false, string? symbolPath = null);
 
     /// <summary>
     /// Get the current status of the Profile Explorer UI
