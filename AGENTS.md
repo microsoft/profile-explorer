@@ -35,6 +35,33 @@ For faster iteration when ProfileExplorer is running:
 
 The Core project build is much faster (~2-3s) and doesn't require ProfileExplorer to be closed.
 
+## Bumping the App Version
+
+The app version lives in 3 files that must stay in lockstep (history shows they've drifted apart and needed follow-up commits). Use the bump script — never edit these by hand:
+
+```powershell
+# Print current version across all files
+.\scripts\Bump-Version.ps1 -Show
+
+# Bump components (1.2.1 -> 1.2.2 / 1.3.0 / 2.0.0)
+.\scripts\Bump-Version.ps1 -Bump Patch
+.\scripts\Bump-Version.ps1 -Bump Minor
+.\scripts\Bump-Version.ps1 -Bump Major
+
+# Set an explicit version
+.\scripts\Bump-Version.ps1 -Version 1.5.0
+
+# Preview without writing
+.\scripts\Bump-Version.ps1 -Bump Patch -WhatIf
+```
+
+The script refuses to bump when the files disagree on the current version; pass `-Version X.Y.Z -Force` to force a known-good value. See the script's header comment for full help.
+
+The files it updates:
+- `src/ProfileExplorerUI/ProfileExplorerUI.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
+- `installer/x64/prepare-installer.cmd`
+- `installer/arm64/prepare-installer.cmd`
+
 ## Diagnostic Logging
 
 Enable diagnostic logging with:
