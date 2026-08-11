@@ -134,10 +134,25 @@ public class FunctionProfiler : IDisposable {
   /// Providing functions this way makes <see cref="LoadSymbolsAsync"/> a no-op.
   /// </para>
   /// </summary>
+  /// <param name="moduleName">The image's module name, matching the value registered via <see cref="AddImages"/>.</param>
   /// <param name="baseAddress">The image's base address, matching the value registered via <see cref="AddImages"/>.</param>
   /// <param name="sortedFunctions">The module's functions, sorted by ascending RVA.</param>
-  public void AddResolvedFunctions(long baseAddress, IReadOnlyList<FunctionDebugInfo> sortedFunctions) {
+  public void AddResolvedFunctions(string moduleName, long baseAddress,
+                                   IReadOnlyList<FunctionDebugInfo> sortedFunctions) {
+    ArgumentNullException.ThrowIfNull(moduleName);
     ArgumentNullException.ThrowIfNull(sortedFunctions);
+
+    if (!imagesByBase_.TryGetValue(baseAddress, out var image)) {
+      throw new ArgumentException(
+        $"No image registered at base address 0x{baseAddress:X}; call AddImages before AddResolvedFunctions.",
+        nameof(baseAddress));
+    }
+
+    if (!string.Equals(image.ImageName, moduleName, StringComparison.OrdinalIgnoreCase)) {
+      throw new ArgumentException(
+        $"Module name '{moduleName}' does not match image '{image.ImageName}' registered at base address 0x{baseAddress:X}.",
+        nameof(moduleName));
+    }
 
     ipResolver_.SetFunctions(baseAddress,
       sortedFunctions as List<FunctionDebugInfo> ?? new List<FunctionDebugInfo>(sortedFunctions));

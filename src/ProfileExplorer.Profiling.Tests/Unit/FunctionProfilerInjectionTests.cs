@@ -42,7 +42,7 @@ public class FunctionProfilerInjectionTests {
     using var profiler = new FunctionProfiler(options, new NoSymbolLocator());
 
     profiler.AddImages(SyntheticSampleBuilder.CreateImages((module, baseAddr, size)));
-    profiler.AddResolvedFunctions(baseAddr, new List<FunctionDebugInfo> {
+    profiler.AddResolvedFunctions(module, baseAddr, new List<FunctionDebugInfo> {
       new("Main", 0x1000, 0x800),
       new("Foo", 0x2000, 0x800),
       new("Bar", 0x3000, 0x800)
@@ -82,7 +82,35 @@ public class FunctionProfilerInjectionTests {
     using var profiler = new FunctionProfiler(options, new NoSymbolLocator());
 
     Assert.ThrowsException<ArgumentNullException>(() =>
-      profiler.AddResolvedFunctions(0x1000, null!));
+      profiler.AddResolvedFunctions("app.dll", 0x1000, null!));
+  }
+
+  [TestMethod]
+  public void AddResolvedFunctions_UnknownBaseAddress_Throws() {
+    var options = new ProfilerOptions { SymbolPaths = new[] { "srv*https://symbols.invalid" } };
+    using var profiler = new FunctionProfiler(options, new NoSymbolLocator());
+
+    // No image registered at this base → the base must be rejected.
+    Assert.ThrowsException<ArgumentException>(() =>
+      profiler.AddResolvedFunctions("app.dll", 0x140000000,
+        new List<FunctionDebugInfo> { new("Main", 0x1000, 0x800) }));
+  }
+
+  [TestMethod]
+  public void AddResolvedFunctions_MismatchedModuleName_Throws() {
+    const string module = "app.dll";
+    const long baseAddr = 0x140000000;
+    const int size = 0x100000;
+
+    var options = new ProfilerOptions { SymbolPaths = new[] { "srv*https://symbols.invalid" } };
+    using var profiler = new FunctionProfiler(options, new NoSymbolLocator());
+
+    profiler.AddImages(SyntheticSampleBuilder.CreateImages((module, baseAddr, size)));
+
+    // Correct base but wrong module name → the mismatch must be rejected.
+    Assert.ThrowsException<ArgumentException>(() =>
+      profiler.AddResolvedFunctions("other.dll", baseAddr,
+        new List<FunctionDebugInfo> { new("Main", 0x1000, 0x800) }));
   }
 
   [TestMethod]
@@ -99,7 +127,7 @@ public class FunctionProfilerInjectionTests {
 
     using var profiler = new FunctionProfiler(options, new NoSymbolLocator());
     profiler.AddImages(SyntheticSampleBuilder.CreateImages((module, baseAddr, size)));
-    profiler.AddResolvedFunctions(baseAddr, new List<FunctionDebugInfo> {
+    profiler.AddResolvedFunctions(module, baseAddr, new List<FunctionDebugInfo> {
       new("Main", 0x1000, 0x800),
       new("Foo", 0x2000, 0x800),
       new("Bar", 0x3000, 0x800),
