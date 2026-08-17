@@ -6,7 +6,10 @@
 #include <unknwn.h>
 
 #ifdef _WINDOWS
-#include <atlbase.h>
+#include <wrl/client.h>
+
+template <typename T>
+using CComPtr = Microsoft::WRL::ComPtr<T>;
 #else
 typedef int32_t HRESULT;
 struct CAtlException {

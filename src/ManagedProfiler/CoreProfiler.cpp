@@ -86,7 +86,8 @@ void FindRuntimeArchitecture() {
 
   CComPtr<IEnumUnknown> runtime;
 
-  if ((hr = metaHost->EnumerateInstalledRuntimes(&runtime)) != S_OK) {
+  if ((hr = metaHost->EnumerateInstalledRuntimes(runtime.GetAddressOf())) !=
+      S_OK) {
     return;
   }
 
@@ -95,7 +96,8 @@ void FindRuntimeArchitecture() {
 
   while (runtime->Next(1, &enumRuntime, 0) == S_OK) {
     CComPtr<ICLRRuntimeInfo> runtimeInfo;
-    if (enumRuntime->QueryInterface<ICLRRuntimeInfo>(&runtimeInfo) == S_OK) {
+    if (enumRuntime->QueryInterface<ICLRRuntimeInfo>(
+            runtimeInfo.GetAddressOf()) == S_OK) {
       if (runtimeInfo != nullptr) {
         DWORD bytes;
         runtimeInfo->GetVersionString(frameworkName, &bytes);
@@ -182,7 +184,7 @@ USHORT GetTargetMachine() {
 HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
   Log("PEX: Initialize");
 
-  pICorProfilerInfoUnk->QueryInterface(&profilerInfo_);
+  pICorProfilerInfoUnk->QueryInterface(profilerInfo_.GetAddressOf());
   profilerInfo_->SetEventMask2(
       // COR_PRF_MONITOR_MODULE_LOADS |
       // COR_PRF_MONITOR_ASSEMBLY_LOADS |
@@ -256,7 +258,8 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
   });
 
   // Load DAC, used mostly to get JIT helper function names.
-  auto dacPath = CLRDataTarget::FindDacBinary(profilerInfo_, machineType_);
+  auto dacPath =
+      CLRDataTarget::FindDacBinary(profilerInfo_.Get(), machineType_);
   auto dacModule = LoadLibrary(dacPath.c_str());
 
   if (dacModule) {
@@ -269,7 +272,7 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
                              (void**)&dataProc);
 
     if (SUCCEEDED(result)) {
-      auto result = dataProc->QueryInterface(&dac_);
+      auto result = dataProc->QueryInterface(dac_.GetAddressOf());
 
       if (SUCCEEDED(result)) {
         Log("PEX: DAC initialized");
@@ -379,7 +382,7 @@ bool CoreProfiler::SendLoadedFunctionCode(uint64_t funcId,
 HRESULT CoreProfiler::Shutdown() {
   Log("PEX: Shutdown");
 
-  profilerInfo_.Release();
+  profilerInfo_.Reset();
   return S_OK;
 }
 
@@ -1020,7 +1023,7 @@ std::string CoreProfiler::GetTypeName(mdTypeDef type, ModuleID module) const {
   CComPtr<IMetaDataImport> spMetadata;
   if (SUCCEEDED(profilerInfo_->GetModuleMetaData(
           module, ofRead, IID_IMetaDataImport,
-          reinterpret_cast<IUnknown**>(&spMetadata)))) {
+          reinterpret_cast<IUnknown**>(spMetadata.GetAddressOf())))) {
     WCHAR name[256];
     ULONG nameSize = 256;
     DWORD flags;
@@ -1045,7 +1048,7 @@ std::string CoreProfiler::GetMethodName(FunctionID function) const {
   CComPtr<IMetaDataImport> spMetadata;
   if (FAILED(profilerInfo_->GetModuleMetaData(
           module, ofRead, IID_IMetaDataImport,
-          reinterpret_cast<IUnknown**>(&spMetadata))))
+          reinterpret_cast<IUnknown**>(spMetadata.GetAddressOf()))))
     return "";
   PCCOR_SIGNATURE sig;
   ULONG blobSize, size, attributes;
