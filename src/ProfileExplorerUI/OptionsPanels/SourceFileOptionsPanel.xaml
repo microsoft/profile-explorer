@@ -488,6 +488,23 @@
               Margin="2,4,4,4">
               <Button
                 Height="24"
+                Padding="2"
+                HorizontalContentAlignment="Left"
+                Click="AddMappedPath_Click"
+                ToolTip="Add a new file path mapping">
+                <StackPanel Orientation="Horizontal">
+                  <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource PlusIcon}"
+                    Style="{StaticResource DisabledImageStyle}" />
+                  <TextBlock
+                    Margin="4,0,0,0"
+                    Text="Add" />
+                </StackPanel>
+              </Button>
+              <Button
+                Height="24"
                 Margin="0,2,0,0"
                 Padding="2"
                 HorizontalContentAlignment="Left"

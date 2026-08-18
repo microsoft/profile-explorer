@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Core.Settings;
+using ProfileExplorer.UI.Windows;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
@@ -54,6 +55,27 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
       Utils.SelectTextBoxListViewItem(textBox, ExcludedPathsList);
       e.Handled = true;
     }
+  }
+
+  private void AddMappedPath_Click(object sender, RoutedEventArgs e) {
+    var originalInput = new TextInputWindow(
+      "Add file path mapping", "Original source path:", "Next", "Cancel",
+      Window.GetWindow(this));
+
+    if (!originalInput.Show(out string originalPath, false)) {
+      return;
+    }
+
+    var mappedInput = new TextInputWindow(
+      "Add file path mapping", "Local mapped path:", "Add", "Cancel",
+      Window.GetWindow(this));
+
+    if (!mappedInput.Show(out string mappedPath, false)) {
+      return;
+    }
+
+    settings_.FinderSettings.SourceMappings[originalPath] = mappedPath;
+    ReloadMappedPathsList();
   }
 
   private void RemoveMappedPath_Click(object sender, RoutedEventArgs e) {
