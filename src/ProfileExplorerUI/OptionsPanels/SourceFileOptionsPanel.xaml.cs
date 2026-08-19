@@ -11,6 +11,7 @@ using ProfileExplorer.UI.Windows;
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class SourceFileOptionsPanel : OptionsPanelBase {
+  private const string AddMappingTitle = "Add file path mapping";
   private SourceFileSettings settings_;
 
   public SourceFileOptionsPanel() {
@@ -58,17 +59,21 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
   }
 
   private void AddMappedPath_Click(object sender, RoutedEventArgs e) {
+    var owner = Window.GetWindow(this);
     var originalInput = new TextInputWindow(
-      "Add file path mapping", "Original source path:", "Next", "Cancel",
-      Window.GetWindow(this));
+      AddMappingTitle, "Original source path:", "Next", "Cancel", owner);
 
     if (!originalInput.Show(out string originalPath, false)) {
       return;
     }
 
+    if (settings_.FinderSettings.SourceMappings.ContainsKey(originalPath)) {
+      Utils.ShowErrorMessageBox("A mapping for this original path already exists.", this);
+      return;
+    }
+
     var mappedInput = new TextInputWindow(
-      "Add file path mapping", "Local mapped path:", "Add", "Cancel",
-      Window.GetWindow(this));
+      AddMappingTitle, "Local mapped path:", "Add", "Cancel", owner);
 
     if (!mappedInput.Show(out string mappedPath, false)) {
       return;
