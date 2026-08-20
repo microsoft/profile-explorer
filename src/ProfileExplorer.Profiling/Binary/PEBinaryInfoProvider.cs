@@ -256,6 +256,54 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     return array.AsMemory();
   }
 
+  /// <summary>
+  /// Raw bytes of the PE exception directory (IMAGE_DIRECTORY_ENTRY_EXCEPTION) — the x64/ARM64
+  /// RUNTIME_FUNCTION table used by <see cref="RuntimeFunctionTable"/> to resolve function bounds
+  /// when no PDB/DIA symbols are available. Empty when the directory is absent (e.g. x86 images,
+  /// which don't use table-based unwinding).
+  /// </summary>
+  public ReadOnlyMemory<byte> GetExceptionDirectoryData() {
+    var peHeader = reader_.PEHeaders.PEHeader;
+
+    if (peHeader == null || peHeader.ExceptionTableDirectory.Size <= 0 ||
+        !reader_.PEHeaders.TryGetDirectoryOffset(peHeader.ExceptionTableDirectory, out int offset)) {
+      return ReadOnlyMemory<byte>.Empty;
+    }
+
+    var imageData = reader_.GetEntireImage();
+    var content = imageData.GetContent(offset, peHeader.ExceptionTableDirectory.Size);
+    return content.AsMemory();
+  }
+
+  /// <summary>
+  /// Read <paramref name="length"/> bytes starting at RVA <paramref name="rva"/>, wherever in the
+  /// image that RVA falls (not just code sections) — a single bounded read used to pull the
+  /// .xdata unwind-info header word for ARM64 unpacked .pdata entries. Never scans; only reads
+  /// this exact byte range. Returns false when the range doesn't fit entirely within one section.
+  /// </summary>
+  public bool TryReadRvaData(long rva, int length, out ReadOnlyMemory<byte> data) {
+    if (reader_.PEHeaders.PEHeader != null) {
+      foreach (var section in reader_.PEHeaders.SectionHeaders) {
+        long sectionSize = Math.Max(section.VirtualSize, section.SizeOfRawData);
+
+        if (rva >= section.VirtualAddress && rva + length <= section.VirtualAddress + sectionSize) {
+          var sectionData = reader_.GetSectionData(section.VirtualAddress).GetContent();
+          int offsetInSection = (int)(rva - section.VirtualAddress);
+
+          if (offsetInSection >= 0 && offsetInSection + length <= sectionData.Length) {
+            data = sectionData.AsMemory().Slice(offsetInSection, length);
+            return true;
+          }
+
+          break; // RVA is within the section's virtual range but past its raw data -> unreadable.
+        }
+      }
+    }
+
+    data = ReadOnlyMemory<byte>.Empty;
+    return false;
+  }
+
   private bool IsARM64ECBinary() {
     if (reader_.PEHeaders.PEHeader == null ||
         reader_.PEHeaders.PEHeader.LoadConfigTableDirectory.Size <= 0 ||

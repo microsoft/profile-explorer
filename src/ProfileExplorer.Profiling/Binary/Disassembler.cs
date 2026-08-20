@@ -14,9 +14,23 @@ using ProfileExplorer.Core.Providers;
 namespace ProfileExplorer.Core.Binary;
 
 /// <summary>
-/// A single disassembled instruction with resolved operand text.
+/// A resolved call/jump/branch target for a single instruction, as produced by
+/// <see cref="Disassembler.DisassembleToStructuredList"/>. <see cref="Rva"/>/<see cref="Address"/>
+/// are the target's module RVA / absolute address; <see cref="SymbolName"/> is populated only
+/// when the disassembler's debug-info provider (or symbol name resolver) can resolve it — a null
+/// name still carries a structured target address (e.g. an unresolved indirect/import target).
 /// </summary>
-public record DisassembledInstruction(long Address, long Rva, string Text, int Size);
+public record DisassembledInstructionTarget(long Rva, long Address, string? SymbolName, bool IsCall, bool IsJump);
+
+/// <summary>
+/// A single disassembled instruction with resolved operand text. <see cref="Mnemonic"/>,
+/// <see cref="OperandText"/> and <see cref="Target"/> are only populated by
+/// <see cref="Disassembler.DisassembleToStructuredList"/>; <see cref="Disassembler.DisassembleToList"/>
+/// leaves them null/default for backward compatibility.
+/// </summary>
+public record DisassembledInstruction(long Address, long Rva, string Text, int Size,
+                                      string? Mnemonic = null, string? OperandText = null,
+                                      DisassembledInstructionTarget? Target = null);
 
 public class Disassembler : IDisposable {
   public delegate string SymbolNameResolverDelegate(long address);
@@ -170,6 +184,50 @@ public class Disassembler : IDisposable {
     return list;
   }
 
+  /// <summary>
+  /// Disassemble a function into a list of structured instructions: mnemonic and operand text are
+  /// kept separate (in addition to the combined <see cref="DisassembledInstruction.Text"/>), and
+  /// each call/jump/branch instruction carries a resolved <see cref="DisassembledInstructionTarget"/>
+  /// when a target address is present in the operand (memory/register-indirect operands, e.g.
+  /// "call [rax+0x8]", are not resolved to a target — only direct/PC-relative branches are).
+  /// Bounded to [startRVA, startRVA + size), same as <see cref="DisassembleToList"/>: never scans
+  /// beyond the requested range.
+  /// </summary>
+  public List<DisassembledInstruction> DisassembleToStructuredList(long startRVA, long size) {
+    var list = new List<DisassembledInstruction>();
+
+    if (startRVA == 0 || size == 0) {
+      return list;
+    }
+
+    try {
+      DisassembleInstructions(startRVA, size, startRVA + baseAddress_, (instr) => {
+        string mnemonic = instr.MnemonicString;
+        var sb = new StringBuilder();
+        AppendOperands(instr, startRVA, size, sb);
+        string operandText = sb.ToString();
+        string text = $"{mnemonic}  {operandText}";
+
+        DisassembledInstructionTarget? target = null;
+
+        if (TryGetBranchTarget(instr, out long targetRva, out bool isCall, out bool isJump)) {
+          string? symbolName = ResolveFunctionName(targetRva);
+          target = new DisassembledInstructionTarget(targetRva, targetRva + baseAddress_, symbolName, isCall, isJump);
+        }
+
+        list.Add(new DisassembledInstruction(instr.Address, instr.Address - baseAddress_,
+                                             text, instr.Size, mnemonic, operandText, target));
+      });
+    }
+    catch (Exception ex) {
+#if DEBUG
+      Trace.TraceError($"Failed to disassemble structured list at RVA {startRVA}, size {size}: {ex.Message}");
+#endif
+    }
+
+    return list;
+  }
+
   private void Initialize(bool checkValidCallAddress) {
     checkValidCallAddress_ = checkValidCallAddress;
     disasmHandle_ = Interop.Create(architecture_);
@@ -263,33 +321,37 @@ public class Disassembler : IDisposable {
   }
 
   private bool TryAppendFunctionName(StringBuilder builder, long rva) {
+    string name = ResolveFunctionName(rva);
+
+    if (name != null) {
+      builder.Append(name);
+      return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Resolve the function/symbol name at <paramref name="rva"/>, using the symbol-name resolver
+  /// callback when one was supplied (with no fallback to <see cref="debugInfo_"/> — matches the
+  /// original inline resolution order), otherwise falling back to <see cref="debugInfo_"/> lookup.
+  /// Returns null when nothing resolves.
+  /// </summary>
+  private string? ResolveFunctionName(long rva) {
     if (symbolNameResolver_ != null) {
       string name = symbolNameResolver_(rva);
-
-      if (!string.IsNullOrEmpty(name)) {
-        builder.Append(name);
-        return true;
-      }
-
-      return false;
+      return string.IsNullOrEmpty(name) ? null : name;
     }
 
     if (debugInfo_ != null) {
       var func = FindFunctionByRva(rva);
 
       if (func != null) {
-        if (funcNameFormatter_ != null) {
-          builder.Append(funcNameFormatter_(func.Name));
-        }
-        else {
-          builder.Append(func.Name);
-        }
-
-        return true;
+        return funcNameFormatter_ != null ? funcNameFormatter_(func.Name) : func.Name;
       }
     }
 
-    return false;
+    return null;
   }
 
   private FunctionDebugInfo FindFunctionByRva(long rva) {
@@ -438,27 +500,83 @@ public class Disassembler : IDisposable {
       return false;
     }
 
-    switch (architecture_) {
+    var (isCall, isJumpBranch) = ClassifyBranch(architecture_, instr.MnemonicString);
+    isJump = isJumpBranch;
+    return isCall || isJumpBranch;
+  }
+
+  /// <summary>
+  /// Classify a mnemonic as a call and/or (unconditional) jump/branch instruction, independent of
+  /// whether symbol-name resolution is available. Shared by <see cref="ShouldLookupAddressByName"/>
+  /// (operand text symbol substitution) and <see cref="TryGetBranchTarget"/> (structured target
+  /// extraction) so both stay in sync.
+  /// </summary>
+  internal static (bool IsCall, bool IsJump) ClassifyBranch(Machine architecture, string mnemonic) {
+    switch (architecture) {
       case Machine.I386:
       case Machine.Amd64: {
-        // Resolve operand symbol names for direct calls and unconditional jumps
-        // (matches x86Opcodes Call/Goto classification: CALL, SYSCALL, JMP).
-        string mnemonic = instr.MnemonicString;
-        isJump = mnemonic.Equals("jmp", StringComparison.OrdinalIgnoreCase);
-        return isJump ||
-               mnemonic.Equals("call", StringComparison.OrdinalIgnoreCase) ||
-               mnemonic.Equals("syscall", StringComparison.OrdinalIgnoreCase);
+        // Matches x86Opcodes Call/Goto classification: CALL, SYSCALL, JMP.
+        bool isJump = mnemonic.Equals("jmp", StringComparison.OrdinalIgnoreCase);
+        bool isCall = mnemonic.Equals("call", StringComparison.OrdinalIgnoreCase) ||
+                      mnemonic.Equals("syscall", StringComparison.OrdinalIgnoreCase);
+        return (isCall, isJump);
       }
       case Machine.Arm:
       case Machine.Arm64: {
         // Matches ARM64Opcodes Call/Goto classification: B, BR (Goto), BL, BLR (Call).
-        string mnemonic = instr.MnemonicString;
-        isJump = mnemonic.Equals("b", StringComparison.OrdinalIgnoreCase) ||
-                 mnemonic.Equals("br", StringComparison.OrdinalIgnoreCase);
-        return isJump ||
-               mnemonic.Equals("bl", StringComparison.OrdinalIgnoreCase) ||
-               mnemonic.Equals("blr", StringComparison.OrdinalIgnoreCase);
+        bool isJump = mnemonic.Equals("b", StringComparison.OrdinalIgnoreCase) ||
+                      mnemonic.Equals("br", StringComparison.OrdinalIgnoreCase);
+        bool isCall = mnemonic.Equals("bl", StringComparison.OrdinalIgnoreCase) ||
+                      mnemonic.Equals("blr", StringComparison.OrdinalIgnoreCase);
+        return (isCall, isJump);
       }
+      default:
+        return (false, false);
+    }
+  }
+
+  /// <summary>
+  /// Extract the first direct call/jump/branch target address from an instruction's operand text,
+  /// without building display text or resolving symbol names (unlike <see cref="AppendOperands"/>,
+  /// which does both). Memory/register-indirect operands (e.g. "call [rax+0x8]", "call [rip+0xN]")
+  /// are not resolved to a target — only direct/PC-relative branches with a literal hex address
+  /// operand are. Returns false for non-branch instructions and for branches whose target can't be
+  /// determined from the operand text alone.
+  /// </summary>
+  private unsafe bool TryGetBranchTarget(Interop.Instruction instr, out long targetRva, out bool isCall, out bool isJump) {
+    targetRva = 0;
+    (isCall, isJump) = ClassifyBranch(architecture_, instr.MnemonicString);
+
+    if (!isCall && !isJump) {
+      return false;
+    }
+
+    bool isArm = architecture_ == Machine.Arm || architecture_ == Machine.Arm64;
+    bool sawBracket = false;
+    byte* letterPtr = instr.Operand;
+    int index = 0;
+
+    while (index < Interop.Instruction.OperandLength && letterPtr[index] != 0) {
+      char letter = (char)letterPtr[index];
+      int hexLength = 0;
+      long hexValue = 0;
+
+      if (letter == '[') {
+        sawBracket = true; // Memory/register-indirect operand -> not a resolvable direct target.
+      }
+      else if (letter == '#' && isArm && !sawBracket) {
+        hexLength = FindHexNumber(letterPtr, index + 1, out hexValue); // Skip over #.
+      }
+      else if (letter == '0' && !sawBracket) {
+        hexLength = FindHexNumber(letterPtr, index, out hexValue);
+      }
+
+      if (IsValidCallAddress(hexLength, hexValue)) {
+        targetRva = hexValue - baseAddress_;
+        return true;
+      }
+
+      index++;
     }
 
     return false;

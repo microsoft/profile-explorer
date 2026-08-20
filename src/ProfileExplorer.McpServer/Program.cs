@@ -16,6 +16,7 @@ using ProfileExplorer.Core.Profile.ETW;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Core.Settings;
 using ProfileExplorer.Core.Utilities;
+using ProfileExplorer.Profiling.Symbols;
 
 namespace ProfileExplorer.McpServer;
 
@@ -665,6 +666,132 @@ public static class ProfileTools
     return JsonSerializer.Serialize(result, JsonOpts);
   }
 
+  [McpServerTool, Description(
+    "Deterministic, structured, address-based native disassembly for a single x64/ARM64 address — " +
+    "independent of any loaded trace or CPU sample aggregation. Given an exact binary path and a " +
+    "module RVA or absolute instruction pointer, resolves trustworthy function bounds from a supplied " +
+    "PDB (pdbPath) or, when omitted/unresolved, from the PE exception directory (.pdata/unwind info); " +
+    "never scans .text unbounded and never guesses. Set frameKind='ReturnAddress' for addresses taken " +
+    "from a stack frame's return slot to normalize to the preceding call instruction when " +
+    "deterministically possible. Returns explicit FailureReason values (e.g. FunctionBoundsNotResolved, " +
+    "UnsupportedArchitecture, RvaNotInCodeSection) instead of a partial/best-effort result on failure.")]
+  public static string DisassembleAddress(
+    string binaryPath,
+    string address,
+    string addressForm = "ModuleRva",
+    string frameKind = "InstructionPointer",
+    string? imageBase = null,
+    string? pdbPath = null)
+  {
+    DiagnosticLogger.LogInfo($"[MCP] DisassembleAddress called: binaryPath={binaryPath}, address={address}, " +
+                             $"addressForm={addressForm}, frameKind={frameKind}, pdbPath={pdbPath}");
+
+    if (!TryParseAddress(address, out long parsedAddress))
+      return Error("DisassembleAddress", $"Could not parse address '{address}' (expected hex like '0x1400' or decimal).");
+
+    if (!Enum.TryParse<NativeAddressForm>(addressForm, ignoreCase: true, out var parsedAddressForm))
+      return Error("DisassembleAddress",
+        $"Invalid addressForm '{addressForm}'. Expected 'ModuleRva' or 'AbsoluteInstructionPointer'.");
+
+    if (!Enum.TryParse<FrameAddressKind>(frameKind, ignoreCase: true, out var parsedFrameKind))
+      return Error("DisassembleAddress",
+        $"Invalid frameKind '{frameKind}'. Expected 'InstructionPointer' or 'ReturnAddress'.");
+
+    long? parsedImageBase = null;
+    if (!string.IsNullOrWhiteSpace(imageBase))
+    {
+      if (!TryParseAddress(imageBase, out long imageBaseValue))
+        return Error("DisassembleAddress", $"Could not parse imageBase '{imageBase}' (expected hex like '0x140000000' or decimal).");
+      parsedImageBase = imageBaseValue;
+    }
+
+    PdbSymbolProvider? symbolProvider = null;
+    try
+    {
+      if (!string.IsNullOrWhiteSpace(pdbPath))
+      {
+        if (!File.Exists(pdbPath))
+          return Error("DisassembleAddress", $"PDB file not found: {pdbPath}");
+
+        symbolProvider = new PdbSymbolProvider();
+        if (!symbolProvider.LoadDebugInfo(pdbPath))
+          return Error("DisassembleAddress", $"Failed to load PDB: {pdbPath}");
+      }
+
+      var result = NativeAddressDisassembler.Resolve(new NativeAddressDisassemblyRequest
+      {
+        BinaryPath = binaryPath,
+        Address = parsedAddress,
+        AddressForm = parsedAddressForm,
+        FrameKind = parsedFrameKind,
+        ImageBase = parsedImageBase,
+        SymbolDebugInfo = symbolProvider
+      });
+
+      var response = new
+      {
+        Action = "DisassembleAddress",
+        Status = result.Success ? "Success" : "Error",
+        FailureReason = result.FailureReason.ToString(),
+        Error = result.Success ? null : result.ErrorMessage,
+        ModuleName = result.ModuleName,
+        Architecture = result.Architecture?.ToString(),
+        RequestedRva = $"0x{result.RequestedRva:X}",
+        RequestedAddress = $"0x{result.RequestedAddress:X}",
+        NormalizedRva = $"0x{result.NormalizedRva:X}",
+        NormalizedAddress = $"0x{result.NormalizedAddress:X}",
+        WasNormalized = result.WasNormalized,
+        QualifiedName = result.QualifiedName,
+        Range = result.Range is { } range ? new
+        {
+          StartRva = $"0x{range.StartRva:X}",
+          EndRva = $"0x{range.EndRva:X}",
+          Size = range.Size,
+          Provenance = range.Provenance.ToString(),
+          FunctionName = range.FunctionName,
+          RuntimeFunctionKind = range.RuntimeFunctionKind?.ToString()
+        } : null,
+        Instructions = result.Instructions.Select(i => new
+        {
+          Rva = $"0x{i.Rva:X}",
+          Address = $"0x{i.Address:X}",
+          Size = i.Size,
+          Text = i.Text,
+          Mnemonic = i.Mnemonic,
+          Operands = i.OperandText,
+          Target = i.Target is { } target ? new
+          {
+            Rva = $"0x{target.Rva:X}",
+            Address = $"0x{target.Address:X}",
+            SymbolName = target.SymbolName,
+            IsCall = target.IsCall,
+            IsJump = target.IsJump
+          } : null
+        }).ToArray(),
+        Timestamp = DateTime.UtcNow
+      };
+
+      return JsonSerializer.Serialize(response, JsonOpts);
+    }
+    finally
+    {
+      symbolProvider?.Dispose();
+    }
+  }
+
+  /// <summary>Parses an address as hex (with or without a "0x" prefix) or decimal.</summary>
+  private static bool TryParseAddress(string text, out long value)
+  {
+    string trimmed = text.Trim();
+    if (trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+      return long.TryParse(trimmed[2..], System.Globalization.NumberStyles.HexNumber, null, out value);
+
+    if (long.TryParse(trimmed, out value))
+      return true;
+
+    return long.TryParse(trimmed, System.Globalization.NumberStyles.HexNumber, null, out value);
+  }
+
   [McpServerTool, Description("Get callers and callees for a function, showing who calls it and what it calls, with call stack traces")]
   public static string GetFunctionCallerCallee(
     string functionName,
@@ -810,6 +937,14 @@ public static class ProfileTools
         "5. GetFunctionAssembly(name) — get instruction-level hotspot data",
         "6. GetFunctionCallerCallee(name) — get callers, callees, and full call stacks",
         "7. CloseTrace() — close trace and reset state (required before loading a new trace)"
+      },
+      IndependentTools = new[]
+      {
+        "DisassembleAddress(binaryPath, address, addressForm, frameKind, imageBase, pdbPath) — " +
+        "deterministic, structured disassembly at an exact module RVA or absolute instruction " +
+        "pointer for x64/ARM64, independent of any loaded trace. Resolves bounds from an optional " +
+        "PDB or the PE exception directory (.pdata); never scans .text unbounded; returns explicit " +
+        "failures (e.g. FunctionBoundsNotResolved) instead of guessing."
       }
     };
     return JsonSerializer.Serialize(help, JsonOpts);
