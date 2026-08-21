@@ -44,6 +44,15 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
   public int MajorVersion { get; set; }
   [ProtoMember(12)]
   public int MinorVersion { get; set; }
+  // The module's OWN embedded original filename (from its version resource / ImageID ETW event),
+  // which for some first-party binaries differs from the on-disk name -- e.g. ntoskrnl.exe's
+  // OriginalFileName is "ntkrnlmp.exe". Symbol servers can index the raw binary under this name
+  // instead of (or in addition to) the on-disk name, exactly like PDBs are frequently indexed
+  // under a name that differs from "<image>.pdb" (ntoskrnl.exe's PDB is ntkrnlmp.pdb, not
+  // ntoskrnl.pdb). BinaryFileLocator tries this as a fallback key when the on-disk ImageName
+  // lookup fails. Null/empty when unknown or identical to ImageName.
+  [ProtoMember(13)]
+  public string OriginalFileName { get; set; }
   public bool IsNativeImage => FileKind == BinaryFileKind.Native;
   public bool IsManagedImage => FileKind == BinaryFileKind.DotNet ||
                                 FileKind == BinaryFileKind.DotNetR2R;

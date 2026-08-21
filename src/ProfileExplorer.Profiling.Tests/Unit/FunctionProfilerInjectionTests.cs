@@ -23,7 +23,7 @@ public class FunctionProfilerInjectionTests {
       Task.FromResult<string?>(null);
 
     public Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                             CancellationToken ct = default) =>
+                                             string? originalFileName = null, CancellationToken ct = default) =>
       Task.FromResult<string?>(null);
   }
 

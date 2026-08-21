@@ -32,7 +32,15 @@ public interface ISymbolFileLocator {
   /// <param name="binaryName">Binary file name (e.g., "ntdll.dll").</param>
   /// <param name="timeDateStamp">PE TimeDateStamp from the file header.</param>
   /// <param name="imageSize">PE ImageSize (SizeOfImage).</param>
+  /// <param name="originalFileName">
+  /// The module's own embedded original filename (from its version resource), when known and
+  /// different from <paramref name="binaryName"/>. Some first-party binaries are indexed on the
+  /// symbol server under this internal name rather than the on-disk name -- e.g. ntoskrnl.exe's
+  /// OriginalFileName is "ntkrnlmp.exe", and the symbol server only has an entry under that name.
+  /// Tried as a fallback key when the primary <paramref name="binaryName"/> lookup 404s. Null when
+  /// unknown.
+  /// </param>
   /// <param name="ct">Cancellation token.</param>
   Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                    CancellationToken ct = default);
+                                    string? originalFileName = null, CancellationToken ct = default);
 }

@@ -128,9 +128,31 @@ public static class BinaryFileLocator {
       }
 
       //Trace.WriteLine($"Start download of {Utils.TryGetFileName(binaryFile.ImageName)}");
-      result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
-                                                   binaryFile.TimeStamp,
-                                                   (int)binaryFile.ImageSize);
+      // Try the on-disk/ETW-reported name first, then the module's own embedded OriginalFileName
+      // (if different) as a genuine alternate identity key -- not a guess, exactly like PDBs are
+      // routinely indexed under a name that differs from "<image>.pdb" (see
+      // BinaryFileDescriptor.OriginalFileName). This fixes lookups for binaries whose symbol-server
+      // key uses their internal name instead of the on-disk name (e.g. ntoskrnl.exe is indexed as
+      // "ntkrnlmp.exe" -- confirmed via a direct symweb probe: the on-disk name 404s at every
+      // candidate size, while the exact same TimeStamp+ImageSize under "ntkrnlmp.exe" succeeds).
+      string[] candidateNames = string.IsNullOrEmpty(binaryFile.OriginalFileName) ||
+                                 string.Equals(binaryFile.OriginalFileName, binaryFile.ImageName, StringComparison.OrdinalIgnoreCase)
+        ? [binaryFile.ImageName]
+        : [binaryFile.ImageName, binaryFile.OriginalFileName];
+
+      foreach (string candidateName in candidateNames) {
+        result = symbolReader.FindExecutableFilePath(candidateName, binaryFile.TimeStamp, (int)binaryFile.ImageSize);
+
+        if (result != null) {
+          if (candidateName != binaryFile.ImageName) {
+            DiagnosticLogger.LogInfo(
+              $"[BinarySearch] Found {binaryFile.ImageName} on symbol server under its OriginalFileName " +
+              $"'{candidateName}' instead of the on-disk name");
+          }
+
+          break;
+        }
+      }
 
       if (result == null) {
         // Finally, try an approximate manual search.
@@ -144,14 +166,19 @@ public static class BinaryFileLocator {
       // ImageSize is the mapped-view size, which can exceed the real PE SizeOfImage that symweb
       // indexes by, by a few slack pages -- probe downward in small alignment steps until we get
       // a hit, exactly mirroring the local-file correction above but against the server itself.
+      // Tries every candidate name (on-disk + OriginalFileName) since a module could need BOTH a
+      // corrected name AND a corrected size.
       if (result == null && settings.AllowApproximateBinaryMatch) {
-        result = TryFindExecutableWithSizeProbing(symbolReader, binaryFile, out long probedSize);
+        foreach (string candidateName in candidateNames) {
+          result = TryFindExecutableWithSizeProbing(symbolReader, binaryFile, candidateName, out long probedSize);
 
-        if (result != null) {
-          DiagnosticLogger.LogInfo(
-            $"[BinarySearch] Found {binaryFile.ImageName} on symbol server after size-probing " +
-            $"(reported ImageSize {binaryFile.ImageSize} -> corrected {probedSize})");
-          binaryFile.ImageSize = probedSize;
+          if (result != null) {
+            DiagnosticLogger.LogInfo(
+              $"[BinarySearch] Found {binaryFile.ImageName} on symbol server after size-probing " +
+              $"(name='{candidateName}', reported ImageSize {binaryFile.ImageSize} -> corrected {probedSize})");
+            binaryFile.ImageSize = probedSize;
+            break;
+          }
         }
       }
     }
@@ -222,9 +249,12 @@ public static class BinaryFileLocator {
   /// <see cref="SizeProbeStepBytes"/> increments. Used when the exact TimeStamp+ImageSize lookup
   /// 404s and there's no local copy of the binary to read the corrected PE SizeOfImage from
   /// directly (see <see cref="FindExactLocalBinaryFile"/> for that local-file counterpart).
+  /// <paramref name="candidateName"/> lets the caller probe under either the on-disk ImageName or
+  /// the module's OriginalFileName (see <see cref="BinaryFileDescriptor.OriginalFileName"/>).
   /// </summary>
   private static string TryFindExecutableWithSizeProbing(SymbolReader symbolReader,
                                                           BinaryFileDescriptor binaryFile,
+                                                          string candidateName,
                                                           out long correctedSize) {
     correctedSize = 0;
     long baseSize = binaryFile.ImageSize;
@@ -239,10 +269,10 @@ public static class BinaryFileLocator {
       string candidateResult;
 
       try {
-        candidateResult = symbolReader.FindExecutableFilePath(binaryFile.ImageName, binaryFile.TimeStamp, (int)candidateSize);
+        candidateResult = symbolReader.FindExecutableFilePath(candidateName, binaryFile.TimeStamp, (int)candidateSize);
       }
       catch (Exception ex) {
-        DiagnosticLogger.LogDebug($"[BinarySearch] Size probe failed for {binaryFile.ImageName} at size {candidateSize}: {ex.Message}");
+        DiagnosticLogger.LogDebug($"[BinarySearch] Size probe failed for {candidateName} at size {candidateSize}: {ex.Message}");
         continue;
       }
 

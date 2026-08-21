@@ -506,7 +506,7 @@ public class FunctionProfiler : IDisposable {
         binaryPath = TryFindLocalBinary(image);
 
         binaryPath ??= await symbolResolver_.FindBinaryFileAsync(
-          image.ImageName, image.TimeDateStamp, image.Size, ct);
+          image.ImageName, image.TimeDateStamp, image.Size, ct: ct);
 
         if (binaryPath != null) {
           binaryPathByModule_[moduleName] = binaryPath;
@@ -668,7 +668,7 @@ public class FunctionProfiler : IDisposable {
       Task.FromResult<string?>(null);
 
     public Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                             CancellationToken ct = default) =>
+                                             string? originalFileName = null, CancellationToken ct = default) =>
       Task.FromResult<string?>(null);
   }
 

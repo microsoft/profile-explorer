@@ -138,8 +138,21 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
         architecture = Machine.Arm64;
       }
 
+      // Original filename from the version resource (e.g. "ntkrnlmp.exe" for ntoskrnl.exe) --
+      // symbol servers can index the raw binary under this name instead of the on-disk name.
+      // Only set when it's a real, distinct value; a self-referential match (OriginalFileName ==
+      // ImageName, the common case) doesn't need to be carried around as a separate fallback key.
+      string originalFileName = null;
+      string imageName = string.IsNullOrEmpty(filePath_) ? "" : Path.GetFileName(filePath_);
+      var versionInfo = GetVersionInfo(filePath_);
+
+      if (!string.IsNullOrEmpty(versionInfo?.OriginalFilename) &&
+          !string.Equals(versionInfo.OriginalFilename, imageName, StringComparison.OrdinalIgnoreCase)) {
+        originalFileName = versionInfo.OriginalFilename;
+      }
+
       return new BinaryFileDescriptor {
-        ImageName = string.IsNullOrEmpty(filePath_) ? "" : Path.GetFileName(filePath_),
+        ImageName = imageName,
         ImagePath = filePath_,
         Architecture = architecture,
         FileKind = fileKind,
@@ -150,7 +163,8 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
         ImageBase = (long)reader_.PEHeaders.PEHeader.ImageBase,
         BaseOfCode = reader_.PEHeaders.PEHeader.BaseOfCode,
         MajorVersion = reader_.PEHeaders.PEHeader.MajorImageVersion,
-        MinorVersion = reader_.PEHeaders.PEHeader.MinorImageVersion
+        MinorVersion = reader_.PEHeaders.PEHeader.MinorImageVersion,
+        OriginalFileName = originalFileName
       };
     }
   }

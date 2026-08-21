@@ -73,9 +73,21 @@ public class SymbolServerClient : IDisposable, ISymbolFileLocator {
   /// <param name="ct">Cancellation token.</param>
   /// <returns>Local file path to the downloaded binary, or null if not found.</returns>
   public async Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                                  CancellationToken ct = default) {
+                                                  string? originalFileName = null, CancellationToken ct = default) {
     string hash = $"{timeDateStamp:X8}{imageSize:x}".ToUpperInvariant();
-    return await DownloadFileAsync(binaryName, hash, ct);
+
+    string? result = await DownloadFileAsync(binaryName, hash, ct);
+
+    // Some first-party binaries are indexed on the symbol server under their own embedded original
+    // filename rather than the on-disk name -- e.g. ntoskrnl.exe's OriginalFileName is
+    // "ntkrnlmp.exe", and the server only has an entry under that name (confirmed via direct probe:
+    // the on-disk name 404s at the exact same TimeStamp+ImageSize that "ntkrnlmp.exe" resolves).
+    if (result == null && !string.IsNullOrEmpty(originalFileName) &&
+        !string.Equals(originalFileName, binaryName, StringComparison.OrdinalIgnoreCase)) {
+      result = await DownloadFileAsync(originalFileName, hash, ct);
+    }
+
+    return result;
   }
 
   /// <summary>
