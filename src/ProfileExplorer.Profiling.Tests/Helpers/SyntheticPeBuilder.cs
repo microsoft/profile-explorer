@@ -27,11 +27,18 @@ internal static class SyntheticPeBuilder {
   /// Build a minimal well-formed PE32+ image with the given COFF machine type and sections.
   /// When <paramref name="exceptionTableSectionIndex"/> is >= 0, the IMAGE_DIRECTORY_ENTRY_EXCEPTION
   /// data directory is pointed at that section (offset <paramref name="exceptionTableOffsetInSection"/>,
-  /// size <paramref name="exceptionTableSize"/>).
+  /// size <paramref name="exceptionTableSize"/>). <paramref name="exportTableSectionIndex"/>/
+  /// <paramref name="importTableSectionIndex"/> work the same way for
+  /// IMAGE_DIRECTORY_ENTRY_EXPORT/IMPORT (directory indices 0/1), used by
+  /// PEReferenceModelTests to exercise import/export parsing without needing a real compiled binary.
   /// </summary>
   public static byte[] Build(ushort machine, IReadOnlyList<Section> sections,
                              int exceptionTableSectionIndex = -1, uint exceptionTableOffsetInSection = 0,
-                             uint exceptionTableSize = 0) {
+                             uint exceptionTableSize = 0,
+                             int exportTableSectionIndex = -1, uint exportTableOffsetInSection = 0,
+                             uint exportTableSize = 0,
+                             int importTableSectionIndex = -1, uint importTableOffsetInSection = 0,
+                             uint importTableSize = 0) {
     int numberOfSections = sections.Count;
     const int dosHeaderSize = 64;
     const int peSignatureSize = 4;
@@ -106,7 +113,15 @@ internal static class SyntheticPeBuilder {
     w.Write((uint)16); // NumberOfRvaAndSizes
 
     for (int i = 0; i < 16; i++) {
-      if (i == 3 && exceptionTableSectionIndex >= 0) { // IMAGE_DIRECTORY_ENTRY_EXCEPTION.
+      if (i == 0 && exportTableSectionIndex >= 0) { // IMAGE_DIRECTORY_ENTRY_EXPORT.
+        w.Write((uint)(rvas[exportTableSectionIndex] + exportTableOffsetInSection));
+        w.Write(exportTableSize);
+      }
+      else if (i == 1 && importTableSectionIndex >= 0) { // IMAGE_DIRECTORY_ENTRY_IMPORT.
+        w.Write((uint)(rvas[importTableSectionIndex] + importTableOffsetInSection));
+        w.Write(importTableSize);
+      }
+      else if (i == 3 && exceptionTableSectionIndex >= 0) { // IMAGE_DIRECTORY_ENTRY_EXCEPTION.
         w.Write((uint)(rvas[exceptionTableSectionIndex] + exceptionTableOffsetInSection));
         w.Write(exceptionTableSize);
       }
