@@ -351,6 +351,44 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   }
 
   /// <summary>
+  /// Read a null-terminated UTF-16LE ("wide") string starting at RVA <paramref name="rva"/>,
+  /// bounded to at most <paramref name="maxLength"/> UTF-16 code units and to the containing
+  /// section's data. Windows code commonly stores wide string literals (L"...") this way; used by
+  /// <see cref="ReferenceResolver"/> to classify a data reference as a string.
+  /// </summary>
+  public bool TryReadNullTerminatedUtf16String(long rva, int maxLength, out string? value) {
+    if (!TryFindContainingSection(rva, out var sectionData, out long sectionStartRva)) {
+      value = null;
+      return false;
+    }
+
+    int offset = (int)(rva - sectionStartRva);
+
+    if (offset < 0 || offset + 1 >= sectionData.Length) {
+      // Need at least 2 bytes available for a single UTF-16 code unit.
+      value = null;
+      return false;
+    }
+
+    var span = sectionData.Span;
+    int end = offset;
+    int limitBytes = Math.Min(sectionData.Length - 1, offset + maxLength * 2);
+
+    while (end + 1 <= limitBytes) {
+      int unit = span[end] | (span[end + 1] << 8);
+
+      if (unit == 0) {
+        break;
+      }
+
+      end += 2;
+    }
+
+    value = Encoding.Unicode.GetString(span.Slice(offset, end - offset));
+    return true;
+  }
+
+  /// <summary>
   /// Locates the section containing <paramref name="rva"/> and returns its full data plus its
   /// start RVA, so callers that don't know the length to read up-front (null-terminated strings)
   /// can bound their own scan within the section instead of guessing a length for

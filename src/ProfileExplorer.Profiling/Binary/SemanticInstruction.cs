@@ -51,6 +51,16 @@ public sealed class SemanticInstruction {
   /// </summary>
   public long? TargetRva { get; init; }
 
+  /// <summary>
+  /// The resolved module-relative RVA of an x64 RIP-relative memory operand (e.g. "[rip + 0xN]"),
+  /// regardless of whether the instruction is a call/jump -- covers IAT slot references (indirect
+  /// calls to imports), literal/global data references, and string references. Null when the
+  /// instruction has no such operand, or on non-x64 architectures (ARM64/x86 use different
+  /// addressing forms for this, not yet covered here). Use <see cref="ReferenceResolver.Resolve"/>
+  /// to turn this into an actual identity (import/export/string/unknown).
+  /// </summary>
+  public long? MemoryReferenceRva { get; init; }
+
   /// <summary>Combined implicit + explicit registers read, by Capstone register name (e.g. "eax", "rbx").</summary>
   public IReadOnlyList<string> RegistersRead { get; init; } = Array.Empty<string>();
 

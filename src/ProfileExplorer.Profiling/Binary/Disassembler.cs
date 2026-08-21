@@ -271,6 +271,7 @@ public class Disassembler : IDisposable {
         long? targetRva = TryGetBranchTarget(instr, out long branchTargetRva, out _, out _)
           ? branchTargetRva
           : null;
+        long? memoryReferenceRva = TryResolveRipRelativeMemoryRva(instr);
 
         list.Add(new SemanticInstruction {
           Address = instr.Address,
@@ -279,6 +280,7 @@ public class Disassembler : IDisposable {
           Mnemonic = mnemonic,
           OperandText = operandText,
           TargetRva = targetRva,
+          MemoryReferenceRva = memoryReferenceRva,
           Groups = groups,
           RegistersRead = registersRead,
           RegistersWritten = registersWritten,
@@ -683,6 +685,83 @@ public class Disassembler : IDisposable {
 
     iatSymbolCache_[rva] = name;
     return name;
+  }
+
+  /// <summary>
+  /// Detects an x64 RIP-relative memory operand ("[rip + 0xN]", "[rip - 0xN]", or bare "[rip]")
+  /// anywhere in the instruction's *raw* Capstone operand text (<see cref="Interop.Instruction.OperandString"/>,
+  /// never the locally-rendered/symbol-substituted <c>operandText</c> built by
+  /// <see cref="AppendOperands"/>) and resolves its effective address to a module RVA. This is a
+  /// lightweight, managed-string re-implementation of the same effective-address arithmetic
+  /// <see cref="TryResolveRipRelativeOperand"/> uses for symbol-name substitution, kept
+  /// independent so semantic instruction construction never depends on that method's unsafe
+  /// pointer-scanning/text-building side effects. Using the raw operand text (rather than the
+  /// rendered one) means this works correctly regardless of whether the disassembler was given a
+  /// PDB/symbol resolver that would otherwise rewrite "[rip+N]" into "[SymbolName]" in the
+  /// rendered text. x86/ARM64 do not use RIP-relative addressing for this pattern, so this only
+  /// applies to <see cref="Machine.Amd64"/>.
+  /// </summary>
+  private long? TryResolveRipRelativeMemoryRva(Interop.Instruction instr) {
+    if (architecture_ != Machine.Amd64) {
+      return null;
+    }
+
+    string operandText = instr.OperandString;
+
+    if (string.IsNullOrEmpty(operandText)) {
+      return null;
+    }
+
+    int ripIndex = operandText.IndexOf("[rip", StringComparison.Ordinal);
+
+    if (ripIndex < 0) {
+      return null;
+    }
+
+    int idx = ripIndex + 4; // Past "[rip".
+
+    while (idx < operandText.Length && operandText[idx] == ' ') {
+      idx++;
+    }
+
+    long signedOffset;
+
+    if (idx < operandText.Length && operandText[idx] == ']') {
+      signedOffset = 0; // Bare "[rip]".
+    }
+    else if (idx < operandText.Length && (operandText[idx] == '+' || operandText[idx] == '-')) {
+      int sign = operandText[idx] == '+' ? 1 : -1;
+      idx++;
+
+      while (idx < operandText.Length && operandText[idx] == ' ') {
+        idx++;
+      }
+
+      if (idx + 1 >= operandText.Length || operandText[idx] != '0' ||
+          (operandText[idx + 1] != 'x' && operandText[idx + 1] != 'X')) {
+        return null; // Not the expected "0x..." hex displacement form -- refuse to guess.
+      }
+
+      idx += 2;
+      int digitsStart = idx;
+
+      while (idx < operandText.Length && Uri.IsHexDigit(operandText[idx])) {
+        idx++;
+      }
+
+      if (idx == digitsStart) {
+        return null; // "0x" with no digits -- malformed.
+      }
+
+      signedOffset = sign * Convert.ToInt64(operandText.Substring(digitsStart, idx - digitsStart), 16);
+    }
+    else {
+      return null; // Not a recognized "[rip ...]" form.
+    }
+
+    // For RIP-relative addressing the effective address is (next-instruction address) + displacement.
+    long effectiveAddress = instr.Address + instr.Size + signedOffset;
+    return effectiveAddress - baseAddress_;
   }
 
   private static unsafe void SkipOperandWhitespace(byte* letterPtr, ref int idx) {
