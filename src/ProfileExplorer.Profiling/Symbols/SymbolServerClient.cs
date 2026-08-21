@@ -74,7 +74,14 @@ public class SymbolServerClient : IDisposable, ISymbolFileLocator {
   /// <returns>Local file path to the downloaded binary, or null if not found.</returns>
   public async Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
                                                   string? originalFileName = null, CancellationToken ct = default) {
-    string hash = $"{timeDateStamp:X8}{imageSize:x}".ToUpperInvariant();
+    // SSQP key convention (https://github.com/dotnet/symstore/blob/main/docs/specs/SSQP_Key_Conventions.md):
+    // "<filename>/<Timestamp><SizeOfImage>/<filename>" where Timestamp is always 8 hex digits,
+    // zero-padded, UPPER-case, and SizeOfImage is as few digits as needed, in LOWER-case. Example:
+    // Timestamp 0x542d574e + SizeOfImage 0xc2000 -> "542D574Ec2000". The previous blanket
+    // .ToUpperInvariant() over the whole hash uppercased the size portion too, which happened to
+    // still work against symweb.azurefd.net (case-insensitive at that layer) but is spec-incorrect
+    // and could 404 against a case-sensitive symbol store/backend.
+    string hash = $"{timeDateStamp:X8}{imageSize:x}";
 
     string? result = await DownloadFileAsync(binaryName, hash, ct);
 
