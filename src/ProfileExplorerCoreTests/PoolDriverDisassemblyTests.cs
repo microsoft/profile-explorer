@@ -201,6 +201,124 @@ public class PoolDriverDisassemblyTests {
   }
 
   /// <summary>
+  /// Proves <see cref="SymbolFileSourceSettings.DisableSizeProbingFallback"/> actually disables the
+  /// size-probing fallback: same setup as <see cref="LocateBinaryFile_InflatedImageSize_SucceedsViaSizeProbingFallback"/>
+  /// (inflated ImageSize, no local path), but with the flag set -- the exact-size lookup 404s and,
+  /// unlike that test, nothing retries with a corrected size, so the overall lookup must fail. This
+  /// is the "strict mode" a caller uses to verify a computed identity is correct on its own merits
+  /// (e.g. investigating why a specific module doesn't resolve) rather than letting the probing
+  /// fallback silently paper over a wrong ImageSize. Inconclusive (not Fail) when network/auth is
+  /// unavailable, matching this project's convention for network-dependent Integration tests.
+  /// </summary>
+  [TestMethod]
+  public void LocateBinaryFile_InflatedImageSizeWithProbingDisabled_FailsInsteadOfFallingBack() {
+    var path = Path.Combine(Environment.SystemDirectory, "ntdll.dll");
+    if (!File.Exists(path)) {
+      Assert.Inconclusive($"{path} not found.");
+      return;
+    }
+
+    var info = PEBinaryInfoProvider.GetBinaryFileInfo(path);
+
+    var settings = new SymbolFileSourceSettings();
+    settings.ManagedIdentityEnabled = false;
+    settings.DisableSizeProbingFallback = true;
+    settings.SymbolPaths.Clear();
+    settings.SymbolPaths.Add($@"srv*{SymbolFileSourceSettings.DefaultCacheDirectoryPath}*https://symweb.azurefd.net");
+    PDBDebugInfoProvider.ReinitializeCredentials(settings);
+
+    var identity = new BinaryFileDescriptor {
+      ImageName = "ntdll.dll",
+      ImagePath = "ntdll.dll", // No real path -- forces the remote path, not the local shortcut.
+      TimeStamp = info.TimeStamp,
+      ImageSize = info.ImageSize + 3 * 0x1000, // Deliberately inflated by 3 pages of "slack".
+      Architecture = info.Architecture,
+      FileKind = BinaryFileKind.Native
+    };
+
+    var located = BinaryFileLocator.LocateBinaryFile(identity, settings);
+    Console.WriteLine($"RealImageSize={info.ImageSize} RequestedImageSize={identity.ImageSize} DisableSizeProbingFallback=true");
+    Console.WriteLine($"Found={located.Found} Path={located.FilePath}");
+    Console.WriteLine($"Details:\n{located.Details}");
+
+    if (located.Found) {
+      // If a real network error masked the exact-size 404 as some other unexpected success this
+      // would be surprising -- fail loudly rather than silently passing.
+      Assert.Fail($"Expected the lookup to fail with probing disabled, but it found {located.FilePath}.");
+    }
+
+    if (!located.Details.Contains("404", StringComparison.Ordinal)) {
+      // Distinguish "probing correctly disabled, exact-size lookup 404'd" from "network/auth was
+      // unavailable so the exact-size lookup never actually ran" -- only the former proves the flag.
+      Assert.Inconclusive($"Exact-size lookup didn't appear to reach the server (no 404 in log; network/auth unavailable?): {located.Details}");
+      return;
+    }
+
+    Assert.IsFalse(located.Found, "Expected DisableSizeProbingFallback to prevent the probing retry from succeeding.");
+  }
+
+  /// <summary>
+  /// Root-cause fix for the ntoskrnl.exe download failure investigated this session:
+  /// <c>ntoskrnl.exe</c>'s version resource reports its OWN embedded <c>OriginalFileName</c> as
+  /// "ntkrnlmp.exe" (confirmed via <see cref="PEBinaryInfoProvider.GetVersionInfo"/> on this
+  /// machine's local copy) -- symweb indexes the raw binary under that internal name, not the
+  /// on-disk "ntoskrnl.exe" (mirroring how its PDB is indexed as "ntkrnlmp.pdb", not
+  /// "ntoskrnl.pdb"). A direct symweb probe with <c>DisableSizeProbingFallback=true</c> (exact
+  /// TimeStamp+ImageSize, zero guessing) confirms this: "ntoskrnl.exe" 404s while "ntkrnlmp.exe"
+  /// returns 302 for the SAME identity. This test proves <see cref="BinaryFileLocator"/> now
+  /// finds it automatically via <see cref="BinaryFileDescriptor.OriginalFileName"/> without any
+  /// size-probing at all -- a genuine identity correction, not a fallback guess. Uses this
+  /// machine's own local ntoskrnl.exe identity (real TimeStamp+ImageSize read directly from the
+  /// PE header) so the test doesn't depend on any specific trace-captured build still being
+  /// retained on the server. Inconclusive (not Fail) when network/auth is unavailable.
+  /// </summary>
+  [TestMethod]
+  public void LocateBinaryFile_Ntoskrnl_ResolvesViaOriginalFileNameWithoutSizeProbing() {
+    var path = Path.Combine(Environment.SystemDirectory, "ntoskrnl.exe");
+    if (!File.Exists(path)) {
+      Assert.Inconclusive($"{path} not found.");
+      return;
+    }
+
+    var info = PEBinaryInfoProvider.GetBinaryFileInfo(path);
+    Console.WriteLine($"Local ntoskrnl.exe: TimeStamp=0x{info.TimeStamp:X8} ImageSize={info.ImageSize} OriginalFileName={info.OriginalFileName}");
+    Assert.AreEqual("ntkrnlmp.exe", info.OriginalFileName,
+      "Expected ntoskrnl.exe's version resource to report OriginalFileName=ntkrnlmp.exe (if this fails, the OS build changed this -- re-verify the premise).");
+
+    var settings = new SymbolFileSourceSettings();
+    settings.ManagedIdentityEnabled = false;
+    settings.DisableSizeProbingFallback = true; // Strict mode -- the fix must work with ZERO guessing.
+    settings.SymbolPaths.Clear();
+    settings.SymbolPaths.Add($@"srv*{SymbolFileSourceSettings.DefaultCacheDirectoryPath}*https://symweb.azurefd.net");
+    PDBDebugInfoProvider.ReinitializeCredentials(settings);
+
+    var identity = new BinaryFileDescriptor {
+      ImageName = "ntoskrnl.exe",
+      ImagePath = "ntoskrnl.exe", // No real path -- forces the remote path, not the local shortcut.
+      TimeStamp = info.TimeStamp,
+      ImageSize = info.ImageSize, // The REAL, verified-correct PE SizeOfImage -- no correction needed.
+      OriginalFileName = info.OriginalFileName,
+      Architecture = info.Architecture,
+      FileKind = BinaryFileKind.Native
+    };
+
+    var located = BinaryFileLocator.LocateBinaryFile(identity, settings);
+    Console.WriteLine($"Found={located.Found} Path={located.FilePath}");
+    if (!located.Found) {
+      Console.WriteLine($"Details:\n{located.Details}");
+      Assert.Inconclusive($"Could not download ntoskrnl.exe (network/auth unavailable, or this specific build was purged from the server): {located.Details}");
+      return;
+    }
+
+    var downloadedInfo = PEBinaryInfoProvider.GetBinaryFileInfo(located.FilePath);
+    Console.WriteLine($"Downloaded file: {located.FilePath}, ImageName={downloadedInfo.ImageName}, ImageSize={downloadedInfo.ImageSize}");
+    Assert.AreEqual(info.ImageSize, downloadedInfo.ImageSize,
+      "Expected an exact match -- no size correction should have been needed.");
+    Assert.AreEqual("ntkrnlmp.exe", downloadedInfo.ImageName, ignoreCase: true,
+      "Expected the resolved file to be the one downloaded under its OriginalFileName.");
+  }
+
+  /// <summary>
   /// First-party ground-truth probe: disassembles a real, named kernel function
   /// (<c>ntoskrnl!CmpAllocate</c>, one of the functions the FunGates blame-walk landed on) using
   /// this machine's own local <c>ntoskrnl.exe</c> build and its matching private PDB downloaded

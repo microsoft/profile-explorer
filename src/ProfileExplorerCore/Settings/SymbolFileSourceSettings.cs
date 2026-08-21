@@ -87,6 +87,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool AllowApproximateBinaryMatch { get; set; }
   [ProtoMember(26)][OptionValue(false)]
   public bool ManagedIdentityEnabled { get; set; }
+  [ProtoMember(27)][OptionValue(false)]
+  public bool DisableSizeProbingFallback { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public bool HasCompanyFilter => CompanyFilterEnabled;
 

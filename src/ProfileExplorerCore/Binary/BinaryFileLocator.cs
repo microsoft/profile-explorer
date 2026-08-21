@@ -168,7 +168,10 @@ public static class BinaryFileLocator {
       // a hit, exactly mirroring the local-file correction above but against the server itself.
       // Tries every candidate name (on-disk + OriginalFileName) since a module could need BOTH a
       // corrected name AND a corrected size.
-      if (result == null && settings.AllowApproximateBinaryMatch) {
+      // DisableSizeProbingFallback forces exact-match-only resolution (no probing at all) -- use
+      // it to verify a computed identity is correct on its own merits, rather than letting the
+      // probing fallback silently paper over a wrong ImageSize.
+      if (result == null && settings.AllowApproximateBinaryMatch && !settings.DisableSizeProbingFallback) {
         foreach (string candidateName in candidateNames) {
           result = TryFindExecutableWithSizeProbing(symbolReader, binaryFile, candidateName, out long probedSize);
 
