@@ -374,3 +374,5 @@ src/GrpcCppLib/ReleaseStaticLib
 
 # Don't include MCP-generated temporary files
 src/tmp/*
+.claude/settings.local.json
+.vscode/settings.json

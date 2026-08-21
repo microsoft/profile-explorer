@@ -99,30 +99,35 @@ public class DisassemblerSemanticDetailTests {
     Assert.IsTrue(cmp.RegistersWritten.Any(r => r.Equals("rflags", StringComparison.OrdinalIgnoreCase)),
       $"Expected 'rflags' in writes: [{string.Join(",", cmp.RegistersWritten)}]");
 
-    // je +0: conditional branch only.
+    // je +0: conditional branch only, with its direct target resolved (previously a gap: je's
+    // target was NOT resolved by the shared TryGetBranchTarget before this change).
     var je = instructions[2];
     StringAssert.StartsWith(je.Mnemonic, "j");
     Assert.IsTrue(je.IsConditionalBranch);
     Assert.IsFalse(je.IsUnconditionalJump);
     Assert.IsFalse(je.IsCall);
     Assert.IsFalse(je.IsReturn);
+    Assert.AreEqual(0x206, je.TargetRva, "je's direct branch target should resolve to RVA 0x206 (je is 2 bytes at 0x204, rel8=0).");
 
     // jmp +0: unconditional jump only.
     var jmp = instructions[3];
     StringAssert.StartsWith(jmp.Mnemonic, "jmp");
     Assert.IsTrue(jmp.IsUnconditionalJump);
     Assert.IsFalse(jmp.IsConditionalBranch);
+    Assert.AreEqual(0x208, jmp.TargetRva);
 
     // call +0: call only.
     var call = instructions[4];
     StringAssert.StartsWith(call.Mnemonic, "call");
     Assert.IsTrue(call.IsCall);
     Assert.IsFalse(call.IsReturn);
+    Assert.AreEqual(0x20D, call.TargetRva);
 
-    // ret: return only.
+    // ret: return only, no target.
     var ret = instructions[5];
     StringAssert.StartsWith(ret.Mnemonic, "ret");
     Assert.IsTrue(ret.IsReturn);
+    Assert.IsNull(ret.TargetRva);
     Assert.IsFalse(ret.IsCall);
   }
 

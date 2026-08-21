@@ -41,6 +41,16 @@ public sealed class SemanticInstruction {
   public string Mnemonic { get; init; } = "";
   public string OperandText { get; init; } = "";
 
+  /// <summary>
+  /// The resolved module-relative RVA of a direct call/jump/branch target, when the operand is a
+  /// literal PC-relative/absolute address (never a memory/register-indirect operand) -- the same
+  /// resolution <see cref="Disassembler.DisassembleToStructuredList"/> uses for
+  /// <see cref="DisassembledInstructionTarget"/>. Null for non-branch instructions and for
+  /// indirect calls/jumps (e.g. "call [rax]") whose target cannot be determined statically. This
+  /// is what <see cref="FunctionControlFlowGraph.Build"/> uses to resolve edges.
+  /// </summary>
+  public long? TargetRva { get; init; }
+
   /// <summary>Combined implicit + explicit registers read, by Capstone register name (e.g. "eax", "rbx").</summary>
   public IReadOnlyList<string> RegistersRead { get; init; } = Array.Empty<string>();
 

@@ -268,6 +268,9 @@ public class Disassembler : IDisposable {
 
         var groups = ClassifyInstructionGroups(instr);
         var (registersRead, registersWritten, hasDetail) = TryGetRegisterAccess(instrHandle);
+        long? targetRva = TryGetBranchTarget(instr, out long branchTargetRva, out _, out _)
+          ? branchTargetRva
+          : null;
 
         list.Add(new SemanticInstruction {
           Address = instr.Address,
@@ -275,6 +278,7 @@ public class Disassembler : IDisposable {
           Size = instr.Size,
           Mnemonic = mnemonic,
           OperandText = operandText,
+          TargetRva = targetRva,
           Groups = groups,
           RegistersRead = registersRead,
           RegistersWritten = registersWritten,
@@ -737,7 +741,17 @@ public class Disassembler : IDisposable {
   /// </summary>
   private unsafe bool TryGetBranchTarget(Interop.Instruction instr, out long targetRva, out bool isCall, out bool isJump) {
     targetRva = 0;
-    (isCall, isJump) = ClassifyBranch(architecture_, instr.MnemonicString);
+    string mnemonic = instr.MnemonicString;
+    (isCall, isJump) = ClassifyBranch(architecture_, mnemonic);
+
+    if (!isCall && !isJump && IsConditionalBranchMnemonic(architecture_, mnemonic)) {
+      // ClassifyBranch doesn't recognize conditional branches (je/b.eq/cbz/tbz/...) as branches at
+      // all (see ClassifyInstructionGroups, which found this gap via testing) -- their operand is
+      // still a direct PC-relative target exactly like an unconditional jump, so widen here too.
+      // This resolves a pre-existing gap: conditional-branch targets were previously unresolved in
+      // DisassembleToStructuredList's DisassembledInstructionTarget as well, for every caller.
+      isJump = true;
+    }
 
     if (!isCall && !isJump) {
       return false;
