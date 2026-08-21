@@ -137,6 +137,23 @@ public static class BinaryFileLocator {
         DiagnosticLogger.LogDebug($"[BinarySearch] Symbol server search failed, trying approximate local search for {binaryFile.ImageName}");
         result = FindMatchingLocalBinaryFile(binaryFile, settings, ref approximateMatchPath);
       }
+
+      // No local copy at all (e.g. a third-party driver we've never seen on this machine), so
+      // FindExactLocalBinaryFile never had a chance to correct ImageSize from a PE header. Retry
+      // the exact same server lookup with nearby candidate sizes: the kernel/DataLayer-reported
+      // ImageSize is the mapped-view size, which can exceed the real PE SizeOfImage that symweb
+      // indexes by, by a few slack pages -- probe downward in small alignment steps until we get
+      // a hit, exactly mirroring the local-file correction above but against the server itself.
+      if (result == null && settings.AllowApproximateBinaryMatch) {
+        result = TryFindExecutableWithSizeProbing(symbolReader, binaryFile, out long probedSize);
+
+        if (result != null) {
+          DiagnosticLogger.LogInfo(
+            $"[BinarySearch] Found {binaryFile.ImageName} on symbol server after size-probing " +
+            $"(reported ImageSize {binaryFile.ImageSize} -> corrected {probedSize})");
+          binaryFile.ImageSize = probedSize;
+        }
+      }
     }
     catch (Exception ex) {
       DiagnosticLogger.LogError($"[BinarySearch] Exception during binary search for {binaryFile.ImageName}: {ex.Message}", ex);
@@ -190,6 +207,52 @@ public static class BinaryFileLocator {
 
     resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
     return searchResult;
+  }
+
+  // PE section alignment is almost always 0x1000 (4KB); the kernel-reported mapped-view size
+  // rounds up to a small number of these pages beyond the real SizeOfImage. Bounded to 16 steps
+  // (64KB of slack) -- generous relative to observed real-world slack of a few pages -- so a
+  // genuinely-missing binary still fails fast instead of hammering the server.
+  private const int SizeProbeStepBytes = 0x1000;
+  private const int SizeProbeMaxSteps = 16;
+
+  /// <summary>
+  /// Retries <see cref="SymbolReader.FindExecutableFilePath"/> against nearby candidate
+  /// ImageSize values, stepping down from <paramref name="binaryFile"/>'s reported size in
+  /// <see cref="SizeProbeStepBytes"/> increments. Used when the exact TimeStamp+ImageSize lookup
+  /// 404s and there's no local copy of the binary to read the corrected PE SizeOfImage from
+  /// directly (see <see cref="FindExactLocalBinaryFile"/> for that local-file counterpart).
+  /// </summary>
+  private static string TryFindExecutableWithSizeProbing(SymbolReader symbolReader,
+                                                          BinaryFileDescriptor binaryFile,
+                                                          out long correctedSize) {
+    correctedSize = 0;
+    long baseSize = binaryFile.ImageSize;
+
+    for (int step = 1; step <= SizeProbeMaxSteps; step++) {
+      long candidateSize = baseSize - (long)step * SizeProbeStepBytes;
+
+      if (candidateSize <= 0) {
+        break;
+      }
+
+      string candidateResult;
+
+      try {
+        candidateResult = symbolReader.FindExecutableFilePath(binaryFile.ImageName, binaryFile.TimeStamp, (int)candidateSize);
+      }
+      catch (Exception ex) {
+        DiagnosticLogger.LogDebug($"[BinarySearch] Size probe failed for {binaryFile.ImageName} at size {candidateSize}: {ex.Message}");
+        continue;
+      }
+
+      if (candidateResult != null) {
+        correctedSize = candidateSize;
+        return candidateResult;
+      }
+    }
+
+    return null;
   }
 
   private static string ResolveNtKernelPath(string path) {
