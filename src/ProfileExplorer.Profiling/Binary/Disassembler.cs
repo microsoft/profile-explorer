@@ -45,19 +45,22 @@ public class Disassembler : IDisposable {
   private FunctionNameFormatter funcNameFormatter_;
   private object sectionLock_;
   private Dictionary<long, string> iatSymbolCache_;
+  private bool enableSemanticDetail_;
 
   private Disassembler(Machine architecture,
                        PEBinaryInfoProvider peInfo,
                        long baseAddress = 0,
                        ISymbolDebugInfo debugInfo = null,
                        FunctionNameFormatter funcNameFormatter = null,
-                       SymbolNameResolverDelegate symbolNameResolver = null) {
+                       SymbolNameResolverDelegate symbolNameResolver = null,
+                       bool enableSemanticDetail = false) {
     peInfo_ = peInfo;
     architecture_ = architecture;
     baseAddress_ = baseAddress;
     debugInfo_ = debugInfo;
     funcNameFormatter_ = funcNameFormatter;
     symbolNameResolver_ = symbolNameResolver;
+    enableSemanticDetail_ = enableSemanticDetail;
     sectionLock_ = new object();
     Initialize(true);
   }
@@ -67,8 +70,15 @@ public class Disassembler : IDisposable {
     GC.SuppressFinalize(this);
   }
 
+  /// <param name="enableSemanticDetail">
+  /// When true, enables Capstone's <c>CS_OPT_DETAIL</c> mode so <see cref="DisassembleToSemanticList"/>
+  /// can return exact register read/write facts. Defaults to false so all existing callers keep
+  /// their current behavior and performance profile unchanged; detail mode has a per-instruction
+  /// decode cost that only semantic-analysis callers should pay.
+  /// </param>
   public static Disassembler CreateForBinary(string binaryFilePath, ISymbolDebugInfo debugInfo,
-                                             FunctionNameFormatter funcNameFormatter) {
+                                             FunctionNameFormatter funcNameFormatter,
+                                             bool enableSemanticDetail = false) {
     var peInfo = new PEBinaryInfoProvider(binaryFilePath);
 
     if (!peInfo.Initialize()) {
@@ -77,12 +87,16 @@ public class Disassembler : IDisposable {
 
     var binaryInfo = peInfo.BinaryFileInfo;
     return new Disassembler(binaryInfo.Architecture, peInfo,
-                            binaryInfo.ImageBase, debugInfo, funcNameFormatter);
+                            binaryInfo.ImageBase, debugInfo, funcNameFormatter,
+                            enableSemanticDetail: enableSemanticDetail);
   }
 
+  /// <param name="enableSemanticDetail">See <see cref="CreateForBinary"/>.</param>
   public static Disassembler CreateForMachine(ISymbolDebugInfo debugInfo,
-                                              FunctionNameFormatter funcNameFormatter) {
-    return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo, funcNameFormatter);
+                                              FunctionNameFormatter funcNameFormatter,
+                                              bool enableSemanticDetail = false) {
+    return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo, funcNameFormatter,
+                            enableSemanticDetail: enableSemanticDetail);
   }
 
   public void UseSymbolNameResolver(SymbolNameResolverDelegate symbolNameResolver) {
@@ -228,9 +242,187 @@ public class Disassembler : IDisposable {
     return list;
   }
 
+  /// <summary>
+  /// Disassemble a function into <see cref="SemanticInstruction"/> records: exact combined
+  /// implicit + explicit register read/write sets (via Capstone's <c>cs_regs_access</c>) and a
+  /// structured control-transfer classification, alongside the same mnemonic/operand text produced
+  /// by <see cref="DisassembleToStructuredList"/>. Register access facts are only exact when this
+  /// disassembler was created with <c>enableSemanticDetail: true</c> (see <see cref="CreateForBinary"/>);
+  /// otherwise <see cref="SemanticInstruction.HasRegisterAccessDetail"/> is false and the register
+  /// lists are empty rather than fabricated. Bounded to [startRVA, startRVA + size), same as the
+  /// other Disassemble* APIs -- never scans beyond the requested range.
+  /// </summary>
+  public List<SemanticInstruction> DisassembleToSemanticList(long startRVA, long size) {
+    var list = new List<SemanticInstruction>();
+
+    if (startRVA == 0 || size == 0) {
+      return list;
+    }
+
+    try {
+      DisassembleSemanticInstructions(startRVA, size, startRVA + baseAddress_, (instr, instrHandle) => {
+        string mnemonic = instr.MnemonicString;
+        var sb = new StringBuilder();
+        AppendOperands(instr, startRVA, size, sb);
+        string operandText = sb.ToString();
+
+        var groups = ClassifyInstructionGroups(instr);
+        var (registersRead, registersWritten, hasDetail) = TryGetRegisterAccess(instrHandle);
+
+        list.Add(new SemanticInstruction {
+          Address = instr.Address,
+          Rva = instr.Address - baseAddress_,
+          Size = instr.Size,
+          Mnemonic = mnemonic,
+          OperandText = operandText,
+          Groups = groups,
+          RegistersRead = registersRead,
+          RegistersWritten = registersWritten,
+          HasRegisterAccessDetail = hasDetail
+        });
+      });
+    }
+    catch (Exception ex) {
+#if DEBUG
+      Trace.TraceError($"Failed to disassemble semantic list at RVA {startRVA}, size {size}: {ex.Message}");
+#endif
+    }
+
+    return list;
+  }
+
+  public List<SemanticInstruction> DisassembleToSemanticList(FunctionDebugInfo funcInfo) {
+    return DisassembleToSemanticList(funcInfo.StartRVA, funcInfo.Size);
+  }
+
+  private InstructionGroupFlags ClassifyInstructionGroups(Interop.Instruction instr) {
+    string mnemonic = instr.MnemonicString;
+    var (isCall, isJumpOrBranch) = ClassifyBranch(architecture_, mnemonic);
+    var groups = InstructionGroupFlags.None;
+
+    if (isCall) {
+      groups |= InstructionGroupFlags.Call;
+    }
+
+    if (mnemonic.Equals("ret", StringComparison.OrdinalIgnoreCase)) {
+      groups |= InstructionGroupFlags.Return;
+    }
+
+    if (isJumpOrBranch) {
+      // ClassifyBranch (shared with symbol-name substitution/structured target extraction
+      // elsewhere) only ever returns IsJump=true for the *unconditional* x86 "jmp" and ARM64
+      // "b"/"br" -- it was written for those two use sites, where the conditional-vs-unconditional
+      // distinction didn't matter. This branch is therefore only reachable for those two cases.
+      bool isUnconditional = architecture_ switch {
+        Machine.I386 or Machine.Amd64 => mnemonic.Equals("jmp", StringComparison.OrdinalIgnoreCase),
+        Machine.Arm or Machine.Arm64 => mnemonic.Equals("b", StringComparison.OrdinalIgnoreCase) ||
+                                        mnemonic.Equals("br", StringComparison.OrdinalIgnoreCase),
+        _ => false
+      };
+
+      groups |= isUnconditional ? InstructionGroupFlags.UnconditionalJump : InstructionGroupFlags.ConditionalBranch;
+    }
+    else if (IsConditionalBranchMnemonic(architecture_, mnemonic)) {
+      // Conditional branches (x86 Jcc, ARM64 "b.<cond>"/cbz/cbnz/tbz/tbnz) are NOT recognized as
+      // branches at all by ClassifyBranch above -- confirmed by decoding real conditional-jump
+      // bytes through this exact path (see DisassemblerSemanticDetailTests). CFG construction
+      // needs every conditional branch recognized, so detect the common families here rather than
+      // widen ClassifyBranch's existing, separately relied-upon behavior in this change.
+      groups |= InstructionGroupFlags.ConditionalBranch;
+    }
+
+    return groups;
+  }
+
+  /// <summary>
+  /// Detects conditional-branch mnemonics that <see cref="ClassifyBranch"/> does not classify as
+  /// jumps/branches at all (see <see cref="ClassifyInstructionGroups"/>). Deliberately conservative:
+  /// covers the common x86 Jcc family and the ARM64 "b.&lt;cond&gt;"/cbz/cbnz/tbz/tbnz family, which
+  /// covers everything Capstone's default syntax produces for conditional control transfer on these
+  /// architectures.
+  /// </summary>
+  private static bool IsConditionalBranchMnemonic(Machine architecture, string mnemonic) {
+    switch (architecture) {
+      case Machine.I386:
+      case Machine.Amd64:
+        // Every x86 "j*" mnemonic other than the unconditional "jmp" is a conditional jump (Jcc);
+        // this also covers jcxz/jecxz/jrcxz (branch if counter register is zero).
+        return mnemonic.StartsWith("j", StringComparison.OrdinalIgnoreCase) &&
+               !mnemonic.Equals("jmp", StringComparison.OrdinalIgnoreCase);
+      case Machine.Arm:
+      case Machine.Arm64:
+        // Capstone's default AArch64 syntax renders conditional branches as "b.<cond>" (e.g.
+        // "b.eq", "b.ne"); the compare/test-and-branch family is a separate encoding but is
+        // equally conditional.
+        return mnemonic.StartsWith("b.", StringComparison.OrdinalIgnoreCase) ||
+               mnemonic.Equals("cbz", StringComparison.OrdinalIgnoreCase) ||
+               mnemonic.Equals("cbnz", StringComparison.OrdinalIgnoreCase) ||
+               mnemonic.Equals("tbz", StringComparison.OrdinalIgnoreCase) ||
+               mnemonic.Equals("tbnz", StringComparison.OrdinalIgnoreCase);
+      default:
+        return false;
+    }
+  }
+
+  /// <summary>
+  /// Combined implicit + explicit register read/write sets for one instruction, via Capstone's
+  /// <c>cs_regs_access</c> -- a real decode API, not a text-parsing heuristic. Requires the
+  /// disassembler to have been created with semantic detail enabled; returns
+  /// (empty, empty, false) otherwise so callers never mistake "detail unavailable" for
+  /// "no registers accessed".
+  /// </summary>
+  private (IReadOnlyList<string> Read, IReadOnlyList<string> Written, bool HasDetail)
+      TryGetRegisterAccess(Interop.InstructionHandle instrHandle) {
+    if (!enableSemanticDetail_) {
+      return (Array.Empty<string>(), Array.Empty<string>(), false);
+    }
+
+    // Capstone's cstool reference implementation sizes these at 64; MAX_IMPL_R_REGS/MAX_IMPL_W_REGS
+    // (20/47) plus explicit operand registers comfortably fit within that bound for every
+    // architecture Profile Explorer disassembles.
+    var readIds = new short[64];
+    var writtenIds = new short[64];
+    byte readCount = 0;
+    byte writtenCount = 0;
+
+    var result = Interop.GetAccessedRegisters(disasmHandle_, instrHandle, readIds, ref readCount,
+                                              writtenIds, ref writtenCount);
+
+    if (result != Interop.CapstoneResultCode.Ok) {
+      return (Array.Empty<string>(), Array.Empty<string>(), false);
+    }
+
+    return (MapRegisterIds(readIds, readCount), MapRegisterIds(writtenIds, writtenCount), true);
+  }
+
+  private string[] MapRegisterIds(short[] ids, byte count) {
+    if (count == 0) {
+      return Array.Empty<string>();
+    }
+
+    var names = new string[count];
+
+    for (int i = 0; i < count; i++) {
+      names[i] = GetRegisterNameSafe(ids[i]);
+    }
+
+    return names;
+  }
+
+  private string GetRegisterNameSafe(int registerId) {
+    if (registerId == 0) {
+      // 0 is always the architecture's *_REG_INVALID sentinel; cs_regs_access shouldn't emit it,
+      // but guard defensively rather than report a fabricated name.
+      return $"<invalid-reg-0>";
+    }
+
+    IntPtr namePtr = Interop.GetRegisterName(disasmHandle_, registerId);
+    return namePtr == IntPtr.Zero ? $"reg{registerId}" : Marshal.PtrToStringAnsi(namePtr) ?? $"reg{registerId}";
+  }
+
   private void Initialize(bool checkValidCallAddress) {
     checkValidCallAddress_ = checkValidCallAddress;
-    disasmHandle_ = Interop.Create(architecture_);
+    disasmHandle_ = Interop.Create(architecture_, enableSemanticDetail_);
   }
 
   private unsafe void AppendMnemonic(Interop.Instruction instr, StringBuilder builder) {
@@ -722,6 +914,51 @@ public class Disassembler : IDisposable {
     }
   }
 
+  /// <summary>
+  /// Mirrors <see cref="DisassembleInstructions"/> exactly, but additionally passes the reused
+  /// native instruction handle to the callback so it can call Capstone APIs that need the raw
+  /// <c>cs_insn*</c> (e.g. <see cref="Interop.GetAccessedRegisters"/>/<c>cs_regs_access</c>), which
+  /// isn't available from the marshaled-out <see cref="Interop.Instruction"/> struct alone. Kept as
+  /// a separate method rather than changing <see cref="DisassembleInstructions"/>'s callback
+  /// signature, so the existing text/list/structured disassembly paths -- and their call sites --
+  /// are completely unaffected by this addition.
+  /// </summary>
+  private unsafe void DisassembleSemanticInstructions(long startRVA, long size, long startAddress,
+                                                      Action<Interop.Instruction, Interop.InstructionHandle> action) {
+    var codeSection = FindCodeSection(startRVA);
+
+    if (codeSection.Data.IsEmpty) {
+      Trace.WriteLine($"Invalid disassembler RVA/size {startRVA}/{size}");
+      return;
+    }
+
+    using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
+    long offset = startRVA - codeSection.StartRVA;
+    using var dataBuffer = codeSection.Data.Pin();
+    IntPtr dataBufferPtr = (IntPtr)dataBuffer.Pointer;
+
+    IntPtr dataIteratorPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset);
+    IntPtr dataEndPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset + size);
+
+    while (dataIteratorPtr.ToInt64() < dataEndPtr.ToInt64()) {
+      IntPtr remainingLength = (IntPtr)(dataEndPtr.ToInt64() - dataIteratorPtr.ToInt64());
+
+      if (Interop.Iterate(disasmHandle_, ref dataIteratorPtr, ref remainingLength, ref startAddress, instrBuffer)) {
+        IntPtr instrPtr = instrBuffer.DangerousGetHandle();
+
+        if (instrPtr == IntPtr.Zero) {
+          return;
+        }
+
+        var instruction = (Interop.Instruction)Marshal.PtrToStructure(instrPtr, typeof(Interop.Instruction));
+        action(instruction, instrBuffer);
+      }
+      else {
+        break;
+      }
+    }
+  }
+
   private void Dispose(bool disposing) {
     disasmHandle_?.Dispose();
     disasmHandle_ = null;
@@ -889,13 +1126,28 @@ public class Disassembler : IDisposable {
                                                                   DisassemblerOptionType optionType,
                                                                   IntPtr optionValue);
 
-    public static DisassemblerHandle Create(Architecture architecture, DisassembleMode mode) {
+    public static DisassemblerHandle Create(Architecture architecture, DisassembleMode mode,
+                                            bool enableDetail = false) {
       IntPtr disasmPtr = IntPtr.Zero;
       var resultCode = CreateDisassembler(architecture, mode, ref disasmPtr);
 
       if (resultCode == CapstoneResultCode.Ok) {
         var handle = new DisassemblerHandle(disasmPtr);
         //SetDisassemblerOption(handle, DisassemblerOptionType.SetSkipData, (IntPtr)DisassemblerOptionValue.Enable);
+
+        if (enableDetail) {
+          // Must be set before the first cs_disasm/cs_disasm_iter call on this handle -- Capstone
+          // ties detail-buffer allocation to option state at open time. Required by cs_regs_access
+          // (see TryGetRegisterAccess), which is what DisassembleToSemanticList relies on for exact
+          // (non-heuristic) register read/write facts.
+          var detailResult = SetDisassemblerOption(handle, DisassemblerOptionType.SetInstructionDetails,
+                                                   (IntPtr)DisassemblerOptionValue.Enable);
+
+          if (detailResult != CapstoneResultCode.Ok) {
+            Trace.WriteLine($"Failed to enable Capstone instruction detail: {detailResult}");
+          }
+        }
+
         return handle;
       }
 
@@ -903,12 +1155,12 @@ public class Disassembler : IDisposable {
       return null;
     }
 
-    public static DisassemblerHandle Create(Machine architecture) {
+    public static DisassemblerHandle Create(Machine architecture, bool enableDetail = false) {
       return architecture switch {
-        Machine.I386  => Create(Architecture.X86, DisassembleMode.Bit32),
-        Machine.Amd64 => Create(Architecture.X86, DisassembleMode.Bit64),
-        Machine.Arm   => Create(Architecture.Arm, DisassembleMode.Arm),
-        Machine.Arm64 => Create(Architecture.Arm64, DisassembleMode.Arm),
+        Machine.I386  => Create(Architecture.X86, DisassembleMode.Bit32, enableDetail),
+        Machine.Amd64 => Create(Architecture.X86, DisassembleMode.Bit64, enableDetail),
+        Machine.Arm   => Create(Architecture.Arm, DisassembleMode.Arm, enableDetail),
+        Machine.Arm64 => Create(Architecture.Arm64, DisassembleMode.Arm, enableDetail),
         _             => throw new NotSupportedException("Unsupported architecture!")
       };
     }
