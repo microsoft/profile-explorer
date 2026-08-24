@@ -168,6 +168,8 @@ public class FunctionAnalysisPackageBuilderTests {
     Assert.IsTrue(lines.Any(l => l.StartsWith("### Signature")), "Expected an H3 Signature header.");
     Assert.IsTrue(lines.Any(l => l.StartsWith("### Facts")), "Expected an H3 Facts header.");
     Assert.IsTrue(lines.Any(l => l.StartsWith("### Basic Blocks")), "Expected an H3 Basic Blocks header.");
+    Assert.IsTrue(lines.Any(l => l.StartsWith("### Suggested Analysis Questions")),
+      "Expected an H3 Suggested Analysis Questions header for Full detail level.");
 
     // The fenced code block around the assembly listing must open and close in balanced pairs.
     int fenceCount = lines.Count(l => l.TrimEnd() == "```text" || l.TrimEnd() == "```");
@@ -182,6 +184,32 @@ public class FunctionAnalysisPackageBuilderTests {
     int lastBacktick = functionHeaderLine.LastIndexOf('`');
     Assert.IsTrue(firstBacktick < functionHeaderLine.IndexOf('<') && functionHeaderLine.IndexOf('<') < lastBacktick,
       "Any '<' in the function label must fall inside the backtick-wrapped span, not bare in prose.");
+  }
+
+  /// <summary>
+  /// Verifies the "Suggested Analysis Questions" section -- one question per
+  /// <see cref="AccuracyDimension"/>, matching the rubric these evaluations are later scored
+  /// against -- appears for Standard/Full detail but is omitted at Compact, respecting the
+  /// caller's stated context budget.
+  /// </summary>
+  [TestMethod]
+  public void ToPromptMarkdown_SuggestedQuestions_PresentUnlessCompact() {
+    var (fixture, textRva, _) = BuildFixture();
+    using var _ = fixture;
+
+    var standardResult = FunctionAnalysisPackageBuilder.Build(fixture.Path, textRva,
+      detailLevel: FunctionAnalysisDetailLevel.Standard);
+    Assert.IsTrue(standardResult.Success, standardResult.ErrorMessage);
+    string standardMarkdown = standardResult.Package!.ToPromptMarkdown();
+    StringAssert.Contains(standardMarkdown, "### Suggested Analysis Questions");
+    StringAssert.Contains(standardMarkdown, "how many times it runs"); // sanity check a real question rendered.
+
+    var compactResult = FunctionAnalysisPackageBuilder.Build(fixture.Path, textRva,
+      detailLevel: FunctionAnalysisDetailLevel.Compact);
+    Assert.IsTrue(compactResult.Success, compactResult.ErrorMessage);
+    string compactMarkdown = compactResult.Package!.ToPromptMarkdown();
+    Assert.IsFalse(compactMarkdown.Contains("Suggested Analysis Questions"),
+      "Compact detail level should omit the suggested-questions section to respect a minimal context budget.");
   }
 
   [TestMethod]

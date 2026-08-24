@@ -174,8 +174,41 @@ public sealed class FunctionAnalysisPackage {
       }
     }
 
+    if (DetailLevel != FunctionAnalysisDetailLevel.Compact) {
+      sb.AppendLine();
+      sb.AppendLine("### Suggested Analysis Questions");
+      sb.AppendLine();
+      sb.AppendLine("Answer each of these using only the evidence above. State explicitly when the " +
+                    "evidence is insufficient to answer with confidence -- do not guess.");
+      sb.AppendLine();
+
+      foreach (var (_, question) in SuggestedAnalysisQuestions) {
+        sb.AppendLine($"- {question}");
+      }
+    }
+
     return sb.ToString();
   }
+
+  /// <summary>
+  /// One question per <see cref="AccuracyDimension"/>, emitted in <see cref="ToPromptMarkdown"/>'s
+  /// "Suggested Analysis Questions" section so the AI is explicitly prompted to address the same
+  /// dimensions <see cref="PseudocodeAccuracyRubric"/> later scores -- closing the loop between
+  /// what is asked and what is graded. This mirrors the structured-questionnaire methodology from
+  /// Pordanesh &amp; Tan, "Exploring the Efficacy of Large Language Models (GPT-4) in Binary
+  /// Reverse Engineering" (arXiv:2406.06637): their strongest-performing evaluation scenario, and
+  /// their own recommendation for future benchmark design, used targeted per-function questions
+  /// rather than an open-ended "explain this code" request.
+  /// </summary>
+  private static readonly IReadOnlyList<(AccuracyDimension Dimension, string Question)> SuggestedAnalysisQuestions = new List<(AccuracyDimension, string)> {
+    (AccuracyDimension.OverallBehavior, "What is the overall behavior or purpose of this function?"),
+    (AccuracyDimension.ControlFlow, "What are the distinct control-flow paths (branches, loops, early returns), and under what condition is each one taken?"),
+    (AccuracyDimension.CallsAndApis, "What does each resolved call/API do, and how does its result affect this function's behavior?"),
+    (AccuracyDimension.DataAccesses, "What data does this function read or write (registers, memory, strings/constants), and where does each value come from or go?"),
+    (AccuracyDimension.LoopBounds, "For each loop, what determines how many times it runs -- is the bound fixed, or does it depend on runtime data?"),
+    (AccuracyDimension.ErrorHandling, "What error or failure paths exist, and how are they detected and handled?"),
+    (AccuracyDimension.ExternallyVisibleEffects, "What effects does this function have that are visible outside itself -- return value, memory writes, allocations, or other side effects?")
+  };
 
   /// <summary>
   /// Wraps <paramref name="text"/> as a Markdown inline code span, choosing a backtick-fence

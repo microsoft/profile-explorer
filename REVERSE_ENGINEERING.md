@@ -38,6 +38,7 @@ Profile Explorer includes a headless, non-GUI **Function Evidence Generator**: g
 - **PDB/DIA function signatures**: return type, calling convention, and named/typed parameters, when a full private PDB is available.
 - **Lightweight data flow**: function-local reaching definitions, a narrow constant-propagation check (direct immediate loads only), and bounded backward slicing from any instruction — reports ambiguity honestly at CFG merge points rather than guessing.
 - **One evidence package, one call**: `FunctionAnalysisPackage` bundles all of the above for one function, with a ready-to-use Markdown rendering (`ToPromptMarkdown()`) and a fully structured object model for JSON serialization.
+- **Suggested analysis questions**: `ToPromptMarkdown()` (at `Standard`/`Full` detail) appends one targeted question per accuracy dimension — behavior, control flow, calls/APIs, data accesses, loop bounds, error handling, externally visible effects — steering the AI toward a structured, per-aspect answer instead of an open-ended "explain this code," which research on LLM-assisted reverse engineering has found more reliable.
 - **Benchmark/coverage harness**: run a corpus of (binary, function) cases and get coverage metrics stratified by symbol availability, so accuracy claims are never averaged across wildly different scenarios.
 
 ## How to use the API
