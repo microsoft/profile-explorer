@@ -103,7 +103,7 @@ public class FunctionAnalysisPackageBuilderTests {
     Assert.IsTrue(result.Success, result.ErrorMessage);
     var package = result.Package!;
 
-    Console.WriteLine(package.ToPromptText());
+    Console.WriteLine(package.ToPromptMarkdown());
 
     Assert.AreEqual(Machine.Amd64, package.Architecture);
     Assert.AreEqual(textRva, package.FunctionStartRva);
@@ -136,10 +136,52 @@ public class FunctionAnalysisPackageBuilderTests {
     Assert.IsTrue(package.Facts.Any(f => f.Fact.Contains("ExceptionDirectory") && f.Confidence == EvidenceConfidence.High));
     Assert.IsTrue(package.Facts.Any(f => f.Fact.Contains("No PDB signature available")));
 
-    string promptText = package.ToPromptText();
+    string promptText = package.ToPromptMarkdown();
     StringAssert.Contains(promptText, "No PDB signature available");
-    StringAssert.Contains(promptText, "Basic Blocks:");
+    StringAssert.Contains(promptText, "### Basic Blocks");
     StringAssert.Contains(promptText, "NTOSKRNL.EXE!ExAllocatePool2");
+    StringAssert.Contains(promptText, "```text");
+  }
+
+  /// <summary>
+  /// Verifies <see cref="FunctionAnalysisPackage.ToPromptMarkdown"/> produces genuinely
+  /// well-formed Markdown, not merely plain text: real headers, a balanced fenced code block
+  /// around the assembly listing, and the "&lt;unresolved&gt;"-style placeholder (which looks like
+  /// an HTML tag to a naive renderer) always wrapped in backticks rather than left bare. Confirmed
+  /// end-to-end against a real CommonMark parser (marked.js) during development: the previous
+  /// plain-text rendering collapsed every line into one paragraph and lost the bare
+  /// "&lt;no PDB signature available&gt;" placeholder entirely.
+  /// </summary>
+  [TestMethod]
+  public void ToPromptMarkdown_ProducesWellFormedMarkdownStructure() {
+    var (fixture, textRva, _) = BuildFixture();
+    using var _ = fixture;
+
+    var result = FunctionAnalysisPackageBuilder.Build(fixture.Path, textRva,
+      detailLevel: FunctionAnalysisDetailLevel.Full);
+    Assert.IsTrue(result.Success, result.ErrorMessage);
+
+    string markdown = result.Package!.ToPromptMarkdown();
+    var lines = markdown.Split('\n');
+
+    Assert.IsTrue(lines.Any(l => l.StartsWith("## Function")), "Expected an H2 function header.");
+    Assert.IsTrue(lines.Any(l => l.StartsWith("### Signature")), "Expected an H3 Signature header.");
+    Assert.IsTrue(lines.Any(l => l.StartsWith("### Facts")), "Expected an H3 Facts header.");
+    Assert.IsTrue(lines.Any(l => l.StartsWith("### Basic Blocks")), "Expected an H3 Basic Blocks header.");
+
+    // The fenced code block around the assembly listing must open and close in balanced pairs.
+    int fenceCount = lines.Count(l => l.TrimEnd() == "```text" || l.TrimEnd() == "```");
+    Assert.IsTrue(fenceCount > 0 && fenceCount % 2 == 0, $"Expected a balanced number of code fences, got {fenceCount}.");
+
+    // The "<unresolved>"/"<unknown+0xRVA>" style placeholder must never appear bare -- it must
+    // always be wrapped in backticks, or a naive Markdown-to-HTML renderer will swallow it as an
+    // unrecognized HTML tag (confirmed with marked.js: this exact bug is why this test exists).
+    var functionHeaderLine = lines.Single(l => l.StartsWith("## Function"));
+    Assert.IsTrue(functionHeaderLine.Contains('`'), "The function label must be wrapped in backticks.");
+    int firstBacktick = functionHeaderLine.IndexOf('`');
+    int lastBacktick = functionHeaderLine.LastIndexOf('`');
+    Assert.IsTrue(firstBacktick < functionHeaderLine.IndexOf('<') && functionHeaderLine.IndexOf('<') < lastBacktick,
+      "Any '<' in the function label must fall inside the backtick-wrapped span, not bare in prose.");
   }
 
   [TestMethod]

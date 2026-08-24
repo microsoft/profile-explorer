@@ -84,57 +84,79 @@ public sealed class FunctionAnalysisPackage {
   public FunctionAnalysisDetailLevel DetailLevel { get; init; }
 
   /// <summary>
-  /// Renders a compact, deterministic, human/LLM-readable text view of this package: signature,
-  /// facts, and a block list with successor/predecessor edges and (for Full detail) per-instruction
-  /// text -- the plan's "CFG as structured text, never an image" design decision. This is a
-  /// convenience rendering alongside the structured object model, not a replacement for it.
+  /// Renders a compact, deterministic, human/LLM-readable **Markdown** view of this package:
+  /// signature, facts, and a block list with successor/predecessor edges and (for Full detail)
+  /// per-instruction assembly -- the "CFG as structured text, never an image" design decision.
+  /// Genuinely valid Markdown, not merely plain text: headers/bullets for prose sections, and the
+  /// per-block assembly listing wrapped in a fenced code block so raw disassembly text (which can
+  /// contain `*`, `_`, `[`, `]`, `&lt;`/`&gt;` -- e.g. "char*", "[rip+N]", decorated import names)
+  /// is preserved literally and never misinterpreted as Markdown syntax by a renderer. This is a
+  /// convenience rendering alongside the fully structured object model, not a replacement for it.
   /// </summary>
-  public string ToPromptText() {
+  public string ToPromptMarkdown() {
     var sb = new StringBuilder();
-    sb.AppendLine($"Function: {QualifiedName ?? "<unresolved>"} @ {ModuleName ?? "<unknown-module>"}+0x{FunctionStartRva:X} " +
-                  $"(arch: {Architecture?.ToString() ?? "unknown"}, bounds: {BoundaryProvenance})");
+    string functionLabel = QualifiedName ?? "<unresolved>";
+    sb.AppendLine($"## Function {WrapInlineCode(functionLabel)}");
+    sb.AppendLine();
+    sb.AppendLine($"- Module: {WrapInlineCode(ModuleName ?? "unknown")}");
+    sb.AppendLine($"- Address: {WrapInlineCode($"+0x{FunctionStartRva:X}")} (architecture: {Architecture?.ToString() ?? "unknown"})");
+    sb.AppendLine($"- Bounds provenance: {BoundaryProvenance}");
+    sb.AppendLine();
+
+    sb.AppendLine("### Signature");
+    sb.AppendLine();
 
     if (Signature != null) {
       string paramList = string.Join(", ", Signature.Parameters.Select(p => $"{p.TypeName ?? "?"} {p.Name ?? "?"}"));
-      sb.AppendLine($"Signature: {Signature.CallingConvention} {Signature.ReturnTypeName} (" + paramList + ")");
+      sb.AppendLine(WrapInlineCode($"{Signature.CallingConvention} {Signature.ReturnTypeName} ({paramList})"));
     }
     else {
-      sb.AppendLine("Signature: <no PDB signature available>");
+      sb.AppendLine("*No PDB signature available.*");
     }
 
-    if (Loops.Count > 0) {
-      sb.AppendLine($"Loops: {Loops.Count}");
+    sb.AppendLine();
+    sb.AppendLine("### Loops");
+    sb.AppendLine();
+
+    if (Loops.Count == 0) {
+      sb.AppendLine("*None.*");
+    }
+    else {
       foreach (var loop in Loops) {
-        sb.AppendLine($"  Header=B{loop.HeaderBlockId} BackEdgeFrom=B{loop.BackEdgeSourceBlockId} " +
+        sb.AppendLine($"- Header=B{loop.HeaderBlockId}, BackEdgeFrom=B{loop.BackEdgeSourceBlockId}, " +
                       $"Body=[{string.Join(",", loop.BodyBlockIds.Select(b => $"B{b}"))}]");
       }
     }
-    else {
-      sb.AppendLine("Loops: none");
-    }
 
     sb.AppendLine();
-    sb.AppendLine("Facts:");
+    sb.AppendLine("### Facts");
+    sb.AppendLine();
 
     if (Facts.Count == 0) {
-      sb.AppendLine("  (none)");
+      sb.AppendLine("*None.*");
     }
     else {
       foreach (var fact in Facts) {
-        sb.AppendLine($"  [{fact.Confidence}/{fact.Provenance}] {fact.Fact}");
+        sb.AppendLine($"- **[{fact.Confidence}/{fact.Provenance}]** {EscapeMarkdownProse(fact.Fact)}");
       }
     }
 
     sb.AppendLine();
-    sb.AppendLine("Basic Blocks:");
+    sb.AppendLine("### Basic Blocks");
 
     foreach (var block in Blocks) {
-      string flags = block.IsExit ? " [exit]" : "";
-      sb.AppendLine($"Block B{block.Id}{flags} [0x{block.StartRva:X}..0x{block.EndRva:X}) " +
-                    $"succ=[{string.Join(",", block.SuccessorIds.Select(s => $"B{s}"))}] " +
-                    $"pred=[{string.Join(",", block.PredecessorIds.Select(p => $"B{p}"))}]");
+      string flags = block.IsExit ? " *(exit)*" : "";
+      sb.AppendLine();
+      sb.AppendLine($"**Block B{block.Id}**{flags} — range {WrapInlineCode($"[0x{block.StartRva:X}..0x{block.EndRva:X})")}, " +
+                    $"successors=[{string.Join(",", block.SuccessorIds.Select(s => $"B{s}"))}], " +
+                    $"predecessors=[{string.Join(",", block.PredecessorIds.Select(p => $"B{p}"))}]");
 
       if (DetailLevel == FunctionAnalysisDetailLevel.Full) {
+        // A fenced code block: assembly text is preserved exactly (whitespace, brackets, `<`/`>`,
+        // asterisks in e.g. "char*") and is never reinterpreted as Markdown by any conformant
+        // renderer, unlike the plain paragraph text this method used to emit.
+        sb.AppendLine("```text");
+
         foreach (var instr in Instructions) {
           if (instr.BlockId != block.Id) {
             continue;
@@ -145,9 +167,60 @@ public sealed class FunctionAnalysisPackage {
               ? $"  ; -> {mr.Name ?? mr.Text ?? mr.Kind.ToString()}"
               : "";
 
-          sb.AppendLine($"  +0x{instr.Rva:X6}  {instr.Mnemonic} {instr.OperandText}{target}");
+          sb.AppendLine($"+0x{instr.Rva:X6}  {instr.Mnemonic} {instr.OperandText}{target}");
         }
+
+        sb.AppendLine("```");
       }
+    }
+
+    return sb.ToString();
+  }
+
+  /// <summary>
+  /// Wraps <paramref name="text"/> as a Markdown inline code span, choosing a backtick-fence
+  /// length one longer than the longest run of backticks already present in the text (per
+  /// CommonMark's inline-code-span rule) so the span can never be broken out of early. Needed
+  /// because compiler-demangled C++ names can themselves contain backticks (e.g. the MSVC
+  /// "`vector deleting destructor'" special-member-function name).
+  /// </summary>
+  private static string WrapInlineCode(string text) {
+    int longestRun = 0;
+    int currentRun = 0;
+
+    foreach (char c in text) {
+      if (c == '`') {
+        currentRun++;
+        longestRun = Math.Max(longestRun, currentRun);
+      }
+      else {
+        currentRun = 0;
+      }
+    }
+
+    string fence = new string('`', longestRun + 1);
+    // CommonMark also requires a space-padded fence when the content starts/ends with a backtick
+    // or is empty, to avoid the fence visually merging with the content.
+    bool needsPadding = text.Length == 0 || text[0] == '`' || text[^1] == '`';
+    return needsPadding ? $"{fence} {text} {fence}" : $"{fence}{text}{fence}";
+  }
+
+  /// <summary>
+  /// Escapes Markdown inline-emphasis/link/heading-triggering characters in free-form prose text
+  /// (the <see cref="Facts"/> bullet list) so a fact that happens to embed a resolved name/path
+  /// (e.g. containing underscores or asterisks) can never be misinterpreted as emphasis or a link.
+  /// Not used for the per-block assembly listing, which is already protected by a fenced code
+  /// block instead (escaping would be both unnecessary and would corrupt the literal text there).
+  /// </summary>
+  private static string EscapeMarkdownProse(string text) {
+    var sb = new StringBuilder(text.Length);
+
+    foreach (char c in text) {
+      if (c is '*' or '_' or '`' or '[' or ']' or '<' or '>') {
+        sb.Append('\\');
+      }
+
+      sb.Append(c);
     }
 
     return sb.ToString();

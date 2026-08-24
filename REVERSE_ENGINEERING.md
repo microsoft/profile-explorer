@@ -37,7 +37,7 @@ Profile Explorer includes a headless, non-GUI **Function Evidence Generator**: g
 - **Known API facts**: a small, curated table of common Windows/CRT API side effects (allocation, free, lock acquire/release, reference counting, bulk memory ops) attached automatically to a resolved import.
 - **PDB/DIA function signatures**: return type, calling convention, and named/typed parameters, when a full private PDB is available.
 - **Lightweight data flow**: function-local reaching definitions, a narrow constant-propagation check (direct immediate loads only), and bounded backward slicing from any instruction — reports ambiguity honestly at CFG merge points rather than guessing.
-- **One evidence package, one call**: `FunctionAnalysisPackage` bundles all of the above for one function, with a ready-to-use text rendering (`ToPromptText()`) and a fully structured object model for JSON serialization.
+- **One evidence package, one call**: `FunctionAnalysisPackage` bundles all of the above for one function, with a ready-to-use Markdown rendering (`ToPromptMarkdown()`) and a fully structured object model for JSON serialization.
 - **Benchmark/coverage harness**: run a corpus of (binary, function) cases and get coverage metrics stratified by symbol availability, so accuracy claims are never averaged across wildly different scenarios.
 
 ## How to use the API
@@ -62,7 +62,7 @@ if (!result.Success) {
 }
 
 var package = result.Package!;
-string aiPrompt = package.ToPromptText();   // ready to hand to an LLM
+string aiPrompt = package.ToPromptMarkdown();   // ready to hand to an LLM, and renders correctly if displayed as Markdown
 // or serialize `package` itself (blocks, instructions, facts, signature) as JSON.
 ```
 
@@ -77,7 +77,7 @@ pdb.LoadDebugInfo(@"C:\symbols\target.pdb");
 var result = FunctionAnalysisPackageBuilder.Build(binaryPath, address, symbolDebugInfo: pdb);
 ```
 
-`FunctionAnalysisDetailLevel` (`Compact` / `Standard` / `Full`) controls how much per-instruction detail `ToPromptText()` includes, for callers with limited prompt budget.
+`FunctionAnalysisDetailLevel` (`Compact` / `Standard` / `Full`) controls how much per-instruction detail `ToPromptMarkdown()` includes, for callers with limited prompt budget.
 
 For measuring coverage across many functions/binaries (e.g. before trusting the pipeline on a new symbol-poor binary), see `BenchmarkRunner.Run(IReadOnlyList<BenchmarkCase>, symbolProviderFactory)`, which reports success/signature-availability rates stratified by `SymbolAvailabilityTier` (`FullPdb` / `PublicSymbolsOnlyPdb` / `NoPdb`).
 

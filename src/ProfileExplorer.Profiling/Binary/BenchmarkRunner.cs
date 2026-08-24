@@ -155,6 +155,6 @@ public static class BenchmarkRunner {
     return new BenchmarkCaseResult(benchmarkCase.Name, benchmarkCase.ExpectedTier, true, null,
       package.Signature != null, package.BoundaryProvenance,
       package.Instructions.Count, package.Blocks.Count, package.Loops.Count,
-      resolvedCount, unresolvedIndirectCount, assemblyOnlyText, package.ToPromptText());
+      resolvedCount, unresolvedIndirectCount, assemblyOnlyText, package.ToPromptMarkdown());
   }
 }
