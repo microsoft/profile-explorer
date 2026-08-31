@@ -6,10 +6,12 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using ProfileExplorer.Core.Settings;
+using ProfileExplorer.UI.Windows;
 
 namespace ProfileExplorer.UI.OptionsPanels;
 
 public partial class SourceFileOptionsPanel : OptionsPanelBase {
+  private const string AddMappingTitle = "Add file path mapping";
   private SourceFileSettings settings_;
 
   public SourceFileOptionsPanel() {
@@ -54,6 +56,31 @@ public partial class SourceFileOptionsPanel : OptionsPanelBase {
       Utils.SelectTextBoxListViewItem(textBox, ExcludedPathsList);
       e.Handled = true;
     }
+  }
+
+  private void AddMappedPath_Click(object sender, RoutedEventArgs e) {
+    var owner = Window.GetWindow(this);
+    var originalInput = new TextInputWindow(
+      AddMappingTitle, "Original source path:", "Next", "Cancel", owner);
+
+    if (!originalInput.Show(out string originalPath, false)) {
+      return;
+    }
+
+    if (settings_.FinderSettings.SourceMappings.ContainsKey(originalPath)) {
+      Utils.ShowErrorMessageBox("A mapping for this original path already exists.", this);
+      return;
+    }
+
+    var mappedInput = new TextInputWindow(
+      AddMappingTitle, "Local mapped path:", "Add", "Cancel", owner);
+
+    if (!mappedInput.Show(out string mappedPath, false)) {
+      return;
+    }
+
+    settings_.FinderSettings.SourceMappings[originalPath] = mappedPath;
+    ReloadMappedPathsList();
   }
 
   private void RemoveMappedPath_Click(object sender, RoutedEventArgs e) {
