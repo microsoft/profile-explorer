@@ -509,7 +509,10 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
   }
 
   private static IDiaDataSource? TryCreateViaRegistry() {
-    try { return new DiaSourceClass(); }
+    try {
+      var sourceType = Type.GetTypeFromCLSID(new Guid("E6756135-1E65-4D17-8576-610761398C3C"), throwOnError: true);
+      return sourceType != null ? Activator.CreateInstance(sourceType) as IDiaDataSource : null;
+    }
     catch (COMException ex) {
       diaRegistrationFailed_ = true;
       diaRegistrationError_ = $"COM error: 0x{ex.HResult:X8} - {ex.Message}";
