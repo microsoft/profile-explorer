@@ -1,10 +1,12 @@
 set _PUBLISH_PATH="publish"
 set _BUILD_TARGET="..\..\src\ProfileExplorerUI\ProfileExplorerUI.csproj"
+set _MCP_SERVER_TARGET="..\..\src\ProfileExplorer.McpServer\ProfileExplorer.McpServer.csproj"
 set _PROFILER_PATH="..\..\src\ManagedProfiler"
 set _EXTERNALS_PATH="..\..\src\external"
 set _RESOURCES_PATH="..\..\resources"
 set _REPO_PATH="..\.."
 set _OUT_PATH="out"
+set _MCP_SERVER_PUBLISH_PATH="%_OUT_PATH%\mcp"
 
 rd %_OUT_PATH% /s /q
 rd %_PUBLISH_PATH% /s /q
@@ -19,6 +21,8 @@ call "%_VS_ENV%"
 pushd %_EXTERNALS_PATH%
 call build-external.cmd
 popd
+
+dotnet publish -c "Release" -r win-x64 --self-contained true --verbosity diagnostic --output %_MCP_SERVER_PUBLISH_PATH% %_MCP_SERVER_TARGET%
 
 msbuild %_PROFILER_PATH%\ManagedProfiler.vcxproj /t:Rebuild /p:Configuration=Release /p:Platform=x64
 copy %_PROFILER_PATH%\x64\Release\ManagedProfiler.dll %_OUT_PATH%

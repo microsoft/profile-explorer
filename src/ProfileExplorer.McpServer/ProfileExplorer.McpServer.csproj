@@ -26,9 +26,11 @@
     built/staged by build.cmd / build-external.cmd.
   -->
   <ItemGroup>
-    <NativeDependency Include="..\external\capstone\build\Release\capstone.dll" Condition="Exists('..\external\capstone\build\Release\capstone.dll')" />
+    <NativeDependency Include="..\external\capstone\build\Release\capstone.dll" Condition="'$(RuntimeIdentifier)' != 'win-arm64' and Exists('..\external\capstone\build\Release\capstone.dll')" />
+    <NativeDependency Include="..\external\capstone\build_arm64\Release\capstone.dll" Condition="'$(RuntimeIdentifier)' == 'win-arm64' and Exists('..\external\capstone\build_arm64\Release\capstone.dll')" />
     <NativeDependency Include="..\external\msdia140.dll" Condition="Exists('..\external\msdia140.dll')" />
-    <NativeDependency Include="..\external\tree-sitter\build\*.dll" />
+    <NativeDependency Include="..\external\tree-sitter\build\*.dll" Condition="'$(RuntimeIdentifier)' != 'win-arm64'" />
+    <NativeDependency Include="..\external\tree-sitter\build_arm64\*.dll" Condition="'$(RuntimeIdentifier)' == 'win-arm64'" />
   </ItemGroup>
 
   <Target Name="CopyNativeDependencies" AfterTargets="Build" Inputs="@(NativeDependency)" Outputs="@(NativeDependency -> '$(OutputPath)%(Filename)%(Extension)')">
