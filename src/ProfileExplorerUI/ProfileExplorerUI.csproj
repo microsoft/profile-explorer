@@ -338,5 +338,84 @@
 		</Content>
 	</ItemGroup>
 
+	<!-- Copy capstone.dll to output root for disassembler P/Invoke (built by src/external/build-capstone.cmd) -->
+	<ItemGroup Condition="'$(Platform)' == 'ARM64' And Exists('..\external\capstone\build_arm64\Release\capstone.dll')">
+		<Content Include="..\external\capstone\build_arm64\Release\capstone.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>capstone.dll</Link>
+		</Content>
+	</ItemGroup>
+	<ItemGroup Condition="'$(Platform)' != 'ARM64' And Exists('..\external\capstone\build\Release\capstone.dll')">
+		<Content Include="..\external\capstone\build\Release\capstone.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>capstone.dll</Link>
+		</Content>
+	</ItemGroup>
+
+	<Target Name="WarnIfCapstoneMissing" BeforeTargets="Build"
+	        Condition="'$(Platform)' != 'ARM64' And !Exists('..\external\capstone\build\Release\capstone.dll')">
+		<Warning Text="capstone.dll not found at ..\external\capstone\build\Release\capstone.dll. Run src\external\build-capstone.cmd to build it; otherwise disassembly will fail at runtime." />
+	</Target>
+
+	<!-- Copy Graphviz dot.exe and its DLLs to output root for graph rendering (built by src/external/build-graphviz.cmd) -->
+	<ItemGroup Condition="'$(Platform)' != 'ARM64' And Exists('..\external\graphviz\build\cmd\dot\Release\dot.exe')">
+		<Content Include="..\external\graphviz\build\cmd\dot\Release\dot.exe">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>dot.exe</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\lib\cdt\Release\cdt.dll" Condition="Exists('..\external\graphviz\build\lib\cdt\Release\cdt.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>cdt.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\lib\cgraph\Release\cgraph.dll" Condition="Exists('..\external\graphviz\build\lib\cgraph\Release\cgraph.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>cgraph.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\lib\gvc\Release\gvc.dll" Condition="Exists('..\external\graphviz\build\lib\gvc\Release\gvc.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>gvc.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\lib\pathplan\Release\pathplan.dll" Condition="Exists('..\external\graphviz\build\lib\pathplan\Release\pathplan.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>pathplan.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\lib\xdot\Release\xdot.dll" Condition="Exists('..\external\graphviz\build\lib\xdot\Release\xdot.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>xdot.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\plugin\core\Release\gvplugin_core.dll" Condition="Exists('..\external\graphviz\build\plugin\core\Release\gvplugin_core.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>gvplugin_core.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\build\plugin\dot_layout\Release\gvplugin_dot_layout.dll" Condition="Exists('..\external\graphviz\build\plugin\dot_layout\Release\gvplugin_dot_layout.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>gvplugin_dot_layout.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\zlib1.dll" Condition="Exists('..\external\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\zlib1.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>zlib1.dll</Link>
+		</Content>
+		<Content Include="..\external\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\libexpat.dll" Condition="Exists('..\external\graphviz\windows\dependencies\libraries\vcpkg\installed\x64-windows\bin\libexpat.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>libexpat.dll</Link>
+		</Content>
+	</ItemGroup>
+
+	<!-- Copy tree-sitter parser DLLs for source-code parsing P/Invoke (built by src/external/build-tree-sitter.cmd via nmake) -->
+	<ItemGroup Condition="'$(Platform)' != 'ARM64' And Exists('..\external\tree-sitter\build')">
+		<Content Include="..\external\tree-sitter\build\*.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<Target Name="WarnIfGraphvizMissing" BeforeTargets="Build"
+	        Condition="'$(Platform)' != 'ARM64' And !Exists('..\external\graphviz\build\cmd\dot\Release\dot.exe')">
+		<Warning Text="dot.exe not found at ..\external\graphviz\build\cmd\dot\Release\dot.exe. Run src\external\build-graphviz.cmd to build it; otherwise flow/expression/call graph rendering will fail." />
+	</Target>
+
+	<Target Name="WarnIfTreeSitterMissing" BeforeTargets="Build"
+	        Condition="'$(Platform)' != 'ARM64' And !Exists('..\external\tree-sitter\build')">
+		<Warning Text="tree-sitter DLLs not found at ..\external\tree-sitter\build\. Run src\external\build-tree-sitter.cmd (requires nmake from a VS dev prompt); otherwise source-code parsing will fail." />
+	</Target>
 
 </Project>
