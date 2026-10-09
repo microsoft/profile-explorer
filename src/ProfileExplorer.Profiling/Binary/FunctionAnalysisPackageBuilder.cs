@@ -18,7 +18,8 @@ public enum FunctionAnalysisFailure {
   NoInstructionsDecoded,
   /// <summary>Instructions decoded, but no basic blocks could be constructed from them.</summary>
   CfgConstructionFailed,
-  Canceled
+  Canceled,
+  DecodeIncomplete
 }
 
 /// <summary>Result of <see cref="FunctionAnalysisPackageBuilder.Build"/>: either a package, or an
@@ -99,6 +100,12 @@ public static class FunctionAnalysisPackageBuilder {
         "produced no instructions.");
     }
 
+    if (!Disassembler.CoversRange(semanticInstructions.Select(i => (i.Rva, i.Size)), range.StartRva, range.EndRva)) {
+      return FunctionAnalysisResult.Failure(FunctionAnalysisFailure.DecodeIncomplete,
+        $"Semantic decoding of [0x{range.StartRva:X}, 0x{range.EndRva:X}) was incomplete; " +
+        "refusing to produce a partial evidence package.");
+    }
+
     if (cancellationToken.IsCancellationRequested) {
       return FunctionAnalysisResult.Failure(FunctionAnalysisFailure.Canceled, "Canceled after decoding.");
     }
@@ -142,8 +149,8 @@ public static class FunctionAnalysisPackageBuilder {
         if (targetName == null && peInitialized) {
           var targetRef = ReferenceResolver.Resolve(peInfo, targetRva, imports, exports);
 
-          if (targetRef.Kind != ReferenceKind.Unknown) {
-            targetName = targetRef.Name ?? targetRef.Text;
+          if (targetRef.Kind is ReferenceKind.ImportedFunction or ReferenceKind.ExportedFunction) {
+            targetName = targetRef.Name;
           }
         }
       }

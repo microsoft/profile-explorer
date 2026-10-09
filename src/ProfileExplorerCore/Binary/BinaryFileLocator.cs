@@ -18,7 +18,13 @@ namespace ProfileExplorer.Core.Binary;
 /// to the TraceEvent-free <see cref="PEBinaryInfoProvider"/> reader that lives in the library.
 /// </summary>
 public static class BinaryFileLocator {
-  private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ = new();
+  private readonly record struct LookupKey(BinaryFileDescriptor Image, string OriginalFileName,
+                                           bool AllowApproximateMatch, bool DisableSizeProbing);
+  private static ConcurrentDictionary<LookupKey, BinaryFileSearchResult> resolvedBinariesCache_ = new();
+
+  private static LookupKey CreateLookupKey(BinaryFileDescriptor image, SymbolFileSourceSettings settings) =>
+    new(image.Clone(), (image.OriginalFileName ?? "").ToUpperInvariant(),
+        settings.AllowApproximateBinaryMatch, settings.DisableSizeProbingFallback);
 
   /// <summary>
   /// Clears the static resolved binaries cache.
@@ -32,7 +38,7 @@ public static class BinaryFileLocator {
   public static async Task<BinaryFileSearchResult> LocateBinaryFileAsync(BinaryFileDescriptor binaryFile,
                                                                          SymbolFileSourceSettings settings) {
     // Check if the binary was requested before.
-    if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
+    if (resolvedBinariesCache_.TryGetValue(CreateLookupKey(binaryFile, settings), out var searchResult)) {
       return searchResult;
     }
 
@@ -44,14 +50,14 @@ public static class BinaryFileLocator {
   public static BinaryFileSearchResult LocateBinaryFile(BinaryFileDescriptor binaryFile,
                                                         SymbolFileSourceSettings settings) {
     var sw = Stopwatch.StartNew();
+    var requestKey = CreateLookupKey(binaryFile, settings);
     
     // Check if the binary was requested before.
-    if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
+    if (resolvedBinariesCache_.TryGetValue(requestKey, out var searchResult)) {
       DiagnosticLogger.LogDebug($"[BinarySearch] Cache hit for {binaryFile.ImageName}");
       return searchResult;
     }
 
-    var requestedDescriptor = binaryFile.Clone();
     binaryFile = binaryFile.Clone();
 
     DiagnosticLogger.LogInfo($"[BinarySearch] Starting binary search for {binaryFile.ImageName} (Size: {binaryFile.ImageSize}, Timestamp: {binaryFile.TimeStamp})");
@@ -60,7 +66,7 @@ public static class BinaryFileLocator {
     if (settings.IsRejectedBinaryFile(binaryFile)) {
       DiagnosticLogger.LogInfo($"[BinarySearch] SKIPPED - previously rejected: {binaryFile.ImageName}");
       searchResult = BinaryFileSearchResult.Failure(binaryFile, "Previously rejected");
-      resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+      resolvedBinariesCache_.TryAdd(requestKey, searchResult);
       return searchResult;
     }
 
@@ -81,8 +87,8 @@ public static class BinaryFileLocator {
       DiagnosticLogger.LogInfo($"[BinarySearch] Found exact local binary for {binaryFile.ImageName} at {result} ({sw.ElapsedMilliseconds}ms)");
       binaryFile = PEBinaryInfoProvider.GetBinaryFileInfo(result);
       searchResult = BinaryFileSearchResult.Success(binaryFile, result, "");
-      resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
-      resolvedBinariesCache_.TryAdd(requestedDescriptor, searchResult);
+      resolvedBinariesCache_.TryAdd(CreateLookupKey(binaryFile, settings), searchResult);
+      resolvedBinariesCache_.TryAdd(requestKey, searchResult);
       return searchResult;
     }
 
@@ -175,17 +181,19 @@ public static class BinaryFileLocator {
       // DisableSizeProbingFallback forces exact-match-only resolution (no probing at all) -- use
       // it to verify a computed identity is correct on its own merits, rather than letting the
       // probing fallback silently paper over a wrong ImageSize.
-      if (result == null && settings.AllowApproximateBinaryMatch && !settings.DisableSizeProbingFallback) {
-        foreach (string candidateName in candidateNames) {
-          result = TryFindExecutableWithSizeProbing(symbolReader, binaryFile, candidateName, out long probedSize);
+      var primaryFailure = settings.ClassifySearchFailure(logWriter.ToString());
+      if (result == null && settings.AllowApproximateBinaryMatch && !settings.DisableSizeProbingFallback &&
+          primaryFailure is SymbolFileRejectionReason.PermanentNotFound or SymbolFileRejectionReason.Unknown) {
+        var budget = TimeSpan.FromSeconds(settings.SymbolServerTimeoutSeconds > 0 ? settings.SymbolServerTimeoutSeconds : 10);
+        var probeTimeout = TimeSpan.FromSeconds(settings.DegradedTimeoutSeconds > 0 ? settings.DegradedTimeoutSeconds : 3);
+        result = TryFindExecutableWithSizeProbing(symbolReader, binaryFile, candidateNames,
+          budget, probeTimeout, settings, logWriter, out long probedSize);
 
-          if (result != null) {
-            DiagnosticLogger.LogInfo(
-              $"[BinarySearch] Found {binaryFile.ImageName} on symbol server after size-probing " +
-              $"(name='{candidateName}', reported ImageSize {binaryFile.ImageSize} -> corrected {probedSize})");
-            binaryFile.ImageSize = probedSize;
-            break;
-          }
+        if (result != null) {
+          DiagnosticLogger.LogInfo(
+            $"[BinarySearch] Found {binaryFile.ImageName} after size-probing " +
+            $"(reported ImageSize {binaryFile.ImageSize} -> corrected {probedSize})");
+          binaryFile.ImageSize = probedSize;
         }
       }
     }
@@ -196,6 +204,7 @@ public static class BinaryFileLocator {
 
     var searchDuration = sw.Elapsed;
     string searchLog = logWriter.ToString();
+    bool cacheResult = true;
     
 #if DEBUG
     Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
@@ -215,7 +224,7 @@ public static class BinaryFileLocator {
       // Fallback: use a binary with matching timestamp but different size.
       // This handles cases where the kernel-reported ImageSize in the ETW trace
       // differs from the PE header SizeOfImage, or the DLL was serviced.
-      long traceImageSize = binaryFile.ImageSize;
+      long traceImageSize = requestKey.Image.ImageSize;
       DiagnosticLogger.LogWarning(
         $"[BinarySearch] Using APPROXIMATE match for {binaryFile.ImageName} " +
         $"at {approximateMatchPath} ({searchDuration.TotalMilliseconds:F0}ms) - " +
@@ -224,9 +233,6 @@ public static class BinaryFileLocator {
       string details = $"Approximate match: timestamp matches but image size differs " +
         $"(trace: {traceImageSize}, on-disk: {binaryFile.ImageSize}). Disassembly may not be fully accurate.\n{searchLog}";
       searchResult = BinaryFileSearchResult.ApproximateSuccess(binaryFile, approximateMatchPath, details);
-      // Cache under the original trace descriptor so subsequent lookups for the
-      // same trace module hit the cache instead of repeating the search.
-      resolvedBinariesCache_.TryAdd(requestedDescriptor, searchResult);
     }
     else {
       DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
@@ -235,18 +241,25 @@ public static class BinaryFileLocator {
       // Record failed lookup to avoid retrying in future sessions,
       // but skip transient failures (timeout, auth, server errors).
       var reason = settings.ClassifySearchFailure(searchLog);
-      settings.RejectBinaryFile(binaryFile, reason, searchLog);
+      cacheResult = reason is SymbolFileRejectionReason.PermanentNotFound or SymbolFileRejectionReason.InvalidFormat;
+      if (settings.AllowApproximateBinaryMatch && !settings.DisableSizeProbingFallback) {
+        settings.RejectBinaryFile(binaryFile, reason, searchLog);
+      }
+      else {
+        DiagnosticLogger.LogInfo($"[BinarySearch] Not persisting a failure from a restricted lookup policy for {binaryFile.ImageName}");
+      }
     }
 
-    resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
-    resolvedBinariesCache_.TryAdd(requestedDescriptor, searchResult);
+    if (cacheResult) {
+      resolvedBinariesCache_.TryAdd(CreateLookupKey(binaryFile, settings), searchResult);
+      resolvedBinariesCache_.TryAdd(requestKey, searchResult);
+    }
     return searchResult;
   }
 
   // PE section alignment is almost always 0x1000 (4KB); the kernel-reported mapped-view size
   // rounds up to a small number of these pages beyond the real SizeOfImage. Bounded to 16 steps
-  // (64KB of slack) -- generous relative to observed real-world slack of a few pages -- so a
-  // genuinely-missing binary still fails fast instead of hammering the server.
+  // (64KB of slack), with a shared scheduling budget and no further probes after slow/transient failures.
   private const int SizeProbeStepBytes = 0x1000;
   private const int SizeProbeMaxSteps = 16;
 
@@ -256,15 +269,19 @@ public static class BinaryFileLocator {
   /// <see cref="SizeProbeStepBytes"/> increments. Used when the exact TimeStamp+ImageSize lookup
   /// 404s and there's no local copy of the binary to read the corrected PE SizeOfImage from
   /// directly (see <see cref="FindExactLocalBinaryFile"/> for that local-file counterpart).
-  /// <paramref name="candidateName"/> lets the caller probe under either the on-disk ImageName or
+  /// <paramref name="candidateNames"/> lets the caller probe under either the on-disk ImageName or
   /// the module's OriginalFileName (see <see cref="BinaryFileDescriptor.OriginalFileName"/>).
+  /// The budget stops further lookups across both names; an in-flight synchronous SymbolReader
+  /// call can outlast it, so a slow/transient failure also aborts the retry loop immediately.
   /// </summary>
   private static string TryFindExecutableWithSizeProbing(SymbolReader symbolReader,
                                                           BinaryFileDescriptor binaryFile,
-                                                          string candidateName,
+                                                          string[] candidateNames, TimeSpan budget,
+                                                          TimeSpan probeTimeout, SymbolFileSourceSettings settings, StringWriter log,
                                                           out long correctedSize) {
     correctedSize = 0;
     long baseSize = binaryFile.ImageSize;
+    var elapsed = Stopwatch.StartNew();
 
     for (int step = 1; step <= SizeProbeMaxSteps; step++) {
       long candidateSize = baseSize - (long)step * SizeProbeStepBytes;
@@ -273,19 +290,30 @@ public static class BinaryFileLocator {
         break;
       }
 
-      string candidateResult;
+      foreach (string candidateName in candidateNames) {
+        TimeSpan remaining = budget - elapsed.Elapsed;
+        if (remaining <= TimeSpan.Zero) {
+          log.WriteLine("[BinarySearch] Size probing timeout budget exhausted.");
+          DiagnosticLogger.LogWarning($"[BinarySearch] Size probing budget exhausted for {binaryFile.ImageName}");
+          return null;
+        }
 
-      try {
-        candidateResult = symbolReader.FindExecutableFilePath(candidateName, binaryFile.TimeStamp, (int)candidateSize);
-      }
-      catch (Exception ex) {
-        DiagnosticLogger.LogDebug($"[BinarySearch] Size probe failed for {candidateName} at size {candidateSize}: {ex.Message}");
-        continue;
-      }
+        symbolReader.ServerTimeout = remaining < probeTimeout ? remaining : probeTimeout;
+        var attempt = Stopwatch.StartNew();
+        string candidateResult = symbolReader.FindExecutableFilePath(candidateName, binaryFile.TimeStamp, (int)candidateSize);
+        if (candidateResult != null) {
+          correctedSize = candidateSize;
+          return candidateResult;
+        }
 
-      if (candidateResult != null) {
-        correctedSize = candidateSize;
-        return candidateResult;
+        var failure = settings.ClassifySearchFailure(log.ToString());
+        if (attempt.Elapsed >= symbolReader.ServerTimeout ||
+            failure is SymbolFileRejectionReason.NetworkTimeout or SymbolFileRejectionReason.ServerError or
+                       SymbolFileRejectionReason.AuthenticationFailure) {
+          log.WriteLine("[BinarySearch] Size probing stopped after a timeout or transient server failure.");
+          DiagnosticLogger.LogWarning($"[BinarySearch] Stopping size probes for {binaryFile.ImageName} after a slow/failed request");
+          return null;
+        }
       }
     }
 

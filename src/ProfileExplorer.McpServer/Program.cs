@@ -769,8 +769,7 @@ public static class ProfileTools
             IsCall = target.IsCall,
             IsJump = target.IsJump
           } : null
-        }).ToArray(),
-        Timestamp = DateTime.UtcNow
+        }).ToArray()
       };
 
       return JsonSerializer.Serialize(response, JsonOpts);
@@ -1024,6 +1023,9 @@ public static class ProfileTools
 
   private static string Error(string action, string message)
   {
+    if (action == "DisassembleAddress")
+      return JsonSerializer.Serialize(new { Action = action, Status = "Error", Error = message }, JsonOpts);
+
     return JsonSerializer.Serialize(new
     {
       Action = action,

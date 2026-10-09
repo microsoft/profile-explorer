@@ -271,6 +271,30 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     return array.AsMemory();
   }
 
+  public bool IsCodeRangeAvailable(long startRva, long size) {
+    var peHeader = reader_.PEHeaders.PEHeader;
+    if (peHeader == null || startRva < 0 || size <= 0 ||
+        startRva >= peHeader.SizeOfImage || size > peHeader.SizeOfImage - startRva) {
+      return false;
+    }
+
+    foreach (var section in CodeSectionHeaders) {
+      long offset = startRva - section.VirtualAddress;
+      if (offset < 0 || offset >= Math.Max(section.VirtualSize, section.SizeOfRawData)) continue;
+
+      try {
+        int available = GetSectionData(section).Length;
+        return offset < available && size <= available - offset;
+      }
+      catch (BadImageFormatException ex) {
+        Trace.TraceError($"Invalid code section in {filePath_}: {ex.Message}");
+        return false;
+      }
+    }
+
+    return false;
+  }
+
   /// <summary>
   /// Raw bytes of the PE exception directory (IMAGE_DIRECTORY_ENTRY_EXCEPTION) — the x64/ARM64
   /// RUNTIME_FUNCTION table used by <see cref="RuntimeFunctionTable"/> to resolve function bounds

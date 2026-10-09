@@ -301,6 +301,18 @@ public class Disassembler : IDisposable {
     return DisassembleToSemanticList(funcInfo.StartRVA, funcInfo.Size);
   }
 
+  internal static bool CoversRange(IEnumerable<(long Rva, int Size)> instructions, long startRva, long endRva) {
+    if (endRva <= startRva) return false;
+    long nextRva = startRva;
+    foreach (var instruction in instructions) {
+      if (instruction.Rva != nextRva || instruction.Size <= 0 || instruction.Size > endRva - nextRva) {
+        return false;
+      }
+      nextRva += instruction.Size;
+    }
+    return nextRva == endRva;
+  }
+
   private InstructionGroupFlags ClassifyInstructionGroups(Interop.Instruction instr) {
     string mnemonic = instr.MnemonicString;
     var (isCall, isJumpOrBranch) = ClassifyBranch(architecture_, mnemonic);
@@ -969,16 +981,16 @@ public class Disassembler : IDisposable {
   private unsafe void DisassembleInstructions(long startRVA, long size, long startAddress,
                                               Action<Interop.Instruction> action) {
     var codeSection = FindCodeSection(startRVA);
+    long offset = startRVA - codeSection.StartRVA;
 
-    if (codeSection.Data.IsEmpty) {
-      Trace.WriteLine($"Invalid disassembler RVA/size {startRVA}/{size}");
+    if (codeSection.Data.IsEmpty || size <= 0 || offset < 0 || size > codeSection.Data.Length - offset) {
+      Trace.TraceError($"Invalid disassembler RVA/size {startRVA}/{size}: range exceeds code buffer.");
       return;
     }
 
     // Allocate a buffer for storing the instruction,
     // gets reused during iteration.
     using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
-    long offset = startRVA - codeSection.StartRVA;
     using var dataBuffer = codeSection.Data.Pin();
     IntPtr dataBufferPtr = (IntPtr)dataBuffer.Pointer;
 
@@ -1019,14 +1031,14 @@ public class Disassembler : IDisposable {
   private unsafe void DisassembleSemanticInstructions(long startRVA, long size, long startAddress,
                                                       Action<Interop.Instruction, Interop.InstructionHandle> action) {
     var codeSection = FindCodeSection(startRVA);
+    long offset = startRVA - codeSection.StartRVA;
 
-    if (codeSection.Data.IsEmpty) {
-      Trace.WriteLine($"Invalid disassembler RVA/size {startRVA}/{size}");
+    if (codeSection.Data.IsEmpty || size <= 0 || offset < 0 || size > codeSection.Data.Length - offset) {
+      Trace.TraceError($"Invalid disassembler RVA/size {startRVA}/{size}: range exceeds code buffer.");
       return;
     }
 
     using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
-    long offset = startRVA - codeSection.StartRVA;
     using var dataBuffer = codeSection.Data.Pin();
     IntPtr dataBufferPtr = (IntPtr)dataBuffer.Pointer;
 

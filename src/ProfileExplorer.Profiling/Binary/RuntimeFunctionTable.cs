@@ -12,7 +12,7 @@ namespace ProfileExplorer.Core.Binary;
 public enum RuntimeFunctionKind {
   /// <summary>x64 RUNTIME_FUNCTION: BeginAddress/EndAddress are explicit in the record.</summary>
   Amd64,
-  /// <summary>ARM64 packed .pdata record (Flag != 0): FunctionLength is encoded directly in the record.</summary>
+  /// <summary>ARM64 packed .pdata record (Flag 1 or 2): FunctionLength is encoded directly in the record.</summary>
   Arm64Packed,
   /// <summary>ARM64 unpacked .pdata record (Flag == 0): FunctionLength comes from the .xdata header word.</summary>
   Arm64Unwind
@@ -73,7 +73,7 @@ public static class RuntimeFunctionTable {
 
   /// <summary>
   /// Parse the ARM64 IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY array. Packed entries (low 2 bits of the
-  /// second DWORD, "Flag", != 0) encode FunctionLength directly in bits [2:12] of that DWORD, in
+  /// second DWORD, "Flag", is 1 or 2) encode FunctionLength directly in bits [2:12] of that DWORD, in
   /// units of 4-byte instructions. Unpacked entries (Flag == 0) instead store the RVA of an
   /// .xdata unwind-info record whose first DWORD's low 18 bits are FunctionLength in the same
   /// units; <paramref name="readXdataHeaderDword"/> reads exactly that one DWORD (a bounded,
@@ -95,6 +95,8 @@ public static class RuntimeFunctionTable {
       if (begin == 0 && unwindData == 0) continue;
 
       uint flag = unwindData & 0x3;
+
+      if (flag == 3) continue; // Reserved; do not fabricate bounds from undefined record bits.
 
       if (flag != 0) {
         // Packed: Flag(2) | FunctionLength(11) | RegF(3) | RegI(4) | H(1) | CR(2) | FrameSize(9).

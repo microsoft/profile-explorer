@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection.PortableExecutable;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorer.Profiling.Symbols;
@@ -72,7 +73,9 @@ public enum NativeAddressDisassemblyFailure {
   DisassemblerInitializationFailed,
   InvalidAddressForm,
   InvalidFrameKind,
-  SymbolIdentityMismatch
+  SymbolIdentityMismatch,
+  InvalidFunctionRange,
+  DisassemblyIncomplete
 }
 
 /// <summary>
@@ -331,6 +334,13 @@ public static class NativeAddressDisassembler {
         request.BinaryPath, binaryInfo.Architecture, requestedRva, requestedAddress);
     }
 
+    if (!peInfo.IsCodeRangeAvailable(initialBounds.Value.StartRva, initialBounds.Value.Size) ||
+        lookupRva < initialBounds.Value.StartRva || lookupRva >= initialBounds.Value.EndRva) {
+      return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.InvalidFunctionRange,
+        "Resolved function bounds do not fit within readable code in one executable section.",
+        request.BinaryPath, binaryInfo.Architecture, requestedRva, requestedAddress);
+    }
+
     using var disassembler = Disassembler.CreateForBinary(request.BinaryPath, request.SymbolDebugInfo!, request.NameFormatter!);
 
     if (disassembler == null) {
@@ -348,18 +358,26 @@ public static class NativeAddressDisassembler {
     var finalBounds = ResolveFunctionBounds(peInfo, binaryInfo.Architecture, request.SymbolDebugInfo,
                                             normalizedRva, ref runtimeFunctions) ?? initialBounds.Value;
 
+    if (!peInfo.IsCodeRangeAvailable(finalBounds.StartRva, finalBounds.Size) ||
+        normalizedRva < finalBounds.StartRva || normalizedRva >= finalBounds.EndRva) {
+      return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.InvalidFunctionRange,
+        "Normalized function bounds do not fit within readable code in one executable section.",
+        request.BinaryPath, binaryInfo.Architecture, requestedRva, requestedAddress);
+    }
+
     string qualifiedName = BuildQualifiedName(binaryInfo, finalBounds);
     var range = new ResolvedFunctionRange(finalBounds.StartRva, finalBounds.EndRva, finalBounds.Provenance,
                                           finalBounds.FunctionName, finalBounds.RuntimeKind);
 
     var instructions = disassembler.DisassembleToStructuredList(finalBounds.StartRva, finalBounds.Size);
 
-    if (instructions.Count == 0) {
+    if (!Disassembler.CoversRange(instructions.Select(i => (i.Rva, i.Size)), range.StartRva, range.EndRva)) {
       return new NativeAddressDisassemblyResult {
         Success = false,
-        FailureReason = NativeAddressDisassemblyFailure.DisassemblyProducedNoInstructions,
+        FailureReason = instructions.Count == 0 ? NativeAddressDisassemblyFailure.DisassemblyProducedNoInstructions
+                                               : NativeAddressDisassemblyFailure.DisassemblyIncomplete,
         ErrorMessage = $"Disassembly of resolved range [0x{finalBounds.StartRva:X}, 0x{finalBounds.EndRva:X}) " +
-                       "produced no instructions.",
+                       (instructions.Count == 0 ? "produced no instructions." : "was incomplete."),
         ImagePath = request.BinaryPath,
         ModuleName = binaryInfo.ImageName,
         Architecture = binaryInfo.Architecture,
@@ -370,7 +388,7 @@ public static class NativeAddressDisassembler {
         WasNormalized = wasNormalized,
         Range = range,
         QualifiedName = qualifiedName,
-        Instructions = instructions
+        Instructions = new List<DisassembledInstruction>()
       };
     }
 

@@ -248,6 +248,40 @@ public class FunctionAnalysisPackageBuilderTests {
   }
 
   [TestMethod]
+  public void Build_IncompleteDecode_FailsWithoutPartialPackage() {
+    byte[] text = { 0x90, 0x0F }; // nop followed by an incomplete two-byte opcode.
+    int rva = SyntheticPeBuilder.ComputeSectionRvas(2, new[] { text.Length, 12 })[0];
+    var pdata = new byte[12];
+    BitConverter.GetBytes((uint)rva).CopyTo(pdata, 0);
+    BitConverter.GetBytes((uint)(rva + text.Length)).CopyTo(pdata, 4);
+    using var fixture = new SyntheticPeFile(SyntheticPeBuilder.Build((ushort)Machine.Amd64,
+      new[] { new SyntheticPeBuilder.Section(".text", text, true), new(".pdata", pdata, false) },
+      exceptionTableSectionIndex: 1, exceptionTableSize: 12), "IncompleteDecode.dll");
+
+    var result = FunctionAnalysisPackageBuilder.Build(fixture.Path, rva);
+    Assert.IsFalse(result.Success);
+    Assert.IsNull(result.Package);
+    StringAssert.Contains(result.ErrorMessage, "incomplete");
+  }
+
+  [TestMethod]
+  public void Build_DirectControlTransferTarget_IsNotNamedAsString() {
+    byte[] text = { 0xE8, 0x01, 0, 0, 0, 0xC3, 0x41, 0x41, 0x41, 0, 0xC3 };
+    int rva = SyntheticPeBuilder.ComputeSectionRvas(2, new[] { text.Length, 12 })[0];
+    var pdata = new byte[12];
+    BitConverter.GetBytes((uint)rva).CopyTo(pdata, 0);
+    BitConverter.GetBytes((uint)(rva + 6)).CopyTo(pdata, 4);
+    using var fixture = new SyntheticPeFile(SyntheticPeBuilder.Build((ushort)Machine.Amd64,
+      new[] { new SyntheticPeBuilder.Section(".text", text, true), new(".pdata", pdata, false) },
+      exceptionTableSectionIndex: 1, exceptionTableSize: 12), "PrintableCallee.dll");
+
+    var result = FunctionAnalysisPackageBuilder.Build(fixture.Path, rva);
+    Assert.IsTrue(result.Success, result.ErrorMessage);
+    Assert.AreEqual((long)rva + 6, result.Package!.Instructions[0].TargetRva);
+    Assert.IsNull(result.Package.Instructions[0].TargetName);
+  }
+
+  [TestMethod]
   public void Build_RvaOutsideImage_ReturnsExplicitFailureNotException() {
     var (fixture, _, _) = BuildFixture();
     using var _ = fixture;

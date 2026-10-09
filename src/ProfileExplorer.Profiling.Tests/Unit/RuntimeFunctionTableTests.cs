@@ -127,6 +127,19 @@ public class RuntimeFunctionTableTests {
   }
 
   [TestMethod]
+  public void ParseArm64_ReservedFlagIsRejected_PackedFragmentRemainsValid() {
+    var reserved = Arm64PackedEntry(0x1000, 3);
+    BitConverter.GetBytes(3u | (3u << 2)).CopyTo(reserved, 4);
+    var fragment = Arm64PackedEntry(0x2000, 4);
+    BitConverter.GetBytes(2u | (4u << 2)).CopyTo(fragment, 4);
+
+    var ranges = RuntimeFunctionTable.ParseArm64(Concat(reserved, fragment), _ => null);
+    Assert.AreEqual(1, ranges.Count);
+    Assert.AreEqual(0x2000L, ranges[0].StartRva);
+    Assert.AreEqual(0x2010L, ranges[0].EndRva);
+  }
+
+  [TestMethod]
   public void ParseArm64_PackedEntry_MaxFunctionLength_DecodesCorrectly() {
     // 11-bit field: max value 0x7FF words = 8188 bytes.
     var data = Arm64PackedEntry(0x1000, functionLengthWords: 0x7FF);

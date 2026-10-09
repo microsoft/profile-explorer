@@ -29,7 +29,7 @@ Profile Explorer includes a headless, non-GUI **Function Evidence Generator**: g
 
 ## Feature list
 
-- **Exact function bounds** from PDB/DIA symbols, or the PE exception directory (`.pdata`) when no PDB is available. Never guesses at a boundary; fails explicitly instead.
+- **Exact function bounds** from PDB/DIA symbols, or the PE exception directory (`.pdata`) when no PDB is available. Bounds must fit readable code in one section, and decoding must cover the complete range; invalid bounds or incomplete decoding fail explicitly rather than returning a partial function.
 - **Semantic instruction decoding** (x64/ARM64): mnemonic, operands, and the *exact* combined implicit+explicit set of registers each instruction reads and writes (via Capstone, not text parsing).
 - **Control-transfer classification**: call, unconditional jump, conditional branch, return — including cases the underlying disassembler engine doesn't classify by default (e.g. `je`, `b.eq`, `cbz`/`tbz`).
 - **Control flow graph**: basic blocks, successor/predecessor edges, dominators, and natural loop detection — presented as structured text/JSON (never an image) so it's directly usable in an AI prompt.

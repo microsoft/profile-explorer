@@ -117,6 +117,41 @@ public class NativeAddressDisassemblerSyntheticTests {
   }
 
   [TestMethod]
+  public void MalformedPdataExtent_IsRejectedBeforeNativeDecoding() {
+    byte[] text = { 0x90, 0xC3 };
+    int rva = SyntheticPeBuilder.ComputeSectionRvas(2, new[] { text.Length, 12 })[0];
+    var pdata = new byte[12];
+    BitConverter.GetBytes((uint)rva).CopyTo(pdata, 0);
+    BitConverter.GetBytes(uint.MaxValue).CopyTo(pdata, 4);
+    using var fixture = new SyntheticPeFile(SyntheticPeBuilder.Build((ushort)Machine.Amd64,
+      new[] { new SyntheticPeBuilder.Section(".text", text, true), new(".pdata", pdata, false) },
+      exceptionTableSectionIndex: 1, exceptionTableSize: 12), "MalformedExtent.dll");
+    var result = NativeAddressDisassembler.Resolve(new NativeAddressDisassemblyRequest {
+      BinaryPath = fixture.Path, Address = rva + 1, FrameKind = FrameAddressKind.ReturnAddress
+    });
+    Assert.IsFalse(result.Success);
+    Assert.AreEqual(NativeAddressDisassemblyFailure.InvalidFunctionRange, result.FailureReason);
+    Assert.AreEqual(0, result.Instructions.Count);
+  }
+
+  [TestMethod]
+  public void RawDisassemblyRange_CannotOverrunPinnedCodeSection() {
+    using var fixture = BuildAmd64Fixture();
+    using var pe = new PEBinaryInfoProvider(fixture.Path);
+    Assert.IsTrue(pe.Initialize());
+    var section = pe.CodeSectionHeaders[0];
+    int length = pe.GetSectionData(section).Length;
+    Assert.IsTrue(pe.IsCodeRangeAvailable(section.VirtualAddress, length));
+    Assert.IsFalse(pe.IsCodeRangeAvailable(section.VirtualAddress, (long)length + 1));
+    Assert.IsFalse(pe.IsCodeRangeAvailable(section.VirtualAddress + length - 1, 2));
+
+    using var decoder = Disassembler.CreateForBinary(fixture.Path, null, null, enableSemanticDetail: true);
+    Assert.AreEqual(0, decoder!.DisassembleToStructuredList(section.VirtualAddress, (long)length + 1).Count);
+    Assert.AreEqual(0, decoder.DisassembleToSemanticList(section.VirtualAddress, long.MaxValue).Count);
+    Assert.AreEqual(0, decoder.DisassembleToList(section.VirtualAddress, -1).Count);
+  }
+
+  [TestMethod]
   public void Amd64_NormalizesReturnAddress_ToPrecedingCallInstruction() {
     using var fixture = BuildAmd64Fixture();
 
