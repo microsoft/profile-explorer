@@ -78,7 +78,9 @@ pdb.LoadDebugInfo(@"C:\symbols\target.pdb");
 var result = FunctionAnalysisPackageBuilder.Build(binaryPath, address, symbolDebugInfo: pdb);
 ```
 
-`FunctionAnalysisDetailLevel` (`Compact` / `Standard` / `Full`) controls how much per-instruction detail `ToPromptMarkdown()` includes, for callers with limited prompt budget.
+`FunctionAnalysisDetailLevel` controls the prompt budget: `Compact` omits assembly, `Standard` includes a basic per-block assembly listing, and `Full` adds register accesses, control-transfer groups, known API facts, and register data flow.
+
+For identity-based lookup through `ProfileExplorerCore`, `NativeAddressDisassemblyService.ResolveByIdentity` accepts an explicit `imageBase` for absolute instruction pointers. Pass the actual runtime load address, not the preferred PE base; the original overload remains available for module RVAs.
 
 For measuring coverage across many functions/binaries (e.g. before trusting the pipeline on a new symbol-poor binary), see `BenchmarkRunner.Run(IReadOnlyList<BenchmarkCase>, symbolProviderFactory)`, which reports success/signature-availability rates stratified by `SymbolAvailabilityTier` (`FullPdb` / `PublicSymbolsOnlyPdb` / `NoPdb`).
 
@@ -113,5 +115,6 @@ The practical takeaway: **getting the raw binary matters more than getting the P
 - **x64 and ARM64 both use a single unified calling convention.** `__stdcall`/`__fastcall` source annotations are no-ops on 64-bit targets, so don't be surprised when the recovered calling convention always reads `__cdecl`-equivalent there — x86 is the only architecture where the distinction is real.
 - **Return addresses need `FrameAddressKind.ReturnAddress`, not `InstructionPointer`.** An address taken from a stack frame's return slot points *after* the call, not at the instruction that matters — pass the right `FrameAddressKind` or normalization/attribution will be off by one instruction.
 - **A binary you fetch may not exactly match the one that produced your trace/stack.** Always pass the expected image identity (timestamp/size) when you have it, so a mismatched binary fails loudly instead of producing confidently-wrong analysis.
+- **Size-probed or size-corrected matches remain approximate.** Matching a nearby size and timestamp does not prove exact identity. Binary lookup can return them when approximate matching is enabled, but identity-based disassembly rejects them; provide a verified exact identity instead.
 - **A supplied `PdbSymbolProvider` must match the PE's CodeView GUID/age.** A mismatched PDB, or a PDB whose identity cannot be verified, fails with `SymbolIdentityMismatch` before its symbols are used. Custom `ISymbolDebugInfo` implementations must ensure their own symbols match the binary.
 - **Absence of evidence is reported, not hidden.** Every package includes a `Facts` list with explicit notes like "no PDB signature available" or "block ends in an unresolved indirect call" — read it. A clean-looking package with no facts about missing data is more trustworthy than one that silently omitted the gaps.

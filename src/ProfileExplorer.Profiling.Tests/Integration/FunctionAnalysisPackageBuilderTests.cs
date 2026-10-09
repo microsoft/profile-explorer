@@ -282,6 +282,21 @@ public class FunctionAnalysisPackageBuilderTests {
   }
 
   [TestMethod]
+  public void DefaultStandardMarkdown_ContainsBasicAssemblyWithoutFullAnnotations() {
+    var (fixture, rva, _) = BuildFixture(new byte[] { 0xB8, 0x2A, 0, 0, 0 });
+    using var _ = fixture;
+    var result = FunctionAnalysisPackageBuilder.Build(fixture.Path, rva);
+    Assert.IsTrue(result.Success, result.ErrorMessage);
+    Assert.AreEqual(FunctionAnalysisDetailLevel.Standard, result.Package!.DetailLevel);
+    var markdown = result.Package.ToPromptMarkdown();
+    StringAssert.Contains(markdown, "mov eax, 0x2a");
+    StringAssert.Contains(markdown, "ret");
+    StringAssert.Contains(markdown, "```text");
+    Assert.IsFalse(markdown.Contains("groups="));
+    Assert.IsFalse(markdown.Contains("### Register Data Flow"));
+  }
+
+  [TestMethod]
   public void Build_RvaOutsideImage_ReturnsExplicitFailureNotException() {
     var (fixture, _, _) = BuildFixture();
     using var _ = fixture;

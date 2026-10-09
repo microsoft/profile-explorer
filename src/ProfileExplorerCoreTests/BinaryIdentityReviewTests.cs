@@ -62,9 +62,8 @@ public class BinaryIdentityReviewTests {
     File.Copy(FixturePath, Path.Combine(storeEntry, alternateName));
     var requested = actual.Clone();
     requested.ImageName = "trace-name.dll";
-    requested.ImagePath = FixturePath;
+    requested.ImagePath = Path.Combine(directory_, requested.ImageName);
     requested.OriginalFileName = alternateName;
-    requested.ImageSize += 0x1000;
     var original = requested.Clone();
     int hash = requested.GetHashCode();
     var settings = LocalSettings();
@@ -84,6 +83,47 @@ public class BinaryIdentityReviewTests {
     var result = NativeAddressDisassemblyService.ResolveByIdentity(original.Clone(), FunctionRva(),
       NativeAddressForm.ModuleRva, FrameAddressKind.InstructionPointer, settings);
     Assert.IsTrue(result.Success, result.ErrorMessage);
+  }
+
+  [TestMethod]
+  public void ResolveByIdentity_ForwardsRuntimeImageBase_AndPreservesOriginalOverload() {
+    var identity = PEBinaryInfoProvider.GetBinaryFileInfo(FixturePath);
+    long rva = FunctionRva();
+    const long runtimeBase = 0x7FF7_0000_0000;
+    var result = NativeAddressDisassemblyService.ResolveByIdentity(identity, runtimeBase + rva,
+      NativeAddressForm.AbsoluteInstructionPointer, FrameAddressKind.InstructionPointer,
+      LocalSettings(), imageBase: runtimeBase);
+    Assert.IsTrue(result.Success, result.ErrorMessage);
+    Assert.AreEqual(rva, result.RequestedRva);
+    Assert.AreEqual(runtimeBase + rva, result.RequestedAddress);
+
+    Assert.IsNotNull(typeof(NativeAddressDisassemblyService).GetMethod("ResolveByIdentity", new[] {
+      typeof(BinaryFileDescriptor), typeof(long), typeof(NativeAddressForm), typeof(FrameAddressKind),
+      typeof(SymbolFileSourceSettings), typeof(ISymbolDebugInfo)
+    }));
+    var originalCall = NativeAddressDisassemblyService.ResolveByIdentity(identity, rva,
+      NativeAddressForm.ModuleRva, FrameAddressKind.InstructionPointer, LocalSettings(), null);
+    Assert.IsTrue(originalCall.Success, originalCall.ErrorMessage);
+  }
+
+  [TestMethod]
+  [DataRow(true)]
+  [DataRow(false)]
+  public void LocalSizeCorrection_IsApproximateOrRejected(bool allowApproximate) {
+    var actual = PEBinaryInfoProvider.GetBinaryFileInfo(FixturePath);
+    var requested = actual.Clone();
+    requested.ImageSize += 0x1000;
+    var settings = LocalSettings();
+    settings.AllowApproximateBinaryMatch = allowApproximate;
+    var result = BinaryFileLocator.LocateBinaryFile(requested, settings);
+    Assert.AreEqual(allowApproximate, result.Found, result.Details);
+    if (allowApproximate) {
+      Assert.IsTrue(result.IsApproximateMatch);
+      Assert.AreEqual(actual.ImageSize, result.BinaryFile.ImageSize);
+      var exact = BinaryFileLocator.LocateBinaryFile(actual, settings);
+      Assert.IsTrue(exact.Found, exact.Details);
+      Assert.IsFalse(exact.IsApproximateMatch, "Approximate provenance must not pollute an exact request's cache.");
+    }
   }
 
   [TestMethod]
@@ -131,6 +171,31 @@ public class BinaryIdentityReviewTests {
     strict.SymbolPaths = new List<string> { $"srv*{directory_}*{directory_}" };
     var result = BinaryFileLocator.LocateBinaryFile(requested, strict);
     Assert.IsFalse(result.Found, "Strict resolution must not return a size-probed cached result.");
+  }
+
+  [TestMethod]
+  public void SizeProbedMatch_RetainsApproximateProvenanceAndCannotDisassembleStrictly() {
+    var actual = PEBinaryInfoProvider.GetBinaryFileInfo(FixturePath);
+    var requested = actual.Clone();
+    requested.ImageName = "probed-image.dll";
+    requested.ImagePath = Path.Combine(directory_, requested.ImageName);
+    requested.ImageSize += 0x1000;
+    string entry = Path.Combine(directory_, requested.ImageName, $"{actual.TimeStamp:X8}{actual.ImageSize:x}");
+    Directory.CreateDirectory(entry);
+    File.Copy(FixturePath, Path.Combine(entry, requested.ImageName));
+    var settings = LocalSettings();
+    settings.SymbolPaths = new List<string> { $"srv*{directory_}*{directory_}" };
+    settings.DisableSizeProbingFallback = false;
+    var located = BinaryFileLocator.LocateBinaryFile(requested, settings);
+    Assert.IsTrue(located.Found, located.Details);
+    Assert.AreEqual(actual.ImageSize, located.BinaryFile.ImageSize);
+    Assert.IsTrue(located.IsApproximateMatch, "A changed image size must not be promoted to exact identity.");
+    Assert.AreSame(located, BinaryFileLocator.LocateBinaryFile(requested.Clone(), settings));
+    var result = NativeAddressDisassemblyService.ResolveByIdentity(requested, FunctionRva(),
+      NativeAddressForm.ModuleRva, FrameAddressKind.InstructionPointer, settings);
+    Assert.IsFalse(result.Success);
+    Assert.AreEqual(NativeAddressDisassemblyFailure.ImageIdentityMismatch, result.FailureReason);
+    Assert.AreEqual(0, result.Instructions.Count);
   }
 
   [TestMethod]

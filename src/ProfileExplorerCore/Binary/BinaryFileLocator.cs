@@ -97,7 +97,7 @@ public static class BinaryFileLocator {
     // from the PE header, but the ETW kernel event may report a larger mapped view size
     // (the kernel mapping can include extra slack pages). Using the wrong size causes
     // 404s on the symbol server even when the binary IS indexed there.
-    if (correctedImageSize > 0 && correctedImageSize != binaryFile.ImageSize) {
+    if (settings.AllowApproximateBinaryMatch && correctedImageSize > 0 && correctedImageSize != binaryFile.ImageSize) {
       DiagnosticLogger.LogInfo(
         $"[BinarySearch] Correcting ImageSize for {binaryFile.ImageName} from ETW value {binaryFile.ImageSize} " +
         $"to PE SizeOfImage {correctedImageSize} for symbol server lookup");
@@ -216,7 +216,20 @@ public static class BinaryFileLocator {
       DiagnosticLogger.LogInfo($"[BinarySearch] Found binary for {binaryFile.ImageName} at {result} ({searchDuration.TotalMilliseconds:F0}ms)");
       // Read the binary info from the local file to fill in all fields.
       binaryFile = PEBinaryInfoProvider.GetBinaryFileInfo(result);
-      searchResult = BinaryFileSearchResult.Success(binaryFile, result, searchLog);
+      bool identityChanged = binaryFile.ImageSize != requestKey.Image.ImageSize ||
+                             binaryFile.TimeStamp != requestKey.Image.TimeStamp;
+      if (identityChanged) {
+        string details = $"Approximate match: requested timestamp/size " +
+          $"0x{requestKey.Image.TimeStamp:X}/{requestKey.Image.ImageSize}, located " +
+          $"0x{binaryFile.TimeStamp:X}/{binaryFile.ImageSize}. Disassembly may not be fully accurate.\n{searchLog}";
+        DiagnosticLogger.LogWarning($"[BinarySearch] {details}");
+        searchResult = settings.AllowApproximateBinaryMatch
+          ? BinaryFileSearchResult.ApproximateSuccess(binaryFile, result, details)
+          : BinaryFileSearchResult.Failure(requestKey.Image, details);
+      }
+      else {
+        searchResult = BinaryFileSearchResult.Success(binaryFile, result, searchLog);
+      }
     }
     else if (settings.AllowApproximateBinaryMatch &&
              !string.IsNullOrEmpty(approximateMatchPath) &&
@@ -251,7 +264,9 @@ public static class BinaryFileLocator {
     }
 
     if (cacheResult) {
-      resolvedBinariesCache_.TryAdd(CreateLookupKey(binaryFile, settings), searchResult);
+      if (searchResult.Found && !searchResult.IsApproximateMatch) {
+        resolvedBinariesCache_.TryAdd(CreateLookupKey(binaryFile, settings), searchResult);
+      }
       resolvedBinariesCache_.TryAdd(requestKey, searchResult);
     }
     return searchResult;

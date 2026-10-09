@@ -88,12 +88,13 @@ public class PoolDriverDisassemblyTests {
   /// binary from the internal symbol server by identity alone. This is the case the
   /// <c>BinaryFileLocator</c> size-probing fallback exists for: the ETW/DataLayer-reported
   /// ImageSize (mapped-view size) doesn't match the real PE SizeOfImage symweb indexes by.
+  /// Such a size-corrected download remains approximate and must not pass strict disassembly.
   /// Identity captured from a real FunGates trace blame-walk (Cont -&gt; e1r63x64.sys, an Intel
   /// NIC driver). Requires network + internal auth (symweb) -- Inconclusive, not Fail, when
   /// unavailable (matches convention for network-dependent Integration tests in this project).
   /// </summary>
   [TestMethod]
-  public void ResolveByIdentity_RemoteThirdPartyDriverNoLocalCopy_DownloadsAndDisassembles() {
+  public void ResolveByIdentity_RemoteThirdPartyDriverNoLocalCopy_PreservesLookupProvenance() {
     const string imageName = "e1r63x64.sys";
     const int timeStamp = unchecked((int)0x50A5733A);
     const long etwReportedImageSize = 466944; // 0x72000 -- mapped-view size from the trace/DataLayer.
@@ -126,6 +127,7 @@ public class PoolDriverDisassemblyTests {
     // Corrected ImageSize should be smaller than the ETW-reported size (kernel mapped-view slack).
     var downloadedInfo = PEBinaryInfoProvider.GetBinaryFileInfo(located.FilePath);
     Console.WriteLine($"Corrected ImageSize={downloadedInfo.ImageSize} (ETW-reported was {etwReportedImageSize})");
+    Assert.AreEqual(downloadedInfo.ImageSize != etwReportedImageSize, located.IsApproximateMatch);
 
     var result = NativeAddressDisassemblyService.ResolveByIdentity(
       identity,
@@ -143,6 +145,13 @@ public class PoolDriverDisassemblyTests {
     Console.WriteLine($"Instructions={result.Instructions.Count}");
     foreach (var ins in result.Instructions.Take(40)) {
       Console.WriteLine($"  +0x{ins.Rva:X6}  {ins.Text}");
+    }
+
+    if (located.IsApproximateMatch) {
+      Assert.IsFalse(result.Success);
+      Assert.AreEqual(NativeAddressDisassemblyFailure.ImageIdentityMismatch, result.FailureReason);
+      Assert.AreEqual(0, result.Instructions.Count);
+      return;
     }
 
     Assert.IsTrue(result.Success, result.ErrorMessage);
@@ -396,4 +405,3 @@ public class PoolDriverDisassemblyTests {
     Assert.IsTrue(result.Instructions.Count > 0, "Expected disassembled instructions.");
   }
 }
-

@@ -4,12 +4,43 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Profiling.Symbols;
 using ProfileExplorer.Profiling.Tests.Helpers;
+using ProfileExplorer.Core.Providers;
 
 namespace ProfileExplorer.Profiling.Tests.Integration;
 
 [TestClass]
 [TestCategory("Integration")]
 public class DisassemblerTests {
+  [TestMethod]
+  public void PublicClrSignatures_AndFourValueInstructionShape_ArePreserved() {
+    Assert.IsNotNull(typeof(Disassembler).GetMethod(nameof(Disassembler.CreateForBinary),
+      new[] { typeof(string), typeof(ISymbolDebugInfo), typeof(FunctionNameFormatter) }));
+    Assert.IsNotNull(typeof(Disassembler).GetMethod(nameof(Disassembler.CreateForMachine),
+      new[] { typeof(ISymbolDebugInfo), typeof(FunctionNameFormatter) }));
+    Assert.IsNotNull(typeof(DisassembledInstruction).GetConstructor(
+      new[] { typeof(long), typeof(long), typeof(string), typeof(int) }));
+    Assert.IsNotNull(typeof(DisassembledInstruction).GetMethod("Deconstruct", new[] {
+      typeof(long).MakeByRefType(), typeof(long).MakeByRefType(),
+      typeof(string).MakeByRefType(), typeof(int).MakeByRefType()
+    }));
+  }
+
+  [TestMethod]
+  public void OriginalInstructionShape_DeconstructsAndJsonRoundTripsExtendedRecord() {
+    var original = new DisassembledInstruction(10, 20, "nop", 1);
+    var (address, rva, text, size) = original;
+    Assert.AreEqual(10L, address);
+    Assert.AreEqual(20L, rva);
+    Assert.AreEqual("nop", text);
+    Assert.AreEqual(1, size);
+    Assert.IsNull(original.Mnemonic);
+
+    var extended = new DisassembledInstruction(10, 20, "jmp 30", 2, "jmp", "30",
+      new DisassembledInstructionTarget(30, 30, null, false, true));
+    var json = System.Text.Json.JsonSerializer.Serialize(extended);
+    Assert.AreEqual(extended, System.Text.Json.JsonSerializer.Deserialize<DisassembledInstruction>(json));
+  }
+
   private static string DllPath => TestDataHelper.GetBinaryFilePath(TestDataHelper.MsoTrace, TestDataHelper.MsoDllFile);
   private static string PdbPath => TestDataHelper.GetSymbolFilePath(TestDataHelper.MsoTrace, TestDataHelper.MsoPdbFile);
 

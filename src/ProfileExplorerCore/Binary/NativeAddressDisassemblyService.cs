@@ -34,7 +34,23 @@ public static class NativeAddressDisassemblyService {
       NativeAddressForm addressForm,
       FrameAddressKind frameKind,
       SymbolFileSourceSettings symbolSettings,
-      ISymbolDebugInfo? symbolDebugInfo = null) {
+      ISymbolDebugInfo? symbolDebugInfo = null) =>
+    ResolveByIdentityCore(identity, address, addressForm, frameKind, symbolSettings, symbolDebugInfo, imageBase: null);
+
+  /// <param name="imageBase">Actual runtime load address, required for absolute instruction pointers.</param>
+  public static NativeAddressDisassemblyResult ResolveByIdentity(
+      BinaryFileDescriptor identity,
+      long address,
+      NativeAddressForm addressForm,
+      FrameAddressKind frameKind,
+      SymbolFileSourceSettings symbolSettings,
+      long imageBase,
+      ISymbolDebugInfo? symbolDebugInfo = null) =>
+    ResolveByIdentityCore(identity, address, addressForm, frameKind, symbolSettings, symbolDebugInfo, imageBase);
+
+  private static NativeAddressDisassemblyResult ResolveByIdentityCore(
+      BinaryFileDescriptor identity, long address, NativeAddressForm addressForm, FrameAddressKind frameKind,
+      SymbolFileSourceSettings symbolSettings, ISymbolDebugInfo? symbolDebugInfo, long? imageBase) {
     ArgumentNullException.ThrowIfNull(identity);
     ArgumentNullException.ThrowIfNull(symbolSettings);
 
@@ -62,6 +78,7 @@ public static class NativeAddressDisassemblyService {
       Address = address,
       AddressForm = addressForm,
       FrameKind = frameKind,
+      ImageBase = imageBase,
       SymbolDebugInfo = symbolDebugInfo
     });
   }

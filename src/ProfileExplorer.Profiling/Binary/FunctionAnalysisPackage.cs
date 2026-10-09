@@ -94,8 +94,8 @@ public sealed class FunctionAnalysisPackage {
 
   /// <summary>
   /// Renders a compact, deterministic, human/LLM-readable **Markdown** view of this package:
-  /// signature, facts, and a block list with successor/predecessor edges and (for Full detail)
-  /// per-instruction assembly -- the "CFG as structured text, never an image" design decision.
+  /// signature, facts, and a block list with successor/predecessor edges and assembly at
+  /// Standard/Full detail (with semantic annotations at Full).
   /// Genuinely valid Markdown, not merely plain text: headers/bullets for prose sections, and the
   /// per-block assembly listing wrapped in a fenced code block so raw disassembly text (which can
   /// contain `*`, `_`, `[`, `]`, `&lt;`/`&gt;` -- e.g. "char*", "[rip+N]", decorated import names)
@@ -160,7 +160,7 @@ public sealed class FunctionAnalysisPackage {
                     $"successors=[{string.Join(",", block.SuccessorIds.Select(s => $"B{s}"))}], " +
                     $"predecessors=[{string.Join(",", block.PredecessorIds.Select(p => $"B{p}"))}]");
 
-      if (DetailLevel == FunctionAnalysisDetailLevel.Full) {
+      if (DetailLevel != FunctionAnalysisDetailLevel.Compact) {
         // A fenced code block: assembly text is preserved exactly (whitespace, brackets, `<`/`>`,
         // asterisks in e.g. "char*") and is never reinterpreted as Markdown by any conformant
         // renderer, unlike the plain paragraph text this method used to emit.
@@ -176,12 +176,15 @@ public sealed class FunctionAnalysisPackage {
               ? $"  ; -> {mr.Name ?? mr.Text ?? mr.Kind.ToString()}"
               : "";
 
-          string registers = instr.HasRegisterAccessDetail
-            ? $"read=[{string.Join(",", instr.RegistersRead)}], write=[{string.Join(",", instr.RegistersWritten)}]"
-            : "register access unavailable";
-          sb.AppendLine($"+0x{instr.Rva:X6}  {instr.Mnemonic} {instr.OperandText}{target} " +
-                        $"; groups={instr.Groups}; {registers}");
-          if (instr.MemoryReference?.ApiFact is { } apiFact) {
+          string detail = "";
+          if (DetailLevel == FunctionAnalysisDetailLevel.Full) {
+            string registers = instr.HasRegisterAccessDetail
+              ? $"read=[{string.Join(",", instr.RegistersRead)}], write=[{string.Join(",", instr.RegistersWritten)}]"
+              : "register access unavailable";
+            detail = $" ; groups={instr.Groups}; {registers}";
+          }
+          sb.AppendLine($"+0x{instr.Rva:X6}  {instr.Mnemonic} {instr.OperandText}{target}{detail}");
+          if (DetailLevel == FunctionAnalysisDetailLevel.Full && instr.MemoryReference?.ApiFact is { } apiFact) {
             sb.AppendLine($"  ; API [{apiFact.Category}]: {apiFact.Summary}");
           }
         }

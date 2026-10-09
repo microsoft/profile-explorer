@@ -62,6 +62,31 @@ public class DisassemblerSemanticDetailTests {
   }
 
   [TestMethod]
+  [DataRow((byte)0xE2, "loop")]
+  [DataRow((byte)0xE1, "loope")]
+  [DataRow((byte)0xE0, "loopne")]
+  public void LoopFamily_NativeDecodeHasConditionalTargetAndCfgLoop(byte opcode, string mnemonic) {
+    byte[] text = { opcode, 0xFE, 0xC3 }; // Conditional self-loop followed by ret.
+    int rva = SyntheticPeBuilder.ComputeSectionRvas(1, new[] { text.Length })[0];
+    using var fixture = new SyntheticPeFile(SyntheticPeBuilder.Build((ushort)Machine.Amd64,
+      new[] { new SyntheticPeBuilder.Section(".text", text, true) }), "LoopFamily.dll");
+    using var decoder = Disassembler.CreateForBinary(fixture.Path, null, null, enableSemanticDetail: true);
+    var instructions = decoder!.DisassembleToSemanticList(rva, text.Length);
+    Assert.AreEqual(mnemonic, instructions[0].Mnemonic);
+    Assert.IsTrue(instructions[0].IsConditionalBranch);
+    Assert.AreEqual((long)rva, instructions[0].TargetRva);
+    var cfg = FunctionControlFlowGraph.Build(instructions, rva, rva + text.Length)!;
+    Assert.AreEqual(2, cfg.Blocks.Count);
+    Assert.AreEqual(1, cfg.Loops.Count);
+    Assert.IsTrue(cfg.Blocks[0].SuccessorIds.Contains(0));
+    Assert.IsTrue(cfg.Blocks[0].SuccessorIds.Contains(1));
+    var structured = decoder.DisassembleToStructuredList(rva, text.Length);
+    Assert.IsNotNull(structured[0].Target);
+    Assert.IsTrue(structured[0].Target!.IsJump);
+    Assert.AreEqual((long)rva, structured[0].Target.Rva);
+  }
+
+  [TestMethod]
   public void Amd64_SemanticDetail_ReportsExactRegisterAccessAndGroups() {
     using var fixture = BuildAmd64Fixture();
     int rva = Amd64TextRva(fixture);

@@ -7,6 +7,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
 using ProfileExplorer.Core.Providers;
@@ -28,9 +29,20 @@ public record DisassembledInstructionTarget(long Rva, long Address, string? Symb
 /// <see cref="Disassembler.DisassembleToStructuredList"/>; <see cref="Disassembler.DisassembleToList"/>
 /// leaves them null/default for backward compatibility.
 /// </summary>
+[method: JsonConstructor]
 public record DisassembledInstruction(long Address, long Rva, string Text, int Size,
                                       string? Mnemonic = null, string? OperandText = null,
-                                      DisassembledInstructionTarget? Target = null);
+                                      DisassembledInstructionTarget? Target = null) {
+  public DisassembledInstruction(long Address, long Rva, string Text, int Size)
+    : this(Address, Rva, Text, Size, null, null, null) { }
+
+  public void Deconstruct(out long Address, out long Rva, out string Text, out int Size) {
+    Address = this.Address;
+    Rva = this.Rva;
+    Text = this.Text;
+    Size = this.Size;
+  }
+}
 
 public class Disassembler : IDisposable {
   public delegate string SymbolNameResolverDelegate(long address);
@@ -70,6 +82,10 @@ public class Disassembler : IDisposable {
     GC.SuppressFinalize(this);
   }
 
+  public static Disassembler CreateForBinary(string binaryFilePath, ISymbolDebugInfo debugInfo,
+                                             FunctionNameFormatter funcNameFormatter) =>
+    CreateForBinary(binaryFilePath, debugInfo, funcNameFormatter, enableSemanticDetail: false);
+
   /// <param name="enableSemanticDetail">
   /// When true, enables Capstone's <c>CS_OPT_DETAIL</c> mode so <see cref="DisassembleToSemanticList"/>
   /// can return exact register read/write facts. Defaults to false so all existing callers keep
@@ -78,7 +94,7 @@ public class Disassembler : IDisposable {
   /// </param>
   public static Disassembler CreateForBinary(string binaryFilePath, ISymbolDebugInfo debugInfo,
                                              FunctionNameFormatter funcNameFormatter,
-                                             bool enableSemanticDetail = false) {
+                                             bool enableSemanticDetail) {
     var peInfo = new PEBinaryInfoProvider(binaryFilePath);
 
     if (!peInfo.Initialize()) {
@@ -91,10 +107,13 @@ public class Disassembler : IDisposable {
                             enableSemanticDetail: enableSemanticDetail);
   }
 
+  public static Disassembler CreateForMachine(ISymbolDebugInfo debugInfo, FunctionNameFormatter funcNameFormatter) =>
+    CreateForMachine(debugInfo, funcNameFormatter, enableSemanticDetail: false);
+
   /// <param name="enableSemanticDetail">See <see cref="CreateForBinary"/>.</param>
   public static Disassembler CreateForMachine(ISymbolDebugInfo debugInfo,
                                               FunctionNameFormatter funcNameFormatter,
-                                              bool enableSemanticDetail = false) {
+                                              bool enableSemanticDetail) {
     return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo, funcNameFormatter,
                             enableSemanticDetail: enableSemanticDetail);
   }
@@ -355,7 +374,7 @@ public class Disassembler : IDisposable {
   /// <summary>
   /// Detects conditional-branch mnemonics that <see cref="ClassifyBranch"/> does not classify as
   /// jumps/branches at all (see <see cref="ClassifyInstructionGroups"/>). Deliberately conservative:
-  /// covers the common x86 Jcc family and the ARM64 "b.&lt;cond&gt;"/cbz/cbnz/tbz/tbnz family, which
+  /// covers the common x86 Jcc/LOOP families and the ARM64 "b.&lt;cond&gt;"/cbz/cbnz/tbz/tbnz family, which
   /// covers everything Capstone's default syntax produces for conditional control transfer on these
   /// architectures.
   /// </summary>
@@ -365,8 +384,11 @@ public class Disassembler : IDisposable {
       case Machine.Amd64:
         // Every x86 "j*" mnemonic other than the unconditional "jmp" is a conditional jump (Jcc);
         // this also covers jcxz/jecxz/jrcxz (branch if counter register is zero).
-        return mnemonic.StartsWith("j", StringComparison.OrdinalIgnoreCase) &&
-               !mnemonic.Equals("jmp", StringComparison.OrdinalIgnoreCase);
+        return (mnemonic.StartsWith("j", StringComparison.OrdinalIgnoreCase) &&
+                !mnemonic.Equals("jmp", StringComparison.OrdinalIgnoreCase)) ||
+               mnemonic.Equals("loop", StringComparison.OrdinalIgnoreCase) ||
+               mnemonic.Equals("loope", StringComparison.OrdinalIgnoreCase) ||
+               mnemonic.Equals("loopne", StringComparison.OrdinalIgnoreCase);
       case Machine.Arm:
       case Machine.Arm64:
         // Capstone's default AArch64 syntax renders conditional branches as "b.<cond>" (e.g.
