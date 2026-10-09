@@ -72,8 +72,12 @@ public class SymbolServerClient : IDisposable, ISymbolFileLocator {
   /// <param name="imageSize">PE ImageSize (SizeOfImage).</param>
   /// <param name="ct">Cancellation token.</param>
   /// <returns>Local file path to the downloaded binary, or null if not found.</returns>
+  public Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
+                                           CancellationToken ct = default) =>
+    FindBinaryFileAsync(binaryName, timeDateStamp, imageSize, originalFileName: null, ct: ct);
+
   public async Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                                  string? originalFileName = null, CancellationToken ct = default) {
+                                                  string? originalFileName, CancellationToken ct = default) {
     // SSQP key convention (https://github.com/dotnet/symstore/blob/main/docs/specs/SSQP_Key_Conventions.md):
     // "<filename>/<Timestamp><SizeOfImage>/<filename>" where Timestamp is always 8 hex digits,
     // zero-padded, UPPER-case, and SizeOfImage is as few digits as needed, in LOWER-case. Example:

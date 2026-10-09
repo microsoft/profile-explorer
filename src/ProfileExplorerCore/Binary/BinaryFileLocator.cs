@@ -51,6 +51,9 @@ public static class BinaryFileLocator {
       return searchResult;
     }
 
+    var requestedDescriptor = binaryFile.Clone();
+    binaryFile = binaryFile.Clone();
+
     DiagnosticLogger.LogInfo($"[BinarySearch] Starting binary search for {binaryFile.ImageName} (Size: {binaryFile.ImageSize}, Timestamp: {binaryFile.TimeStamp})");
 
     // Check if this binary was previously rejected (failed lookup in a prior session).
@@ -79,6 +82,7 @@ public static class BinaryFileLocator {
       binaryFile = PEBinaryInfoProvider.GetBinaryFileInfo(result);
       searchResult = BinaryFileSearchResult.Success(binaryFile, result, "");
       resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+      resolvedBinariesCache_.TryAdd(requestedDescriptor, searchResult);
       return searchResult;
     }
 
@@ -212,7 +216,6 @@ public static class BinaryFileLocator {
       // This handles cases where the kernel-reported ImageSize in the ETW trace
       // differs from the PE header SizeOfImage, or the DLL was serviced.
       long traceImageSize = binaryFile.ImageSize;
-      var originalDescriptor = binaryFile;
       DiagnosticLogger.LogWarning(
         $"[BinarySearch] Using APPROXIMATE match for {binaryFile.ImageName} " +
         $"at {approximateMatchPath} ({searchDuration.TotalMilliseconds:F0}ms) - " +
@@ -223,7 +226,7 @@ public static class BinaryFileLocator {
       searchResult = BinaryFileSearchResult.ApproximateSuccess(binaryFile, approximateMatchPath, details);
       // Cache under the original trace descriptor so subsequent lookups for the
       // same trace module hit the cache instead of repeating the search.
-      resolvedBinariesCache_.TryAdd(originalDescriptor, searchResult);
+      resolvedBinariesCache_.TryAdd(requestedDescriptor, searchResult);
     }
     else {
       DiagnosticLogger.LogWarning($"[BinarySearch] Failed to find binary for {binaryFile.ImageName} ({searchDuration.TotalMilliseconds:F0}ms)");
@@ -236,6 +239,7 @@ public static class BinaryFileLocator {
     }
 
     resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+    resolvedBinariesCache_.TryAdd(requestedDescriptor, searchResult);
     return searchResult;
   }
 

@@ -147,6 +147,25 @@ public class NativeAddressDisassemblerRealFixtureTests {
   }
 
   [TestMethod]
+  public void RealBinary_MismatchedPdb_FailsBeforeUsingItsSymbols() {
+    if (!CanRun()) { Assert.Inconclusive("Test data not available."); return; }
+    string wrongPdb = TestDataHelper.GetSymbolFilePath("SignatureTestLib", "testlib.pdb");
+    using var provider = new PdbSymbolProvider();
+    Assert.IsTrue(provider.LoadDebugInfo(wrongPdb));
+
+    var result = NativeAddressDisassembler.Resolve(new NativeAddressDisassemblyRequest {
+      BinaryPath = DllPath, Address = 0x1000, SymbolDebugInfo = provider
+    });
+
+    Assert.IsFalse(result.Success, "A loaded but unrelated PDB must never be accepted.");
+    StringAssert.Contains(result.FailureReason.ToString(), "SymbolIdentity");
+    Assert.AreEqual(0, result.Instructions.Count);
+    var packageResult = FunctionAnalysisPackageBuilder.Build(DllPath, 0x1000, symbolDebugInfo: provider);
+    Assert.IsFalse(packageResult.Success);
+    Assert.IsNull(packageResult.Package);
+  }
+
+  [TestMethod]
   public void RealBinary_ImageIdentityMismatch_FailsExplicitly() {
     if (!CanRun()) { Assert.Inconclusive("Test data not available."); return; }
 

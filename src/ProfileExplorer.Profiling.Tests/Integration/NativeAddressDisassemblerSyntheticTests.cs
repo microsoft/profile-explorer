@@ -77,6 +77,19 @@ public class NativeAddressDisassemblerSyntheticTests {
   }
 
   [TestMethod]
+  public void UndefinedEnumValues_FailExplicitly() {
+    using var fixture = BuildAmd64Fixture();
+    var result = NativeAddressDisassembler.Resolve(new NativeAddressDisassemblyRequest {
+      BinaryPath = fixture.Path, Address = 0x200, AddressForm = (NativeAddressForm)99
+    });
+    Assert.AreEqual(NativeAddressDisassemblyFailure.InvalidAddressForm, result.FailureReason);
+    result = NativeAddressDisassembler.Resolve(new NativeAddressDisassemblyRequest {
+      BinaryPath = fixture.Path, Address = 0x200, FrameKind = (FrameAddressKind)99
+    });
+    Assert.AreEqual(NativeAddressDisassemblyFailure.InvalidFrameKind, result.FailureReason);
+  }
+
+  [TestMethod]
   public void Amd64_ResolvesBoundsFromPdata_AndDisassemblesFunction() {
     using var fixture = BuildAmd64Fixture();
 

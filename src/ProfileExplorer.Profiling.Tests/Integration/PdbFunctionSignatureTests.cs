@@ -4,6 +4,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Profiling.Symbols;
 using ProfileExplorer.Profiling.Tests.Helpers;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace ProfileExplorer.Profiling.Tests.Integration;
 
@@ -35,6 +37,45 @@ public class PdbFunctionSignatureTests {
 
   private static FunctionDebugInfo? FindByName(PdbSymbolProvider provider, string name) {
     return provider.GetSortedFunctions().FirstOrDefault(f => f.Name == name);
+  }
+
+  public class FailingDiaSymbolProxy : DispatchProxy {
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) =>
+      throw new COMException("Malformed DIA argument records.");
+  }
+
+  [TestMethod]
+  public void MissingParameterType_RemainsUnknownRatherThanVoid() {
+    using var provider = new PdbSymbolProvider();
+    var render = typeof(PdbSymbolProvider).GetMethod("RenderTypeName", BindingFlags.NonPublic | BindingFlags.Instance);
+    Assert.IsNotNull(render);
+    Assert.IsNull(render.Invoke(provider, new object?[] { null }));
+  }
+
+  [TestMethod]
+  public void ArgumentEnumerationFailure_PropagatesRatherThanReturningPartialSignature() {
+    using var provider = new PdbSymbolProvider();
+    var enumerate = typeof(PdbSymbolProvider).GetMethod("EnumerateArgumentTypes",
+      BindingFlags.NonPublic | BindingFlags.Instance);
+    Assert.IsNotNull(enumerate);
+    var symbol = DispatchProxy.Create(enumerate.GetParameters()[0].ParameterType, typeof(FailingDiaSymbolProxy));
+    var parameters = new List<ParameterTypeInfo> { new("already-collected", "int") };
+    var exception = Assert.ThrowsException<TargetInvocationException>(() =>
+      enumerate.Invoke(provider, new object[] { symbol, new List<string?>(), parameters }));
+    Assert.IsInstanceOfType<COMException>(exception.InnerException);
+  }
+
+  [TestMethod]
+  public void PdbIdentity_MatchesGuidAndAgeRatherThanFilename() {
+    if (!CanRun()) { Assert.Inconclusive("testlib fixture not available."); return; }
+    using var provider = new PdbSymbolProvider();
+    Assert.IsTrue(provider.LoadDebugInfo(PdbPath));
+    var expected = PEBinaryInfoProvider.GetSymbolFileInfo(DllPath);
+    Assert.IsNotNull(expected);
+    Assert.IsTrue(provider.MatchesIdentity(new SymbolFileDescriptor("renamed.pdb", expected.Id, expected.Age)));
+    Assert.IsFalse(provider.MatchesIdentity(new SymbolFileDescriptor(expected.FileName, Guid.NewGuid(), expected.Age)));
+    Assert.IsFalse(provider.MatchesIdentity(new SymbolFileDescriptor(expected.FileName, expected.Id, expected.Age + 1)));
+    Assert.IsFalse(provider.MatchesIdentity(null));
   }
 
   [TestMethod]

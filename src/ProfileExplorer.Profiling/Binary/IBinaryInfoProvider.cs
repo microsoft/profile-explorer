@@ -57,6 +57,8 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
   public bool IsManagedImage => FileKind == BinaryFileKind.DotNet ||
                                 FileKind == BinaryFileKind.DotNetR2R;
 
+  public BinaryFileDescriptor Clone() => (BinaryFileDescriptor)MemberwiseClone();
+
   public bool Equals(BinaryFileDescriptor other) {
     if (ReferenceEquals(null, other)) {
       return false;

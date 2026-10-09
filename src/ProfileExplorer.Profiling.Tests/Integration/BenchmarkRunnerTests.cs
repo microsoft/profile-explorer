@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProfileExplorer.Core.Binary;
 using ProfileExplorer.Profiling.Symbols;
 using ProfileExplorer.Profiling.Tests.Helpers;
+using System.Reflection.PortableExecutable;
 
 namespace ProfileExplorer.Profiling.Tests.Integration;
 
@@ -48,7 +49,57 @@ public class BenchmarkRunnerTests {
 
   private static ISymbolDebugInfo? LoadPdb(string pdbPath) {
     var provider = new PdbSymbolProvider();
-    return provider.LoadDebugInfo(pdbPath) ? provider : null;
+    if (provider.LoadDebugInfo(pdbPath)) return provider;
+    provider.Dispose();
+    return null;
+  }
+
+  private sealed class TrackingProvider : ISymbolDebugInfo {
+    public bool IsDisposed { get; private set; }
+    public bool ThrowOnLookup { get; init; }
+    public Machine? Architecture => Machine.Amd64;
+    public void Dispose() => IsDisposed = true;
+    public void Unload() { }
+    public IEnumerable<FunctionDebugInfo> EnumerateFunctions() => Array.Empty<FunctionDebugInfo>();
+    public List<FunctionDebugInfo> GetSortedFunctions() => new();
+    public FunctionDebugInfo FindFunction(string name) =>
+      ThrowOnLookup ? throw new InvalidOperationException("lookup failed") : null!;
+    public FunctionDebugInfo FindFunctionByRVA(long rva) => null!;
+    public bool PopulateSourceLines(FunctionDebugInfo info) => false;
+    public SourceFileDebugInfo FindFunctionSourceFilePath(string name) => default;
+    public SourceFileDebugInfo FindSourceFilePathByRVA(long rva) => default;
+    public SourceLineDebugInfo FindSourceLineByRVA(long rva, bool includeInlinees = false) => default;
+  }
+
+  [TestMethod]
+  public void Run_DisposesFactoryProviderOnFailuresAndExceptions() {
+    var provider = new TrackingProvider();
+    var cases = new[] { new BenchmarkCase("missing", "missing.dll", "test.pdb", "absent", SymbolAvailabilityTier.FullPdb) };
+    Assert.IsFalse(BenchmarkRunner.Run(cases, _ => provider).CaseResults[0].Success);
+    Assert.IsTrue(provider.IsDisposed);
+
+    provider = new TrackingProvider { ThrowOnLookup = true };
+    Assert.ThrowsException<InvalidOperationException>(() => BenchmarkRunner.Run(cases, _ => provider));
+    Assert.IsTrue(provider.IsDisposed);
+
+    provider = new TrackingProvider();
+    cases = new[] { cases[0] with { KnownFunctionRva = 0x1000 } };
+    Assert.IsFalse(BenchmarkRunner.Run(cases, _ => provider).CaseResults[0].Success);
+    Assert.IsTrue(provider.IsDisposed);
+  }
+
+  [TestMethod]
+  public void Run_DisposesFactoryProviderAfterSuccessfulAnalysis() {
+    string dll = TestDataHelper.GetBinaryFilePath("SignatureTestLib", "testlib.dll");
+    using var peInfo = new PEBinaryInfoProvider(dll);
+    Assert.IsTrue(peInfo.Initialize());
+    var range = RuntimeFunctionTable.ParseAmd64(peInfo.GetExceptionDirectoryData().Span).First();
+    var provider = new TrackingProvider();
+    var report = BenchmarkRunner.Run(new[] {
+      new BenchmarkCase("success", dll, "test.pdb", "known", SymbolAvailabilityTier.FullPdb, range.StartRva)
+    }, _ => provider);
+    Assert.IsTrue(report.CaseResults[0].Success, report.CaseResults[0].FailureReason);
+    Assert.IsTrue(provider.IsDisposed);
   }
 
   [TestMethod]

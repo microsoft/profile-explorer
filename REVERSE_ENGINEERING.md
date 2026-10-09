@@ -18,7 +18,7 @@ Profile Explorer includes a headless, non-GUI **Function Evidence Generator**: g
 | Live-trace/ETW correlation (module+RVA→function) | ✅ Native | ❌ No |
 | x64/ARM64 disassembly with register semantics | ✅ | ✅ |
 | Control flow graph, dominators, loops | ✅ (per selected function) | ✅ (whole program) |
-| Import/export/API resolution, no PDB required | ✅ | ✅ |
+| Import/export/API resolution, no PDB required | ✅ PE metadata; instruction-reference resolution is x64-only | ✅ |
 | PDB type/signature recovery | ✅ | ✅ (with PDB) |
 | Whole-program analysis, cross-references, data types | ❌ | ✅ |
 | Native decompiler (C-like pseudocode) | ❌ (AI-generated from evidence instead) | ✅ |
@@ -33,10 +33,10 @@ Profile Explorer includes a headless, non-GUI **Function Evidence Generator**: g
 - **Semantic instruction decoding** (x64/ARM64): mnemonic, operands, and the *exact* combined implicit+explicit set of registers each instruction reads and writes (via Capstone, not text parsing).
 - **Control-transfer classification**: call, unconditional jump, conditional branch, return — including cases the underlying disassembler engine doesn't classify by default (e.g. `je`, `b.eq`, `cbz`/`tbz`).
 - **Control flow graph**: basic blocks, successor/predecessor edges, dominators, and natural loop detection — presented as structured text/JSON (never an image) so it's directly usable in an AI prompt.
-- **Reference resolution**: resolves indirect calls through the IAT (e.g. `call qword ptr [rip+N]`) to a real `Module!Function` identity, resolves exports (including forwarders), and classifies data references as ASCII/UTF-16 strings — all from the PE alone, **with or without a PDB**.
+- **Reference resolution**: on x64, resolves RIP-relative instruction references, including indirect calls through the IAT (e.g. `call qword ptr [rip+N]`), to a real `Module!Function` identity or ASCII/UTF-16 string. PE import/export parsing (including forwarder metadata) is also available for ARM64, but connecting ARM64 `ADRP`/`LDR`/`BLR` sequences to IAT entries or strings is not supported. No PDB is required.
 - **Known API facts**: a small, curated table of common Windows/CRT API side effects (allocation, free, lock acquire/release, reference counting, bulk memory ops) attached automatically to a resolved import.
 - **PDB/DIA function signatures**: return type, calling convention, and named/typed parameters, when a full private PDB is available.
-- **Lightweight data flow**: function-local reaching definitions, a narrow constant-propagation check (direct immediate loads only), and bounded backward slicing from any instruction — reports ambiguity honestly at CFG merge points rather than guessing.
+- **Lightweight data flow**: function-local reaching definitions, a narrow constant-propagation check (direct immediate loads only), and bounded backward slicing from any instruction — reports ambiguity honestly at CFG merge points and partial-register writes rather than guessing. Packages include per-register-read definitions/constants and bounded call-site slices; `Full` Markdown renders them alongside register accesses, control-transfer groups, and known API facts.
 - **One evidence package, one call**: `FunctionAnalysisPackage` bundles all of the above for one function, with a ready-to-use Markdown rendering (`ToPromptMarkdown()`) and a fully structured object model for JSON serialization.
 - **Suggested analysis questions**: `ToPromptMarkdown()` (at `Standard`/`Full` detail) appends one targeted question per accuracy dimension — behavior, control flow, calls/APIs, data accesses, loop bounds, error handling, externally visible effects — steering the AI toward a structured, per-aspect answer instead of an open-ended "explain this code," which research on LLM-assisted reverse engineering has found more reliable.
 - **Benchmark/coverage harness**: run a corpus of (binary, function) cases and get coverage metrics stratified by symbol availability, so accuracy claims are never averaged across wildly different scenarios.
@@ -88,12 +88,12 @@ The single biggest driver of evidence quality is **what's available for the targ
 
 | You have | Function bounds | Disassembly + CFG | Register data flow | API/import resolution | Signature & parameter names |
 |---|---|---|---|---|---|
-| **Binary + full private PDB** | ✅ Exact, from symbols | ✅ | ✅ | ✅ | ✅ Full (return type, calling convention, parameter names/types) |
-| **Binary + public-symbols-only PDB** (common for shipped/released binaries you don't own the source for) | ✅ From symbols | ✅ | ✅ | ✅ | ❌ No — public PDBs typically carry no function-type records at all |
-| **Binary, no PDB at all** | ✅ Usually, from `.pdata` (x64/ARM64) — see gotcha below | ✅ | ✅ | ✅ | ❌ No |
+| **Binary + full private PDB** | ✅ Exact, from symbols | ✅ | ✅ | ✅ x64 instruction references; ARM64 PE metadata only | ✅ Full (return type, calling convention, parameter names/types) |
+| **Binary + public-symbols-only PDB** (common for shipped/released binaries you don't own the source for) | ✅ From symbols | ✅ | ✅ | ✅ x64 instruction references; ARM64 PE metadata only | ❌ No — public PDBs typically carry no function-type records at all |
+| **Binary, no PDB at all** | ✅ Usually, from `.pdata` (x64/ARM64) — see gotcha below | ✅ | ✅ | ✅ x64 instruction references; ARM64 PE metadata only | ❌ No |
 | **No binary accessible** (not on disk, and not downloadable from a symbol/binary server) | ❌ | ❌ | ❌ | ❌ | ❌ — nothing is possible; the address stays an opaque `module!<unknown+0xRVA>` |
 
-The practical takeaway: **getting the raw binary matters more than getting the PDB.** A binary with no PDB still gets full disassembly, CFG, and (crucially) resolved API calls/strings — often enough to write accurate pseudocode. No binary at all means nothing beyond the bare address.
+The practical takeaway: **getting the raw binary matters more than getting the PDB.** A binary with no PDB still gets disassembly and CFG; on x64 it also gets resolved RIP-relative API calls/strings. No binary at all means nothing beyond the bare address.
 
 ## Limitations
 
@@ -113,4 +113,5 @@ The practical takeaway: **getting the raw binary matters more than getting the P
 - **x64 and ARM64 both use a single unified calling convention.** `__stdcall`/`__fastcall` source annotations are no-ops on 64-bit targets, so don't be surprised when the recovered calling convention always reads `__cdecl`-equivalent there — x86 is the only architecture where the distinction is real.
 - **Return addresses need `FrameAddressKind.ReturnAddress`, not `InstructionPointer`.** An address taken from a stack frame's return slot points *after* the call, not at the instruction that matters — pass the right `FrameAddressKind` or normalization/attribution will be off by one instruction.
 - **A binary you fetch may not exactly match the one that produced your trace/stack.** Always pass the expected image identity (timestamp/size) when you have it, so a mismatched binary fails loudly instead of producing confidently-wrong analysis.
+- **A supplied `PdbSymbolProvider` must match the PE's CodeView GUID/age.** A mismatched PDB, or a PDB whose identity cannot be verified, fails with `SymbolIdentityMismatch` before its symbols are used. Custom `ISymbolDebugInfo` implementations must ensure their own symbols match the binary.
 - **Absence of evidence is reported, not hidden.** Every package includes a `Facts` list with explicit notes like "no PDB signature available" or "block ends in an unresolved indirect call" — read it. A clean-looking package with no facts about missing data is more trustworthy than one that silently omitted the gaps.

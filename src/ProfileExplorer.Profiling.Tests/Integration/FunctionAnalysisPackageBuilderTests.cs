@@ -33,11 +33,13 @@ public class FunctionAnalysisPackageBuilderTests {
   //   .pdata one RUNTIME_FUNCTION entry covering the whole .text range (bounds fallback, no PDB).
   //   .idata standard import descriptor/ILT/IAT/name layout (same shape as ReferenceResolverTests).
   // ---------------------------------------------------------------------------------------------
-  private static (SyntheticPeFile Fixture, int TextRva, long IatRva) BuildFixture() {
+  private static (SyntheticPeFile Fixture, int TextRva, long IatRva) BuildFixture(byte[]? prefix = null) {
     const string moduleName = "NTOSKRNL.EXE";
     const string functionName = "ExAllocatePool2";
 
-    var textBytes = new byte[7]; // call (6 bytes) + ret (1 byte).
+    prefix ??= Array.Empty<byte>();
+    var textBytes = new byte[prefix.Length + 7];
+    prefix.CopyTo(textBytes, 0);
 
     int importByNameOffset = 72;
     int importByNameSize = 2 + functionName.Length + 1;
@@ -66,12 +68,12 @@ public class FunctionAnalysisPackageBuilderTests {
     WriteAsciiZ(idataBytes, importByNameOffset + 2, functionName);
     WriteAsciiZ(idataBytes, moduleNameOffset, moduleName);
 
-    long instrEndRva = textRva + 6;
+    long instrEndRva = textRva + prefix.Length + 6;
     int disp32 = (int)(iatRva - instrEndRva);
-    textBytes[0] = 0xFF;
-    textBytes[1] = 0x15;
-    BitConverter.GetBytes(disp32).CopyTo(textBytes, 2);
-    textBytes[6] = 0xC3; // ret
+    textBytes[prefix.Length] = 0xFF;
+    textBytes[prefix.Length + 1] = 0x15;
+    BitConverter.GetBytes(disp32).CopyTo(textBytes, prefix.Length + 2);
+    textBytes[prefix.Length + 6] = 0xC3; // ret
 
     BitConverter.GetBytes((uint)textRva).CopyTo(pdataBytes, 0);
     BitConverter.GetBytes((uint)(textRva + textBytes.Length)).CopyTo(pdataBytes, 4);
@@ -141,6 +143,11 @@ public class FunctionAnalysisPackageBuilderTests {
     StringAssert.Contains(promptText, "### Basic Blocks");
     StringAssert.Contains(promptText, "NTOSKRNL.EXE!ExAllocatePool2");
     StringAssert.Contains(promptText, "```text");
+    StringAssert.Contains(promptText, "groups=Call");
+    StringAssert.Contains(promptText, "read=[");
+    StringAssert.Contains(promptText, "write=[");
+    StringAssert.Contains(promptText, "MemoryAllocation");
+    StringAssert.Contains(promptText, call.MemoryReference.ApiFact.Summary);
   }
 
   /// <summary>
@@ -210,6 +217,34 @@ public class FunctionAnalysisPackageBuilderTests {
     string compactMarkdown = compactResult.Package!.ToPromptMarkdown();
     Assert.IsFalse(compactMarkdown.Contains("Suggested Analysis Questions"),
       "Compact detail level should omit the suggested-questions section to respect a minimal context budget.");
+  }
+
+  [TestMethod]
+  public void Build_ExportsDataFlowDefinitionsConstantsAndCallSlices() {
+    byte[] prefix = {
+      0xB8, 0x10, 0, 0, 0, // mov eax, 0x10
+      0x48, 0x89, 0xC3    // mov rbx, rax
+    };
+    var (fixture, rva, _) = BuildFixture(prefix);
+    using var _ = fixture;
+    var result = FunctionAnalysisPackageBuilder.Build(fixture.Path, rva,
+      detailLevel: FunctionAnalysisDetailLevel.Full);
+    Assert.IsTrue(result.Success, result.ErrorMessage);
+    var package = result.Package!;
+    Assert.AreEqual("1.1", package.FormatVersion);
+    Assert.AreEqual(package.Instructions.Count, package.DataFlow.Count);
+    var read = package.DataFlow.Single(i => i.InstructionRva == rva + 5).Reads.Single();
+    Assert.AreEqual("rax", read.Register);
+    Assert.AreEqual(ReachingDefinitionState.Unique, read.State);
+    Assert.AreEqual((long)rva, read.DefiningInstructionRva);
+    Assert.AreEqual(0x10L, read.ConstantValue);
+    var callSlice = package.DataFlow.Single(i => i.InstructionRva == rva + prefix.Length);
+    Assert.IsNotNull(callSlice.BackwardSliceRvas);
+    Assert.IsFalse(callSlice.SliceWasTruncated);
+    StringAssert.Contains(package.ToPromptMarkdown(), "rax: Unique");
+    StringAssert.Contains(package.ToPromptMarkdown(), "constant=0x10");
+    StringAssert.Contains(package.ToPromptMarkdown(), "call backward slice=");
+    StringAssert.Contains(System.Text.Json.JsonSerializer.Serialize(package), "\"ConstantValue\":16");
   }
 
   [TestMethod]

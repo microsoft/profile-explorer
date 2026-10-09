@@ -169,6 +169,26 @@ public static class FunctionAnalysisPackageBuilder {
       b.Id, b.StartRva, b.EndRva, b.SuccessorIds.ToList(), b.PredecessorIds.ToList(),
       b.IsExit, b.EndsInReturn, b.EndsInUnresolvedIndirectTransfer, b.EndsInOutOfRangeTransfer)).ToList();
 
+    var dataFlow = FunctionDataFlowAnalysis.Build(cfg, addressResult.Architecture!.Value);
+    var analyzedDataFlow = new List<InstructionDataFlowEvidence>(dataFlow.InstructionCount);
+    for (int index = 0; index < dataFlow.InstructionCount; index++) {
+      var instruction = dataFlow.GetInstruction(index);
+      var reads = new List<RegisterDataFlowEvidence>();
+      foreach (string register in instruction.RegistersRead) {
+        var definition = dataFlow.GetReachingDefinition(index, register);
+        long? definingRva = definition.DefiningInstructionIndex is int definingIndex
+          ? dataFlow.GetInstruction(definingIndex).Rva : null;
+        long? constant = dataFlow.TryGetConstantValue(index, register, out long value) ? value : null;
+        reads.Add(new RegisterDataFlowEvidence(register, definition.State, definingRva, constant));
+      }
+
+      bool truncated = false;
+      IReadOnlyList<long>? slice = instruction.IsCall
+        ? dataFlow.BackwardSlice(index, 64, out truncated).Select(i => dataFlow.GetInstruction(i).Rva).ToList()
+        : null;
+      analyzedDataFlow.Add(new InstructionDataFlowEvidence(instruction.Rva, reads, slice, truncated));
+    }
+
     // Explicit, honest facts -- absence of evidence is itself evidence (plan design principle).
     facts.Add(new EvidenceNote($"Function bounds resolved via {range.Provenance}.",
       range.Provenance == FunctionBoundaryProvenance.PdbSymbols ? EvidenceProvenance.Pdb : EvidenceProvenance.PeMetadata,
@@ -213,6 +233,7 @@ public static class FunctionAnalysisPackageBuilder {
       Instructions = analyzedInstructions,
       Blocks = analyzedBlocks,
       Loops = cfg.Loops,
+      DataFlow = analyzedDataFlow,
       Facts = facts,
       DetailLevel = detailLevel
     };

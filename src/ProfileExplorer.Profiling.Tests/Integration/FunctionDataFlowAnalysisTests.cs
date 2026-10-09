@@ -142,6 +142,105 @@ public class FunctionDataFlowAnalysisTests {
   }
 
   [TestMethod]
+  public void RegisterAliases_ZeroExtensionAndPartialWrites_AreConservative() {
+    byte[] text = {
+      0xB8, 0xFF, 0xFF, 0xFF, 0xFF, // mov eax, 0xffffffff
+      0x48, 0x89, 0xC3,             // mov rbx, rax
+      0xB0, 0x02,                   // mov al, 2
+      0x48, 0x89, 0xC1,             // mov rcx, rax
+      0xC3
+    };
+    using var fixture = BuildFixture(text, "SyntheticRegisterAliases.dll");
+    int rva = TextRva(text);
+    using var disasm = Disassembler.CreateForBinary(fixture.Path, null, null, enableSemanticDetail: true);
+    var cfg = FunctionControlFlowGraph.Build(disasm!.DisassembleToSemanticList(rva, text.Length),
+      rva, rva + text.Length);
+    var analysis = FunctionDataFlowAnalysis.Build(cfg!);
+
+    Assert.AreEqual(ReachingDefinition.Unique(0), analysis.GetReachingDefinition(1, "RAX"));
+    Assert.IsTrue(analysis.TryGetConstantValue(1, "rax", out long value));
+    Assert.AreEqual(0xFFFF_FFFFL, value);
+    Assert.AreEqual(ReachingDefinition.Ambiguous, analysis.GetReachingDefinition(3, "rax"));
+    Assert.IsFalse(analysis.TryGetConstantValue(3, "rax", out _));
+    Assert.AreEqual(ReachingDefinition.Unique(2), analysis.GetReachingDefinition(3, "al"));
+    Assert.IsTrue(analysis.TryGetConstantValue(3, "al", out value));
+    Assert.AreEqual(2L, value);
+    Assert.AreEqual(ReachingDefinition.Unique(0), analysis.GetReachingDefinition(3, "ah"));
+  }
+
+  [TestMethod]
+  public void Arm64RegisterAliases_WritesZeroExtendAndCallsClobberVolatileValues() {
+    var instructions = new[] {
+      new SemanticInstruction { Rva = 0, Size = 4, Mnemonic = "mov", OperandText = "w0, #0xffffffff",
+        RegistersWritten = new[] { "w0" } },
+      new SemanticInstruction { Rva = 4, Size = 4, RegistersRead = new[] { "x0" } },
+      new SemanticInstruction { Rva = 8, Size = 4, Groups = InstructionGroupFlags.Call },
+      new SemanticInstruction { Rva = 12, Size = 4, RegistersRead = new[] { "x0" } }
+    };
+    var analysis = FunctionDataFlowAnalysis.Build(FunctionControlFlowGraph.Build(instructions, 0, 16)!, Machine.Arm64);
+    Assert.AreEqual(ReachingDefinition.Unique(0), analysis.GetReachingDefinition(1, "x0"));
+    Assert.IsTrue(analysis.TryGetConstantValue(1, "x0", out long value));
+    Assert.AreEqual(0xFFFF_FFFFL, value);
+    Assert.AreEqual(ReachingDefinition.Ambiguous, analysis.GetReachingDefinition(3, "x0"));
+    Assert.IsFalse(analysis.TryGetConstantValue(3, "x0", out _));
+  }
+
+  [TestMethod]
+  public void Arm64RegisterAliases_FramePointerLinkAndStackPointerNamesShareDefinitions() {
+    var instructions = new[] {
+      new SemanticInstruction { Rva = 0, Size = 4, RegistersWritten = new[] { "x29", "x30", "wsp" } },
+      new SemanticInstruction { Rva = 4, Size = 4, RegistersRead = new[] { "fp", "lr", "sp" } }
+    };
+    var analysis = FunctionDataFlowAnalysis.Build(FunctionControlFlowGraph.Build(instructions, 0, 8)!, Machine.Arm64);
+    foreach (string register in new[] { "fp", "lr", "sp" }) {
+      Assert.AreEqual(ReachingDefinition.Unique(0), analysis.GetReachingDefinition(1, register));
+    }
+  }
+
+  [TestMethod]
+  public void RegisterAliases_CfgMergeAndPartialWrites_DoNotInventConstants() {
+    var instructions = new[] {
+      new SemanticInstruction { Rva = 0, Size = 1, Groups = InstructionGroupFlags.ConditionalBranch, TargetRva = 3 },
+      new SemanticInstruction { Rva = 1, Size = 1, Mnemonic = "mov", OperandText = "eax, 1", RegistersWritten = new[] { "eax" } },
+      new SemanticInstruction { Rva = 2, Size = 1, Groups = InstructionGroupFlags.UnconditionalJump, TargetRva = 4 },
+      new SemanticInstruction { Rva = 3, Size = 1, Mnemonic = "mov", OperandText = "ax, 2", RegistersWritten = new[] { "ax" } },
+      new SemanticInstruction { Rva = 4, Size = 1, RegistersRead = new[] { "rax", "ax" } }
+    };
+    var analysis = FunctionDataFlowAnalysis.Build(FunctionControlFlowGraph.Build(instructions, 0, 5)!);
+    Assert.AreEqual(ReachingDefinition.Ambiguous, analysis.GetReachingDefinition(4, "rax"));
+    Assert.AreEqual(ReachingDefinition.Ambiguous, analysis.GetReachingDefinition(4, "ax"));
+    Assert.IsFalse(analysis.TryGetConstantValue(4, "rax", out _));
+  }
+
+  [TestMethod]
+  public void X64CallClobbersVolatileRegisters_ButPreservesNonvolatileDefinitions() {
+    var instructions = new[] {
+      new SemanticInstruction { Rva = 0, Size = 1, Mnemonic = "mov", OperandText = "eax, 1", RegistersWritten = new[] { "eax" } },
+      new SemanticInstruction { Rva = 1, Size = 1, Mnemonic = "mov", OperandText = "ebx, 2", RegistersWritten = new[] { "ebx" } },
+      new SemanticInstruction { Rva = 2, Size = 1, Groups = InstructionGroupFlags.Call },
+      new SemanticInstruction { Rva = 3, Size = 1, RegistersRead = new[] { "rax", "rbx" } }
+    };
+    var analysis = FunctionDataFlowAnalysis.Build(FunctionControlFlowGraph.Build(instructions, 0, 4)!);
+    Assert.AreEqual(ReachingDefinition.Ambiguous, analysis.GetReachingDefinition(3, "rax"));
+    Assert.IsFalse(analysis.TryGetConstantValue(3, "rax", out _));
+    Assert.AreEqual(ReachingDefinition.Unique(1), analysis.GetReachingDefinition(3, "rbx"));
+  }
+
+  [TestMethod]
+  public void BackwardSlice_MultipleDependencies_NeverExceedsBound() {
+    var instructions = new[] {
+      new SemanticInstruction { Rva = 0, Size = 1, RegistersWritten = new[] { "eax" } },
+      new SemanticInstruction { Rva = 1, Size = 1, RegistersWritten = new[] { "ebx" } },
+      new SemanticInstruction { Rva = 2, Size = 1, RegistersRead = new[] { "eax", "ebx" } }
+    };
+    var analysis = FunctionDataFlowAnalysis.Build(FunctionControlFlowGraph.Build(instructions, 0, 3)!);
+    Assert.AreEqual(2, analysis.BackwardSlice(2, 2, out bool truncated).Count);
+    Assert.IsTrue(truncated);
+    Assert.AreEqual(3, analysis.BackwardSlice(2, 3, out truncated).Count);
+    Assert.IsFalse(truncated);
+  }
+
+  [TestMethod]
   public void BackwardSlice_RespectsMaxInstructionsBound() {
     var text = BuildChainText();
     using var fixture = BuildFixture(text, "SyntheticDataFlowBounded.dll");

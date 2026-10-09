@@ -111,11 +111,9 @@ public static class BenchmarkRunner {
 
   private static BenchmarkCaseResult RunOne(BenchmarkCase benchmarkCase,
                                             Func<string, ISymbolDebugInfo?>? symbolProviderFactory) {
-    ISymbolDebugInfo? symbolDebugInfo = null;
-
-    if (benchmarkCase.PdbPath != null && symbolProviderFactory != null) {
-      symbolDebugInfo = symbolProviderFactory(benchmarkCase.PdbPath);
-    }
+    using ISymbolDebugInfo? symbolDebugInfo =
+      benchmarkCase.PdbPath != null && symbolProviderFactory != null
+        ? symbolProviderFactory(benchmarkCase.PdbPath) : null;
 
     long? functionRva = benchmarkCase.KnownFunctionRva;
 

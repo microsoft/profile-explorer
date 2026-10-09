@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Dia2Lib;
 using ProfileExplorer.Core.Binary;
 
@@ -59,6 +60,21 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
 
   /// <summary>Processor architecture is not derived from the PDB; resolved elsewhere.</summary>
   public Machine? Architecture => null;
+
+  /// <summary>Verifies the loaded PDB against the PE's CodeView GUID/age; filenames may differ.</summary>
+  public bool MatchesIdentity(SymbolFileDescriptor? expected) {
+    if (expected == null || globalSymbol_ == null) {
+      return false;
+    }
+
+    try {
+      return globalSymbol_.guid == expected.Id && globalSymbol_.age == (uint)expected.Age;
+    }
+    catch (COMException ex) {
+      Trace.TraceError($"Failed to read PDB identity from {debugFilePath_}: {ex.Message}");
+      return false;
+    }
+  }
 
   public bool LoadDebugInfo(string debugFilePath, SymbolFileDescriptor? cacheKey = null,
                             string? cacheDirectory = null, bool enumerateImmediately = true) {
@@ -185,7 +201,7 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
 
       try {
         returnType = functionType.type;
-        returnTypeName = RenderTypeName(returnType);
+        returnTypeName = returnType == null ? "void" : RenderTypeName(returnType);
       }
       finally {
         if (returnType != null) Marshal.ReleaseComObject(returnType);
@@ -201,8 +217,9 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
 
       return new FunctionTypeInfo(returnTypeName, callingConvention, parameters);
     }
-    catch {
-      return null; // DIA COM calls can throw on malformed/unusual PDB records -- fail closed.
+    catch (COMException ex) {
+      Trace.TraceError($"Failed to read PDB signature at RVA 0x{funcInfo.StartRVA:X}: {ex.Message}");
+      return null;
     }
     finally {
       if (functionType != null) Marshal.ReleaseComObject(functionType);
@@ -248,8 +265,9 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
         Marshal.ReleaseComObject(enumSyms);
       }
     }
-    catch {
-      // Leave names empty -- parameters are still reported, just without names.
+    catch (COMException ex) {
+      names.Clear();
+      Trace.TraceWarning($"PDB parameter names unavailable: {ex.Message}");
     }
   }
 
@@ -262,49 +280,50 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
   /// </summary>
   private void EnumerateArgumentTypes(IDiaSymbol functionType, List<string?> parameterNames,
                                       List<ParameterTypeInfo> parameters) {
+    functionType.findChildren(SymTagEnum.SymTagFunctionArgType, null, 0, out var enumSyms);
+
+    if (enumSyms == null) {
+      return;
+    }
+
     try {
-      functionType.findChildren(SymTagEnum.SymTagFunctionArgType, null, 0, out var enumSyms);
+      int index = 0;
 
-      if (enumSyms == null) {
-        return;
-      }
+      while (true) {
+        enumSyms.Next(1, out var argType, out uint fetched);
 
-      try {
-        int index = 0;
+        if (fetched == 0) {
+          break;
+        }
 
-        while (true) {
-          enumSyms.Next(1, out var argType, out uint fetched);
-
-          if (fetched == 0) {
-            break;
-          }
+        try {
+          IDiaSymbol? paramType = null;
 
           try {
-            IDiaSymbol? paramType = null;
-
-            try {
-              paramType = argType.type; // SymTagFunctionArgType wraps the real parameter type.
-              string? typeName = RenderTypeName(paramType);
-              string? name = index < parameterNames.Count ? parameterNames[index] : null;
-              parameters.Add(new ParameterTypeInfo(name, typeName));
-            }
-            finally {
-              if (paramType != null) Marshal.ReleaseComObject(paramType);
-            }
-
-            index++;
+            paramType = argType.type; // SymTagFunctionArgType wraps the real parameter type.
+            string? typeName = RenderTypeName(paramType);
+            string? name = index < parameterNames.Count ? parameterNames[index] : null;
+            parameters.Add(new ParameterTypeInfo(name, typeName));
           }
           finally {
-            Marshal.ReleaseComObject(argType);
+            if (paramType != null) Marshal.ReleaseComObject(paramType);
           }
+
+          index++;
+        }
+        finally {
+          Marshal.ReleaseComObject(argType);
         }
       }
-      finally {
-        Marshal.ReleaseComObject(enumSyms);
-      }
     }
-    catch {
-      // Leave parameters as whatever was collected before the failure -- partial info beats none.
+    finally {
+      Marshal.ReleaseComObject(enumSyms);
+    }
+
+    if (parameterNames.Count != parameters.Count) {
+      for (int i = 0; i < parameters.Count; i++) {
+        parameters[i] = parameters[i] with { Name = null };
+      }
     }
   }
 
@@ -317,7 +336,7 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
   /// </summary>
   private string? RenderTypeName(IDiaSymbol? type) {
     if (type == null) {
-      return "void"; // A null return-type symbol conventionally means "void" in DIA.
+      return null;
     }
 
     try {
@@ -332,7 +351,8 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
 
           try {
             pointee = type.type;
-            return $"{RenderTypeName(pointee) ?? "void"}*";
+            string? pointeeName = RenderTypeName(pointee);
+            return pointeeName == null ? null : $"{pointeeName}*";
           }
           finally {
             if (pointee != null) Marshal.ReleaseComObject(pointee);
@@ -344,7 +364,8 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
 
           try {
             elementType = type.type;
-            string elementName = RenderTypeName(elementType) ?? "void";
+            string? elementName = RenderTypeName(elementType);
+            if (elementName == null) return null;
             ulong elementLength = elementType?.length ?? 0;
             long count = elementLength > 0 ? (long)(type.length / elementLength) : 0;
             return $"{elementName}[{count}]";

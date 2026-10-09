@@ -326,6 +326,11 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   /// (module names, function names) which are always plain ASCII per the PE spec.
   /// </summary>
   public bool TryReadNullTerminatedAsciiString(long rva, int maxLength, out string? value) {
+    value = null;
+    if (maxLength <= 0) {
+      return false;
+    }
+
     if (!TryFindContainingSection(rva, out var sectionData, out long sectionStartRva)) {
       value = null;
       return false;
@@ -340,10 +345,14 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
     var span = sectionData.Span;
     int end = offset;
-    int limit = Math.Min(sectionData.Length, offset + maxLength);
+    int limit = offset + Math.Min(sectionData.Length - offset, maxLength);
 
     while (end < limit && span[end] != 0) {
       end++;
+    }
+
+    if (end == limit) {
+      return false;
     }
 
     value = Encoding.ASCII.GetString(span.Slice(offset, end - offset));
@@ -357,6 +366,11 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
   /// <see cref="ReferenceResolver"/> to classify a data reference as a string.
   /// </summary>
   public bool TryReadNullTerminatedUtf16String(long rva, int maxLength, out string? value) {
+    value = null;
+    if (maxLength <= 0) {
+      return false;
+    }
+
     if (!TryFindContainingSection(rva, out var sectionData, out long sectionStartRva)) {
       value = null;
       return false;
@@ -372,9 +386,9 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
 
     var span = sectionData.Span;
     int end = offset;
-    int limitBytes = Math.Min(sectionData.Length - 1, offset + maxLength * 2);
+    int limitBytes = offset + Math.Min((sectionData.Length - offset) / 2, maxLength) * 2;
 
-    while (end + 1 <= limitBytes) {
+    while (end < limitBytes) {
       int unit = span[end] | (span[end + 1] << 8);
 
       if (unit == 0) {
@@ -382,6 +396,10 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
       }
 
       end += 2;
+    }
+
+    if (end == limitBytes) {
+      return false;
     }
 
     value = Encoding.Unicode.GetString(span.Slice(offset, end - offset));

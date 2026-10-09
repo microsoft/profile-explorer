@@ -50,9 +50,15 @@ public static class NativeAddressDisassemblyService {
       };
     }
 
+    if (located.IsApproximateMatch || located.BinaryFile == null) {
+      return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.ImageIdentityMismatch,
+        $"Binary lookup for {identity.ImageName} returned an approximate or unverified match; " +
+        "refusing to disassemble it.", located.FilePath);
+    }
+
     return NativeAddressDisassembler.Resolve(new NativeAddressDisassemblyRequest {
       BinaryPath = located.FilePath,
-      ExpectedImageIdentity = identity,
+      ExpectedImageIdentity = located.BinaryFile,
       Address = address,
       AddressForm = addressForm,
       FrameKind = frameKind,

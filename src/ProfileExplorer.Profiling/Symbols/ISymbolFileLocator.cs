@@ -25,6 +25,10 @@ public interface ISymbolFileLocator {
   /// <param name="ct">Cancellation token.</param>
   Task<string?> FindSymbolFileAsync(string pdbName, Guid guid, int age, CancellationToken ct = default);
 
+  /// <summary>Locate a binary by its on-disk name and PE timestamp/size.</summary>
+  Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
+                                    CancellationToken ct = default);
+
   /// <summary>
   /// Locate a binary/executable for the given PE identity, returning a local file path or
   /// <c>null</c> if it cannot be found.
@@ -41,6 +45,14 @@ public interface ISymbolFileLocator {
   /// unknown.
   /// </param>
   /// <param name="ct">Cancellation token.</param>
-  Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                    string? originalFileName = null, CancellationToken ct = default);
+  async Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
+                                          string? originalFileName, CancellationToken ct = default) {
+    string? result = await FindBinaryFileAsync(binaryName, timeDateStamp, imageSize, ct).ConfigureAwait(false);
+    if (result == null && !string.IsNullOrEmpty(originalFileName) &&
+        !string.Equals(originalFileName, binaryName, StringComparison.OrdinalIgnoreCase)) {
+      result = await FindBinaryFileAsync(originalFileName, timeDateStamp, imageSize, ct).ConfigureAwait(false);
+    }
+
+    return result;
+  }
 }

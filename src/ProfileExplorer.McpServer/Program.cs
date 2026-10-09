@@ -689,11 +689,13 @@ public static class ProfileTools
     if (!TryParseAddress(address, out long parsedAddress))
       return Error("DisassembleAddress", $"Could not parse address '{address}' (expected hex like '0x1400' or decimal).");
 
-    if (!Enum.TryParse<NativeAddressForm>(addressForm, ignoreCase: true, out var parsedAddressForm))
+    if (!Enum.TryParse<NativeAddressForm>(addressForm, ignoreCase: true, out var parsedAddressForm) ||
+        !Enum.IsDefined(parsedAddressForm))
       return Error("DisassembleAddress",
         $"Invalid addressForm '{addressForm}'. Expected 'ModuleRva' or 'AbsoluteInstructionPointer'.");
 
-    if (!Enum.TryParse<FrameAddressKind>(frameKind, ignoreCase: true, out var parsedFrameKind))
+    if (!Enum.TryParse<FrameAddressKind>(frameKind, ignoreCase: true, out var parsedFrameKind) ||
+        !Enum.IsDefined(parsedFrameKind))
       return Error("DisassembleAddress",
         $"Invalid frameKind '{frameKind}'. Expected 'InstructionPointer' or 'ReturnAddress'.");
 

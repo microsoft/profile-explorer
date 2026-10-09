@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection.PortableExecutable;
 using ProfileExplorer.Core.Providers;
+using ProfileExplorer.Profiling.Symbols;
 
 namespace ProfileExplorer.Core.Binary;
 
@@ -68,7 +69,10 @@ public enum NativeAddressDisassemblyFailure {
   RvaNotInCodeSection,
   FunctionBoundsNotResolved,
   DisassemblyProducedNoInstructions,
-  DisassemblerInitializationFailed
+  DisassemblerInitializationFailed,
+  InvalidAddressForm,
+  InvalidFrameKind,
+  SymbolIdentityMismatch
 }
 
 /// <summary>
@@ -210,6 +214,16 @@ public static class NativeAddressDisassembler {
   public static NativeAddressDisassemblyResult Resolve(NativeAddressDisassemblyRequest request) {
     ArgumentNullException.ThrowIfNull(request);
 
+    if (!Enum.IsDefined(request.AddressForm)) {
+      return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.InvalidAddressForm,
+        $"Unknown address form: {request.AddressForm}.");
+    }
+
+    if (!Enum.IsDefined(request.FrameKind)) {
+      return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.InvalidFrameKind,
+        $"Unknown frame kind: {request.FrameKind}.");
+    }
+
     if (string.IsNullOrWhiteSpace(request.BinaryPath)) {
       return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.BinaryPathInvalid,
         "BinaryPath is null, empty, or whitespace.");
@@ -238,6 +252,13 @@ public static class NativeAddressDisassembler {
       return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.ImageIdentityMismatch,
         $"Expected image identity ({request.ExpectedImageIdentity}) does not match the binary on disk " +
         $"({binaryInfo}).", request.BinaryPath, binaryInfo.Architecture);
+    }
+
+    if (request.SymbolDebugInfo is PdbSymbolProvider pdbProvider &&
+        !pdbProvider.MatchesIdentity(peInfo.SymbolFileInfo)) {
+      return NativeAddressDisassemblyResult.Failure(NativeAddressDisassemblyFailure.SymbolIdentityMismatch,
+        "The supplied PDB's GUID/age does not match the binary's CodeView record, or its identity " +
+        "could not be verified.", request.BinaryPath, binaryInfo.Architecture);
     }
 
     if (binaryInfo.Architecture != Machine.Amd64 && binaryInfo.Architecture != Machine.Arm64) {

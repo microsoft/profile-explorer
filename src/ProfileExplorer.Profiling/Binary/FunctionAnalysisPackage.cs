@@ -43,6 +43,14 @@ public sealed record AnalyzedBasicBlock(int Id, long StartRva, long EndRva, IRea
                                         IReadOnlyList<int> PredecessorIds, bool IsExit, bool EndsInReturn,
                                         bool EndsInUnresolvedIndirectTransfer, bool EndsInOutOfRangeTransfer);
 
+public sealed record RegisterDataFlowEvidence(
+  string Register, ReachingDefinitionState State, long? DefiningInstructionRva, long? ConstantValue);
+
+/// <summary>Per-read reaching definitions and bounded call-site backward slices, using instruction RVAs.</summary>
+public sealed record InstructionDataFlowEvidence(
+  long InstructionRva, IReadOnlyList<RegisterDataFlowEvidence> Reads,
+  IReadOnlyList<long>? BackwardSliceRvas, bool SliceWasTruncated);
+
 /// <summary>
 /// The reverse-engineering enhancement plan's "Function Evidence Generator" output: a versioned,
 /// self-contained package of static facts about one caller-selected function, assembled from
@@ -54,7 +62,7 @@ public sealed record AnalyzedBasicBlock(int Id, long StartRva, long EndRva, IRea
 /// </summary>
 public sealed class FunctionAnalysisPackage {
   /// <summary>Schema version -- bump when the shape changes in a way a consumer should react to.</summary>
-  public string FormatVersion { get; init; } = "1.0";
+  public string FormatVersion { get; init; } = "1.1";
 
   public string? ModuleName { get; init; }
   public string? ImagePath { get; init; }
@@ -75,6 +83,7 @@ public sealed class FunctionAnalysisPackage {
   public IReadOnlyList<AnalyzedInstruction> Instructions { get; init; } = Array.Empty<AnalyzedInstruction>();
   public IReadOnlyList<AnalyzedBasicBlock> Blocks { get; init; } = Array.Empty<AnalyzedBasicBlock>();
   public IReadOnlyList<NaturalLoop> Loops { get; init; } = Array.Empty<NaturalLoop>();
+  public IReadOnlyList<InstructionDataFlowEvidence> DataFlow { get; init; } = Array.Empty<InstructionDataFlowEvidence>();
 
   /// <summary>Explicit facts, gaps, and warnings -- e.g. "no PDB signature available", "block 3 ends
   /// in an unresolved indirect call". Absence of evidence is itself evidence; see the plan's design
@@ -167,11 +176,38 @@ public sealed class FunctionAnalysisPackage {
               ? $"  ; -> {mr.Name ?? mr.Text ?? mr.Kind.ToString()}"
               : "";
 
-          sb.AppendLine($"+0x{instr.Rva:X6}  {instr.Mnemonic} {instr.OperandText}{target}");
+          string registers = instr.HasRegisterAccessDetail
+            ? $"read=[{string.Join(",", instr.RegistersRead)}], write=[{string.Join(",", instr.RegistersWritten)}]"
+            : "register access unavailable";
+          sb.AppendLine($"+0x{instr.Rva:X6}  {instr.Mnemonic} {instr.OperandText}{target} " +
+                        $"; groups={instr.Groups}; {registers}");
+          if (instr.MemoryReference?.ApiFact is { } apiFact) {
+            sb.AppendLine($"  ; API [{apiFact.Category}]: {apiFact.Summary}");
+          }
         }
 
         sb.AppendLine("```");
       }
+    }
+
+    if (DetailLevel == FunctionAnalysisDetailLevel.Full && DataFlow.Count > 0) {
+      sb.AppendLine();
+      sb.AppendLine("### Register Data Flow");
+      sb.AppendLine();
+      sb.AppendLine("```text");
+      foreach (var instruction in DataFlow) {
+        foreach (var read in instruction.Reads) {
+          string definition = read.DefiningInstructionRva is long rva ? $" <- +0x{rva:X6}" : "";
+          string constant = read.ConstantValue is long value ? $" (constant=0x{value:X})" : "";
+          sb.AppendLine($"+0x{instruction.InstructionRva:X6}: {read.Register}: {read.State}{definition}{constant}");
+        }
+        if (instruction.BackwardSliceRvas is { } slice) {
+          sb.AppendLine($"+0x{instruction.InstructionRva:X6}: call backward slice=" +
+                        $"[{string.Join(",", slice.Select(rva => $"+0x{rva:X6}"))}]" +
+                        (instruction.SliceWasTruncated ? " (truncated at instruction limit)" : ""));
+        }
+      }
+      sb.AppendLine("```");
     }
 
     if (DetailLevel != FunctionAnalysisDetailLevel.Compact) {

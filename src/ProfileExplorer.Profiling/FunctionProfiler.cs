@@ -668,7 +668,7 @@ public class FunctionProfiler : IDisposable {
       Task.FromResult<string?>(null);
 
     public Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                             string? originalFileName = null, CancellationToken ct = default) =>
+                                             CancellationToken ct = default) =>
       Task.FromResult<string?>(null);
   }
 

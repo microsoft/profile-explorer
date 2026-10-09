@@ -26,19 +26,3 @@ extern "C" __declspec(dllexport) void __cdecl CopyBuffer(char* destination, cons
         destination[i] = source[i];
     }
 }
-
-
-// Simple functions with known, verifiable signatures for PDB type-extraction testing.
-extern "C" __declspec(dllexport) int __cdecl AddIntegers(int a, int b) {
-    return a + b;
-}
-
-extern "C" __declspec(dllexport) double __stdcall ComputeRatio(double numerator, double denominator, int scale) {
-    return (numerator / denominator) * scale;
-}
-
-extern "C" __declspec(dllexport) void __cdecl CopyBuffer(char* destination, const char* source, unsigned int length) {
-    for (unsigned int i = 0; i < length; i++) {
-        destination[i] = source[i];
-    }
-}

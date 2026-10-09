@@ -221,6 +221,32 @@ public class ReferenceResolverTests {
   }
 
   [TestMethod]
+  public void NullTerminatedReaders_RejectTruncationAndSectionBoundary() {
+    var data = Enumerable.Repeat((byte)'A', SyntheticPeBuilder.SectionAlignment).ToArray();
+    data[3] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    int rva = SyntheticPeBuilder.ComputeSectionRvas(1, new[] { data.Length })[0];
+    using var fixture = new SyntheticPeFile(SyntheticPeBuilder.Build((ushort)Machine.Amd64,
+      new[] { new SyntheticPeBuilder.Section(".rdata", data, false) }), "TruncatedStrings.dll");
+    using var peInfo = new PEBinaryInfoProvider(fixture.Path);
+    Assert.IsTrue(peInfo.Initialize());
+
+    Assert.IsFalse(peInfo.TryReadNullTerminatedAsciiString(rva, 3, out var ascii));
+    Assert.IsNull(ascii);
+    Assert.IsTrue(peInfo.TryReadNullTerminatedAsciiString(rva, 4, out ascii));
+    Assert.AreEqual("AAA", ascii);
+    Assert.IsFalse(peInfo.TryReadNullTerminatedAsciiString(rva + data.Length - 3, 20, out ascii));
+    Assert.IsNull(ascii);
+    Assert.IsFalse(peInfo.TryReadNullTerminatedUtf16String(rva + 5, 1, out var wide));
+    Assert.IsNull(wide);
+    Assert.IsTrue(peInfo.TryReadNullTerminatedUtf16String(rva + 5, 2, out wide));
+    Assert.IsFalse(peInfo.TryReadNullTerminatedUtf16String(rva + data.Length - 3, 20, out wide));
+    Assert.IsNull(wide);
+    Assert.AreEqual(ReferenceKind.Unknown, ReferenceResolver.Resolve(peInfo, rva + data.Length - 3).Kind);
+  }
+
+  [TestMethod]
   public void Resolve_UnrecognizedData_ReturnsUnknownKind() {
     // Non-printable binary data -- must not be misclassified as a string.
     var data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
