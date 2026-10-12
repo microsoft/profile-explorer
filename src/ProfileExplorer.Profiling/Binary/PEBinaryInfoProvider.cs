@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ProfileExplorer.Core.Binary;
 
@@ -138,8 +139,21 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
         architecture = Machine.Arm64;
       }
 
+      // Original filename from the version resource (e.g. "ntkrnlmp.exe" for ntoskrnl.exe) --
+      // symbol servers can index the raw binary under this name instead of the on-disk name.
+      // Only set when it's a real, distinct value; a self-referential match (OriginalFileName ==
+      // ImageName, the common case) doesn't need to be carried around as a separate fallback key.
+      string originalFileName = null;
+      string imageName = string.IsNullOrEmpty(filePath_) ? "" : Path.GetFileName(filePath_);
+      var versionInfo = GetVersionInfo(filePath_);
+
+      if (!string.IsNullOrEmpty(versionInfo?.OriginalFilename) &&
+          !string.Equals(versionInfo.OriginalFilename, imageName, StringComparison.OrdinalIgnoreCase)) {
+        originalFileName = versionInfo.OriginalFilename;
+      }
+
       return new BinaryFileDescriptor {
-        ImageName = string.IsNullOrEmpty(filePath_) ? "" : Path.GetFileName(filePath_),
+        ImageName = imageName,
         ImagePath = filePath_,
         Architecture = architecture,
         FileKind = fileKind,
@@ -150,7 +164,8 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
         ImageBase = (long)reader_.PEHeaders.PEHeader.ImageBase,
         BaseOfCode = reader_.PEHeaders.PEHeader.BaseOfCode,
         MajorVersion = reader_.PEHeaders.PEHeader.MajorImageVersion,
-        MinorVersion = reader_.PEHeaders.PEHeader.MinorImageVersion
+        MinorVersion = reader_.PEHeaders.PEHeader.MinorImageVersion,
+        OriginalFileName = originalFileName
       };
     }
   }
@@ -254,6 +269,342 @@ public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
     var data = reader_.GetSectionData(header.VirtualAddress);
     var array = data.GetContent();
     return array.AsMemory();
+  }
+
+  public bool IsCodeRangeAvailable(long startRva, long size) {
+    var peHeader = reader_.PEHeaders.PEHeader;
+    if (peHeader == null || startRva < 0 || size <= 0 ||
+        startRva >= peHeader.SizeOfImage || size > peHeader.SizeOfImage - startRva) {
+      return false;
+    }
+
+    foreach (var section in CodeSectionHeaders) {
+      long offset = startRva - section.VirtualAddress;
+      if (offset < 0 || offset >= Math.Max(section.VirtualSize, section.SizeOfRawData)) continue;
+
+      try {
+        int available = GetSectionData(section).Length;
+        return offset < available && size <= available - offset;
+      }
+      catch (BadImageFormatException ex) {
+        Trace.TraceError($"Invalid code section in {filePath_}: {ex.Message}");
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Raw bytes of the PE exception directory (IMAGE_DIRECTORY_ENTRY_EXCEPTION) — the x64/ARM64
+  /// RUNTIME_FUNCTION table used by <see cref="RuntimeFunctionTable"/> to resolve function bounds
+  /// when no PDB/DIA symbols are available. Empty when the directory is absent (e.g. x86 images,
+  /// which don't use table-based unwinding).
+  /// </summary>
+  public ReadOnlyMemory<byte> GetExceptionDirectoryData() {
+    var peHeader = reader_.PEHeaders.PEHeader;
+
+    if (peHeader == null || peHeader.ExceptionTableDirectory.Size <= 0 ||
+        !reader_.PEHeaders.TryGetDirectoryOffset(peHeader.ExceptionTableDirectory, out int offset)) {
+      return ReadOnlyMemory<byte>.Empty;
+    }
+
+    var imageData = reader_.GetEntireImage();
+    var content = imageData.GetContent(offset, peHeader.ExceptionTableDirectory.Size);
+    return content.AsMemory();
+  }
+
+  /// <summary>
+  /// Read <paramref name="length"/> bytes starting at RVA <paramref name="rva"/>, wherever in the
+  /// image that RVA falls (not just code sections) — a single bounded read used to pull the
+  /// .xdata unwind-info header word for ARM64 unpacked .pdata entries. Never scans; only reads
+  /// this exact byte range. Returns false when the range doesn't fit entirely within one section.
+  /// </summary>
+  public bool TryReadRvaData(long rva, int length, out ReadOnlyMemory<byte> data) {
+    if (reader_.PEHeaders.PEHeader != null) {
+      foreach (var section in reader_.PEHeaders.SectionHeaders) {
+        long sectionSize = Math.Max(section.VirtualSize, section.SizeOfRawData);
+
+        if (rva >= section.VirtualAddress && rva + length <= section.VirtualAddress + sectionSize) {
+          var sectionData = reader_.GetSectionData(section.VirtualAddress).GetContent();
+          int offsetInSection = (int)(rva - section.VirtualAddress);
+
+          if (offsetInSection >= 0 && offsetInSection + length <= sectionData.Length) {
+            data = sectionData.AsMemory().Slice(offsetInSection, length);
+            return true;
+          }
+
+          break; // RVA is within the section's virtual range but past its raw data -> unreadable.
+        }
+      }
+    }
+
+    data = ReadOnlyMemory<byte>.Empty;
+    return false;
+  }
+
+  /// <summary>
+  /// Read a null-terminated ASCII string starting at RVA <paramref name="rva"/>, bounded to at most
+  /// <paramref name="maxLength"/> bytes and to the containing section's data -- never scans past
+  /// the section or past <paramref name="maxLength"/>. Used for PE import/export directory names
+  /// (module names, function names) which are always plain ASCII per the PE spec.
+  /// </summary>
+  public bool TryReadNullTerminatedAsciiString(long rva, int maxLength, out string? value) {
+    value = null;
+    if (maxLength <= 0) {
+      return false;
+    }
+
+    if (!TryFindContainingSection(rva, out var sectionData, out long sectionStartRva)) {
+      value = null;
+      return false;
+    }
+
+    int offset = (int)(rva - sectionStartRva);
+
+    if (offset < 0 || offset >= sectionData.Length) {
+      value = null;
+      return false;
+    }
+
+    var span = sectionData.Span;
+    int end = offset;
+    int limit = offset + Math.Min(sectionData.Length - offset, maxLength);
+
+    while (end < limit && span[end] != 0) {
+      end++;
+    }
+
+    if (end == limit) {
+      return false;
+    }
+
+    value = Encoding.ASCII.GetString(span.Slice(offset, end - offset));
+    return true;
+  }
+
+  /// <summary>
+  /// Read a null-terminated UTF-16LE ("wide") string starting at RVA <paramref name="rva"/>,
+  /// bounded to at most <paramref name="maxLength"/> UTF-16 code units and to the containing
+  /// section's data. Windows code commonly stores wide string literals (L"...") this way; used by
+  /// <see cref="ReferenceResolver"/> to classify a data reference as a string.
+  /// </summary>
+  public bool TryReadNullTerminatedUtf16String(long rva, int maxLength, out string? value) {
+    value = null;
+    if (maxLength <= 0) {
+      return false;
+    }
+
+    if (!TryFindContainingSection(rva, out var sectionData, out long sectionStartRva)) {
+      value = null;
+      return false;
+    }
+
+    int offset = (int)(rva - sectionStartRva);
+
+    if (offset < 0 || offset + 1 >= sectionData.Length) {
+      // Need at least 2 bytes available for a single UTF-16 code unit.
+      value = null;
+      return false;
+    }
+
+    var span = sectionData.Span;
+    int end = offset;
+    int limitBytes = offset + Math.Min((sectionData.Length - offset) / 2, maxLength) * 2;
+
+    while (end < limitBytes) {
+      int unit = span[end] | (span[end + 1] << 8);
+
+      if (unit == 0) {
+        break;
+      }
+
+      end += 2;
+    }
+
+    if (end == limitBytes) {
+      return false;
+    }
+
+    value = Encoding.Unicode.GetString(span.Slice(offset, end - offset));
+    return true;
+  }
+
+  /// <summary>
+  /// Locates the section containing <paramref name="rva"/> and returns its full data plus its
+  /// start RVA, so callers that don't know the length to read up-front (null-terminated strings)
+  /// can bound their own scan within the section instead of guessing a length for
+  /// <see cref="TryReadRvaData"/>.
+  /// </summary>
+  private bool TryFindContainingSection(long rva, out ReadOnlyMemory<byte> sectionData, out long sectionStartRva) {
+    if (reader_.PEHeaders.PEHeader != null) {
+      foreach (var section in reader_.PEHeaders.SectionHeaders) {
+        long sectionSize = Math.Max(section.VirtualSize, section.SizeOfRawData);
+
+        if (rva >= section.VirtualAddress && rva < section.VirtualAddress + sectionSize) {
+          sectionData = reader_.GetSectionData(section.VirtualAddress).GetContent().AsMemory();
+          sectionStartRva = section.VirtualAddress;
+          return true;
+        }
+      }
+    }
+
+    sectionData = ReadOnlyMemory<byte>.Empty;
+    sectionStartRva = 0;
+    return false;
+  }
+
+  /// <summary>
+  /// Parses the PE Import Directory Table (IMAGE_DIRECTORY_ENTRY_IMPORT) into one
+  /// <see cref="ImportedFunctionReference"/> per imported function/ordinal, including the exact
+  /// RVA of its IAT slot. Returns an empty list (never throws) when the directory is absent or a
+  /// bounded read anywhere in the table fails -- a malformed/truncated table yields a partial or
+  /// empty result rather than a guess. Bounded by hard iteration caps so a corrupt/cyclic table
+  /// cannot loop unbounded.
+  /// </summary>
+  public List<ImportedFunctionReference> GetImportedFunctions() {
+    var result = new List<ImportedFunctionReference>();
+    var peHeader = reader_.PEHeaders.PEHeader;
+
+    if (peHeader == null || peHeader.ImportTableDirectory.Size <= 0) {
+      return result;
+    }
+
+    bool isPe32Plus = peHeader.Magic == PEMagic.PE32Plus;
+    int thunkSize = isPe32Plus ? 8 : 4;
+    long ordinalFlag = isPe32Plus ? unchecked((long)0x8000000000000000) : 0x80000000L;
+
+    const int descriptorSize = 20; // sizeof(IMAGE_IMPORT_DESCRIPTOR)
+    long descriptorRva = peHeader.ImportTableDirectory.RelativeVirtualAddress;
+    int descriptorCount = 0;
+
+    while (descriptorCount++ < 4096 && TryReadRvaData(descriptorRva, descriptorSize, out var descBytes)) {
+      var span = descBytes.Span;
+      uint originalFirstThunk = BitConverter.ToUInt32(span[..4]);
+      uint nameRva = BitConverter.ToUInt32(span.Slice(12, 4));
+      uint firstThunk = BitConverter.ToUInt32(span.Slice(16, 4));
+
+      if (originalFirstThunk == 0 && nameRva == 0 && firstThunk == 0) {
+        break; // Null terminator descriptor -- end of the table.
+      }
+
+      if (!TryReadNullTerminatedAsciiString(nameRva, 260, out string? moduleName) || string.IsNullOrEmpty(moduleName)) {
+        moduleName = "<unknown-module>";
+      }
+
+      // Prefer the Import Lookup Table (OriginalFirstThunk) for names/ordinals -- it's never
+      // overwritten by the loader. FirstThunk (the IAT) is what compiled code actually references
+      // at runtime, so that's always the reported IatRva regardless of which table we read names from.
+      long thunkArrayRva = originalFirstThunk != 0 ? originalFirstThunk : firstThunk;
+      long iatArrayRva = firstThunk;
+      int index = 0;
+
+      while (index < 65536) {
+        long entryRva = thunkArrayRva + index * thunkSize;
+
+        if (!TryReadRvaData(entryRva, thunkSize, out var entryBytes)) {
+          break;
+        }
+
+        long entryValue = thunkSize == 8
+          ? BitConverter.ToInt64(entryBytes.Span)
+          : BitConverter.ToUInt32(entryBytes.Span);
+
+        if (entryValue == 0) {
+          break; // End of this module's thunk array.
+        }
+
+        long iatSlotRva = iatArrayRva + (long)index * thunkSize;
+
+        if ((entryValue & ordinalFlag) != 0) {
+          result.Add(new ImportedFunctionReference(moduleName, null, entryValue & 0xFFFF, iatSlotRva));
+        }
+        else {
+          // Non-ordinal entries are RVAs to IMAGE_IMPORT_BY_NAME: uint16 Hint followed by the
+          // null-terminated ASCII function name.
+          string? functionName = null;
+          TryReadNullTerminatedAsciiString(entryValue + 2, 512, out functionName);
+          result.Add(new ImportedFunctionReference(moduleName, functionName, null, iatSlotRva));
+        }
+
+        index++;
+      }
+
+      descriptorRva += descriptorSize;
+    }
+
+    return result;
+  }
+
+  /// <summary>
+  /// Parses this binary's own Export Directory Table (IMAGE_DIRECTORY_ENTRY_EXPORT). Useful when
+  /// a selected function is itself an export (common for driver dispatch routines) or to identify
+  /// forwarder exports (<see cref="ExportedFunctionReference.IsForwarder"/>). Returns an empty
+  /// list (never throws) when the directory is absent or malformed.
+  /// </summary>
+  public List<ExportedFunctionReference> GetExportedFunctions() {
+    var result = new List<ExportedFunctionReference>();
+    var peHeader = reader_.PEHeaders.PEHeader;
+
+    if (peHeader == null || peHeader.ExportTableDirectory.Size <= 0 ||
+        !TryReadRvaData(peHeader.ExportTableDirectory.RelativeVirtualAddress, 40, out var dirBytes)) {
+      return result;
+    }
+
+    var span = dirBytes.Span;
+    uint baseOrdinal = BitConverter.ToUInt32(span.Slice(16, 4));
+    uint numberOfFunctions = Math.Min(BitConverter.ToUInt32(span.Slice(20, 4)), 65536);
+    uint numberOfNames = Math.Min(BitConverter.ToUInt32(span.Slice(24, 4)), 65536);
+    uint addressOfFunctions = BitConverter.ToUInt32(span.Slice(28, 4));
+    uint addressOfNames = BitConverter.ToUInt32(span.Slice(32, 4));
+    uint addressOfNameOrdinals = BitConverter.ToUInt32(span.Slice(36, 4));
+
+    // Map ordinal-table-index -> exported name via the parallel AddressOfNames/AddressOfNameOrdinals arrays.
+    var namesByOrdinalIndex = new Dictionary<uint, string>((int)numberOfNames);
+
+    for (uint i = 0; i < numberOfNames; i++) {
+      if (!TryReadRvaData(addressOfNames + i * 4, 4, out var nameRvaBytes) ||
+          !TryReadRvaData(addressOfNameOrdinals + i * 2, 2, out var ordIdxBytes)) {
+        break;
+      }
+
+      uint nameRva = BitConverter.ToUInt32(nameRvaBytes.Span);
+      ushort ordinalIndex = BitConverter.ToUInt16(ordIdxBytes.Span);
+
+      if (TryReadNullTerminatedAsciiString(nameRva, 512, out string? name) && !string.IsNullOrEmpty(name)) {
+        namesByOrdinalIndex[ordinalIndex] = name;
+      }
+    }
+
+    long exportDirRva = peHeader.ExportTableDirectory.RelativeVirtualAddress;
+    long exportDirEndRva = exportDirRva + peHeader.ExportTableDirectory.Size;
+
+    for (uint i = 0; i < numberOfFunctions; i++) {
+      if (!TryReadRvaData(addressOfFunctions + i * 4, 4, out var funcRvaBytes)) {
+        break;
+      }
+
+      uint functionRva = BitConverter.ToUInt32(funcRvaBytes.Span);
+
+      if (functionRva == 0) {
+        continue; // Gap in the ordinal range -- no export at this ordinal.
+      }
+
+      // A function RVA that falls *inside* the export directory itself is a forwarder: its "RVA"
+      // is really the RVA of an ASCII "OtherModule.OtherFunction" string, not real code.
+      bool isForwarder = functionRva >= exportDirRva && functionRva < exportDirEndRva;
+      string? forwarderTarget = null;
+
+      if (isForwarder) {
+        TryReadNullTerminatedAsciiString(functionRva, 512, out forwarderTarget);
+      }
+
+      namesByOrdinalIndex.TryGetValue(i, out string? functionName);
+      result.Add(new ExportedFunctionReference(functionName, isForwarder ? 0 : functionRva,
+                                               baseOrdinal + i, forwarderTarget));
+    }
+
+    return result;
   }
 
   private bool IsARM64ECBinary() {

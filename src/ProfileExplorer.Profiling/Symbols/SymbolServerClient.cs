@@ -72,10 +72,33 @@ public class SymbolServerClient : IDisposable, ISymbolFileLocator {
   /// <param name="imageSize">PE ImageSize (SizeOfImage).</param>
   /// <param name="ct">Cancellation token.</param>
   /// <returns>Local file path to the downloaded binary, or null if not found.</returns>
+  public Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
+                                           CancellationToken ct = default) =>
+    FindBinaryFileAsync(binaryName, timeDateStamp, imageSize, originalFileName: null, ct: ct);
+
   public async Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                                  CancellationToken ct = default) {
-    string hash = $"{timeDateStamp:X8}{imageSize:x}".ToUpperInvariant();
-    return await DownloadFileAsync(binaryName, hash, ct);
+                                                  string? originalFileName, CancellationToken ct = default) {
+    // SSQP key convention (https://github.com/dotnet/symstore/blob/main/docs/specs/SSQP_Key_Conventions.md):
+    // "<filename>/<Timestamp><SizeOfImage>/<filename>" where Timestamp is always 8 hex digits,
+    // zero-padded, UPPER-case, and SizeOfImage is as few digits as needed, in LOWER-case. Example:
+    // Timestamp 0x542d574e + SizeOfImage 0xc2000 -> "542D574Ec2000". The previous blanket
+    // .ToUpperInvariant() over the whole hash uppercased the size portion too, which happened to
+    // still work against symweb.azurefd.net (case-insensitive at that layer) but is spec-incorrect
+    // and could 404 against a case-sensitive symbol store/backend.
+    string hash = $"{timeDateStamp:X8}{imageSize:x}";
+
+    string? result = await DownloadFileAsync(binaryName, hash, ct);
+
+    // Some first-party binaries are indexed on the symbol server under their own embedded original
+    // filename rather than the on-disk name -- e.g. ntoskrnl.exe's OriginalFileName is
+    // "ntkrnlmp.exe", and the server only has an entry under that name (confirmed via direct probe:
+    // the on-disk name 404s at the exact same TimeStamp+ImageSize that "ntkrnlmp.exe" resolves).
+    if (result == null && !string.IsNullOrEmpty(originalFileName) &&
+        !string.Equals(originalFileName, binaryName, StringComparison.OrdinalIgnoreCase)) {
+      result = await DownloadFileAsync(originalFileName, hash, ct);
+    }
+
+    return result;
   }
 
   /// <summary>

@@ -25,6 +25,10 @@ public interface ISymbolFileLocator {
   /// <param name="ct">Cancellation token.</param>
   Task<string?> FindSymbolFileAsync(string pdbName, Guid guid, int age, CancellationToken ct = default);
 
+  /// <summary>Locate a binary by its on-disk name and PE timestamp/size.</summary>
+  Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
+                                    CancellationToken ct = default);
+
   /// <summary>
   /// Locate a binary/executable for the given PE identity, returning a local file path or
   /// <c>null</c> if it cannot be found.
@@ -32,7 +36,23 @@ public interface ISymbolFileLocator {
   /// <param name="binaryName">Binary file name (e.g., "ntdll.dll").</param>
   /// <param name="timeDateStamp">PE TimeDateStamp from the file header.</param>
   /// <param name="imageSize">PE ImageSize (SizeOfImage).</param>
+  /// <param name="originalFileName">
+  /// The module's own embedded original filename (from its version resource), when known and
+  /// different from <paramref name="binaryName"/>. Some first-party binaries are indexed on the
+  /// symbol server under this internal name rather than the on-disk name -- e.g. ntoskrnl.exe's
+  /// OriginalFileName is "ntkrnlmp.exe", and the symbol server only has an entry under that name.
+  /// Tried as a fallback key when the primary <paramref name="binaryName"/> lookup 404s. Null when
+  /// unknown.
+  /// </param>
   /// <param name="ct">Cancellation token.</param>
-  Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
-                                    CancellationToken ct = default);
+  async Task<string?> FindBinaryFileAsync(string binaryName, int timeDateStamp, long imageSize,
+                                          string? originalFileName, CancellationToken ct = default) {
+    string? result = await FindBinaryFileAsync(binaryName, timeDateStamp, imageSize, ct).ConfigureAwait(false);
+    if (result == null && !string.IsNullOrEmpty(originalFileName) &&
+        !string.Equals(originalFileName, binaryName, StringComparison.OrdinalIgnoreCase)) {
+      result = await FindBinaryFileAsync(originalFileName, timeDateStamp, imageSize, ct).ConfigureAwait(false);
+    }
+
+    return result;
+  }
 }

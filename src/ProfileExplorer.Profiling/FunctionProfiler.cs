@@ -506,7 +506,7 @@ public class FunctionProfiler : IDisposable {
         binaryPath = TryFindLocalBinary(image);
 
         binaryPath ??= await symbolResolver_.FindBinaryFileAsync(
-          image.ImageName, image.TimeDateStamp, image.Size, ct);
+          image.ImageName, image.TimeDateStamp, image.Size, ct: ct);
 
         if (binaryPath != null) {
           binaryPathByModule_[moduleName] = binaryPath;

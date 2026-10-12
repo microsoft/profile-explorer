@@ -1698,7 +1698,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
       Architecture = architecture,
       Checksum = image.Checksum,
       TimeStamp = image.TimeStamp,
-      ImageSize = image.Size
+      ImageSize = image.Size,
+      OriginalFileName = image.OriginalFileName
     };
   }
 

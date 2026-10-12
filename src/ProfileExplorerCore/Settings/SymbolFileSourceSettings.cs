@@ -87,6 +87,8 @@ public class SymbolFileSourceSettings : SettingsBase {
   public bool AllowApproximateBinaryMatch { get; set; }
   [ProtoMember(26)][OptionValue(false)]
   public bool ManagedIdentityEnabled { get; set; }
+  [ProtoMember(27)][OptionValue(false)]
+  public bool DisableSizeProbingFallback { get; set; }
   public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
   public bool HasCompanyFilter => CompanyFilterEnabled;
 
@@ -239,7 +241,9 @@ public class SymbolFileSourceSettings : SettingsBase {
   }
 
   public bool IsRejectedBinaryFile(BinaryFileDescriptor file) {
-    bool isRejected = RejectPreviouslyFailedFiles && RejectedBinaryFiles.Contains(file);
+    bool isRejected = RejectPreviouslyFailedFiles && RejectedBinaryFiles.TryGetValue(file, out var rejected) &&
+                      string.Equals(rejected.OriginalFileName ?? "", file.OriginalFileName ?? "",
+                                    StringComparison.OrdinalIgnoreCase);
     if (isRejected) {
       Trace.WriteLine($"BINARY_FILTER_DEBUG: Binary file REJECTED - Previously failed: {file?.ImageName} (path: {file?.ImagePath})");
     }
@@ -461,7 +465,11 @@ public class SymbolFileSourceSettings : SettingsBase {
       return false;
     }
 
-    RejectedBinaryFiles.Add(file);
+    if (RejectedBinaryFiles.TryGetValue(file, out var previous) &&
+        !string.Equals(previous.OriginalFileName ?? "", file.OriginalFileName ?? "", StringComparison.OrdinalIgnoreCase)) {
+      RejectedBinaryFiles.Remove(previous);
+    }
+    RejectedBinaryFiles.Add(file.Clone());
     if (RejectedFilesCacheTime == default) {
       RejectedFilesCacheTime = DateTime.UtcNow;
     }

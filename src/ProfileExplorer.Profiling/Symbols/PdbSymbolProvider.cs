@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Dia2Lib;
 using ProfileExplorer.Core.Binary;
 
@@ -31,6 +32,10 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
   private const int UndnameDemangleFlags = UndnameNoAccessSpecifiers | UndnameNoAllocationModel |
                                            UndnameNoMemberType | UndnameNoMsKeywords | UndnameNoMsThistype;
 
+  // DIA SDK enum DataKind value (cvconst.h); this generated Dia2Lib interop exposes
+  // IDiaSymbol.dataKind as a raw uint rather than a named enum type.
+  private const uint DataIsParam = 3;
+
   private IDiaDataSource? diaSource_;
   private IDiaSession? session_;
   private IDiaSymbol? globalSymbol_;
@@ -55,6 +60,21 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
 
   /// <summary>Processor architecture is not derived from the PDB; resolved elsewhere.</summary>
   public Machine? Architecture => null;
+
+  /// <summary>Verifies the loaded PDB against the PE's CodeView GUID/age; filenames may differ.</summary>
+  public bool MatchesIdentity(SymbolFileDescriptor? expected) {
+    if (expected == null || globalSymbol_ == null) {
+      return false;
+    }
+
+    try {
+      return globalSymbol_.guid == expected.Id && globalSymbol_.age == (uint)expected.Age;
+    }
+    catch (COMException ex) {
+      Trace.TraceError($"Failed to read PDB identity from {debugFilePath_}: {ex.Message}");
+      return false;
+    }
+  }
 
   public bool LoadDebugInfo(string debugFilePath, SymbolFileDescriptor? cacheKey = null,
                             string? cacheDirectory = null, bool enumerateImmediately = true) {
@@ -146,6 +166,281 @@ public class PdbSymbolProvider : ISymbolDebugInfo {
     // List search missed (or list not yet loaded): fall back to a direct DIA query, which also
     // resolves addresses inside PGO-split function chunks that the contiguous list doesn't cover.
     return FindFunctionByRVADirect(rva);
+  }
+
+  /// <summary>
+  /// Recovers a function's signature (return type, calling convention, parameters in declaration
+  /// order with names when not stripped) from PDB/DIA type information. This is exact PDB-sourced
+  /// evidence: when no PDB is loaded, the function's DIA symbol can't be found by RVA, or it has
+  /// no function-type record (all legitimate outcomes -- e.g. public-symbol-only PDBs), this
+  /// returns null rather than fabricating a signature.
+  /// </summary>
+  public FunctionTypeInfo? TryGetFunctionSignature(FunctionDebugInfo funcInfo) {
+    if (session_ == null || funcInfo == null || funcInfo.IsUnknown) {
+      return null;
+    }
+
+    IDiaSymbol? funcSym = null;
+    IDiaSymbol? functionType = null;
+
+    try {
+      session_.findSymbolByRVA((uint)funcInfo.StartRVA, SymTagEnum.SymTagFunction, out funcSym);
+
+      if (funcSym == null) {
+        return null;
+      }
+
+      functionType = funcSym.type;
+
+      if (functionType == null) {
+        return null; // No function-type record for this symbol.
+      }
+
+      IDiaSymbol? returnType = null;
+      string? returnTypeName;
+
+      try {
+        returnType = functionType.type;
+        returnTypeName = returnType == null ? "void" : RenderTypeName(returnType);
+      }
+      finally {
+        if (returnType != null) Marshal.ReleaseComObject(returnType);
+      }
+
+      string callingConvention = RenderCallingConvention(functionType);
+
+      var parameterNames = new List<string?>();
+      TryEnumerateParameterNames(funcSym, parameterNames);
+
+      var parameters = new List<ParameterTypeInfo>();
+      EnumerateArgumentTypes(functionType, parameterNames, parameters);
+
+      return new FunctionTypeInfo(returnTypeName, callingConvention, parameters);
+    }
+    catch (COMException ex) {
+      Trace.TraceError($"Failed to read PDB signature at RVA 0x{funcInfo.StartRVA:X}: {ex.Message}");
+      return null;
+    }
+    finally {
+      if (functionType != null) Marshal.ReleaseComObject(functionType);
+      if (funcSym != null) Marshal.ReleaseComObject(funcSym);
+    }
+  }
+
+  /// <summary>
+  /// Collects declared parameter names (in DIA enumeration order, which matches declaration order)
+  /// by walking the function's SymTagData children and filtering to DataIsParam. Optimized code
+  /// commonly strips these -- an empty result is expected and not an error.
+  /// </summary>
+  private void TryEnumerateParameterNames(IDiaSymbol funcSym, List<string?> names) {
+    try {
+      funcSym.findChildren(SymTagEnum.SymTagData, null, 0, out var enumSyms);
+
+      if (enumSyms == null) {
+        return;
+      }
+
+      try {
+        while (true) {
+          enumSyms.Next(1, out var child, out uint fetched);
+
+          if (fetched == 0) {
+            break;
+          }
+
+          try {
+            // DIA's IDiaSymbol.dataKind returns a raw uint (this generated interop doesn't expose
+            // a named DataKind enum type, unlike the SymTagEnum used for query filtering). 3 is
+            // DataIsParam per the DIA SDK's stable, well-documented enum DataKind.
+            if (child.dataKind == DataIsParam) {
+              names.Add(child.name);
+            }
+          }
+          finally {
+            Marshal.ReleaseComObject(child);
+          }
+        }
+      }
+      finally {
+        Marshal.ReleaseComObject(enumSyms);
+      }
+    }
+    catch (COMException ex) {
+      names.Clear();
+      Trace.TraceWarning($"PDB parameter names unavailable: {ex.Message}");
+    }
+  }
+
+  /// <summary>
+  /// Enumerates the function type's SymTagFunctionArgType children (one per parameter, in
+  /// declaration order) and pairs each with the corresponding name collected by
+  /// <see cref="TryEnumerateParameterNames"/> (by position -- DIA doesn't otherwise correlate the
+  /// two lists). A parameter-count mismatch (e.g. names partially stripped) still produces the
+  /// correct types; extra/missing names are simply left null rather than guessed.
+  /// </summary>
+  private void EnumerateArgumentTypes(IDiaSymbol functionType, List<string?> parameterNames,
+                                      List<ParameterTypeInfo> parameters) {
+    functionType.findChildren(SymTagEnum.SymTagFunctionArgType, null, 0, out var enumSyms);
+
+    if (enumSyms == null) {
+      return;
+    }
+
+    try {
+      int index = 0;
+
+      while (true) {
+        enumSyms.Next(1, out var argType, out uint fetched);
+
+        if (fetched == 0) {
+          break;
+        }
+
+        try {
+          IDiaSymbol? paramType = null;
+
+          try {
+            paramType = argType.type; // SymTagFunctionArgType wraps the real parameter type.
+            string? typeName = RenderTypeName(paramType);
+            string? name = index < parameterNames.Count ? parameterNames[index] : null;
+            parameters.Add(new ParameterTypeInfo(name, typeName));
+          }
+          finally {
+            if (paramType != null) Marshal.ReleaseComObject(paramType);
+          }
+
+          index++;
+        }
+        finally {
+          Marshal.ReleaseComObject(argType);
+        }
+      }
+    }
+    finally {
+      Marshal.ReleaseComObject(enumSyms);
+    }
+
+    if (parameterNames.Count != parameters.Count) {
+      for (int i = 0; i < parameters.Count; i++) {
+        parameters[i] = parameters[i] with { Name = null };
+      }
+    }
+  }
+
+  /// <summary>
+  /// Best-effort DIA type-name renderer: base types (int, char, bool, ...), pointers (recursively
+  /// rendered pointee + "*"), arrays ("ElementType[N]"), and named UDT/enum/typedef (via
+  /// <c>.name</c>). Returns an explicit "&lt;unknown-type:SymTagN&gt;" placeholder rather than
+  /// throwing or fabricating a name for symbol kinds this doesn't recognize (e.g. function
+  /// pointers, bitfields) -- an honest gap, not a silent wrong answer.
+  /// </summary>
+  private string? RenderTypeName(IDiaSymbol? type) {
+    if (type == null) {
+      return null;
+    }
+
+    try {
+      var symTag = (SymTagEnum)type.symTag;
+
+      switch (symTag) {
+        case SymTagEnum.SymTagBaseType:
+          return RenderBaseTypeName(type);
+
+        case SymTagEnum.SymTagPointerType: {
+          IDiaSymbol? pointee = null;
+
+          try {
+            pointee = type.type;
+            string? pointeeName = RenderTypeName(pointee);
+            return pointeeName == null ? null : $"{pointeeName}*";
+          }
+          finally {
+            if (pointee != null) Marshal.ReleaseComObject(pointee);
+          }
+        }
+
+        case SymTagEnum.SymTagArrayType: {
+          IDiaSymbol? elementType = null;
+
+          try {
+            elementType = type.type;
+            string? elementName = RenderTypeName(elementType);
+            if (elementName == null) return null;
+            ulong elementLength = elementType?.length ?? 0;
+            long count = elementLength > 0 ? (long)(type.length / elementLength) : 0;
+            return $"{elementName}[{count}]";
+          }
+          finally {
+            if (elementType != null) Marshal.ReleaseComObject(elementType);
+          }
+        }
+
+        case SymTagEnum.SymTagUDT:
+        case SymTagEnum.SymTagEnum:
+        case SymTagEnum.SymTagTypedef:
+          return string.IsNullOrEmpty(type.name) ? $"<unnamed-{symTag}>" : type.name;
+
+        default:
+          return $"<unknown-type:{symTag}>";
+      }
+    }
+    catch {
+      return null;
+    }
+  }
+
+  /// <summary>
+  /// Renders a DIA BasicType (<c>type.baseType</c>) + size (<c>type.length</c>) pair into a C-style
+  /// type name. BasicType values are per the DIA SDK (cvconst.h) -- stable and well-documented;
+  /// an unrecognized (baseType, length) combination is rendered explicitly rather than guessed.
+  /// </summary>
+  private static string RenderBaseTypeName(IDiaSymbol type) {
+    uint baseType = type.baseType;
+    ulong length = type.length;
+
+    return (baseType, length) switch {
+      (1, _) => "void",
+      (2, _) => "char",
+      (3, _) => "wchar_t",
+      (6, 1) => "signed char",
+      (6, 2) => "short",
+      (6, 4) => "int",
+      (6, 8) => "long long",
+      (7, 1) => "unsigned char",
+      (7, 2) => "unsigned short",
+      (7, 4) => "unsigned int",
+      (7, 8) => "unsigned long long",
+      (8, 4) => "float",
+      (8, 8) => "double",
+      (10, _) => "bool",
+      (13, 4) => "long",
+      (14, 4) => "unsigned long",
+      (32, _) => "char16_t",
+      (33, _) => "char32_t",
+      _ => $"<basetype:{baseType}/{length}>"
+    };
+  }
+
+  /// <summary>
+  /// Renders a DIA calling-convention code (<c>functionType.callingConvention</c>, CV_call_e per
+  /// the DIA SDK/cvconst.h -- stable and well-documented) into its familiar MSVC keyword.
+  /// </summary>
+  private static string RenderCallingConvention(IDiaSymbol functionType) {
+    try {
+      uint cc = functionType.callingConvention;
+
+      return cc switch {
+        0 => "__cdecl",
+        4 => "__fastcall",
+        7 => "__stdcall",
+        11 => "__thiscall",
+        22 => "__clrcall",
+        _ => $"<callingconvention:{cc}>"
+      };
+    }
+    catch {
+      return "<unknown>";
+    }
   }
 
   public bool PopulateSourceLines(FunctionDebugInfo funcInfo) {
