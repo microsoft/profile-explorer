@@ -2,7 +2,9 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Reflection.PortableExecutable;
 using ProfileExplorer.Core.Binary;
+using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.IR;
 using ProfileExplorer.Core.Providers;
 
@@ -24,8 +26,8 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
 
   public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo, IDebugInfoProvider debugInfo,
     bool preloadFunctions = true, bool isManagedImage = false) {
-    Initialize(compilerInfo.IR, false);
     binaryFilePath_ = binaryFilePath;
+    Initialize(SelectIRInfo(compilerInfo, binaryFilePath), false);
     debugInfo_ = debugInfo;
     debugFileFinder_ = compilerInfo.DebugFileFinder;
     debugInfoProviderFactory_ = compilerInfo.DebugInfoProviderFactory;
@@ -34,6 +36,17 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
     isManagedImage_ = isManagedImage;
     summary_ = new IRTextSummary();
     funcToDebugInfoMap_ = new Dictionary<IRTextFunction, FunctionDebugInfo>();
+  }
+
+  private static ICompilerIRInfo SelectIRInfo(ICompilerInfoProvider compilerInfo, string binaryFilePath) {
+    var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath);
+
+    return binaryInfo?.Architecture switch {
+      Machine.Arm64 => new ASMCompilerIRInfo(IRMode.ARM64),
+      Machine.I386  => new ASMCompilerIRInfo(IRMode.x86_64),
+      Machine.Amd64 => new ASMCompilerIRInfo(IRMode.x86_64),
+      _             => compilerInfo.IR
+    };
   }
 
   public IDebugInfoProvider DebugInfo {
