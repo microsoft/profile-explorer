@@ -15,6 +15,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   private string binaryFilePath_;
   private Disassembler disassembler_;
   private IDebugInfoProvider debugInfo_;
+  private ICompilerIRInfo fallbackIRInfo_;
   private IDebugFileFinder debugFileFinder_;
   private IDebugInfoProviderFactory debugInfoProviderFactory_;
   private INameProvider nameProvider_;
@@ -27,31 +28,45 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo, IDebugInfoProvider debugInfo,
     bool preloadFunctions = true, bool isManagedImage = false) {
     binaryFilePath_ = binaryFilePath;
-    Initialize(SelectIRInfo(compilerInfo, binaryFilePath), false);
+    fallbackIRInfo_ = compilerInfo.IR;
     debugInfo_ = debugInfo;
+    isManagedImage_ = isManagedImage;
+    Initialize(SelectIRInfo(fallbackIRInfo_, binaryFilePath_, debugInfo_, isManagedImage_), false);
     debugFileFinder_ = compilerInfo.DebugFileFinder;
     debugInfoProviderFactory_ = compilerInfo.DebugInfoProviderFactory;
     nameProvider_ = compilerInfo.NameProvider;
     preloadFunctions_ = preloadFunctions;
-    isManagedImage_ = isManagedImage;
     summary_ = new IRTextSummary();
     funcToDebugInfoMap_ = new Dictionary<IRTextFunction, FunctionDebugInfo>();
   }
 
-  private static ICompilerIRInfo SelectIRInfo(ICompilerInfoProvider compilerInfo, string binaryFilePath) {
-    var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath);
+  private static ICompilerIRInfo SelectIRInfo(ICompilerIRInfo fallbackIRInfo, string binaryFilePath,
+                                               IDebugInfoProvider debugInfo, bool isManagedImage) {
+    Machine? architecture = isManagedImage
+      ? debugInfo?.Architecture
+      : PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath)?.Architecture;
 
-    return binaryInfo?.Architecture switch {
+    return architecture switch {
       Machine.Arm64 => new ASMCompilerIRInfo(IRMode.ARM64),
       Machine.I386  => new ASMCompilerIRInfo(IRMode.x86_64),
       Machine.Amd64 => new ASMCompilerIRInfo(IRMode.x86_64),
-      _             => compilerInfo.IR
+      _             => fallbackIRInfo
     };
+  }
+
+  private void UpdateIRInfo() {
+    irInfo_ = SelectIRInfo(fallbackIRInfo_, binaryFilePath_, debugInfo_, isManagedImage_);
   }
 
   public IDebugInfoProvider DebugInfo {
     get => debugInfo_;
-    set => debugInfo_ = value;
+    set {
+      debugInfo_ = value;
+
+      if (isManagedImage_) {
+        UpdateIRInfo();
+      }
+    }
   }
 
   public DebugFileSearchResult DebugInfoFile {
@@ -82,7 +97,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
   }
 
   public void Initialize(IDebugInfoProvider debugInfo) {
-    debugInfo_ = debugInfo;
+    DebugInfo = debugInfo;
     InitializeDisassembler();
   }
 
@@ -93,7 +108,7 @@ public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
       if (preloadFunctions_) {
         // When opening in non-profiling mode, lookup the debug info now.
         debugInfoFile_ = await debugFileFinder_.FindDebugInfoFileAsync(binaryFilePath_);
-        debugInfo_ = debugInfoProviderFactory_.CreateDebugInfoProvider(debugInfoFile_);
+        DebugInfo = debugInfoProviderFactory_.CreateDebugInfoProvider(debugInfoFile_);
       }
 
       if (debugInfo_ == null) {
