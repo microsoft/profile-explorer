@@ -88,12 +88,12 @@ static void TestFrame(PipeMessageKind kind, int32_t size, bool expected,
     size_t lengths[] = {truncatedHeader ? 3u : sizeof(header),
                         truncatedHeader ? 0u : truncated ? 2u : sizeof(body)};
     for (int part = 0; part < (kind == PipeMessageKind::RequestFunctionCode && size == 32 ? 2 : 1); ++part) {
-      if (lengths[part] == 0) continue;
-      DWORD written = 0;
-      if (!WriteFile(server, parts[part], static_cast<DWORD>(lengths[part]), &written, nullptr) ||
-          written != lengths[part]) {
-        sent = false;
-        break;
+      for (size_t byte = 0; byte < lengths[part]; ++byte) {
+        DWORD written = 0;
+        if (!WriteFile(server, parts[part] + byte, 1, &written, nullptr) || written != 1) {
+          sent = false;
+          break;
+        }
       }
     }
     if (truncated || truncatedHeader) {
@@ -103,11 +103,24 @@ static void TestFrame(PipeMessageKind kind, int32_t size, bool expected,
   });
   PipeMessageHeader header{};
   std::shared_ptr<char[]> body;
-  bool accepted = client.ReadMessage(&header, body);
+  bool canceled = false;
+  bool accepted = false;
+  client.ReceiveMessages(
+      [&](PipeMessageHeader receivedHeader, std::shared_ptr<char[]> receivedBody) {
+        accepted = true;
+        header = receivedHeader;
+        body = receivedBody;
+        canceled = true;
+      },
+      canceled);
   writer.join();
   CloseHandle(server);
   Check(sent, "Test writer failed");
   Check(accepted == expected, "Wrong frame acceptance");
+  if (!expected) {
+    Check(!client.SendMessage(PipeMessageKind::EndSession),
+          "Client remained connected after rejecting invalid frame");
+  }
   if (accepted && kind == PipeMessageKind::RequestFunctionCode) {
     RequestFunctionCodeMessage request{};
     memcpy(&request, body.get(), sizeof(request));

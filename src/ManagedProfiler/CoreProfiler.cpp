@@ -242,6 +242,7 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
               break;
             }
             case PipeMessageKind::EndSession: {
+              canceled = true;
               sessionEnded_.store(true);
               pipeClient_->Disconnect();
 
@@ -262,6 +263,8 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
         },
         canceled);
 
+    sessionEnded_.store(true);
+    pipeClient_->Disconnect();
     Log(">PEX: Stop pipe thread (session ended, disconnected, or invalid request frame)\n");
   });
 
