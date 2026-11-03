@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <vector>
 #include "CLRDataTarget.h"
+#include "FunctionCodeRequest.h"
 
 static const wchar_t* ProfilerPipeName = L"\\\\.\\pipe\\PEXProfilerPipe";
 
@@ -222,12 +223,21 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
 
           switch (header.Kind) {
             case PipeMessageKind::RequestFunctionCode: {
-              auto request = (RequestFunctionCodeMessage*)messageBody.get();
-              Log("PEX: Request %lld id %lld\n", request->Address,
-                  request->FunctionId);
+              if (!messageBody ||
+                  header.Size != sizeof(PipeMessageHeader) +
+                                     sizeof(RequestFunctionCodeMessage)) {
+                Log("PEX: Invalid function request body\n");
+                break;
+              }
+              RequestFunctionCodeMessage request{};
+              memcpy(&request, messageBody.get(), sizeof(request));
+              Log("PEX: Request %lld id %lld\n", request.Address,
+                  request.FunctionId);
 
-              if (request->ProcessId == processId_) {
-                SendRequestedFunctionCode(*request);
+              if (request.ProcessId == processId_) {
+                SendRequestedFunctionCode(request);
+              } else {
+                Log("PEX: Function request process mismatch\n");
               }
               break;
             }
@@ -252,7 +262,7 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
         },
         canceled);
 
-    Log(">PEX: Stop pipe thread\n");
+    Log(">PEX: Stop pipe thread (session ended, disconnected, or invalid request frame)\n");
   });
 
   // Load DAC, used mostly to get JIT helper function names.
@@ -288,53 +298,43 @@ bool CoreProfiler::SendRequestedFunctionCode(
     return true;
   }
 
-  Log("PEX: SendRequestedFunctionCode: %s",
-      GetMethodName(request.FunctionId).c_str());
-
-  ModuleID module;
-  mdToken token;
-  mdTypeDef type;
-  ClassID classId;
-  if (FAILED(profilerInfo_->GetFunctionInfo(request.FunctionId, &classId,
-                                            &module, &token))) {
-    Log("PEX: Failed GetFunctionInfo\n");
+  FunctionID functionId = 0;
+  ReJITID requestedRejit = 0;
+  if (!ResolveFunctionCodeRequest(profilerInfo_.p, request, functionId, requestedRejit)) {
+    Log("PEX: Invalid or stale function request address or identity\n");
     return false;
   }
 
-  ULONG rejitCount;
-  if (FAILED(profilerInfo_->GetReJITIDs(request.FunctionId, 0, &rejitCount,
-                                        nullptr))) {
-    Log("PEX: Failed GetReJITIDs\n");
-    return false;
-  }
-
-  std::vector<ReJITID> rejitIds(rejitCount);  //? TODO: Use pre-allocated array
-
-  if (FAILED(profilerInfo_->GetReJITIDs(request.FunctionId, rejitCount,
-                                        &rejitCount, rejitIds.data()))) {
-    Log("PEX: Failed GetReJITIDs\n");
-    return false;
-  }
-
-  for (auto&& rejit : rejitIds) {
-    if (rejit != request.ReJITId) {
-      continue;
+  {
+    const ReJITID rejit = requestedRejit;
+    ULONG32 addrs = 0;
+    if (FAILED(profilerInfo_->GetNativeCodeStartAddresses(functionId, rejit, 0,
+                                                        &addrs, nullptr))) {
+      Log("PEX: Failed native code address query\n");
+      return false;
+    }
+    std::vector<UINT_PTR> addr(addrs);
+    if (FAILED(profilerInfo_->GetNativeCodeStartAddresses(functionId, rejit, addrs,
+                                                        &addrs, addr.data())) ||
+        addrs > addr.size()) {
+      Log("PEX: Failed native code address query\n");
+      return false;
     }
 
-    // Log("PEX: Handle RejitID %d\n", rejit);
-    ULONG32 addrs = 0;
-    profilerInfo_->GetNativeCodeStartAddresses(request.FunctionId, rejit, 0,
-                                               &addrs, nullptr);
-    std::vector<UINT_PTR> addr(addrs);
-    profilerInfo_->GetNativeCodeStartAddresses(request.FunctionId, rejit, addrs,
-                                               &addrs, addr.data());
-
-    for (int rejit = 0; rejit < addrs; rejit++) {
-      ULONG32 cCodeInfos2;
-      profilerInfo_->GetCodeInfo4(addr[rejit], 0, &cCodeInfos2, nullptr);
+    for (ULONG32 index = 0; index < addrs; index++) {
+      ULONG32 cCodeInfos2 = 0;
+      if (FAILED(profilerInfo_->GetCodeInfo4(addr[index], 0, &cCodeInfos2, nullptr))) {
+        Log("PEX: Failed code info query\n");
+        return false;
+      }
       std::vector<COR_PRF_CODE_INFO> codeInfos2(cCodeInfos2);
-      profilerInfo_->GetCodeInfo4(addr[rejit], cCodeInfos2, &cCodeInfos2,
-                                  codeInfos2.data());
+      if (FAILED(profilerInfo_->GetCodeInfo4(addr[index], cCodeInfos2, &cCodeInfos2,
+                                            codeInfos2.data())) ||
+          cCodeInfos2 > codeInfos2.size()) {
+        Log("PEX: Failed code info query\n");
+        return false;
+      }
+      codeInfos2.resize(cCodeInfos2);
 
       for (auto&& codeInfo : codeInfos2) {
         //? TODO: Lock could be moved down if R/W
@@ -347,10 +347,10 @@ bool CoreProfiler::SendRequestedFunctionCode(
         }
 
         recordedAddrs_.insert(codeInfo.startAddress);
-        SendLoadedFunctionCode(request.FunctionId, codeInfo.startAddress, rejit,
-                               (uint32_t)codeInfo.size,
+        SendLoadedFunctionCode(functionId, codeInfo.startAddress,
+                               static_cast<uint32_t>(rejit), (uint32_t)codeInfo.size,
                                (char*)codeInfo.startAddress);
-        SendCallTargets(request.FunctionId, rejit, (uint32_t)codeInfo.size,
+        SendCallTargets(functionId, static_cast<uint32_t>(rejit), (uint32_t)codeInfo.size,
                         (char*)codeInfo.startAddress);
       }
     }

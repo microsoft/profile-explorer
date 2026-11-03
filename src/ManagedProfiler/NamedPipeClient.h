@@ -87,7 +87,19 @@ class NamedPipeClient {
 
   bool ReadMessage(PipeMessageHeader* header,
                    std::shared_ptr<char[]>& messageBody) {
+    messageBody.reset();
     if (!ReadOverlapped(sizeof(PipeMessageHeader), header)) {
+      return false;
+    }
+
+    const int32_t expectedSize =
+        header->Kind == PipeMessageKind::RequestFunctionCode
+            ? static_cast<int32_t>(sizeof(PipeMessageHeader) +
+                                   sizeof(RequestFunctionCodeMessage))
+            : static_cast<int32_t>(sizeof(PipeMessageHeader));
+    if ((header->Kind != PipeMessageKind::RequestFunctionCode &&
+         header->Kind != PipeMessageKind::EndSession) ||
+        header->Size != expectedSize) {
       return false;
     }
 
@@ -169,7 +181,7 @@ class NamedPipeClient {
 
   bool ReadOverlapped(size_t dataSize, void* dataOut) {
     DWORD bytesRead;
-    OVERLAPPED overlapped;
+    OVERLAPPED overlapped{};
     overlapped.hEvent = readEvent_;
     overlapped.Offset = 0;
     overlapped.OffsetHigh = 0;
@@ -186,7 +198,10 @@ class NamedPipeClient {
       }
     }
 
-    return bytesRead == dataSize;
+    if (bytesRead != dataSize) {
+      return false;
+    }
+    return true;
   }
 };
 
