@@ -34,8 +34,8 @@ public class ManagedProfilerPipeValidationTests {
   [DataTestMethod]
   [DataRow("vcvars64.bat")]
   [DataRow("vcvars32.bat")]
-  public void ResolveFunctionCodeRequest_AndReadMessage_RejectInvalidFramesAndIdentities(string vcvarsBatchFile) {
-    string vsInstallPath = FindVisualStudioInstallationPath();
+  public async Task ResolveFunctionCodeRequest_AndReadMessage_RejectInvalidFramesAndIdentities(string vcvarsBatchFile) {
+    string vsInstallPath = await FindVisualStudioInstallationPath();
     if (string.IsNullOrEmpty(vsInstallPath)) {
       Assert.Inconclusive("Visual Studio C++ build tools are not installed on this machine.");
       return;
@@ -59,7 +59,7 @@ public class ManagedProfilerPipeValidationTests {
     string exePath = Path.Combine(directory_, "tests.exe");
     string command =
       $"call \"{vcvarsPath}\" >nul && " +
-      $"cl /nologo /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /EHsc /std:c++17 " +
+      $"cl /nologo /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /EHsc /MT /std:c++20 /permissive- " +
       $"/I\"{managedProfilerDir}\" /I\"{coreClrIncDir}\" /I\"{coreClrPalIncDir}\" " +
       $"\"{cppSourcePath}\" \"/Fo{objPath}\" \"/Fe{exePath}\" && " +
       $"\"{exePath}\"";
@@ -72,26 +72,65 @@ public class ManagedProfilerPipeValidationTests {
       CreateNoWindow = true
     };
 
-    using var process = Process.Start(psi);
-    Assert.IsNotNull(process, "Failed to start native test compiler/runner process.");
-
-    Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
-    Task<string> stderrTask = process.StandardError.ReadToEndAsync();
-    if (!process.WaitForExit(30000)) {
-      process.Kill(entireProcessTree: true);
-      Assert.Fail($"Native pipe validation test timed out ({vcvarsBatchFile}).");
-    }
-
-    Task.WaitAll(stdoutTask, stderrTask);
-    string stdout = stdoutTask.Result;
-    string stderr = stderrTask.Result;
-
-    Assert.AreEqual(0, process.ExitCode,
+    var (exitCode, stdout, stderr) = await RunProcess(psi, TimeSpan.FromSeconds(30));
+    Assert.AreEqual(0, exitCode,
                     $"Native pipe validation test failed ({vcvarsBatchFile}):\n{stdout}\n{stderr}");
     StringAssert.Contains(stdout, "Native pipe framing and function identity checks passed.");
   }
 
-  private static string FindVisualStudioInstallationPath() {
+  [TestMethod]
+  public async Task RunProcess_BothOutputStreamsExceedPipeCapacity_Completes() {
+    var psi = new ProcessStartInfo(Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe") {
+      Arguments = "/d /c \"for /L %i in (1,1,8192) do @(echo stdout-marker& echo stderr-marker 1>&2)\"",
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      UseShellExecute = false,
+      CreateNoWindow = true
+    };
+    var (exitCode, stdout, stderr) = await RunProcess(psi, TimeSpan.FromSeconds(10));
+    Assert.AreEqual(0, exitCode);
+    Assert.AreEqual(8192, stdout.Split("stdout-marker", StringSplitOptions.None).Length - 1);
+    Assert.AreEqual(8192, stderr.Split("stderr-marker", StringSplitOptions.None).Length - 1);
+    Assert.IsTrue(stdout.Length > 64 * 1024 && stderr.Length > 64 * 1024);
+  }
+
+  [TestMethod]
+  public async Task RunProcess_ChildDoesNotExit_FailsWithinTimeout() {
+    var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,
+                                                "WindowsPowerShell", "v1.0", "powershell.exe")) {
+      Arguments = "-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 30\"",
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      UseShellExecute = false,
+      CreateNoWindow = true
+    };
+    var stopwatch = Stopwatch.StartNew();
+    var exception = await Assert.ThrowsExceptionAsync<AssertFailedException>(
+      () => RunProcess(psi, TimeSpan.FromSeconds(1)).WaitAsync(TimeSpan.FromSeconds(10)));
+    StringAssert.Contains(exception.Message, "timed out");
+    Assert.IsTrue(stopwatch.Elapsed < TimeSpan.FromSeconds(10));
+  }
+
+  private static async Task<(int ExitCode, string Stdout, string Stderr)> RunProcess(
+    ProcessStartInfo startInfo, TimeSpan timeout) {
+    using var process = Process.Start(startInfo);
+    Assert.IsNotNull(process, $"Failed to start {startInfo.FileName}.");
+    Task<string> stdout = process.StandardOutput.ReadToEndAsync();
+    Task<string> stderr = process.StandardError.ReadToEndAsync();
+    try {
+      await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).WaitAsync(timeout);
+    }
+    catch (TimeoutException) {
+      if (!process.HasExited) {
+        process.Kill(entireProcessTree: true);
+      }
+      await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+      Assert.Fail($"Process timed out after {timeout}: {startInfo.FileName}");
+    }
+    return (process.ExitCode, await stdout, await stderr);
+  }
+
+  private static async Task<string> FindVisualStudioInstallationPath() {
     string vswherePath = Path.Combine(
       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
       "Microsoft Visual Studio", "Installer", "vswhere.exe");
@@ -102,22 +141,14 @@ public class ManagedProfilerPipeValidationTests {
     var psi = new ProcessStartInfo(vswherePath) {
       Arguments = "-latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath",
       RedirectStandardOutput = true,
+      RedirectStandardError = true,
       UseShellExecute = false,
       CreateNoWindow = true
     };
 
-    using var process = Process.Start(psi);
-    if (process == null) {
-      return null;
-    }
-
-    Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
-    if (!process.WaitForExit(10000)) {
-      process.Kill(entireProcessTree: true);
-      return null;
-    }
-
-    string output = outputTask.GetAwaiter().GetResult().Trim();
+    var (exitCode, stdout, stderr) = await RunProcess(psi, TimeSpan.FromSeconds(10));
+    Assert.AreEqual(0, exitCode, $"Visual Studio discovery failed: {stderr}");
+    string output = stdout.Trim();
 
     if (string.IsNullOrEmpty(output)) {
       return null;
