@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ProfileExplorer.CoreTests;
@@ -48,6 +49,8 @@ public class ManagedProfilerPipeValidationTests {
 
     string srcRoot = FindSrcRootDirectory();
     string managedProfilerDir = Path.Combine(srcRoot, "ManagedProfiler");
+    string coreClrIncDir = Path.Combine(managedProfilerDir, "external", "coreclr", "inc");
+    string coreClrPalIncDir = Path.Combine(managedProfilerDir, "external", "coreclr", "pal", "prebuilt", "inc");
     string cppSourcePath = Path.Combine(srcRoot, "ProfileExplorerCoreTests", "TestData",
                                         "ManagedProfiler", "PipeValidationTests.cpp");
     Assert.IsTrue(File.Exists(cppSourcePath), $"Native test source not found: {cppSourcePath}");
@@ -57,7 +60,8 @@ public class ManagedProfilerPipeValidationTests {
     string command =
       $"call \"{vcvarsPath}\" >nul && " +
       $"cl /nologo /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /EHsc /std:c++17 " +
-      $"/I\"{managedProfilerDir}\" \"{cppSourcePath}\" \"/Fo{objPath}\" \"/Fe{exePath}\" && " +
+      $"/I\"{managedProfilerDir}\" /I\"{coreClrIncDir}\" /I\"{coreClrPalIncDir}\" " +
+      $"\"{cppSourcePath}\" \"/Fo{objPath}\" \"/Fe{exePath}\" && " +
       $"\"{exePath}\"";
 
     var psi = new ProcessStartInfo(Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe") {
@@ -71,12 +75,16 @@ public class ManagedProfilerPipeValidationTests {
     using var process = Process.Start(psi);
     Assert.IsNotNull(process, "Failed to start native test compiler/runner process.");
 
-    string stdout = process.StandardOutput.ReadToEnd();
-    string stderr = process.StandardError.ReadToEnd();
+    Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+    Task<string> stderrTask = process.StandardError.ReadToEndAsync();
     if (!process.WaitForExit(30000)) {
       process.Kill(entireProcessTree: true);
       Assert.Fail($"Native pipe validation test timed out ({vcvarsBatchFile}).");
     }
+
+    Task.WaitAll(stdoutTask, stderrTask);
+    string stdout = stdoutTask.Result;
+    string stderr = stderrTask.Result;
 
     Assert.AreEqual(0, process.ExitCode,
                     $"Native pipe validation test failed ({vcvarsBatchFile}):\n{stdout}\n{stderr}");
@@ -103,8 +111,13 @@ public class ManagedProfilerPipeValidationTests {
       return null;
     }
 
-    string output = process.StandardOutput.ReadToEnd().Trim();
-    process.WaitForExit(10000);
+    Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+    if (!process.WaitForExit(10000)) {
+      process.Kill(entireProcessTree: true);
+      return null;
+    }
+
+    string output = outputTask.GetAwaiter().GetResult().Trim();
 
     if (string.IsNullOrEmpty(output)) {
       return null;
