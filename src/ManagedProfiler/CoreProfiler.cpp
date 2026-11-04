@@ -340,16 +340,13 @@ bool CoreProfiler::SendRequestedFunctionCode(
       codeInfos2.resize(cCodeInfos2);
 
       for (auto&& codeInfo : codeInfos2) {
-        //? TODO: Lock could be moved down if R/W
-        //?   also not needed after adding
-        std::lock_guard<std::mutex> lock(lock_);
-
-        if (recordedAddrs_.find(codeInfo.startAddress) !=
-            recordedAddrs_.end()) {
-          continue;
+        {
+          std::lock_guard<std::mutex> lock(lock_);
+          if (!recordedAddrs_.insert(codeInfo.startAddress).second) {
+            continue;
+          }
         }
 
-        recordedAddrs_.insert(codeInfo.startAddress);
         SendLoadedFunctionCode(functionId, codeInfo.startAddress,
                                static_cast<uint32_t>(rejit), (uint32_t)codeInfo.size,
                                (char*)codeInfo.startAddress);
@@ -579,16 +576,13 @@ bool CoreProfiler::HandleLoadedFunction(uint64_t functionId) {
                                   codeInfos2.data());
 
       for (auto&& codeInfo : codeInfos2) {
-        //? TODO: Lock could be moved down if R/W
-        //?   also not needed after adding
-        std::lock_guard<std::mutex> lock(lock_);
-
-        if (recordedAddrs_.find(codeInfo.startAddress) !=
-            recordedAddrs_.end()) {
-          continue;
+        {
+          std::lock_guard<std::mutex> lock(lock_);
+          if (!recordedAddrs_.insert(codeInfo.startAddress).second) {
+            continue;
+          }
         }
 
-        recordedAddrs_.insert(codeInfo.startAddress);
         SendLoadedFunctionCode(functionId, codeInfo.startAddress, rejit,
                                (uint32_t)codeInfo.size,
                                (char*)codeInfo.startAddress);

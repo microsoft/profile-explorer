@@ -256,6 +256,17 @@ class NamedPipeClient {
   }
 };
 
+static bool TryCopyCodeBytes(void* destination,
+                             const void* source,
+                             size_t codeSize) {
+  __try {
+    memcpy(destination, source, codeSize);
+    return true;
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return false;
+  }
+}
+
 static bool SendFunctionCode(NamedPipeClient& client,
                              int64_t functionId,
                              int64_t address,
@@ -263,6 +274,10 @@ static bool SendFunctionCode(NamedPipeClient& client,
                              int32_t processId,
                              int32_t codeSize,
                              void* codeBytes) {
+  if (codeSize <= 0 || codeBytes == nullptr) {
+    return false;
+  }
+
   const size_t BUFFER_SIZE = 4 * 1024;
 
   char stackBuffer[BUFFER_SIZE];
@@ -283,7 +298,10 @@ static bool SendFunctionCode(NamedPipeClient& client,
   message->ReJITId = reJITId;
   message->ProcessId = processId;
   message->CodeSize = codeSize;
-  memcpy(message->CodeBytes, codeBytes, codeSize);
+  if (!TryCopyCodeBytes(message->CodeBytes, codeBytes,
+                        static_cast<size_t>(codeSize))) {
+    return false;
+  }
   return client.SendMessage(PipeMessageKind::FunctionCode, message,
                             messageSize);
 }
