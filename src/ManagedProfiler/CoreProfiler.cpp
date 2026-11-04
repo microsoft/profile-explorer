@@ -223,18 +223,17 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
 
           switch (header.Kind) {
             case PipeMessageKind::RequestFunctionCode: {
-              if (!messageBody ||
-                  header.Size != sizeof(PipeMessageHeader) +
-                                     sizeof(RequestFunctionCodeMessage)) {
+              RequestFunctionCodeMessage request{};
+              auto status = ValidateFunctionCodeRequestFrame(
+                  header, messageBody.get(), processId_, request);
+              if (status == FunctionCodeRequestFrameStatus::InvalidBody) {
                 Log("PEX: Invalid function request body\n");
                 break;
               }
-              RequestFunctionCodeMessage request{};
-              memcpy(&request, messageBody.get(), sizeof(request));
               Log("PEX: Request %lld id %lld\n", request.Address,
                   request.FunctionId);
 
-              if (request.ProcessId == processId_) {
+              if (status == FunctionCodeRequestFrameStatus::Valid) {
                 SendRequestedFunctionCode(request);
               } else {
                 Log("PEX: Function request process mismatch\n");

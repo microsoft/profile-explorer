@@ -2,9 +2,31 @@
 // Licensed under the MIT license.
 #pragma once
 #include <cstdint>
+#include <cstring>
 #include <cor.h>
 #include <corprof.h>
 #include "NamedPipeClient.h"
+
+enum class FunctionCodeRequestFrameStatus {
+  Valid,
+  InvalidBody,
+  WrongProcess,
+};
+
+inline FunctionCodeRequestFrameStatus ValidateFunctionCodeRequestFrame(
+    const PipeMessageHeader& header, const char* messageBody, int32_t processId,
+    RequestFunctionCodeMessage& request) {
+  if (messageBody == nullptr ||
+      header.Size != static_cast<int32_t>(sizeof(PipeMessageHeader) +
+                                          sizeof(RequestFunctionCodeMessage))) {
+    return FunctionCodeRequestFrameStatus::InvalidBody;
+  }
+
+  std::memcpy(&request, messageBody, sizeof(request));
+  return request.ProcessId == processId
+             ? FunctionCodeRequestFrameStatus::Valid
+             : FunctionCodeRequestFrameStatus::WrongProcess;
+}
 
 template <typename ProfilerInfo>
 bool ResolveFunctionCodeRequest(ProfilerInfo* profilerInfo,

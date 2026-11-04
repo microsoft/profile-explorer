@@ -256,13 +256,20 @@ class NamedPipeClient {
   }
 };
 
+static LONG FilterCodeCopyException(DWORD exceptionCode) noexcept {
+  return exceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+                 exceptionCode == EXCEPTION_IN_PAGE_ERROR
+             ? EXCEPTION_EXECUTE_HANDLER
+             : EXCEPTION_CONTINUE_SEARCH;
+}
+
 static bool TryCopyCodeBytes(void* destination,
                              const void* source,
                              size_t codeSize) {
   __try {
     memcpy(destination, source, codeSize);
     return true;
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
+  } __except (FilterCodeCopyException(GetExceptionCode())) {
     return false;
   }
 }

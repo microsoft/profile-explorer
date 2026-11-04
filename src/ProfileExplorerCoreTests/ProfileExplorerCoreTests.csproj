@@ -5,6 +5,8 @@
 
 		<IsPackable>false</IsPackable>
 
+		<GenerateProgramFile>false</GenerateProgramFile>
+
 		<Platforms>AnyCPU</Platforms>
 
 		<LangVersion>default</LangVersion>
