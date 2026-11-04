@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 #include <stdio.h>
 #include <windows.h>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #pragma once
@@ -57,37 +58,72 @@ class NamedPipeClient {
   HANDLE handle_;
   HANDLE readEvent_;
   HANDLE writeEvent_;
+  std::atomic<bool> disconnected_;
   std::mutex lock_;
 
  public:
-  NamedPipeClient() { handle_ = INVALID_HANDLE_VALUE; }
+  NamedPipeClient()
+      : handle_(INVALID_HANDLE_VALUE),
+        readEvent_(nullptr),
+        writeEvent_(nullptr),
+        disconnected_(false) {}
 
   ~NamedPipeClient() { Disconnect(); }
 
   bool Initialize(const wchar_t* pipeName) {
+    disconnected_.store(false);
     readEvent_ = CreateEvent(nullptr, TRUE, TRUE, nullptr);
     writeEvent_ = CreateEvent(nullptr, TRUE, TRUE, nullptr);
     handle_ = CreateFile(pipeName, GENERIC_WRITE | GENERIC_READ,
                          FILE_SHARE_WRITE | FILE_SHARE_READ, nullptr,
                          OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr);
 
-    return handle_ != INVALID_HANDLE_VALUE &&
-           readEvent_ != INVALID_HANDLE_VALUE &&
-           writeEvent_ != INVALID_HANDLE_VALUE;
+    if (handle_ == INVALID_HANDLE_VALUE || readEvent_ == nullptr ||
+        writeEvent_ == nullptr) {
+      Disconnect();
+      return false;
+    }
+
+    return true;
   }
 
   void Disconnect() {
+    disconnected_.store(true);
+    HANDLE currentHandle = handle_;
+    if (currentHandle != INVALID_HANDLE_VALUE) {
+      CancelIoEx(currentHandle, nullptr);
+    }
+
+    std::unique_lock<std::mutex> lock(lock_);
     if (handle_ != INVALID_HANDLE_VALUE) {
       CloseHandle(handle_);
+      handle_ = INVALID_HANDLE_VALUE;
+    }
+    if (readEvent_ != nullptr) {
       CloseHandle(readEvent_);
+      readEvent_ = nullptr;
+    }
+    if (writeEvent_ != nullptr) {
       CloseHandle(writeEvent_);
-      handle_ = readEvent_ = writeEvent_ = INVALID_HANDLE_VALUE;
+      writeEvent_ = nullptr;
     }
   }
 
   bool ReadMessage(PipeMessageHeader* header,
                    std::shared_ptr<char[]>& messageBody) {
+    messageBody.reset();
     if (!ReadOverlapped(sizeof(PipeMessageHeader), header)) {
+      return false;
+    }
+
+    const int32_t expectedSize =
+        header->Kind == PipeMessageKind::RequestFunctionCode
+            ? static_cast<int32_t>(sizeof(PipeMessageHeader) +
+                                   sizeof(RequestFunctionCodeMessage))
+            : static_cast<int32_t>(sizeof(PipeMessageHeader));
+    if ((header->Kind != PipeMessageKind::RequestFunctionCode &&
+         header->Kind != PipeMessageKind::EndSession) ||
+        header->Size != expectedSize) {
       return false;
     }
 
@@ -110,6 +146,7 @@ class NamedPipeClient {
       std::shared_ptr<char[]> messageBody;
 
       if (!ReadMessage(&header, messageBody)) {
+        Disconnect();
         break;
       }
 
@@ -118,7 +155,10 @@ class NamedPipeClient {
     }
   }
 
-  bool SendMessage(PipeMessageKind kind) { return WriteMessageHeader(kind, 0); }
+  bool SendMessage(PipeMessageKind kind) {
+    std::unique_lock<std::mutex> lock(lock_);
+    return WriteMessageHeader(kind, 0);
+  }
 
   template <class T>
   bool SendMessage(PipeMessageKind kind, const T& data) {
@@ -146,15 +186,25 @@ class NamedPipeClient {
   }
 
   bool WriteOverlapped(void* data, size_t dataSize) {
+    if (disconnected_.load() || handle_ == INVALID_HANDLE_VALUE ||
+        writeEvent_ == nullptr) {
+      return false;
+    }
+
     DWORD bytesWritten;
-    OVERLAPPED overlapped;
+    OVERLAPPED overlapped{};
     overlapped.hEvent = writeEvent_;
     overlapped.Offset = 0;
     overlapped.OffsetHigh = 0;
 
-    if (!WriteFile(handle_, data, dataSize, &bytesWritten, &overlapped)) {
+    if (!WriteFile(handle_, data, static_cast<DWORD>(dataSize), &bytesWritten,
+                   &overlapped)) {
       if (GetLastError() != ERROR_IO_PENDING) {
         return false;
+      }
+
+      if (disconnected_.load()) {
+        CancelIoEx(handle_, &overlapped);
       }
 
       WaitForSingleObject(writeEvent_, INFINITE);
@@ -168,27 +218,61 @@ class NamedPipeClient {
   }
 
   bool ReadOverlapped(size_t dataSize, void* dataOut) {
-    DWORD bytesRead;
-    OVERLAPPED overlapped;
-    overlapped.hEvent = readEvent_;
-    overlapped.Offset = 0;
-    overlapped.OffsetHigh = 0;
-
-    if (!ReadFile(handle_, dataOut, dataSize, &bytesRead, &overlapped)) {
-      if (GetLastError() != ERROR_IO_PENDING) {
+    size_t totalRead = 0;
+    while (totalRead < dataSize) {
+      if (disconnected_.load() || handle_ == INVALID_HANDLE_VALUE ||
+          readEvent_ == nullptr) {
         return false;
       }
 
-      WaitForSingleObject(readEvent_, INFINITE);
+      DWORD bytesRead = 0;
+      OVERLAPPED overlapped{};
+      overlapped.hEvent = readEvent_;
+      if (!ReadFile(handle_, static_cast<char*>(dataOut) + totalRead,
+                    static_cast<DWORD>(dataSize - totalRead), &bytesRead,
+                    &overlapped)) {
+        if (GetLastError() != ERROR_IO_PENDING) {
+          return false;
+        }
 
-      if (!GetOverlappedResult(handle_, &overlapped, &bytesRead, false)) {
+        if (disconnected_.load()) {
+          CancelIoEx(handle_, &overlapped);
+        }
+
+        WaitForSingleObject(readEvent_, INFINITE);
+
+        if (!GetOverlappedResult(handle_, &overlapped, &bytesRead, false)) {
+          return false;
+        }
+      }
+
+      if (bytesRead == 0) {
         return false;
       }
+      totalRead += bytesRead;
     }
 
-    return bytesRead == dataSize;
+    return true;
   }
 };
+
+static LONG FilterCodeCopyException(DWORD exceptionCode) noexcept {
+  return exceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+                 exceptionCode == EXCEPTION_IN_PAGE_ERROR
+             ? EXCEPTION_EXECUTE_HANDLER
+             : EXCEPTION_CONTINUE_SEARCH;
+}
+
+static bool TryCopyCodeBytes(void* destination,
+                             const void* source,
+                             size_t codeSize) {
+  __try {
+    memcpy(destination, source, codeSize);
+    return true;
+  } __except (FilterCodeCopyException(GetExceptionCode())) {
+    return false;
+  }
+}
 
 static bool SendFunctionCode(NamedPipeClient& client,
                              int64_t functionId,
@@ -197,6 +281,10 @@ static bool SendFunctionCode(NamedPipeClient& client,
                              int32_t processId,
                              int32_t codeSize,
                              void* codeBytes) {
+  if (codeSize <= 0 || codeBytes == nullptr) {
+    return false;
+  }
+
   const size_t BUFFER_SIZE = 4 * 1024;
 
   char stackBuffer[BUFFER_SIZE];
@@ -217,7 +305,10 @@ static bool SendFunctionCode(NamedPipeClient& client,
   message->ReJITId = reJITId;
   message->ProcessId = processId;
   message->CodeSize = codeSize;
-  memcpy(message->CodeBytes, codeBytes, codeSize);
+  if (!TryCopyCodeBytes(message->CodeBytes, codeBytes,
+                        static_cast<size_t>(codeSize))) {
+    return false;
+  }
   return client.SendMessage(PipeMessageKind::FunctionCode, message,
                             messageSize);
 }
