@@ -21,7 +21,7 @@ static const wchar_t* ProfilerPipeName = L"\\\\.\\pipe\\PEXProfilerPipe";
 
 CComPtr<ISOSDacInterface> dac_;
 std::unordered_set<UINT_PTR> recordedAddrs_;
-std::mutex lock_;
+std::mutex recordedAddrsLock_;
 bool sessionEnded_;
 
 HRESULT __stdcall CoreProfiler::QueryInterface(REFIID riid, void** ppvObject) {
@@ -262,7 +262,9 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
         },
         canceled);
 
-    Log(">PEX: Stop pipe thread\n");
+    sessionEnded_.store(true);
+    pipeClient_->Disconnect();
+    Log(">PEX: Stop pipe thread (session ended, disconnected, or invalid request frame)\n");
   });
 
   // Load DAC, used mostly to get JIT helper function names.
@@ -309,13 +311,13 @@ bool CoreProfiler::SendRequestedFunctionCode(
     const ReJITID rejit = requestedRejit;
     ULONG32 addrs = 0;
     if (FAILED(profilerInfo_->GetNativeCodeStartAddresses(functionId, rejit, 0,
-                                                          &addrs, nullptr))) {
+                                                        &addrs, nullptr))) {
       Log("PEX: Failed native code address query\n");
       return false;
     }
     std::vector<UINT_PTR> addr(addrs);
     if (FAILED(profilerInfo_->GetNativeCodeStartAddresses(functionId, rejit, addrs,
-                                                          &addrs, addr.data())) ||
+                                                        &addrs, addr.data())) ||
         addrs > addr.size()) {
       Log("PEX: Failed native code address query\n");
       return false;
@@ -329,7 +331,7 @@ bool CoreProfiler::SendRequestedFunctionCode(
       }
       std::vector<COR_PRF_CODE_INFO> codeInfos2(cCodeInfos2);
       if (FAILED(profilerInfo_->GetCodeInfo4(addr[index], cCodeInfos2, &cCodeInfos2,
-                                             codeInfos2.data())) ||
+                                            codeInfos2.data())) ||
           cCodeInfos2 > codeInfos2.size()) {
         Log("PEX: Failed code info query\n");
         return false;
@@ -337,21 +339,13 @@ bool CoreProfiler::SendRequestedFunctionCode(
       codeInfos2.resize(cCodeInfos2);
 
       for (auto&& codeInfo : codeInfos2) {
-        //? TODO: Lock could be moved down if R/W
-        //?   also not needed after adding
-        std::lock_guard<std::mutex> lock(lock_);
-
-        if (recordedAddrs_.find(codeInfo.startAddress) !=
-            recordedAddrs_.end()) {
-          continue;
+        auto result = SendLoadedFunctionCode(
+            functionId, codeInfo.startAddress, static_cast<uint32_t>(rejit),
+            static_cast<uint32_t>(codeInfo.size),
+            reinterpret_cast<char*>(codeInfo.startAddress));
+        if (result == FunctionCodePublicationResult::TransportFailed) {
+          return false;
         }
-
-        recordedAddrs_.insert(codeInfo.startAddress);
-        SendLoadedFunctionCode(functionId, codeInfo.startAddress,
-                               static_cast<uint32_t>(rejit), (uint32_t)codeInfo.size,
-                               (char*)codeInfo.startAddress);
-        SendCallTargets(functionId, static_cast<uint32_t>(rejit),
-                        (uint32_t)codeInfo.size, (char*)codeInfo.startAddress);
       }
     }
   }
@@ -359,21 +353,36 @@ bool CoreProfiler::SendRequestedFunctionCode(
   return true;
 }
 
-bool CoreProfiler::SendLoadedFunctionCode(uint64_t funcId,
-                                          uint64_t address,
-                                          uint32_t rejitId,
-                                          uint32_t codeSize,
-                                          char* codeByes) {
-  if (pipeClient_ != nullptr) {
-    Log("PEX: Sending code for funcId %llu, IP %llu, code size %d\n",
-        funcId, address, codeSize);
-    SendFunctionCode(*pipeClient_, funcId, address, rejitId, processId_,
-                     codeSize, codeByes);
-    Log("PEX: Sent code for funcId %llu, IP %llu, code size %d\n",
-        funcId, address, codeSize);
+FunctionCodePublicationResult CoreProfiler::SendLoadedFunctionCode(
+    uint64_t funcId, uint64_t address, uint32_t rejitId, uint32_t codeSize,
+    char* codeBytes) {
+  if (pipeClient_ == nullptr) {
+    sessionEnded_.store(true);
+    return FunctionCodePublicationResult::TransportFailed;
   }
 
-  return true;
+  Log("PEX: Sending code for funcId %llu, IP %llu, code size %d\n",
+      funcId, address, codeSize);
+  auto result = PublishFunctionCode(
+      *pipeClient_, sessionEnded_, recordedAddrsLock_, recordedAddrs_, funcId,
+      static_cast<UINT_PTR>(address), static_cast<int32_t>(rejitId), processId_,
+      static_cast<int32_t>(codeSize), codeBytes, [&]() {
+        SendCallTargets(funcId, rejitId, codeSize, codeBytes);
+      });
+
+  if (result == FunctionCodePublicationResult::Published) {
+    Log("PEX: Sent code for funcId %llu, IP %llu, code size %d\n",
+        funcId, address, codeSize);
+  } else if (result == FunctionCodePublicationResult::CopyFailed ||
+             result == FunctionCodePublicationResult::InvalidInput) {
+    Log("PEX: Failed to prepare code for funcId %llu, IP %llu\n",
+        funcId, address);
+  } else if (result == FunctionCodePublicationResult::TransportFailed) {
+    Log("PEX: Failed to publish code for funcId %llu, IP %llu\n",
+        funcId, address);
+  }
+
+  return result;
 }
 
 HRESULT CoreProfiler::Shutdown() {
@@ -493,6 +502,23 @@ HRESULT CoreProfiler::JITCompilationFinished(FunctionID functionId,
 bool CoreProfiler::SendCallTargetName(uint64_t ip,
                                       uint64_t funcId,
                                       uint32_t rejitId) {
+  if (sessionEnded_.load() || pipeClient_ == nullptr) {
+    return false;
+  }
+
+  auto sendTarget = [&](int32_t nameLength, const char* name) {
+    if (SendFunctionCallTarget(*pipeClient_, funcId, ip, rejitId, processId_,
+                               nameLength, name)) {
+      return true;
+    }
+
+    Log("PEX: Failed to send call target for funcId %llu, IP %llu\n",
+        funcId, ip);
+    sessionEnded_.store(true);
+    pipeClient_->Disconnect();
+    return false;
+  };
+
   auto md = GetMethodHandleForIP(ip);
 
   if (md != 0) {
@@ -508,8 +534,8 @@ bool CoreProfiler::SendCallTargetName(uint64_t ip,
           (*result)[i] = (char)(*buffer)[i];
         }
 
-        SendFunctionCallTarget(*pipeClient_, funcId, ip, rejitId, processId_,
-                               result->size() + 1, result->c_str());
+        return sendTarget(static_cast<int32_t>(result->size() + 1),
+                          result->c_str());
       }
     }
   } else {
@@ -519,8 +545,7 @@ bool CoreProfiler::SendCallTargetName(uint64_t ip,
 
       if (SUCCEEDED(
               dac_->GetJitHelperFunctionName(ip, needed, buffer, &needed))) {
-        SendFunctionCallTarget(*pipeClient_, funcId, ip, rejitId, processId_,
-                               needed, buffer);
+        return sendTarget(static_cast<int32_t>(needed), buffer);
       }
     }
   }
@@ -576,21 +601,13 @@ bool CoreProfiler::HandleLoadedFunction(uint64_t functionId) {
                                   codeInfos2.data());
 
       for (auto&& codeInfo : codeInfos2) {
-        //? TODO: Lock could be moved down if R/W
-        //?   also not needed after adding
-        std::lock_guard<std::mutex> lock(lock_);
-
-        if (recordedAddrs_.find(codeInfo.startAddress) !=
-            recordedAddrs_.end()) {
-          continue;
+        auto result = SendLoadedFunctionCode(
+            functionId, codeInfo.startAddress, rejit,
+            static_cast<uint32_t>(codeInfo.size),
+            reinterpret_cast<char*>(codeInfo.startAddress));
+        if (result == FunctionCodePublicationResult::TransportFailed) {
+          return false;
         }
-
-        recordedAddrs_.insert(codeInfo.startAddress);
-        SendLoadedFunctionCode(functionId, codeInfo.startAddress, rejit,
-                               (uint32_t)codeInfo.size,
-                               (char*)codeInfo.startAddress);
-        SendCallTargets(functionId, rejit, (uint32_t)codeInfo.size,
-                        (char*)codeInfo.startAddress);
       }
     }
   }
@@ -607,19 +624,23 @@ bool CoreProfiler::SendCallTargets(uint64_t funcId,
   }
 
   __try {
+    bool sent = true;
     switch (machineType_) {
       case IMAGE_FILE_MACHINE_AMD64: {
-        CollectCallTargets(true, funcId, rejitId, codeBytes, codeSize);
+        sent = CollectCallTargets(true, funcId, rejitId, codeBytes, codeSize);
         break;
       }
       case IMAGE_FILE_MACHINE_ARM64: {
-        CollectCallTargetsArm64(funcId, rejitId, codeBytes, codeSize);
+        sent = CollectCallTargetsArm64(funcId, rejitId, codeBytes, codeSize);
         break;
       }
       case IMAGE_FILE_MACHINE_I386: {
-        CollectCallTargets(false, funcId, rejitId, codeBytes, codeSize);
+        sent = CollectCallTargets(false, funcId, rejitId, codeBytes, codeSize);
         break;
       }
+    }
+    if (!sent) {
+      return false;
     }
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     // Log("Exception disassembling: %llx, size %d\n", codeInfo.startAddress,
