@@ -37,6 +37,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="CoreProfiler.h" />
     <ClInclude Include="CoreProfilerFactory.h" />
+    <ClInclude Include="FunctionCodePublication.h" />
     <ClInclude Include="FunctionCodeRequest.h" />
     <ClInclude Include="NamedPipeClient.h" />
   </ItemGroup>
