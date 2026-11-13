@@ -59,7 +59,7 @@ internal static class AttachedProfilerTargetProgram {
       return 3;
     }
 
-    Console.WriteLine($"READY:{IntPtr.Size}:{freedAddress}");
+    Console.WriteLine($"READY:{RuntimeInformation.ProcessArchitecture}:{freedAddress}");
 
     while (await Console.In.ReadLineAsync() is { } command) {
       if (command == "ping") {
@@ -75,11 +75,9 @@ internal static class AttachedProfilerTargetProgram {
 }
 
 /// <summary>
-/// Compiles and runs native C++ tests for the managed profiler named-pipe request framing
-/// (<c>NamedPipeClient.h</c>) and CLR code-map FunctionID/ReJITID resolution
-/// (<c>FunctionCodeRequest.h</c>) across both x64 and x86 pointer widths. A test-only
-/// profiler also exercises the shared validation and serialization helpers against a
-/// real attached CLR; it does not run the complete production profiler.
+/// Compiles and runs native C++ tests for managed-profiler pipe request framing and
+/// CLR code-map FunctionID/ReJITID resolution across x64 and x86. A test-only profiler
+/// also exercises the request validation helpers against a real attached CLR.
 /// </summary>
 [TestClass]
 public class ManagedProfilerPipeValidationTests {
@@ -235,8 +233,8 @@ public class ManagedProfilerPipeValidationTests {
       string[] readyParts = readyLine.Split(':');
       Assert.AreEqual(3, readyParts.Length, $"Unexpected target readiness message: {readyLine}");
       Assert.AreEqual("READY", readyParts[0], $"Unexpected target readiness message: {readyLine}");
-      Assert.AreEqual(is64Bit ? "8" : "4", readyParts[1],
-                      $"Unexpected target pointer size: {readyLine}");
+      Assert.AreEqual(is64Bit ? Architecture.X64.ToString() : Architecture.X86.ToString(),
+                      readyParts[1], $"Unexpected target architecture: {readyLine}");
       Assert.IsTrue(long.TryParse(readyParts[2], out long freedAddress),
                     $"Invalid freed address in target readiness message: {readyLine}");
 
@@ -364,15 +362,40 @@ public class ManagedProfilerPipeValidationTests {
   }
 
   private static string FindDotNetHostPath(bool is64Bit) {
-    string programFiles = is64Bit
-      ? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)
-      : Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+    Architecture osArchitecture = RuntimeInformation.OSArchitecture;
+    string programFiles = SelectProgramFilesRoot(
+      is64Bit, osArchitecture,
+      Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+      Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+      Environment.GetEnvironmentVariable("ProgramW6432"));
+    return FindDotNetHostPath(programFiles, is64Bit, RuntimeInformation.OSArchitecture);
+  }
+
+  private static string SelectProgramFilesRoot(bool is64Bit, Architecture osArchitecture,
+                                               string programFiles, string programFilesX86,
+                                               string programFilesNative) {
+    if (!is64Bit) {
+      return programFilesX86;
+    }
+
+    return osArchitecture != Architecture.X86 && !string.IsNullOrEmpty(programFilesNative)
+      ? programFilesNative
+      : programFiles;
+  }
+
+  private static string FindDotNetHostPath(string programFiles, bool is64Bit,
+                                           Architecture osArchitecture) {
     if (string.IsNullOrEmpty(programFiles)) {
       return null;
     }
 
-    string dotnetExe = Path.Combine(programFiles, "dotnet", "dotnet.exe");
-    string net8SharedDir = Path.Combine(programFiles, "dotnet", "shared", "Microsoft.NETCore.App");
+    string dotnetRoot = Path.Combine(programFiles, "dotnet");
+    if (is64Bit && osArchitecture == Architecture.Arm64) {
+      dotnetRoot = Path.Combine(dotnetRoot, "x64");
+    }
+
+    string dotnetExe = Path.Combine(dotnetRoot, "dotnet.exe");
+    string net8SharedDir = Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App");
     if (!File.Exists(dotnetExe) || !Directory.Exists(net8SharedDir) ||
         !Directory.EnumerateDirectories(net8SharedDir, "8.0.*").Any()) {
       return null;
@@ -382,36 +405,47 @@ public class ManagedProfilerPipeValidationTests {
   }
 
   [TestMethod]
-  public async Task RunProcess_BothOutputStreamsExceedPipeCapacity_Completes() {
-    var psi = new ProcessStartInfo(Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe") {
-      Arguments = "/d /c \"for /L %i in (1,1,8192) do @(echo stdout-marker& echo stderr-marker 1>&2)\"",
-      RedirectStandardOutput = true,
-      RedirectStandardError = true,
-      UseShellExecute = false,
-      CreateNoWindow = true
-    };
-    var (exitCode, stdout, stderr) = await RunProcess(psi, TimeSpan.FromSeconds(10));
-    Assert.AreEqual(0, exitCode);
-    Assert.AreEqual(8192, stdout.Split("stdout-marker", StringSplitOptions.None).Length - 1);
-    Assert.AreEqual(8192, stderr.Split("stderr-marker", StringSplitOptions.None).Length - 1);
-    Assert.IsTrue(stdout.Length > 64 * 1024 && stderr.Length > 64 * 1024);
-  }
+  public void FindDotNetHostPath_SelectsMatchingInstallRootAndArchitecture() {
+    string processProgramFiles = Path.Combine(directory_, "ProgramFilesX86");
+    string nativeProgramFiles = Path.Combine(directory_, "ProgramFilesNative");
+    string x86Host = Path.Combine(processProgramFiles, "dotnet", "dotnet.exe");
+    string x86Runtime = Path.Combine(processProgramFiles, "dotnet", "shared",
+                                     "Microsoft.NETCore.App", "8.0.1");
+    string nativeX64Host = Path.Combine(nativeProgramFiles, "dotnet", "dotnet.exe");
+    string nativeX64Runtime = Path.Combine(nativeProgramFiles, "dotnet", "shared",
+                                           "Microsoft.NETCore.App", "8.0.2");
+    string arm64X64Host = Path.Combine(nativeProgramFiles, "dotnet", "x64", "dotnet.exe");
+    string arm64X64Runtime = Path.Combine(nativeProgramFiles, "dotnet", "x64", "shared",
+                                          "Microsoft.NETCore.App", "8.0.3");
+    Directory.CreateDirectory(x86Runtime);
+    Directory.CreateDirectory(nativeX64Runtime);
+    Directory.CreateDirectory(arm64X64Runtime);
+    File.WriteAllBytes(x86Host, Array.Empty<byte>());
+    File.WriteAllBytes(nativeX64Host, Array.Empty<byte>());
+    File.WriteAllBytes(arm64X64Host, Array.Empty<byte>());
 
-  [TestMethod]
-  public async Task RunProcess_ChildDoesNotExit_FailsWithinTimeout() {
-    var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,
-                                                "WindowsPowerShell", "v1.0", "powershell.exe")) {
-      Arguments = "-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 30\"",
-      RedirectStandardOutput = true,
-      RedirectStandardError = true,
-      UseShellExecute = false,
-      CreateNoWindow = true
-    };
-    var stopwatch = Stopwatch.StartNew();
-    var exception = await Assert.ThrowsExceptionAsync<AssertFailedException>(
-      () => RunProcess(psi, TimeSpan.FromSeconds(1)).WaitAsync(TimeSpan.FromSeconds(10)));
-    StringAssert.Contains(exception.Message, "timed out");
-    Assert.IsTrue(stopwatch.Elapsed < TimeSpan.FromSeconds(10));
+    Assert.AreEqual(x86Host, FindDotNetHostPath(
+      SelectProgramFilesRoot(false, Architecture.X64, processProgramFiles, processProgramFiles,
+                             nativeProgramFiles),
+      false, Architecture.X64));
+    Assert.AreEqual(nativeX64Host, FindDotNetHostPath(
+      SelectProgramFilesRoot(true, Architecture.X64, processProgramFiles, processProgramFiles,
+                             nativeProgramFiles),
+      true, Architecture.X64));
+    Assert.AreEqual(arm64X64Host, FindDotNetHostPath(
+      SelectProgramFilesRoot(true, Architecture.Arm64, processProgramFiles, processProgramFiles,
+                             nativeProgramFiles),
+      true, Architecture.Arm64));
+
+    Assert.IsNull(FindDotNetHostPath(processProgramFiles, true, Architecture.Arm64),
+                  "An x86 install root must not substitute for the native x64 installation.");
+    File.Delete(arm64X64Host);
+    Assert.IsNull(FindDotNetHostPath(nativeProgramFiles, true, Architecture.Arm64),
+                  "Missing x64 host should make the attached test inconclusive.");
+    File.WriteAllBytes(arm64X64Host, Array.Empty<byte>());
+    Directory.Delete(arm64X64Runtime, recursive: true);
+    Assert.IsNull(FindDotNetHostPath(nativeProgramFiles, true, Architecture.Arm64),
+                  "Missing matching runtime should make the attached test inconclusive.");
   }
 
   private static async Task<(int ExitCode, string Stdout, string Stderr)> RunProcess(

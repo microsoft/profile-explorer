@@ -262,9 +262,7 @@ HRESULT CoreProfiler::Initialize(IUnknown* pICorProfilerInfoUnk) {
         },
         canceled);
 
-    sessionEnded_.store(true);
-    pipeClient_->Disconnect();
-    Log(">PEX: Stop pipe thread (session ended, disconnected, or invalid request frame)\n");
+    Log(">PEX: Stop pipe thread\n");
   });
 
   // Load DAC, used mostly to get JIT helper function names.
@@ -311,13 +309,13 @@ bool CoreProfiler::SendRequestedFunctionCode(
     const ReJITID rejit = requestedRejit;
     ULONG32 addrs = 0;
     if (FAILED(profilerInfo_->GetNativeCodeStartAddresses(functionId, rejit, 0,
-                                                        &addrs, nullptr))) {
+                                                          &addrs, nullptr))) {
       Log("PEX: Failed native code address query\n");
       return false;
     }
     std::vector<UINT_PTR> addr(addrs);
     if (FAILED(profilerInfo_->GetNativeCodeStartAddresses(functionId, rejit, addrs,
-                                                        &addrs, addr.data())) ||
+                                                          &addrs, addr.data())) ||
         addrs > addr.size()) {
       Log("PEX: Failed native code address query\n");
       return false;
@@ -331,7 +329,7 @@ bool CoreProfiler::SendRequestedFunctionCode(
       }
       std::vector<COR_PRF_CODE_INFO> codeInfos2(cCodeInfos2);
       if (FAILED(profilerInfo_->GetCodeInfo4(addr[index], cCodeInfos2, &cCodeInfos2,
-                                            codeInfos2.data())) ||
+                                             codeInfos2.data())) ||
           cCodeInfos2 > codeInfos2.size()) {
         Log("PEX: Failed code info query\n");
         return false;
@@ -339,18 +337,21 @@ bool CoreProfiler::SendRequestedFunctionCode(
       codeInfos2.resize(cCodeInfos2);
 
       for (auto&& codeInfo : codeInfos2) {
-        {
-          std::lock_guard<std::mutex> lock(lock_);
-          if (!recordedAddrs_.insert(codeInfo.startAddress).second) {
-            continue;
-          }
+        //? TODO: Lock could be moved down if R/W
+        //?   also not needed after adding
+        std::lock_guard<std::mutex> lock(lock_);
+
+        if (recordedAddrs_.find(codeInfo.startAddress) !=
+            recordedAddrs_.end()) {
+          continue;
         }
 
+        recordedAddrs_.insert(codeInfo.startAddress);
         SendLoadedFunctionCode(functionId, codeInfo.startAddress,
                                static_cast<uint32_t>(rejit), (uint32_t)codeInfo.size,
                                (char*)codeInfo.startAddress);
-        SendCallTargets(functionId, static_cast<uint32_t>(rejit), (uint32_t)codeInfo.size,
-                        (char*)codeInfo.startAddress);
+        SendCallTargets(functionId, static_cast<uint32_t>(rejit),
+                        (uint32_t)codeInfo.size, (char*)codeInfo.startAddress);
       }
     }
   }
@@ -575,13 +576,16 @@ bool CoreProfiler::HandleLoadedFunction(uint64_t functionId) {
                                   codeInfos2.data());
 
       for (auto&& codeInfo : codeInfos2) {
-        {
-          std::lock_guard<std::mutex> lock(lock_);
-          if (!recordedAddrs_.insert(codeInfo.startAddress).second) {
-            continue;
-          }
+        //? TODO: Lock could be moved down if R/W
+        //?   also not needed after adding
+        std::lock_guard<std::mutex> lock(lock_);
+
+        if (recordedAddrs_.find(codeInfo.startAddress) !=
+            recordedAddrs_.end()) {
+          continue;
         }
 
+        recordedAddrs_.insert(codeInfo.startAddress);
         SendLoadedFunctionCode(functionId, codeInfo.startAddress, rejit,
                                (uint32_t)codeInfo.size,
                                (char*)codeInfo.startAddress);
