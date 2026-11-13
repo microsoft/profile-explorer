@@ -87,7 +87,19 @@ class NamedPipeClient {
 
   bool ReadMessage(PipeMessageHeader* header,
                    std::shared_ptr<char[]>& messageBody) {
+    messageBody.reset();
     if (!ReadOverlapped(sizeof(PipeMessageHeader), header)) {
+      return false;
+    }
+
+    const int32_t expectedSize =
+        header->Kind == PipeMessageKind::RequestFunctionCode
+            ? static_cast<int32_t>(sizeof(PipeMessageHeader) +
+                                   sizeof(RequestFunctionCodeMessage))
+            : static_cast<int32_t>(sizeof(PipeMessageHeader));
+    if ((header->Kind != PipeMessageKind::RequestFunctionCode &&
+         header->Kind != PipeMessageKind::EndSession) ||
+        header->Size != expectedSize) {
       return false;
     }
 
@@ -152,7 +164,8 @@ class NamedPipeClient {
     overlapped.Offset = 0;
     overlapped.OffsetHigh = 0;
 
-    if (!WriteFile(handle_, data, dataSize, &bytesWritten, &overlapped)) {
+    if (!WriteFile(handle_, data, static_cast<DWORD>(dataSize), &bytesWritten,
+                   &overlapped)) {
       if (GetLastError() != ERROR_IO_PENDING) {
         return false;
       }
@@ -168,25 +181,32 @@ class NamedPipeClient {
   }
 
   bool ReadOverlapped(size_t dataSize, void* dataOut) {
-    DWORD bytesRead;
-    OVERLAPPED overlapped;
-    overlapped.hEvent = readEvent_;
-    overlapped.Offset = 0;
-    overlapped.OffsetHigh = 0;
+    size_t totalRead = 0;
+    while (totalRead < dataSize) {
+      DWORD bytesRead = 0;
+      OVERLAPPED overlapped{};
+      overlapped.hEvent = readEvent_;
+      if (!ReadFile(handle_, static_cast<char*>(dataOut) + totalRead,
+                    static_cast<DWORD>(dataSize - totalRead), &bytesRead,
+                    &overlapped)) {
+        if (GetLastError() != ERROR_IO_PENDING) {
+          return false;
+        }
 
-    if (!ReadFile(handle_, dataOut, dataSize, &bytesRead, &overlapped)) {
-      if (GetLastError() != ERROR_IO_PENDING) {
-        return false;
+        WaitForSingleObject(readEvent_, INFINITE);
+
+        if (!GetOverlappedResult(handle_, &overlapped, &bytesRead, false)) {
+          return false;
+        }
       }
 
-      WaitForSingleObject(readEvent_, INFINITE);
-
-      if (!GetOverlappedResult(handle_, &overlapped, &bytesRead, false)) {
+      if (bytesRead == 0) {
         return false;
       }
+      totalRead += bytesRead;
     }
 
-    return bytesRead == dataSize;
+    return true;
   }
 };
 
