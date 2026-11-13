@@ -12,6 +12,7 @@
 #include <vector>
 #include "CapstoneWrappers.h"
 #include "Common.h"
+#include "FunctionCodePublication.h"
 #include "NamedPipeClient.h"
 
 #undef min
@@ -292,11 +293,9 @@ class CoreProfiler : public ICorProfilerCallback10 {
   std::string GetMethodName(FunctionID function) const;
 
   bool HandleLoadedFunction(uint64_t functionId);
-  bool SendLoadedFunctionCode(uint64_t funcId,
-                              uint64_t address,
-                              uint32_t rejitId,
-                              uint32_t codeSize,
-                              char* codeByes);
+  FunctionCodePublicationResult SendLoadedFunctionCode(
+      uint64_t funcId, uint64_t address, uint32_t rejitId, uint32_t codeSize,
+      char* codeBytes);
   bool SendCallTargets(uint64_t funcId,
                        uint32_t rejitId,
                        uint32_t codeSize,
@@ -304,7 +303,7 @@ class CoreProfiler : public ICorProfilerCallback10 {
   bool SendCallTargetName(uint64_t ip, uint64_t funcId, uint32_t rejitId);
   bool SendRequestedFunctionCode(RequestFunctionCodeMessage& request);
 
-  void CollectCallTargets(bool is64BitCode,
+  bool CollectCallTargets(bool is64BitCode,
                           uint64_t funcId,
                           uint32_t rejitId,
                           void* buffer,
@@ -320,7 +319,7 @@ class CoreProfiler : public ICorProfilerCallback10 {
         dis.Disassemble(buffer, size, startRva));
 
     if (instrs->Count == 0) {
-      return;
+      return true;
     }
 
     std::unique_ptr<std::unordered_set<uint64_t>> sentTargets;
@@ -341,15 +340,19 @@ class CoreProfiler : public ICorProfilerCallback10 {
           }
 
           if (sentTargets->find(targetAddr) == sentTargets->end()) {
-            SendCallTargetName(targetAddr, funcId, rejitId);
+            if (!SendCallTargetName(targetAddr, funcId, rejitId)) {
+              return false;
+            }
             sentTargets->insert(targetAddr);
           }
         }
       }
     }
+
+    return true;
   }
 
-  void CollectCallTargetsArm64(uint64_t funcId,
+  bool CollectCallTargetsArm64(uint64_t funcId,
                                uint32_t rejitId,
                                void* buffer,
                                size_t size) {
@@ -363,7 +366,7 @@ class CoreProfiler : public ICorProfilerCallback10 {
         dis.Disassemble(buffer, size, startRva));
 
     if (instrs->Count == 0) {
-      return;
+      return true;
     }
 
     std::unique_ptr<std::unordered_set<uint64_t>> sentTargets;
@@ -384,11 +387,15 @@ class CoreProfiler : public ICorProfilerCallback10 {
           auto targetAddr = instr->detail->aarch64.operands[i].imm;
 
           if (sentTargets->find(targetAddr) == sentTargets->end()) {
-            SendCallTargetName(targetAddr, funcId, rejitId);
+            if (!SendCallTargetName(targetAddr, funcId, rejitId)) {
+              return false;
+            }
             sentTargets->insert(targetAddr);
           }
         }
       }
     }
+
+    return true;
   }
 };

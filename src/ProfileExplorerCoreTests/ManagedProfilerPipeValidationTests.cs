@@ -75,9 +75,10 @@ internal static class AttachedProfilerTargetProgram {
 }
 
 /// <summary>
-/// Compiles and runs native C++ tests for managed-profiler pipe request framing and
-/// CLR code-map FunctionID/ReJITID resolution across x64 and x86. A test-only profiler
-/// also exercises the request validation helpers against a real attached CLR.
+/// Compiles and runs native C++ tests for managed-profiler pipe framing, pending-read
+/// teardown, code publication, and CLR code-map FunctionID/ReJITID resolution across
+/// x64 and x86. A test-only profiler also exercises the shared helpers against a real
+/// attached CLR; it does not run the complete production profiler.
 /// </summary>
 [TestClass]
 public class ManagedProfilerPipeValidationTests {
@@ -123,7 +124,7 @@ public class ManagedProfilerPipeValidationTests {
     string exePath = Path.Combine(directory_, "tests.exe");
     string command =
       $"call \"{vcvarsPath}\" >nul && " +
-      $"cl /nologo /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /EHsc /MT /std:c++20 /permissive- " +
+      $"cl /nologo /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /DPEX_TEST_HOOKS /EHsc /MT /std:c++20 /permissive- " +
       $"/I\"{managedProfilerDir}\" /I\"{coreClrIncDir}\" /I\"{coreClrPalIncDir}\" " +
       $"\"{cppSourcePath}\" \"/Fo{objPath}\" \"/Fe{exePath}\" && " +
       $"\"{exePath}\"";
@@ -184,7 +185,7 @@ public class ManagedProfilerPipeValidationTests {
     string defPath = Path.Combine(managedProfilerDir, "ManagedProfiler.def");
     string buildCommand =
       $"call \"{vcvarsPath}\" >nul && " +
-      $"cl /nologo /LD /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /DPEX_BUILD_TEST_PROFILER_DLL " +
+      $"cl /nologo /LD /O2 /DNDEBUG /DUNICODE /D_UNICODE /DNOMINMAX /DPEX_BUILD_TEST_PROFILER_DLL /DPEX_TEST_HOOKS " +
       $"/EHsc /MT /std:c++20 /permissive- " +
       $"/I\"{managedProfilerDir}\" /I\"{coreClrIncDir}\" /I\"{coreClrPalIncDir}\" " +
       $"\"{cppSourcePath}\" \"/Fo{objPath}\" \"/Fe{dllPath}\" " +
@@ -446,6 +447,39 @@ public class ManagedProfilerPipeValidationTests {
     Directory.Delete(arm64X64Runtime, recursive: true);
     Assert.IsNull(FindDotNetHostPath(nativeProgramFiles, true, Architecture.Arm64),
                   "Missing matching runtime should make the attached test inconclusive.");
+  }
+
+  [TestMethod]
+  public async Task RunProcess_BothOutputStreamsExceedPipeCapacity_Completes() {
+    var psi = new ProcessStartInfo(Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe") {
+      Arguments = "/d /c \"for /L %i in (1,1,8192) do @(echo stdout-marker& echo stderr-marker 1>&2)\"",
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      UseShellExecute = false,
+      CreateNoWindow = true
+    };
+    var (exitCode, stdout, stderr) = await RunProcess(psi, TimeSpan.FromSeconds(10));
+    Assert.AreEqual(0, exitCode);
+    Assert.AreEqual(8192, stdout.Split("stdout-marker", StringSplitOptions.None).Length - 1);
+    Assert.AreEqual(8192, stderr.Split("stderr-marker", StringSplitOptions.None).Length - 1);
+    Assert.IsTrue(stdout.Length > 64 * 1024 && stderr.Length > 64 * 1024);
+  }
+
+  [TestMethod]
+  public async Task RunProcess_ChildDoesNotExit_FailsWithinTimeout() {
+    var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,
+                                                "WindowsPowerShell", "v1.0", "powershell.exe")) {
+      Arguments = "-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 30\"",
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      UseShellExecute = false,
+      CreateNoWindow = true
+    };
+    var stopwatch = Stopwatch.StartNew();
+    var exception = await Assert.ThrowsExceptionAsync<AssertFailedException>(
+      () => RunProcess(psi, TimeSpan.FromSeconds(1)).WaitAsync(TimeSpan.FromSeconds(10)));
+    StringAssert.Contains(exception.Message, "timed out");
+    Assert.IsTrue(stopwatch.Elapsed < TimeSpan.FromSeconds(10));
   }
 
   private static async Task<(int ExitCode, string Stdout, string Stderr)> RunProcess(
