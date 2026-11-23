@@ -17,7 +17,11 @@ public static class SptProfileLoader {
     using var binaryFile = SptInputFile.OpenRead(binaryPath);
     using var toolFile = SptInputFile.OpenRead(toolPath);
     progress?.Report("Checking binary identity...");
-    var identity = PEBinaryInfoProvider.GetSymbolFileInfo(binaryFile.Name);
+    using var binaryInfo = new PEBinaryInfoProvider(binaryFile.Name);
+    if (!binaryInfo.Initialize()) {
+      throw new InvalidDataException("Cannot read the selected binary's PE metadata.");
+    }
+    var identity = binaryInfo.SymbolFileInfo;
     if (identity is null || identity.Id == Guid.Empty || identity.Age <= 0) {
       throw new InvalidDataException("The selected binary has no usable CodeView GUID/age. " +
                                      "An available binary with GUID/age is required.");
@@ -52,6 +56,9 @@ public static class SptProfileLoader {
       throw new InvalidDataException("The SPT identity matches, but that program has no sample records.");
     }
 
+    progress?.Report("Indexing SPT observations...");
+    var samples = SptSampleIndex.Create(profile, matches, binaryInfo.BinaryFileInfo.ImageBase,
+                                        binaryInfo.BinaryFileInfo.ImageSize, token);
     progress?.Report("Fingerprinting validated inputs...");
     var inputs = new List<SptInputFile>();
     foreach (var file in new[] {profileFile, binaryFile, toolFile, pdbFile}) {
@@ -62,7 +69,7 @@ public static class SptProfileLoader {
     return new PreparedSptProfile(profile, matches.AsReadOnly(), binaryFile.Name, identity.Id,
                                    (uint)identity.Age, toolFile.Name,
                                    FileVersionInfo.GetVersionInfo(toolFile.Name).FileVersion ?? "Unknown",
-                                   inputs.AsReadOnly());
+                                   inputs.AsReadOnly(), samples);
   }
 
   private static FileStream? OpenAndValidatePdb(string? path, SymbolFileDescriptor identity) {

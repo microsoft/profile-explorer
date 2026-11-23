@@ -511,7 +511,7 @@ public partial class MainWindow : Window, IUISession {
     e.Handled = true;
   }
 
-  private void AttachSpgoProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+  private async void AttachSpgoProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
     var targets = sessionState_?.Documents.FindAll(IsSpgoProfileTarget);
 
     if (targets == null || targets.Count == 0) {
@@ -542,8 +542,26 @@ public partial class MainWindow : Window, IUISession {
         return;
       }
       session.SpgoProfiles[window.AttachedTargetId] = window.PreparedProfile;
+      await RefreshSpgoAssemblyColumns(window.AttachedTargetId);
       SetOptionalStatus(TimeSpan.FromSeconds(15),
-                        "SPT loaded and validated in memory. SPGO visualization is not implemented yet.");
+                        window.PreparedProfile.Samples.HasIpSamples || window.PreparedProfile.Samples.HasBranches
+                          ? "SPT attached. Observations are shown in assembly columns; data is retained for this session only."
+                          : "SPT attached, but contains no IP or LBR observations to display. Call stacks are not annotated.");
+    }
+  }
+
+  private async Task RefreshSpgoAssemblyColumns(Guid documentId) {
+    var state = sessionState_;
+    if (state == null) {
+      return;
+    }
+    foreach (var host in state.DocumentHosts.ToArray()) {
+      if (sessionState_ != state) {
+        return;
+      }
+      if (host.DocumentHost.Section?.ParentFunction.ParentSummary?.Id == documentId) {
+        await host.DocumentHost.RefreshSpgoColumnsAsync();
+      }
     }
   }
 

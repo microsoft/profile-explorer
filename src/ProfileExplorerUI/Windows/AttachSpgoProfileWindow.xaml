@@ -239,7 +239,7 @@
         <TextBlock
           Margin="0,12,0,8"
           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
-          Text="Profile data will be retained in memory only. SPGO visualization is not implemented yet."
+          Text="SPT observations are shown in assembly columns. Profile data is retained for this session only."
           TextWrapping="Wrap" />
       </StackPanel>
     </ScrollViewer>
@@ -263,7 +263,7 @@
         Content="Attach"
         IsEnabled="False"
         Click="AttachButton_Click"
-        ToolTip="Retain the validated SPT in memory without changing existing profiling views"
+        ToolTip="Show SPT observations beside assembly without changing existing ETL data"
         ToolTipService.ShowOnDisabled="True" />
     </StackPanel>
   </Grid>

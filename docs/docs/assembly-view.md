@@ -68,6 +68,25 @@ Notice how B5 is recognized as forming a loop (the last instruction in the block
 
     *Double-click* on a target address operand jumps to the target instruction.
 
+##### SPT observations
+
+After **Profiling** -> **Attach SPGO Profile...**, the assembly view can show two additional columns, both for standalone binaries and binaries in ETL sessions:
+
+- **SPT IP samples** combines repetition-weighted CPU/timer and PMC instruction-pointer observations. Its tooltip shows a one-line source breakdown, such as `Samples: 90 timer, 30 retired-instruction`. Different event sources may use different sampling intervals.
+- **SPT LBR observations** counts recorded control transfers originating at that instruction. Its tooltip lists the top 10 destinations by count, for example `Targets: 0x62101 (70), unknown/external (20)`. Extra destinations are summarized as `+4 targets (23)` while all pairs are retained in memory. LBRs can also record interrupts and exceptions, so an observation may originate at a non-branch instruction.
+
+Only column types present for the attached binary are offered. Use the assembly **View** menu to hide/show them. Blank cells mean no recorded observations at that instruction's exact RVA, not that it never executed.
+
+SPT counts are raw observations, **not execution counts, elapsed time, or hardware-event totals**. Call-stack frames are not added to either column. LBR pairs are mapped using SPTDump's `[destination, source]` ordering; no fall-through counts are inferred. Only exact instruction RVA matches are annotated; samples at other addresses are not shifted onto nearby instructions.
+
+Column-header tooltips identify the profile filename and the header-click action. Mapping warnings are included only when relevant. Blank cells show `No observations.` or `Address unavailable.` Unknown/external LBR endpoints are labeled explicitly, preserving nonzero destination RVAs.
+
+SPT cells use the existing heat palette, flame icons, and percentage bars. Each IP cell's share is relative to all IP observations mapped to the displayed function; each LBR cell uses that function's mapped LBR total independently. The displayed numbers remain raw counts. Heat means **more frequently observed**, not necessarily more expensive. Existing significance thresholds, global marking options, and per-column style settings apply.
+
+Click a column header to use it for assembly-row coloring. On initial attachment, an existing ETL main column remains selected; without ETL, IP is selected by default, or LBR if IP is absent. Switching back to an ETL header restores its row-coloring basis. Each SPT column still has its own cell shading. A valid explicit selection is retained during refresh and navigation within the same binary; hiding or removing the active SPT column falls back to ETL or an available visible SPT column.
+
+ETL values are unchanged, and ETL thread, instance and time filters do not filter SPT observations. Replacing an attachment refreshes open assembly views without navigating away. SPT data remains session-only; source lines and graphs are not annotated.
+
 ##### Profiling annotations
 
 Instruction execution time is displayed and annotated on several parts of the assembly instructions, columns, basic blocks, and the control-flow graph using text, colors, and flame icons:

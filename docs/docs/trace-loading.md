@@ -37,7 +37,7 @@ SPTDump reads the file asynchronously, retaining IP/PMC samples, LBR records, ca
 
 **Attach** is enabled only after parsing and identity validation succeed. It rechecks the input files for changes, then retains the prepared SPT in session memory, replacing any previous SPT for that target. The original multi-program data and matching program IDs are retained. The data is not saved with sessions and is discarded when the session ends. **Cancel** discards the pending result.
 
-This preview does not map samples onto functions, annotate assembly/source/graphs, or change an existing ETL profile. The status bar confirms that the SPT is loaded and validated in memory, but SPGO visualization is not implemented yet.
+After attachment, open assembly tabs for the binary are refreshed and subsequently opened functions show **SPT IP samples** and/or **SPT LBR observations** columns. Only event families present for the matching binary are displayed. These columns are separate from ETL time and counters and are not affected by ETL filtering. The Source File view and graphs are unchanged. See [SPT assembly columns](assembly-view.md#spt-observations) for count and tooltip semantics.
 
 #### Symbols configuration
 

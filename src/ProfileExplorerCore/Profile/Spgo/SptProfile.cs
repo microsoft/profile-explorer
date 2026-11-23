@@ -53,7 +53,7 @@ public sealed record SptInputFile(string Path, string Hash) {
 public sealed record PreparedSptProfile(SptProfile Profile, IReadOnlyList<int> MatchingProgramIndices,
                                         string BinaryPath, Guid BinaryId, uint BinaryAge,
                                         string ToolPath, string ToolVersion,
-                                        IReadOnlyList<SptInputFile> Inputs) {
+                                        IReadOnlyList<SptInputFile> Inputs, SptSampleIndex Samples) {
   public async Task VerifyUnchangedAsync(CancellationToken token) {
     foreach (var input in Inputs) {
       await input.VerifyUnchangedAsync(token).ConfigureAwait(false);

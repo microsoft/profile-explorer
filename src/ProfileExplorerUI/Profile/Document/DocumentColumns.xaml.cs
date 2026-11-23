@@ -29,6 +29,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   private IRDocument associatedDocument_;
   private OptionsPanelHostPopup optionsPanelPopup_;
   private Dictionary<IRElement, ElementRowValue> profileDataRowsMap_;
+  private int displayVersion_;
 
   public DocumentColumns() {
     InitializeComponent();
@@ -74,6 +75,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   }
 
   public void Reset() {
+    displayVersion_++;
     // Unregister column header event handlers.
     foreach (var columnHeader in profileColumnHeaders_) {
       columnHeader.Header.MouseLeftButtonDown -= ColumnHeaderOnClick;
@@ -86,10 +88,14 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     ColumnsList.ItemsSource = null;
     profileColumnHeaders_.Clear();
     foldedTextRegions_.Clear();
+    profileDataRows_.Clear();
+    profileDataRowsMap_.Clear();
+    profileRowCollection_ = null;
   }
 
   public async Task Display(IRDocumentColumnData columnData, IRDocument associatedDocument) {
     Reset(); // Remove any existing columns.
+    int version = displayVersion_;
     UpdateColumnsList();
 
     if (!columnData.HasData) {
@@ -176,7 +182,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
       // Go through the blocks and each tuple in the block
       // and either create a row with profile data or use a dummy row.
-      profileDataRows_ = new List<ElementRowValue>();
+      var dataRows = new List<ElementRowValue>();
+      var dataRowsMap = new Dictionary<IRElement, ElementRowValue>();
 
       foreach (var block in function.SortedBlocks) {
         bool isOddBlock = block.HasOddIndexInFunction;
@@ -226,8 +233,8 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
             }
 
             SetValueBorder(rowValues);
-            profileDataRows_.Add(rowValues);
-            profileDataRowsMap_[tuple] = rowValues;
+            dataRows.Add(rowValues);
+            dataRowsMap[tuple] = rowValues;
           }
           else {
             // No data at all, use an empty row.
@@ -252,9 +259,14 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
         AddDummyRows(rowCount - prevLine, prevIsOddBlock);
       }
 
-      return elementValueList;
+      return (Rows: elementValueList, DataRows: dataRows, Map: dataRowsMap);
     });
 
+    if (version != displayVersion_ || associatedDocument.Function != function) {
+      return;
+    }
+    profileDataRows_ = elementValueList.DataRows;
+    profileDataRowsMap_ = elementValueList.Map;
     // Handle clicks on the column headers.
     var sortedColumns = columnSettings_.FilterAndSortColumns(columnData.Columns);
     profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, sortedColumns);
@@ -267,7 +279,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     }
 
     // Display the columns.
-    profileRowCollection_ = new ListCollectionView(elementValueList);
+    profileRowCollection_ = new ListCollectionView(elementValueList.Rows);
     profileRowCollection_.Filter += ProfileListRowFilter;
     UpdateColumnWidths();
     ColumnsList.ItemsSource = profileRowCollection_;
@@ -366,7 +378,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
 
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
     rowFilterIndex_ = 0;
-    profileRowCollection_.Refresh();
+    profileRowCollection_?.Refresh();
   }
 
   public void HandleTextRegionFolded(FoldingSection section) {
@@ -381,7 +393,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
     foldedTextRegions_.Add(section);
     foldedTextRegions_.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
     rowFilterIndex_ = 0;
-    profileRowCollection_.Refresh();
+    profileRowCollection_?.Refresh();
   }
 
   public void HandleTextRegionUnfolded(FoldingSection section) {
@@ -391,7 +403,7 @@ public partial class DocumentColumns : UserControl, INotifyPropertyChanged {
   public void HandleTextRegionUnfolded((int StartOffset, int EndOffset) section) {
     foldedTextRegions_.Remove(section);
     rowFilterIndex_ = 0;
-    profileRowCollection_.Refresh();
+    profileRowCollection_?.Refresh();
   }
 
   private bool ProfileListRowFilter(object item) {

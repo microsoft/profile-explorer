@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,6 +30,7 @@ using ProfileExplorer.Core.Session;
 using ProfileExplorer.Core.Profile.Processing;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.CallTree;
+using ProfileExplorer.Core.Profile.Spgo;
 
 namespace ProfileExplorer.UI;
 
@@ -120,6 +122,14 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   private bool ignoreNextRowSelectedEvent_;
   private ProfileHistoryManager historyManager_;
   private MenuItem[] viewMenuItems_;
+  private IRDocumentColumnData etlColumnData_;
+  private readonly SemaphoreSlim columnsUpdateLock_ = new(1, 1);
+  private int columnsUpdateVersion_;
+  private bool updatingColumns_;
+  private Guid heatDocumentId_;
+  private string selectedHeatColumnName_;
+  private string lastEtlHeatColumnName_;
+  private bool sptHeatApplied_;
 
   public IRDocumentHost(IUISession session) {
     InitializeComponent();
@@ -256,6 +266,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       if (columnsVisible_ != value) {
         columnsVisible_ = value;
         NotifyPropertyChanged(nameof(ColumnsVisible));
+        NotifyPropertyChanged(nameof(ColumnsToolbarVisible));
       }
     }
   }
@@ -266,10 +277,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
       if (profileVisible_ != value) {
         profileVisible_ = value;
         NotifyPropertyChanged(nameof(ProfileVisible));
+        NotifyPropertyChanged(nameof(ColumnsToolbarVisible));
       }
     }
   }
 
+  public bool ColumnsToolbarVisible => ProfileVisible || ColumnsVisible;
   public bool HasPreviousFunctions => historyManager_.HasPreviousStates;
   public bool HasNextFunctions => historyManager_.HasNextStates;
   public bool HasProfileInstanceFilter => profileFilter_ is {HasInstanceFilter: true};
@@ -325,6 +338,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void ProfileColumn_RowSelected(object sender, int line) {
+    if (updatingColumns_ || !ColumnsVisible) {
+      return;
+    }
     if (ignoreNextRowSelectedEvent_) {
       ignoreNextRowSelectedEvent_ = false;
       return;
@@ -342,7 +358,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-    if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+    if (updatingColumns_ || !ColumnsVisible || Math.Abs(e.VerticalChange) < double.Epsilon) {
       return;
     }
 
@@ -369,7 +385,9 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     TextView.Initialize(settings_, session_);
 
     if (hasProfilingChanges) {
-      await LoadProfile();
+      if (!await LoadProfile()) {
+        await HideProfile();
+      }
     }
   }
 
@@ -390,6 +408,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     SaveSectionState(section);
 
     if (!switchingActiveDocument) {
+      ResetAssemblyColumns();
       if (PassOutputVisible) {
         await PassOutput.UnloadSection(section, TextView);
       }
@@ -451,6 +470,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task LoadSectionMinimal(ParsedIRTextSection parsedSection) {
     using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
+    ResetAssemblyColumns();
 
     // Save state of currently loaded function for going back.
     if (TextView.IsLoaded) {
@@ -463,6 +483,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   public async Task LoadSection(ParsedIRTextSection parsedSection) {
     using var task = await loadTask_.CancelCurrentAndCreateTaskAsync();
+    ResetAssemblyColumns();
     duringSectionSwitching_ = true;
     object data = Session.LoadDocumentState(parsedSection.Section);
     double horizontalOffset = 0;
@@ -699,7 +720,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private void SyncColumnsVerticalScrollOffset(double offset) {
     // Sync scrolling with the optional columns.
-    if (columnsVisible_) {
+    if (columnsVisible_ && !updatingColumns_) {
       ProfileColumns.ScrollToVerticalOffset(offset);
     }
   }
@@ -1168,35 +1189,164 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
   }
 
   private async Task<bool> UpdateProfilingColumns() {
-    var columnData = TextView.ProfileColumnData;
-    ColumnsVisible = columnData is {HasData: true};
+    int version = ++columnsUpdateVersion_;
+    ResetViewMenuItemEvents();
+    await columnsUpdateLock_.WaitAsync();
+    try {
+      if (version != columnsUpdateVersion_ || Section == null || Function == null) {
+        return false;
+      }
+      var section = Section;
+      var function = Function;
+      double verticalOffset = TextView.VerticalOffset;
+      double horizontalOffset = TextView.HorizontalOffset;
+      updatingColumns_ = true;
+      var state = Session.SessionState;
+      var document = state.FindLoadedDocument(section);
+      PreparedSptProfile attachment = null;
+      if (document != null) {
+        state.SpgoProfiles.TryGetValue(document.Id, out attachment);
+      }
+      var sptColumns = attachment != null
+        ? SptAssemblyColumns.Build(attachment, function, settings_.ColumnSettings)
+        : null;
+      var columnData = sptColumns is {Columns.Count: > 0}
+        ? IRDocumentColumnData.Combine(etlColumnData_, sptColumns)
+        : etlColumnData_ ?? new IRDocumentColumnData();
+      TextView.ProfileColumnData = columnData;
+      ColumnsVisible = columnData.HasData;
+      if (!columnData.HasData) {
+        ClearSptHeat();
+        ProfileColumns.Reset();
+        return false;
+      }
 
-    if (columnData == null || !columnData.HasData) {
-      ProfileColumns.Reset();
-      ProfileBlocksMenu.Items.Clear();
-      return false;
+      ProfileColumns.Settings = settings_;
+      ProfileColumns.ColumnSettings = settings_.ColumnSettings;
+      ViewMenuItem1.Visibility = ProfileVisible ? Visibility.Visible : Visibility.Collapsed;
+      ViewMenuItem2.Visibility = ProfileVisible ? Visibility.Visible : Visibility.Collapsed;
+      await ProfileColumns.Display(columnData, TextView);
+      if (version != columnsUpdateVersion_ || Section != section || Function != function ||
+          Session.SessionState != state ||
+          document != null && state.SpgoProfiles.GetValueOrDefault(document.Id) != attachment) {
+        ProfileColumns.Reset();
+        return false;
+      }
+      ConfigureColumnHeat(columnData, document?.Id ?? Guid.Empty, version);
+      ApplyColumnStyles(columnData);
+      ProfileColumns.UpdateColumnWidths();
+      ProfileColumns.SetupFoldedTextRegions(TextView.BlockFoldings ?? Array.Empty<FoldingSection>());
+      ProfileColumns.UpdateLayout();
+      TextView.ScrollToVerticalOffset(verticalOffset);
+      TextView.ScrollToHorizontalOffset(horizontalOffset);
+      ProfileColumns.ScrollToVerticalOffset(verticalOffset);
+      ProfileColumns.UpdateLayout();
+
+      ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
+      ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
+      ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, async () => {
+        await UpdateProfilingColumns();
+      });
+      SetViewMenuItemEvents();
+      return true;
+    }
+    finally {
+      updatingColumns_ = false;
+      columnsUpdateLock_.Release();
+    }
+  }
+
+  public async Task RefreshSpgoColumnsAsync() {
+    if (Section != null && Function != null) {
+      await UpdateProfilingColumns();
+    }
+  }
+
+  private void ConfigureColumnHeat(IRDocumentColumnData data, Guid documentId, int version) {
+    if (heatDocumentId_ != documentId) {
+      heatDocumentId_ = documentId;
+      selectedHeatColumnName_ = null;
+      lastEtlHeatColumnName_ = null;
     }
 
+    lastEtlHeatColumnName_ ??= etlColumnData_?.MainColumn?.ColumnName;
+    foreach (var column in data.Columns) {
+      column.IsVisible = settings_.ColumnSettings.IsColumnVisible(column);
+    }
+    var selected = data.Columns.Find(column => column.ColumnName == selectedHeatColumnName_ && column.IsVisible);
+    if (selected == null) {
+      selectedHeatColumnName_ = null;
+      selected = etlColumnData_?.Columns.Find(column => column.ColumnName == lastEtlHeatColumnName_ && column.IsVisible) ??
+                 etlColumnData_?.Columns.Find(column => column.IsMainColumn && column.IsVisible) ??
+                 etlColumnData_?.Columns.Find(column => column.IsVisible) ??
+                 data.Columns.Find(column => column.IsVisible && SptAssemblyColumns.IsSptColumn(column));
+    }
+    SetMainColumn(data, selected);
+
+    var function = Function;
+    foreach (var column in data.Columns) {
+      // The marker's original callbacks only know about ETL columns, not this composed assembly view.
+      column.HeaderClickHandler = (clicked, _) => {
+        if (version != columnsUpdateVersion_ || Function != function ||
+            !ReferenceEquals(TextView.ProfileColumnData, data)) {
+          return;
+        }
+        selectedHeatColumnName_ = clicked.ColumnName;
+        SetMainColumn(data, clicked);
+        ApplyColumnStyles(data);
+      };
+    }
+  }
+
+  private void SetMainColumn(IRDocumentColumnData data, OptionalColumn selected) {
+    foreach (var column in data.Columns) {
+      column.IsMainColumn = column == selected;
+    }
+    if (selected != null && !SptAssemblyColumns.IsSptColumn(selected)) {
+      lastEtlHeatColumnName_ = selected.ColumnName;
+    }
+  }
+
+  private void ApplyColumnStyles(IRDocumentColumnData data) {
+    TextView.SuspendUpdate();
+    try {
+      foreach (var column in data.Columns) {
+        if (!column.IsMainColumn) {
+          ProfileDocumentMarker.UpdateColumnStyle(column, data, Function, TextView,
+                                                  settings_.ProfileMarkerSettings, settings_.ColumnSettings);
+        }
+      }
+      if (data.MainColumn is { } main) {
+        ProfileDocumentMarker.UpdateColumnStyle(main, data, Function, TextView,
+                                                settings_.ProfileMarkerSettings, settings_.ColumnSettings);
+        sptHeatApplied_ = SptAssemblyColumns.IsSptColumn(main);
+      }
+      else {
+        ClearSptHeat();
+      }
+    }
+    finally {
+      TextView.ResumeUpdate();
+    }
+  }
+
+  private void ClearSptHeat() {
+    if (sptHeatApplied_) {
+      TextView.ClearInstructionMarkers();
+      sptHeatApplied_ = false;
+    }
+  }
+
+  private void ResetAssemblyColumns() {
+    columnsUpdateVersion_++;
+    ClearSptHeat();
+    etlColumnData_ = null;
+    profileMarker_ = null;
+    funcProfile_ = null;
+    TextView.ProfileColumnData = null;
+    ProfileColumns.Reset();
+    ColumnsVisible = false;
     ResetViewMenuItemEvents();
-    ProfileColumns.Settings = settings_;
-    ProfileColumns.ColumnSettings = settings_.ColumnSettings;
-
-    await ProfileColumns.Display(columnData, TextView);
-    profileMarker_.UpdateColumnStyles(columnData, Function, TextView);
-    ProfileColumns.UpdateColumnWidths();
-
-    ProfileColumns.ColumnSettingsChanged -= OnProfileColumnsOnColumnSettingsChanged;
-    ProfileColumns.ColumnSettingsChanged += OnProfileColumnsOnColumnSettingsChanged;
-
-    // Add the columns to the View menu.
-    ProfileColumns.BuildColumnsVisibilityMenu(columnData, ProfileViewMenu, () => {
-      // UpdateProfilingColumns handles reentrancy by calling ResetViewMenuItemEvents()
-      // synchronously before any await, which unsubscribes the event handlers.
-      _ = UpdateProfilingColumns();
-    });
-
-    SetViewMenuItemEvents();
-    return true;
   }
 
   private void SetViewMenuItemEvents() {
@@ -1213,10 +1363,12 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
     }
   }
 
-  private async void OnProfileColumnsOnColumnSettingsChanged(object sender, OptionalColumn column) {
-    ProfileDocumentMarker.UpdateColumnStyle(column, TextView.ProfileColumnData, Function, TextView,
-                                            settings_.ProfileMarkerSettings,
-                                            settings_.ColumnSettings);
+  private void OnProfileColumnsOnColumnSettingsChanged(object sender, OptionalColumn column) {
+    var data = TextView.ProfileColumnData;
+    if (data?.Columns.Contains(column) == true) {
+      ApplyColumnStyles(data);
+      ProfileColumns.UpdateColumnWidths();
+    }
   }
 
   private void CreateProfileBlockMenu(FunctionProfileData funcProfile,
@@ -1380,6 +1532,7 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
                                                settings_.ProfileMarkerSettings,
                                                settings_.ColumnSettings, Session.CompilerInfo);
     await profileMarker_.Mark(TextView, Function, Section.ParentFunction);
+    etlColumnData_ = TextView.ProfileColumnData;
 
     // Redraw the flow graphs, may have loaded before the marker set the node tags.
     Session.RedrawPanels();
@@ -1411,8 +1564,10 @@ public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
 
   private async Task HideProfile() {
     ProfileVisible = false;
-    ColumnsVisible = false;
+    etlColumnData_ = null;
+    profileMarker_ = null;
     ResetProfilingMenus();
+    await UpdateProfilingColumns();
   }
 
   private void ResetProfilingMenus() {
