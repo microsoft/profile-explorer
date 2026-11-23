@@ -126,6 +126,12 @@
       PreviewCanExecute="CanExecuteLoadProfileCommand" />
 
     <CommandBinding
+      CanExecute="CanExecuteAttachSpgoProfileCommand"
+      Command="local:AppCommand.AttachSpgoProfile"
+      Executed="AttachSpgoProfileExecuted"
+      PreviewCanExecute="CanExecuteAttachSpgoProfileCommand" />
+
+    <CommandBinding
       CanExecute="CanExecuteLoadProfileCommand"
       Command="local:AppCommand.RecordProfile"
       Executed="RecordProfileExecuted"
@@ -507,6 +513,10 @@
                   Source="{StaticResource FolderIcon}" />
               </MenuItem.Icon>
             </MenuItem>
+            <MenuItem
+              Command="local:AppCommand.AttachSpgoProfile"
+              Header="Attach SPGO Profile..."
+              ToolTip="Select a sample profile-guided optimization (SPGO) profile to review for a binary" />
             <MenuItem
               Command="local:AppCommand.RecordProfile"
               Header="Record Profile">

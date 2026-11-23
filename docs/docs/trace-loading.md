@@ -23,6 +23,14 @@ Previously opened traces are saved as sessions. Recent sessions can be quickly o
 
 [![Start page screenshot](img/start-page_825x459.png)](img/start-page_825x459.png){:target="_blank"}
 
+#### SPGO profile selection (preview)
+
+Use **Profiling** -> **Attach SPGO Profile...** to select a sample profile-guided optimization profile for a binary. The command is available for binaries opened directly and modules in an ETL session, including modules whose binary files have not been downloaded yet. It is disabled when there is no binary or module in the session.
+
+Selecting **Open** displays a review dialog where you can choose the target binary, review the profile path, and select an optional PDB. The target defaults to the active assembly tab's binary, the selected Summary module, or the sole available binary. Ambiguous targets require an explicit selection.
+
+This is currently a selection/review UI only. Profile contents are not read, formats and compatibility are not validated, and no files are downloaded. **Attach** remains disabled. Closing the dialog discards the selections without changing the existing binary or ETL session.
+
 #### Symbols configuration
 
 Symbols are the binary (EXE/DLL) and debug info (PDB) files required to analyze the processes recorded in a trace. The binaries are used to disassembly individual functions and the debug files are used to resolve function names and provide the source file and line number information.

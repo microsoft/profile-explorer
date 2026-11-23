@@ -948,6 +948,11 @@ public partial class SectionPanel : ToolPanelControl, INotifyPropertyChanged {
     }
   }
 
+  public IRTextSummary SelectedModuleSummary =>
+    summary_ != null && ModulesList.SelectedItem is ModuleEx {IsAllEntry: false} module
+      ? FindModuleSummary(module.Name)
+      : null;
+
   public IRTextSummary OtherSummary {
     get => otherSummary_;
     set {

@@ -49,6 +49,7 @@ public partial class SectionPanelPair : ToolPanelControl {
   public bool SyncDiffedDocuments => MainPanel.SyncDiffedDocuments;
   public IRTextSummary MainSummary => MainPanel.Summary;
   public IRTextSummary DiffSummary => DiffPanel.Summary;
+  public IRTextSummary SelectedModuleSummary => MainPanel.SelectedModuleSummary;
 
   public string MainTitle {
     get => MainPanel.DocumentTitle;

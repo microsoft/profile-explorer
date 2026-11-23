@@ -501,6 +501,48 @@ public partial class MainWindow : Window, IUISession {
     await LoadProfile();
   }
 
+  private bool IsSpgoProfileTarget(ILoadedDocument document) {
+    return document.BinaryFileExists || document.Loader is DisassemblerSectionLoader ||
+           document.EnsureBinaryLoaded != null || Utils.IsBinaryFile(document.ModuleName);
+  }
+
+  private void CanExecuteAttachSpgoProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
+    e.CanExecute = sessionState_?.Documents.Exists(IsSpgoProfileTarget) == true;
+    e.Handled = true;
+  }
+
+  private void AttachSpgoProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    var targets = sessionState_?.Documents.FindAll(IsSpgoProfileTarget);
+
+    if (targets == null || targets.Count == 0) {
+      Trace.TraceWarning("Cannot select an SPGO profile without a binary or module in the session.");
+      return;
+    }
+
+    var section = CurrentDocumentSection;
+    var selectedTarget = section != null
+      ? targets.Find(document => document.Summary == section.ParentFunction.ParentSummary)
+      : null;
+    var summary = SectionPanel.SelectedModuleSummary ?? SectionPanel.MainSummary;
+    selectedTarget ??= targets.Find(document => document.Summary == summary);
+
+    if (selectedTarget == null && targets.Count == 1) {
+      selectedTarget = targets[0];
+    }
+
+    string profilePath = Utils.ShowOpenFileDialog(AttachSpgoProfileWindow.ProfileFileFilter,
+                                                 "*.*", "Select SPGO profile");
+
+    if (profilePath == null) {
+      return;
+    }
+
+    var window = new AttachSpgoProfileWindow(targets, selectedTarget, profilePath) {
+      Owner = this
+    };
+    window.ShowDialog();
+  }
+
   private async Task LoadProfile() {
     var window = new ProfileLoadWindow(this, false);
     window.Owner = this;
