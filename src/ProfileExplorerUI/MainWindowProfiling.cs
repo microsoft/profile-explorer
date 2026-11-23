@@ -530,17 +530,21 @@ public partial class MainWindow : Window, IUISession {
       selectedTarget = targets[0];
     }
 
-    string profilePath = Utils.ShowOpenFileDialog(AttachSpgoProfileWindow.ProfileFileFilter,
-                                                 "*.*", "Select SPGO profile");
-
-    if (profilePath == null) {
-      return;
-    }
-
-    var window = new AttachSpgoProfileWindow(targets, selectedTarget, profilePath) {
+    var window = new AttachSpgoProfileWindow(targets, selectedTarget) {
       Owner = this
     };
-    window.ShowDialog();
+    var session = sessionState_;
+    if (window.ShowDialog() == true && window.PreparedProfile != null) {
+      if (sessionState_ != session || !session.Documents.Exists(document => document.Id == window.AttachedTargetId)) {
+        Trace.TraceWarning("The session changed while preparing an SPGO profile.");
+        MessageBox.Show(this, "The session changed. Select the SPGO profile again.", "Profile Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        return;
+      }
+      session.SpgoProfiles[window.AttachedTargetId] = window.PreparedProfile;
+      SetOptionalStatus(TimeSpan.FromSeconds(15),
+                        "SPT loaded and validated in memory. SPGO visualization is not implemented yet.");
+    }
   }
 
   private async Task LoadProfile() {

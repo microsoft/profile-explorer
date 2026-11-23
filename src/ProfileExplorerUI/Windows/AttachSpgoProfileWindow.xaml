@@ -6,9 +6,13 @@
   Width="700"
   MinWidth="560"
   Loaded="Window_Loaded"
+  Closed="Window_Closed"
   ResizeMode="CanResizeWithGrip"
   ShowInTaskbar="False"
   SizeToContent="Height"
+  SnapsToDevicePixels="True"
+  UseLayoutRounding="True"
+  MaxHeight="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Height}"
   WindowStartupLocation="CenterOwner"
   WindowStyle="ToolWindow">
   <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -17,125 +21,249 @@
     </Grid.LayoutTransform>
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
+      <RowDefinition Height="38" />
     </Grid.RowDefinitions>
 
-    <StackPanel Margin="16,8,16,0">
-      <Label
-        Padding="0,4"
-        Content="_Target binary"
-        Target="{Binding ElementName=TargetBinaryBox}" />
-      <ComboBox
-        x:Name="TargetBinaryBox"
-        HorizontalContentAlignment="Stretch"
-        SelectionChanged="TargetBinaryBox_SelectionChanged">
-        <ComboBox.ItemTemplate>
-          <DataTemplate>
-            <StackPanel ToolTip="{Binding FilePath}">
-              <TextBlock Text="{Binding ModuleName}" />
-              <TextBlock
-                FontSize="11"
-                Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
-                Text="{Binding FilePath}"
-                TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-          </DataTemplate>
-        </ComboBox.ItemTemplate>
-      </ComboBox>
-      <TextBlock
-        x:Name="TargetBinaryStatus"
-        Margin="0,4,0,0"
-        Text="Select a target binary."
-        TextWrapping="Wrap" />
+    <ScrollViewer
+      HorizontalScrollBarVisibility="Disabled"
+      VerticalScrollBarVisibility="Auto">
+      <StackPanel x:Name="InputsPanel" Margin="16,8,16,0">
+        <Label
+          Padding="0"
+          Content="SPGO _profile file"
+          Target="{Binding ElementName=ProfileBrowseButton}" />
+        <Grid Margin="0,4,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBox
+            x:Name="ProfilePathBox"
+            Height="22"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            IsReadOnly="True"
+            ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+          <Button
+            x:Name="ProfileBrowseButton"
+            Grid.Column="1"
+            Height="22"
+            Margin="4,0,0,0"
+            Padding="4,2,4,2"
+            Click="ProfileBrowseButton_Click"
+            Content="_Browse" />
+        </Grid>
 
-      <Label
-        Margin="0,8,0,0"
-        Padding="0,4"
-        Content="Binary path"
-        Target="{Binding ElementName=TargetBinaryPathBox}" />
-      <TextBox
-        x:Name="TargetBinaryPathBox"
-        IsReadOnly="True"
-        ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+        <Label
+          Margin="0,8,0,0"
+          Padding="0"
+          Content="_Target binary"
+          Target="{Binding ElementName=TargetBinaryBox}" />
+        <ComboBox
+          x:Name="TargetBinaryBox"
+          Height="22"
+          Margin="0,4,0,0"
+          HorizontalContentAlignment="Stretch"
+          SelectionChanged="TargetBinaryBox_SelectionChanged">
+          <ComboBox.ItemTemplate>
+            <DataTemplate>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                  Margin="0,0,8,0"
+                  VerticalAlignment="Center"
+                  Text="{Binding ModuleName}" />
+                <TextBlock
+                  Grid.Column="1"
+                  VerticalAlignment="Center"
+                  Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                  TextTrimming="CharacterEllipsis"
+                  ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Text" Value="{Binding FilePath}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding BinaryFileExists}" Value="True">
+                          <Setter Property="Text" Value="{Binding BinaryFile.FilePath}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </Grid>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <TextBlock
+          x:Name="TargetBinaryStatus"
+          Margin="0,4,0,0"
+          Text="Select a target binary."
+          TextWrapping="Wrap">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
 
-      <Label
-        Margin="0,8,0,0"
-        Padding="0,4"
-        Content="SPGO _profile"
-        Target="{Binding ElementName=ProfilePathBox}" />
-      <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <TextBox
-          x:Name="ProfilePathBox"
-          IsReadOnly="True"
-          ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
-        <Button
-          Grid.Column="1"
-          Margin="8,0,0,0"
-          Padding="8,2"
-          Click="ProfileBrowseButton_Click"
-          Content="Browse..." />
-      </Grid>
-
-      <Label
-        Margin="0,8,0,0"
-        Padding="0,4"
-        Content="P_DB (optional)"
-        Target="{Binding ElementName=PdbPathBox}" />
-      <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <TextBox
-          x:Name="PdbPathBox"
-          ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
-        <Button
-          Grid.Column="1"
-          Margin="8,0,0,0"
-          Padding="8,2"
-          Click="PdbBrowseButton_Click"
-          Content="Browse..." />
-      </Grid>
-
-      <Border
-        Margin="0,16,0,0"
-        Padding="8"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="1">
-        <StackPanel>
+        <Grid Margin="0,12,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
           <TextBlock
-            FontWeight="SemiBold"
-            Text="Validation status: Not checked" />
-          <TextBlock
-            Margin="0,4,0,0"
-            Text="Profile reading, compatibility validation, and attachment are not implemented yet. Selections are only kept in this dialog; the loaded session will not be changed."
-            TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-    </StackPanel>
+            VerticalAlignment="Center"
+            FontWeight="Medium"
+            Text="Validation" />
+          <Button
+            x:Name="RetryButton"
+            Grid.Column="1"
+            Height="22"
+            Padding="4,0,4,0"
+            Click="RetryButton_Click"
+            Content="Retry validation"
+            Visibility="Collapsed" />
+        </Grid>
+        <ProgressBar
+          x:Name="ValidationProgress"
+          Height="4"
+          Margin="0,4,0,0"
+          IsIndeterminate="True"
+          Visibility="Collapsed" />
+        <TextBlock
+          x:Name="ValidationStatus"
+          Margin="0,4,0,0"
+          Text="Select a profile to begin."
+          TextWrapping="Wrap" />
+        <TextBlock
+          x:Name="ValidationSummary"
+          Margin="0,2,0,0"
+          TextWrapping="Wrap">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+        <Expander
+          x:Name="ValidationDetailsExpander"
+          Margin="0,8,0,0"
+          Header="Show details"
+          IsExpanded="False"
+          Visibility="Collapsed">
+          <TextBox
+            x:Name="ValidationDetails"
+            MaxHeight="180"
+            Margin="16,4,0,0"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            IsReadOnly="True"
+            TextWrapping="Wrap"
+            VerticalScrollBarVisibility="Auto" />
+        </Expander>
+
+        <Expander
+          x:Name="SymbolsToolsExpander"
+          Margin="0,12,0,0"
+          Header="Symbols and tools"
+          IsExpanded="False"
+          Visibility="Collapsed">
+          <StackPanel Margin="16,4,0,0">
+            <Label
+              Padding="0"
+              Content="P_DB (optional)"
+              Target="{Binding ElementName=PdbPathBox}" />
+            <Grid Margin="0,4,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBox
+                x:Name="PdbPathBox"
+                Height="22"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                TextChanged="PdbPathBox_TextChanged"
+                ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+              <Button
+                Grid.Column="1"
+                Height="22"
+                Margin="4,0,0,0"
+                Padding="4,2,4,2"
+                Click="PdbBrowseButton_Click"
+                Content="Browse" />
+            </Grid>
+            <Label
+              Margin="0,8,0,0"
+              Padding="0"
+              Content="SPTDump _tool"
+              Target="{Binding ElementName=ToolPathBox}" />
+            <Grid Margin="0,4,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBox
+                x:Name="ToolPathBox"
+                Height="22"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                IsReadOnly="True"
+                ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+              <Button
+                Grid.Column="1"
+                Height="22"
+                Margin="4,0,0,0"
+                Padding="4,2,4,2"
+                Click="ToolBrowseButton_Click"
+                Content="Change..." />
+              <Button
+                Grid.Column="2"
+                Height="22"
+                Margin="4,0,0,0"
+                Padding="4,2,4,2"
+                Click="AutoDetectButton_Click"
+                Content="Auto-detect" />
+            </Grid>
+          </StackPanel>
+        </Expander>
+
+        <TextBlock
+          Margin="0,12,0,8"
+          Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+          Text="Profile data will be retained in memory only. SPGO visualization is not implemented yet."
+          TextWrapping="Wrap" />
+      </StackPanel>
+    </ScrollViewer>
 
     <StackPanel
       Grid.Row="1"
-      Margin="16"
+      Margin="0,6,16,8"
       HorizontalAlignment="Right"
       Orientation="Horizontal">
       <Button
-        MinWidth="72"
-        Margin="0,0,8,0"
-        Padding="8,4"
+        Height="24"
+        Margin="0,0,4,0"
+        Padding="4,0,4,0"
         Content="Cancel"
         IsCancel="True" />
       <Button
-        MinWidth="72"
-        Padding="8,4"
+        x:Name="AttachButton"
+        Height="24"
+        Padding="4,0,4,0"
+        Background="#FFFCF4CC"
         Content="Attach"
         IsEnabled="False"
-        ToolTip="SPGO profile reading, validation, and attachment are not implemented yet"
+        Click="AttachButton_Click"
+        ToolTip="Retain the validated SPT in memory without changing existing profiling views"
         ToolTipService.ShowOnDisabled="True" />
     </StackPanel>
   </Grid>

@@ -80,6 +80,8 @@ public class ApplicationSettings {
   public FunctionMarkingSettings MarkingSettings { get; set; }
   [ProtoMember(30)]
   public HashSet<OptionValueId> KnownOptions { get; set; }
+  [ProtoMember(31)]
+  public string SptDumpToolPath { get; set; }
 
   public void Reset() {
     InitializeReferenceMembers();
@@ -102,6 +104,7 @@ public class ApplicationSettings {
     ElementPreviewPopupSettings.Clear();
     KnownOptions.Clear();
     AutoReloadDocument = true;
+    SptDumpToolPath = "";
   }
 
   public void AddRecentFile(string path) {
