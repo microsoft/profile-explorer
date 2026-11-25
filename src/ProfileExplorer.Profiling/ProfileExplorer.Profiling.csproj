@@ -31,6 +31,8 @@
   <ItemGroup>
     <Reference Include="Dia2Lib">
       <HintPath>external\Dia2Lib.dll</HintPath>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
 
@@ -49,7 +51,6 @@
 
   <!-- Ensure native DLLs from runtimes/ folder are copied to output by consumers -->
   <ItemGroup>
-    <None Include="external\Dia2Lib.dll" Pack="true" PackagePath="lib\net8.0\Dia2Lib.dll" />
     <None Include="build\net8.0\ProfileExplorer.Profiling.targets" Pack="true" PackagePath="build\net8.0" />
   </ItemGroup>
 
