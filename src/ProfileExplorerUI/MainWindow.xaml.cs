@@ -63,6 +63,7 @@ public static class AppCommand {
   public static readonly RoutedUICommand SwapDiffDocuments = new("Untitled", "SwapDiffDocuments", typeof(Window));
   public static readonly RoutedUICommand ShowDocumentSearch = new("Untitled", "ShowDocumentSearch", typeof(Window));
   public static readonly RoutedUICommand LoadProfile = new("Untitled", "LoadProfile", typeof(Window));
+  public static readonly RoutedUICommand AttachSpgoProfile = new("Untitled", "AttachSpgoProfile", typeof(Window));
   public static readonly RoutedUICommand RecordProfile = new("Untitled", "RecordProfile", typeof(Window));
   public static readonly RoutedUICommand ViewProfileReport = new("Untitled", "ViewProfileReport", typeof(Window));
   public static readonly RoutedUICommand ShowProfileCallGraph = new("Untitled", "ShowProfileCallGraph", typeof(Window));

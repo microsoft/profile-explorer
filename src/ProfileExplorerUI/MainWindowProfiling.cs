@@ -501,6 +501,70 @@ public partial class MainWindow : Window, IUISession {
     await LoadProfile();
   }
 
+  private bool IsSpgoProfileTarget(ILoadedDocument document) {
+    return document.BinaryFileExists || document.Loader is DisassemblerSectionLoader ||
+           document.EnsureBinaryLoaded != null || Utils.IsBinaryFile(document.ModuleName);
+  }
+
+  private void CanExecuteAttachSpgoProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
+    e.CanExecute = sessionState_?.Documents.Exists(IsSpgoProfileTarget) == true;
+    e.Handled = true;
+  }
+
+  private async void AttachSpgoProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+    var targets = sessionState_?.Documents.FindAll(IsSpgoProfileTarget);
+
+    if (targets == null || targets.Count == 0) {
+      Trace.TraceWarning("Cannot select an SPGO profile without a binary or module in the session.");
+      return;
+    }
+
+    var section = CurrentDocumentSection;
+    var selectedTarget = section != null
+      ? targets.Find(document => document.Summary == section.ParentFunction.ParentSummary)
+      : null;
+    var summary = SectionPanel.SelectedModuleSummary ?? SectionPanel.MainSummary;
+    selectedTarget ??= targets.Find(document => document.Summary == summary);
+
+    if (selectedTarget == null && targets.Count == 1) {
+      selectedTarget = targets[0];
+    }
+
+    var window = new AttachSpgoProfileWindow(targets, selectedTarget) {
+      Owner = this
+    };
+    var session = sessionState_;
+    if (window.ShowDialog() == true && window.PreparedProfile != null) {
+      if (sessionState_ != session || !session.Documents.Exists(document => document.Id == window.AttachedTargetId)) {
+        Trace.TraceWarning("The session changed while preparing an SPGO profile.");
+        MessageBox.Show(this, "The session changed. Select the SPGO profile again.", "Profile Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        return;
+      }
+      session.SpgoProfiles[window.AttachedTargetId] = window.PreparedProfile;
+      await RefreshSpgoAssemblyColumns(window.AttachedTargetId);
+      SetOptionalStatus(TimeSpan.FromSeconds(15),
+                        window.PreparedProfile.Samples.HasIpSamples || window.PreparedProfile.Samples.HasBranches
+                          ? "SPT attached. Observations are shown in assembly columns; data is retained for this session only."
+                          : "SPT attached, but contains no IP or LBR observations to display. Call stacks are not annotated.");
+    }
+  }
+
+  private async Task RefreshSpgoAssemblyColumns(Guid documentId) {
+    var state = sessionState_;
+    if (state == null) {
+      return;
+    }
+    foreach (var host in state.DocumentHosts.ToArray()) {
+      if (sessionState_ != state) {
+        return;
+      }
+      if (host.DocumentHost.Section?.ParentFunction.ParentSummary?.Id == documentId) {
+        await host.DocumentHost.RefreshSpgoColumnsAsync();
+      }
+    }
+  }
+
   private async Task LoadProfile() {
     var window = new ProfileLoadWindow(this, false);
     window.Owner = this;

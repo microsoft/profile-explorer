@@ -23,6 +23,22 @@ Previously opened traces are saved as sessions. Recent sessions can be quickly o
 
 [![Start page screenshot](img/start-page_825x459.png)](img/start-page_825x459.png){:target="_blank"}
 
+#### Attaching an SPT profile (preview)
+
+Use **Profiling** -> **Attach SPGO Profile...** to select a sample profile-guided optimization profile for a binary. The command is available for binaries opened directly and modules in an ETL session, including modules whose binary files have not been downloaded yet. It is disabled when there is no binary or module in the session.
+
+The menu opens the attachment dialog directly. Choose **Browse...** beside **SPGO profile** to select an `.spt` file. The target defaults to the active assembly tab's binary, the selected Summary module, or the sole available binary. Ambiguous targets require an explicit selection.
+
+Selecting an SPT file automatically starts validation. The **Validation** area displays progress, a summary of loaded records, or an actionable error. **Show details** expands the GUID/age comparisons, tool version, and detailed counts. Use **Browse...** again to replace the profile without closing the dialog; changing inputs clears the old validation result.
+
+The dialog automatically locates the externally installed MSVC **SPTDump.exe** using a configured override, PATH, then Visual Studio/MSVC installation locations. No confirmation is needed when detection succeeds. The **Symbols and tools** section is initially collapsed and expands automatically when tool discovery or PDB validation needs attention. **Change...** selects and remembers an executable; **Auto-detect** clears that override. **Retry validation** reruns the checks. The tool is not bundled or downloaded. See [SPTDump documentation](https://learn.microsoft.com/en-us/cpp/build/sptdump).
+
+SPTDump reads the file asynchronously, retaining IP/PMC samples, LBR records, call stacks, and repetition weights without interpreting them as execution time. Parsing errors and unsupported records are reported before attachment. The target binary must already be available locally and have a CodeView GUID and age matching a program in the SPT. A PDB is optional; if supplied, it must also match the binary. The dialog never discovers or downloads binaries or symbols.
+
+**Attach** is enabled only after parsing and identity validation succeed. It rechecks the input files for changes, then retains the prepared SPT in session memory, replacing any previous SPT for that target. The original multi-program data and matching program IDs are retained. The data is not saved with sessions and is discarded when the session ends. **Cancel** discards the pending result.
+
+After attachment, open assembly tabs for the binary are refreshed and subsequently opened functions show **SPT IP samples** and/or **SPT LBR observations** columns. Only event families present for the matching binary are displayed. These columns are separate from ETL time and counters and are not affected by ETL filtering. The Source File view and graphs are unchanged. See [SPT assembly columns](assembly-view.md#spt-observations) for count and tooltip semantics.
+
 #### Symbols configuration
 
 Symbols are the binary (EXE/DLL) and debug info (PDB) files required to analyze the processes recorded in a trace. The binaries are used to disassembly individual functions and the debug files are used to resolve function names and provide the source file and line number information.

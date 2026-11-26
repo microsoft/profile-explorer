@@ -638,7 +638,7 @@
             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
             BorderThickness="0,1,0,1"
             DockPanel.Dock="Top"
-            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            Visibility="{Binding ColumnsToolbarVisible, Converter={StaticResource BoolToVisibilityConverter}}">
             <ToolBarTray
               x:Name="ProfileToolbar"
               HorizontalAlignment="Stretch"
@@ -653,7 +653,8 @@
                 Loaded="ToolBar_Loaded">
                 <Menu
                   Margin="2,0,0,0"
-                  VerticalAlignment="Center">
+                  VerticalAlignment="Center"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <MenuItem
                     x:Name="ProfileElementsMenu"
                     Margin="0,0,0,0"
@@ -691,7 +692,8 @@
                   Padding="0"
                   Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Jump to previous less hot instruction (Shift+F2)">
+                  ToolTip="Jump to previous less hot instruction (Shift+F2)"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Image
                     Source="{StaticResource MinusIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
@@ -701,16 +703,20 @@
                   Padding="0"
                   Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                   CommandTarget="{Binding ElementName=TextView}"
-                  ToolTip="Jump to next hotter instruction (F2)">
+                  ToolTip="Jump to next hotter instruction (F2)"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <Image
                     Source="{StaticResource PlusIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                 </Button>
-                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+                <Separator
+                  Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <Menu
                   Margin="2,0,0,0"
-                  VerticalAlignment="Center">
+                  VerticalAlignment="Center"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <MenuItem
                     x:Name="ProfileBlocksMenu"
                     Margin="0,0,0,0"
@@ -738,7 +744,8 @@
                 <Menu
                   Margin="2,0,0,0"
                   VerticalAlignment="Center"
-                  ToolTip="View sorted list of inlined functions">
+                  ToolTip="View sorted list of inlined functions"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <MenuItem
                     x:Name="InlineesMenu"
                     Margin="0,0,0,0"
@@ -790,12 +797,15 @@
                     Source="{StaticResource PlusIcon}"
                     Style="{StaticResource DisabledImageStyle}" />
                 </Button>
-                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+                <Separator
+                  Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <Menu
                   Margin="2,0,0,0"
                   VerticalAlignment="Center"
-                  ToolTip="Select function instances to display">
+                  ToolTip="Select function instances to display"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <MenuItem
                     x:Name="InstancesMenu"
                     Margin="0,0,0,0"
@@ -829,7 +839,8 @@
                 </Menu>
                 <Menu
                   Margin="2,0,0,0"
-                  VerticalAlignment="Center">
+                  VerticalAlignment="Center"
+                  Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                   <MenuItem
                     x:Name="ThreadsMenu"
                     Margin="0,0,0,0"
@@ -862,7 +873,7 @@
                     <Separator />
                   </MenuItem>
                 </Menu>
-                <Separator />
+                <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <Menu
                   Margin="0,0,0,0"
                   VerticalAlignment="Center"
@@ -945,7 +956,7 @@
                 <Menu
                   Margin="2,0,0,0"
                   VerticalAlignment="Center"
-                  ToolTip="Configure displayed profiling columns">
+                  ToolTip="Configure displayed assembly columns">
                   <MenuItem
                     x:Name="ProfileViewMenu"
                     Margin="0,0,0,0"

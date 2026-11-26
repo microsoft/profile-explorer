@@ -26,6 +26,23 @@ public class IRDocumentColumnData {
   public bool HasData => Rows.Count > 0;
   public OptionalColumn MainColumn => Columns.Find(column => column.IsMainColumn);
 
+  public static IRDocumentColumnData Combine(IRDocumentColumnData first, IRDocumentColumnData second) {
+    var result = new IRDocumentColumnData();
+    foreach (var source in new[] {first, second}) {
+      if (source == null) {
+        continue;
+      }
+      result.Columns.AddRange(source.Columns);
+      foreach (var pair in source.Rows) {
+        foreach (var cell in pair.Value.ColumnValues) {
+          var row = result.AddValue(cell.Value, pair.Key, cell.Key);
+          row.BackColor ??= pair.Value.BackColor;
+        }
+      }
+    }
+    return result;
+  }
+
   public void ExportColumnsToExcel(IRElement tuple, IXLWorksheet ws,
                                    int rowId, int columnId) {
     foreach (var column in Columns) {

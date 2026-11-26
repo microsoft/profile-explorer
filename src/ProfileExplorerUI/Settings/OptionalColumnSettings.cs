@@ -42,6 +42,13 @@ public class OptionalColumnSettings : SettingsBase {
       InvertColorPalette = false,
       PickColorForPercentage = true
     };
+  public static OptionalColumnStyle DefaultSptColumnStyle =>
+    new() {
+      ShowPercentageBar = OptionalColumnStyle.PartVisibility.Always,
+      UseBackColor = OptionalColumnStyle.PartVisibility.Always,
+      ShowIcon = OptionalColumnStyle.PartVisibility.Always,
+      PickColorForPercentage = true
+    };
 
   [ProtoAfterDeserialization]
   private void InitializeReferenceMembers() {

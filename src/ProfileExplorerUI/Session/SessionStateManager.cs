@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AvalonDock.Layout;
@@ -11,6 +12,7 @@ using ProfileExplorer.Core.Utilities;
 using ProfileExplorer.Core.Compilers.Architecture;
 using ProfileExplorer.Core.Profile.Data;
 using ProfileExplorer.Core.Profile.Processing;
+using ProfileExplorer.Core.Profile.Spgo;
 using ProfileExplorer.Core.Providers;
 using ProfileExplorerUI.Session;
 using ProfileExplorer.Core.Session;
@@ -182,6 +184,7 @@ public class SessionStateManager : IDisposable {
   public ILoadedDocument DiffDocument { get; set; }
   public List<DocumentHostInfo> DocumentHosts { get; set; }
   public ProfileData ProfileData { get; set; }
+  public ConcurrentDictionary<Guid, PreparedSptProfile> SpgoProfiles { get; } = new();
   public ProfileFilterState ProfileFilter { get; set; }
   public DiffModeInfo SectionDiffState { get; set; }
   public bool NotifiedSessionStart { get; set; }
@@ -230,6 +233,7 @@ public class SessionStateManager : IDisposable {
     document.DocumentChanged -= DocumentWatcher_Changed;
     panelStateManager_.RemoveDocumentPanelStates(document.Id);
     documents_.Remove(document);
+    SpgoProfiles.TryRemove(document.Id, out _);
   }
 
   public ILoadedDocument FindLoadedDocument(IRTextSection section) {
@@ -363,6 +367,7 @@ public class SessionStateManager : IDisposable {
     }
 
     documents_.Clear();
+    SpgoProfiles.Clear();
     IsAutoSaveEnabled = false;
   }
 
@@ -405,6 +410,9 @@ public class SessionStateManager : IDisposable {
   }
 
   private void DocumentWatcher_Changed(object sender, EventArgs e) {
+    if (sender is ILoadedDocument document) {
+      SpgoProfiles.TryRemove(document.Id, out _);
+    }
     DocumentChanged?.Invoke(sender, e);
   }
 
@@ -412,6 +420,7 @@ public class SessionStateManager : IDisposable {
     if (!disposed_) {
       documents_.ForEach(item => item.Dispose());
       documents_.Clear();
+      SpgoProfiles.Clear();
       MainDocument = null;
       DiffDocument = null;
       disposed_ = true;

@@ -1598,6 +1598,7 @@ public partial class MainWindow : Window, IUISession {
   private async void DocumentState_DocumentChangedEvent(object sender, EventArgs e) {
     var loadedDoc = (ILoadedDocument)sender;
     var eventTime = DateTime.UtcNow;
+    await Dispatcher.InvokeAsync(() => RefreshSpgoAssemblyColumns(loadedDoc.Id)).Task.Unwrap();
 
     // Queue for later, when the application gets focus back.
     // A lock is needed, since the event can fire concurrently.
